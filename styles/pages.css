@@ -80,6 +80,7 @@
   padding: var(--space-xl); border: 1px solid var(--border-light);
   transition: all var(--transition-base); text-decoration: none;
 }
+.contact-method > div:last-child { min-width: 0; }
 .contact-method:hover { border-color: var(--accent); box-shadow: var(--shadow-sm); transform: translateX(4px); }
 .contact-method-icon {
   width: 52px; height: 52px; border-radius: var(--radius-lg); flex-shrink: 0;
@@ -89,7 +90,11 @@
 .contact-method-icon.phone    { background: rgba(21,34,56,0.1);   color: var(--primary); }
 .contact-method-icon.email    { background: var(--accent-pale);    color: var(--accent-hover); }
 .contact-method-label { font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-light); margin-bottom: 2px; }
-.contact-method-value { font-size: 1rem; font-weight: 700; color: var(--primary); }
+.contact-method-value {
+  font-size: 1rem; font-weight: 700; color: var(--primary);
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
 .contact-method-note { font-size: 0.8rem; color: var(--text-muted); margin-top: 2px; }
 
 .contact-tagline {
@@ -169,6 +174,7 @@
     gap: var(--space-md);
     padding: var(--space-lg);
   }
+  .contact-method-value { font-size: 0.95rem; }
   .contact-form-wrap { padding: var(--space-xl); }
 }
 

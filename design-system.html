@@ -45,6 +45,19 @@
     .spacing-label strong { color: var(--primary); font-family: monospace; }
 
     .do-dont { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
+    .ds-contact-grid {
+      background: var(--bg);
+      border-radius: 12px;
+      padding: 1.5rem;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+    }
+    .ds-contact-grid > div {
+      min-width: 0;
+      overflow-wrap: anywhere;
+      word-break: break-word;
+    }
     .do-box, .dont-box {
       border-radius: var(--radius-lg); padding: 1.5rem;
       border: 2px solid;
@@ -61,6 +74,7 @@
     @media (max-width: 640px) {
       .do-dont { grid-template-columns: 1fr; }
       .ds-body { padding: 2rem 1rem 4rem; }
+      .ds-contact-grid { grid-template-columns: 1fr; }
     }
   </style>
 </head>
@@ -472,7 +486,7 @@
         </div>
 
         <h3 style="margin-top:2rem;">Contact Details Reference</h3>
-        <div style="background:var(--bg); border-radius:12px; padding:1.5rem; display:grid; grid-template-columns:1fr 1fr; gap:1rem;">
+        <div class="ds-contact-grid">
           <div><strong style="color:var(--primary);">Email:</strong> info.brightexsolutions@gmail.com</div>
           <div><strong style="color:var(--primary);">Phone / WhatsApp:</strong> +254 741 980 127</div>
           <div><strong style="color:var(--primary);">Location:</strong> Nairobi, Kenya</div>
@@ -503,7 +517,6 @@
             <a href="services.html"      class="footer-link">Services</a>
             <a href="index.html#work"    class="footer-link">Our Work</a>
             <a href="contact.html"       class="footer-link">Contact</a>
-            <a href="design-system.html" class="footer-link">Design System</a>
           </nav>
         </div>
         <div class="footer-col">
