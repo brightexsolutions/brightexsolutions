@@ -1,5 +1,5 @@
 /* =========================================
-   HOME PAGE — home.css
+   HOME PAGE - home.css
    ========================================= */
 
 /* ---- HERO ---- */
@@ -76,16 +76,18 @@
 .hero-stat-value span { color: var(--accent); }
 .hero-stat-label { font-size: 0.8rem; color: rgba(255,255,255,0.55); margin-top: 4px; text-transform: uppercase; letter-spacing: 0.06em; }
 
-/* Right side of hero — visual panel */
+/* Right side of hero - visual panel */
 .hero-visual {
   display: flex; align-items: center; justify-content: center;
   animation: fadeIn 1s 0.3s ease both;
 }
-.hero-card-stack { position: relative; width: 100%; max-width: 420px; }
+.hero-card-stack { position: relative; width: 100%; max-width: 420px; isolation: isolate; }
 .hero-main-card {
   background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.12);
   border-radius: var(--radius-xl); padding: var(--space-2xl);
   backdrop-filter: blur(10px);
+  position: relative;
+  z-index: 1;
 }
 .hero-card-chip {
   display: flex; align-items: center; gap: 0.5rem;
@@ -110,6 +112,7 @@
   font-size: 0.8rem; font-weight: 800;
   box-shadow: 0 8px 24px rgba(249,168,37,0.4);
   animation: float 3s ease-in-out infinite;
+  z-index: 2;
 }
 .hero-float-badge i { display: block; font-size: 1.1rem; margin-bottom: 2px; }
 @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }

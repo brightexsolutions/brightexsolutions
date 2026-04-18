@@ -1,5 +1,5 @@
 /* =========================================
-   BRIGHTEX SOLUTIONS — MAIN JS
+   BRIGHTEX SOLUTIONS - MAIN JS
    ========================================= */
 
 document.addEventListener('DOMContentLoaded', () => {

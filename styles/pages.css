@@ -1,5 +1,5 @@
 /* =========================================
-   SERVICES PAGE — services.css
+   SERVICES PAGE - services.css
    ========================================= */
 
 .services-list { background: var(--white); }
@@ -67,7 +67,7 @@
 .packages-note p { max-width: 520px; margin: 0 auto var(--space-xl); }
 
 /* =========================================
-   CONTACT PAGE — contact.css
+   CONTACT PAGE - contact.css
    ========================================= */
 
 .contact-section { background: var(--white); }
@@ -173,7 +173,7 @@
 }
 
 /* =========================================
-   DESIGN SYSTEM PAGE — design-system.css
+   DESIGN SYSTEM PAGE - design-system.css
    ========================================= */
 
 .ds-section { padding: var(--space-3xl) 0; border-bottom: 1px solid var(--border); }

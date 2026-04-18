@@ -1,5 +1,5 @@
 /* =========================================
-   BRIGHTEX SOLUTIONS — MAIN STYLESHEET
+   BRIGHTEX SOLUTIONS - MAIN STYLESHEET
    ========================================= */
 
 /* --- Google Fonts --- */
@@ -200,8 +200,8 @@ p  { color: var(--text-muted); line-height: 1.75; }
   margin: 0 auto; padding: 0 var(--container-pad);
   display: flex; align-items: center; justify-content: space-between;
 }
-.nav-logo { display: flex; align-items: center; height: 64px; }
-.nav-logo img { height: 100%; width: auto; max-width: min(280px, 56vw); object-fit: contain; }
+.nav-logo { display: flex; align-items: center; height: 76px; }
+.nav-logo img { height: 100%; width: auto; max-width: min(360px, 68vw); object-fit: contain; }
 .logo-scrolled { display: none; }
 .logo-initial { display: block; }
 .navbar.scrolled .logo-initial { display: none; }
@@ -412,8 +412,8 @@ p  { color: var(--text-muted); line-height: 1.75; }
 }
 
 @media (max-width: 640px) {
-  .nav-logo { height: 52px; }
-  .nav-logo img { max-width: min(240px, 62vw); }
+  .nav-logo { height: 60px; }
+  .nav-logo img { max-width: min(280px, 72vw); }
   .footer-logo { height: 46px; }
   .whatsapp-float {
     right: 1rem;
