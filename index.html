@@ -1,0 +1,631 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Brightex Solutions — Web Development, UI/UX Design & Digital Growth | Nairobi</title>
+  <meta name="description" content="Brightex Solutions is a technology & digital consultancy in Nairobi helping businesses build, optimize, and scale their digital presence through web development, UI/UX design, SEO, branding, and AI solutions." />
+  <meta name="keywords" content="web development Nairobi, UI/UX design Kenya, SEO services Nairobi, digital agency Kenya, branding Nairobi, Brightex Solutions" />
+  <meta name="author" content="Brightex Solutions" />
+  <link rel="canonical" href="https://brightexsolutions.com/" />
+  <!-- Open Graph -->
+  <meta property="og:title" content="Brightex Solutions — Building Digital Experiences That Drive Growth" />
+  <meta property="og:description" content="Technology & digital consultancy helping businesses establish, optimize, and scale their online presence." />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://brightexsolutions.com/" />
+  <meta property="og:image" content="assets/Brightex%20Solutions%20Logo-light-v1-no-bg.png" />
+  <!-- Favicon -->
+  <link rel="icon" type="image/png" href="assets/icon-logo-dark.png" />
+  <link rel="apple-touch-icon" href="assets/icon-logo-dark.png" />
+  <!-- Styles -->
+  <link rel="stylesheet" href="styles/main.css" />
+  <link rel="stylesheet" href="styles/home.css" />
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+</head>
+<body>
+
+  <!-- ===== NAVBAR ===== -->
+  <nav class="navbar" id="navbar" aria-label="Main navigation">
+    <div class="nav-container">
+      <a href="index.html" class="nav-logo" aria-label="Brightex Solutions home">
+        <img src="assets/Brightex Solutions Logo-light-v1-no-bg.png" alt="Brightex Solutions" class="logo-initial" />
+        <img src="assets/Brightex Solutions Logo-dark-v1-no-bg.png" alt="Brightex Solutions" class="logo-scrolled" />
+      </a>
+      <div class="nav-links" role="menubar">
+        <a href="index.html"    class="nav-link" role="menuitem">Home</a>
+        <a href="services.html" class="nav-link" role="menuitem">Services</a>
+        <a href="index.html#work"    class="nav-link" role="menuitem">Work</a>
+        <a href="contact.html"  class="nav-link" role="menuitem">Contact</a>
+      </div>
+      <div class="nav-cta">
+        <a href="contact.html" class="nav-btn-accent">Get Started</a>
+      </div>
+      <button class="nav-toggle" id="nav-toggle" aria-label="Toggle menu" aria-expanded="false">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </nav>
+  <!-- Mobile Drawer -->
+  <div class="nav-drawer" id="nav-drawer">
+    <a href="index.html"    class="nav-link">Home</a>
+    <a href="services.html" class="nav-link">Services</a>
+    <a href="index.html#work"    class="nav-link">Work</a>
+    <a href="contact.html"  class="nav-link">Contact</a>
+    <a href="contact.html"  class="btn btn-primary">Get Started <i class="fas fa-arrow-right"></i></a>
+  </div>
+
+  <!-- ===== HERO ===== -->
+  <section class="hero" id="hero" aria-label="Hero section">
+    <div class="hero-bg" role="presentation" aria-hidden="true"></div>
+    <div class="hero-overlay" aria-hidden="true"></div>
+    <div class="hero-glow" aria-hidden="true"></div>
+    <div class="container">
+      <div class="hero-content">
+        <div class="hero-text">
+          <div class="hero-badge" role="note">
+            <span class="hero-badge-dot" aria-hidden="true"></span>
+            Nairobi-Based · Africa-Focused · Globally Capable
+          </div>
+          <h1 class="hero-title">
+            Building Digital <span class="hero-title-accent">Experiences</span> That Drive Growth
+          </h1>
+          <p class="hero-desc">
+            We help startups, SMEs, and growing brands establish a powerful online presence through strategic web development, intuitive design, and data-driven digital solutions.
+          </p>
+          <div class="hero-actions">
+            <a href="contact.html" class="btn btn-primary btn-lg">
+              Start a Project <i class="fas fa-arrow-right"></i>
+            </a>
+            <a href="index.html#work" class="btn btn-outline-white btn-lg">
+              View Our Work
+            </a>
+          </div>
+          <div class="hero-stats">
+            <div class="hero-stat">
+              <div class="hero-stat-value"><span class="count-up" data-target="20" data-suffix="+">0+</span></div>
+              <div class="hero-stat-label">Projects Delivered</div>
+            </div>
+            <div class="hero-stat">
+              <div class="hero-stat-value"><span class="count-up" data-target="15" data-suffix="+">0+</span></div>
+              <div class="hero-stat-label">Happy Clients</div>
+            </div>
+            <div class="hero-stat">
+              <div class="hero-stat-value"><span class="count-up" data-target="3" data-suffix="+">0+</span></div>
+              <div class="hero-stat-label">Years Experience</div>
+            </div>
+            <div class="hero-stat">
+              <div class="hero-stat-value"><span class="count-up" data-target="100" data-suffix="%">0%</span></div>
+              <div class="hero-stat-label">Client Satisfaction</div>
+            </div>
+          </div>
+        </div>
+        <div class="hero-visual" aria-hidden="true">
+          <div class="hero-card-stack">
+            <div class="hero-float-badge">
+              <i class="fas fa-bolt"></i>
+              Live &amp; Growing
+            </div>
+            <div class="hero-main-card">
+              <div class="hero-card-chip">
+                <span class="hero-card-chip-dot"></span>
+                Our Services
+              </div>
+              <div class="hero-card-services">
+                <div class="hero-card-service">
+                  <i class="fas fa-code"></i>
+                  <span>Web Development</span>
+                </div>
+                <div class="hero-card-service">
+                  <i class="fas fa-palette"></i>
+                  <span>UI/UX Design</span>
+                </div>
+                <div class="hero-card-service">
+                  <i class="fas fa-search"></i>
+                  <span>SEO &amp; Growth</span>
+                </div>
+                <div class="hero-card-service">
+                  <i class="fas fa-robot"></i>
+                  <span>AI &amp; Automation</span>
+                </div>
+                <div class="hero-card-service">
+                  <i class="fas fa-fingerprint"></i>
+                  <span>Brand Identity</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== SERVICES PREVIEW ===== -->
+  <section class="services-preview" id="services" aria-labelledby="services-heading">
+    <div class="container">
+      <div class="section-header reveal">
+        <span class="section-label">What We Do</span>
+        <h2 class="section-title" id="services-heading">
+          End-to-End Digital <span>Solutions</span>
+        </h2>
+        <p class="section-subtitle">
+          From your first website to a full digital transformation — we build, design, and grow your online presence with precision.
+        </p>
+      </div>
+      <div class="services-grid">
+
+        <article class="service-card reveal delay-1">
+          <div class="service-icon"><i class="fas fa-code" aria-hidden="true"></i></div>
+          <h3>Web Development</h3>
+          <p>Modern, responsive, and secure websites built on WordPress or custom stacks — tailored to your business goals and built for performance.</p>
+          <a href="services.html#web-development" class="service-link">Learn more <i class="fas fa-arrow-right"></i></a>
+        </article>
+
+        <article class="service-card reveal delay-2">
+          <div class="service-icon"><i class="fas fa-pen-ruler" aria-hidden="true"></i></div>
+          <h3>UI/UX Design</h3>
+          <p>Intuitive interfaces and compelling user experiences that increase engagement, reduce bounce rates, and convert more visitors into clients.</p>
+          <a href="services.html#ui-ux" class="service-link">Learn more <i class="fas fa-arrow-right"></i></a>
+        </article>
+
+        <article class="service-card reveal delay-3">
+          <div class="service-icon"><i class="fas fa-chart-line" aria-hidden="true"></i></div>
+          <h3>SEO &amp; Digital Growth</h3>
+          <p>Data-driven SEO strategies that improve your search rankings, drive qualified traffic, and turn your website into a lead-generation engine.</p>
+          <a href="services.html#seo" class="service-link">Learn more <i class="fas fa-arrow-right"></i></a>
+        </article>
+
+        <article class="service-card reveal delay-1">
+          <div class="service-icon"><i class="fas fa-fingerprint" aria-hidden="true"></i></div>
+          <h3>Branding &amp; Identity</h3>
+          <p>From logo design to full brand guidelines — we help you build a cohesive identity that resonates with your audience and stands out in the market.</p>
+          <a href="services.html#branding" class="service-link">Learn more <i class="fas fa-arrow-right"></i></a>
+        </article>
+
+        <article class="service-card reveal delay-2">
+          <div class="service-icon"><i class="fas fa-robot" aria-hidden="true"></i></div>
+          <h3>AI &amp; Automation</h3>
+          <p>Integrate smart AI tools and automated workflows into your business — from AI-powered web features to intelligent support systems and process automation.</p>
+          <a href="services.html#ai" class="service-link">Learn more <i class="fas fa-arrow-right"></i></a>
+        </article>
+
+        <article class="service-card reveal delay-3">
+          <div class="service-icon"><i class="fas fa-server" aria-hidden="true"></i></div>
+          <h3>ERP Systems</h3>
+          <p>Custom business management systems that integrate your operations — inventory, HR, finance, and more — into one clean, efficient platform.</p>
+          <a href="services.html#erp" class="service-link">Learn more <i class="fas fa-arrow-right"></i></a>
+        </article>
+
+      </div>
+      <div style="text-align:center; margin-top: 3rem;" class="reveal">
+        <a href="services.html" class="btn btn-outline">Explore All Services <i class="fas fa-arrow-right"></i></a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== PROCESS ===== -->
+  <section class="process-section" id="process" aria-labelledby="process-heading">
+    <div class="container">
+      <div class="section-header text-center reveal">
+        <span class="section-label">How We Work</span>
+        <h2 class="section-title" id="process-heading">Our <span>Proven Process</span></h2>
+        <p class="section-subtitle">A clear, collaborative approach from first conversation to successful launch.</p>
+      </div>
+      <div class="process-steps">
+        <div class="process-step active reveal delay-1">
+          <div class="process-num">01</div>
+          <h4>Discovery</h4>
+          <p>We understand your business, goals, and the challenges you're solving.</p>
+        </div>
+        <div class="process-step reveal delay-2">
+          <div class="process-num">02</div>
+          <h4>Strategy</h4>
+          <p>We define the right digital approach and technology for your specific needs.</p>
+        </div>
+        <div class="process-step reveal delay-3">
+          <div class="process-num">03</div>
+          <h4>Design</h4>
+          <p>User-focused wireframes and visual designs that align with your brand.</p>
+        </div>
+        <div class="process-step reveal delay-4">
+          <div class="process-num">04</div>
+          <h4>Build &amp; Test</h4>
+          <p>Development, QA, and performance optimization before anything goes live.</p>
+        </div>
+        <div class="process-step reveal delay-5">
+          <div class="process-num">05</div>
+          <h4>Launch &amp; Support</h4>
+          <p>Deployment with ongoing support and continuous improvements post-launch.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== WORK / PORTFOLIO ===== -->
+  <section class="work-section" id="work" aria-labelledby="work-heading">
+    <div class="container">
+      <div class="section-header reveal">
+        <span class="section-label">Our Work</span>
+        <h2 class="section-title" id="work-heading">Projects We're <span>Proud Of</span></h2>
+        <p class="section-subtitle">Real results for real businesses — from e-commerce to community platforms.</p>
+      </div>
+      <div class="work-grid">
+
+        <article class="project-card reveal delay-1">
+          <div class="project-preview">
+            <div class="project-preview-bg" style="background: linear-gradient(135deg, #1a2a1a 0%, #2d4a2d 100%);">
+              Beco
+            </div>
+            <div class="project-preview-overlay">
+              <a href="https://beco-interiors.netlify.app/" target="_blank" rel="noopener" class="project-preview-btn">
+                Visit Site <i class="fas fa-external-link-alt"></i>
+              </a>
+            </div>
+          </div>
+          <div class="project-meta">
+            <div class="project-tags">
+              <span class="tag">E-Commerce</span>
+              <span class="tag">Redesign</span>
+              <span class="tag">WordPress</span>
+            </div>
+            <h3>Beco Interiors</h3>
+            <p>Full e-commerce redesign for a premium interiors brand — improving product discovery, UX, and conversion rates.</p>
+            <a href="https://beco-interiors.netlify.app/" target="_blank" rel="noopener">
+              View Project <i class="fas fa-external-link-alt"></i>
+            </a>
+          </div>
+        </article>
+
+        <article class="project-card reveal delay-2">
+          <div class="project-preview">
+            <div class="project-preview-bg" style="background: linear-gradient(135deg, #152238 0%, #1e4a7a 100%);">
+              TLW
+            </div>
+            <div class="project-preview-overlay">
+              <a href="https://talkwayslanguages.com/" target="_blank" rel="noopener" class="project-preview-btn">
+                Visit Site <i class="fas fa-external-link-alt"></i>
+              </a>
+            </div>
+          </div>
+          <div class="project-meta">
+            <div class="project-tags">
+              <span class="tag">Education</span>
+              <span class="tag">Web Design</span>
+              <span class="tag">SEO</span>
+            </div>
+            <h3>Talkways Languages</h3>
+            <p>A professional website for a language learning school with clear course offerings and conversion-focused design.</p>
+            <a href="https://talkwayslanguages.com/" target="_blank" rel="noopener">
+              View Project <i class="fas fa-external-link-alt"></i>
+            </a>
+          </div>
+        </article>
+
+        <article class="project-card reveal delay-3">
+          <div class="project-preview">
+            <div class="project-preview-bg" style="background: linear-gradient(135deg, #1a3a25 0%, #2e6b47 100%);">
+              GHW
+            </div>
+            <div class="project-preview-overlay">
+              <a href="https://thegreenhouse-w-s.netlify.app/" target="_blank" rel="noopener" class="project-preview-btn">
+                Visit Site <i class="fas fa-external-link-alt"></i>
+              </a>
+            </div>
+          </div>
+          <div class="project-meta">
+            <div class="project-tags">
+              <span class="tag">Community</span>
+              <span class="tag">Web Development</span>
+              <span class="tag">UI Design</span>
+            </div>
+            <h3>Greenhouse Worship Community</h3>
+            <p>A vibrant, welcoming website for a worship community — built to engage members and connect with newcomers online.</p>
+            <a href="https://thegreenhouse-w-s.netlify.app/" target="_blank" rel="noopener">
+              View Project <i class="fas fa-external-link-alt"></i>
+            </a>
+          </div>
+        </article>
+
+        <article class="project-card reveal delay-4">
+          <div class="project-preview">
+            <div class="project-preview-bg" style="background: linear-gradient(135deg, #2a1a10 0%, #7a3a15 100%);">
+              AFN
+            </div>
+            <div class="project-preview-overlay">
+              <a href="https://africafeaturenetwork.com/" target="_blank" rel="noopener" class="project-preview-btn">
+                Visit Site <i class="fas fa-external-link-alt"></i>
+              </a>
+            </div>
+          </div>
+          <div class="project-meta">
+            <div class="project-tags">
+              <span class="tag">Media</span>
+              <span class="tag">News Platform</span>
+              <span class="tag">SEO</span>
+            </div>
+            <h3>Africa Feature Network</h3>
+            <p>A media and news platform designed for reach and readability — structured for SEO and optimized for mobile audiences.</p>
+            <a href="https://africafeaturenetwork.com/" target="_blank" rel="noopener">
+              View Project <i class="fas fa-external-link-alt"></i>
+            </a>
+          </div>
+        </article>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== TRUST / TESTIMONIALS ===== -->
+  <section class="trust-section" id="trust" aria-labelledby="trust-heading">
+    <div class="container">
+      <div class="section-header text-center reveal">
+        <span class="section-label">Client Trust</span>
+        <h2 class="section-title" id="trust-heading">What Our <span>Clients Say</span></h2>
+        <p class="section-subtitle">We measure success by the growth our clients experience. Here's what a few of them have shared.</p>
+      </div>
+
+      <div class="trust-stats reveal">
+        <div class="trust-stat">
+          <div class="trust-stat-num"><span class="count-up" data-target="20" data-suffix="+">0+</span></div>
+          <div class="trust-stat-label">Projects Delivered</div>
+        </div>
+        <div class="trust-stat">
+          <div class="trust-stat-num"><span class="count-up" data-target="15" data-suffix="+">0+</span></div>
+          <div class="trust-stat-label">Happy Clients</div>
+        </div>
+        <div class="trust-stat">
+          <div class="trust-stat-num"><span class="count-up" data-target="100" data-suffix="%">0%</span></div>
+          <div class="trust-stat-label">On-Time Delivery</div>
+        </div>
+        <div class="trust-stat">
+          <div class="trust-stat-num"><span class="count-up" data-target="3" data-suffix="+">0+</span></div>
+          <div class="trust-stat-label">Years in Business</div>
+        </div>
+      </div>
+
+      <div class="testimonials-grid">
+
+        <blockquote class="testimonial-card reveal delay-1">
+          <div class="testimonial-quote" aria-hidden="true">"</div>
+          <p class="testimonial-text">
+            Brightex redesigned our e-commerce store from scratch. The new site is faster, cleaner, and our online sales noticeably improved within the first few months of launch.
+          </p>
+          <div class="testimonial-stars" aria-label="5 stars">★★★★★</div>
+          <footer class="testimonial-author">
+            <div class="testimonial-avatar" style="background: var(--primary);">JM</div>
+            <div>
+              <div class="testimonial-name">James Mwangi</div>
+              <div class="testimonial-role">Owner, Interior Design Business</div>
+            </div>
+          </footer>
+        </blockquote>
+
+        <blockquote class="testimonial-card reveal delay-2">
+          <div class="testimonial-quote" aria-hidden="true">"</div>
+          <p class="testimonial-text">
+            The team at Brightex understood our brand from day one. They built us a website that perfectly reflects who we are and the feedback from our students has been overwhelmingly positive.
+          </p>
+          <div class="testimonial-stars" aria-label="5 stars">★★★★★</div>
+          <footer class="testimonial-author">
+            <div class="testimonial-avatar" style="background: #2d6a4f;">SK</div>
+            <div>
+              <div class="testimonial-name">Sarah Kimani</div>
+              <div class="testimonial-role">Director, Language School</div>
+            </div>
+          </footer>
+        </blockquote>
+
+        <blockquote class="testimonial-card reveal delay-3">
+          <div class="testimonial-quote" aria-hidden="true">"</div>
+          <p class="testimonial-text">
+            Working with Brightex was seamless from start to finish. Clear communication, delivered on time, and the final product exceeded what we originally envisioned.
+          </p>
+          <div class="testimonial-stars" aria-label="5 stars">★★★★★</div>
+          <footer class="testimonial-author">
+            <div class="testimonial-avatar" style="background: #7a3a15;">DO</div>
+            <div>
+              <div class="testimonial-name">David Ochieng</div>
+              <div class="testimonial-role">Co-Founder, Tech Startup</div>
+            </div>
+          </footer>
+        </blockquote>
+
+        <blockquote class="testimonial-card reveal delay-1">
+          <div class="testimonial-quote" aria-hidden="true">"</div>
+          <p class="testimonial-text">
+            Our website now ranks on the first page for several key search terms. The SEO work Brightex did has driven consistent, organic traffic to our platform every single month.
+          </p>
+          <div class="testimonial-stars" aria-label="5 stars">★★★★★</div>
+          <footer class="testimonial-author">
+            <div class="testimonial-avatar" style="background: #1e4a7a;">AW</div>
+            <div>
+              <div class="testimonial-name">Amina Wanjiru</div>
+              <div class="testimonial-role">Founder, Media &amp; Content Platform</div>
+            </div>
+          </footer>
+        </blockquote>
+
+        <blockquote class="testimonial-card reveal delay-2">
+          <div class="testimonial-quote" aria-hidden="true">"</div>
+          <p class="testimonial-text">
+            They didn't just build a website — they helped us think through our entire digital strategy. That kind of strategic input is rare from a design agency and genuinely valuable.
+          </p>
+          <div class="testimonial-stars" aria-label="5 stars">★★★★★</div>
+          <footer class="testimonial-author">
+            <div class="testimonial-avatar" style="background: #5a189a;">MN</div>
+            <div>
+              <div class="testimonial-name">Michael Njoroge</div>
+              <div class="testimonial-role">CEO, SME Business</div>
+            </div>
+          </footer>
+        </blockquote>
+
+        <blockquote class="testimonial-card reveal delay-3">
+          <div class="testimonial-quote" aria-hidden="true">"</div>
+          <p class="testimonial-text">
+            The branding package Brightex put together for us was exactly what we needed. Professional, modern, and consistent across all our digital channels. Highly recommend.
+          </p>
+          <div class="testimonial-stars" aria-label="5 stars">★★★★★</div>
+          <footer class="testimonial-author">
+            <div class="testimonial-avatar" style="background: #c77dff; color: #2a0050;">FO</div>
+            <div>
+              <div class="testimonial-name">Faith Otieno</div>
+              <div class="testimonial-role">Personal Brand &amp; Consultant</div>
+            </div>
+          </footer>
+        </blockquote>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== WHY BRIGHTEX ===== -->
+  <section class="why-section" id="about" aria-labelledby="why-heading">
+    <div class="container">
+      <div class="why-grid">
+        <div class="why-image-wrap reveal-left">
+          <img
+            src="https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&w=900&q=80"
+            alt="Brightex Solutions team collaborating on a digital project"
+            class="why-image"
+            loading="lazy"
+          />
+          <div class="why-image-badge" aria-hidden="true">
+            <span class="why-image-badge-num">3+</span>
+            <span class="why-image-badge-text">Years Building<br/>Digital Solutions</span>
+          </div>
+        </div>
+        <div class="reveal-right">
+          <span class="section-label">Why Choose Us</span>
+          <h2 class="section-title">We're More Than a <span>Digital Agency</span></h2>
+          <p class="section-subtitle">We're a long-term digital partner — invested in your growth, not just your project.</p>
+          <div class="why-features">
+            <div class="why-feature">
+              <div class="why-feature-icon"><i class="fas fa-bullseye" aria-hidden="true"></i></div>
+              <div>
+                <h4>Business-Focused Solutions</h4>
+                <p>Every decision we make is tied to your business objectives — not just what looks good.</p>
+              </div>
+            </div>
+            <div class="why-feature">
+              <div class="why-feature-icon"><i class="fas fa-comments" aria-hidden="true"></i></div>
+              <div>
+                <h4>Clear Communication</h4>
+                <p>Transparent pricing, regular updates, and no technical jargon. You're always in the loop.</p>
+              </div>
+            </div>
+            <div class="why-feature">
+              <div class="why-feature-icon"><i class="fas fa-layer-group" aria-hidden="true"></i></div>
+              <div>
+                <h4>Scalable &amp; Future-Ready</h4>
+                <p>We build with growth in mind — so your digital foundation can scale as your business does.</p>
+              </div>
+            </div>
+            <div class="why-feature">
+              <div class="why-feature-icon"><i class="fas fa-handshake" aria-hidden="true"></i></div>
+              <div>
+                <h4>Long-Term Partnership</h4>
+                <p>We don't disappear after launch. We stay by your side as an ongoing strategic digital partner.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== HOME CTA ===== -->
+  <section class="home-cta" aria-label="Call to action">
+    <div class="container">
+      <div class="home-cta-content reveal">
+        <span class="section-label" style="justify-content:center; display:flex;">Let's Build Together</span>
+        <h2>Ready to Grow Your Digital Presence?</h2>
+        <p>Whether you need a new website, a rebrand, or a full digital strategy — we're ready to help you build something impactful.</p>
+        <div class="home-cta-actions">
+          <a href="contact.html" class="btn btn-primary btn-lg">
+            Start a Conversation <i class="fas fa-arrow-right"></i>
+          </a>
+          <a href="https://wa.me/254741980127?text=Hi%20Brightex%20Solutions%2C%20I%27d%20like%20to%20discuss%20a%20project." target="_blank" rel="noopener" class="btn btn-outline-white btn-lg">
+            <i class="fab fa-whatsapp"></i> WhatsApp Us
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== FOOTER ===== -->
+  <footer class="footer" aria-label="Site footer">
+    <div class="container">
+      <div class="footer-grid">
+        <div class="footer-brand">
+          <img src="assets/Brightex Solutions Logo-light-v1-no-bg.png" alt="Brightex Solutions" class="footer-logo" />
+          <p class="footer-tagline">
+            Building digital experiences that drive real growth — for startups, SMEs, and brands across Africa and beyond.
+          </p>
+          <div class="footer-social" aria-label="Social media links">
+            <a href="https://www.facebook.com/brightexsolutions" target="_blank" rel="noopener" class="social-link" aria-label="Facebook"><i class="fab fa-facebook-f"></i></a>
+            <a href="https://www.instagram.com/_brightexsolutions/" target="_blank" rel="noopener" class="social-link" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+            <a href="https://www.tiktok.com/@brightex_solutions" target="_blank" rel="noopener" class="social-link" aria-label="TikTok"><i class="fab fa-tiktok"></i></a>
+          </div>
+        </div>
+        <div class="footer-col">
+          <h4>Navigation</h4>
+          <nav class="footer-links" aria-label="Footer navigation">
+            <a href="index.html"          class="footer-link">Home</a>
+            <a href="services.html"       class="footer-link">Services</a>
+            <a href="index.html#work"     class="footer-link">Our Work</a>
+            <a href="index.html#about"    class="footer-link">About</a>
+            <a href="contact.html"        class="footer-link">Contact</a>
+            <a href="design-system.html"  class="footer-link">Design System</a>
+          </nav>
+        </div>
+        <div class="footer-col">
+          <h4>Services</h4>
+          <nav class="footer-links" aria-label="Services navigation">
+            <a href="services.html#web-development" class="footer-link">Web Development</a>
+            <a href="services.html#ui-ux"           class="footer-link">UI/UX Design</a>
+            <a href="services.html#seo"             class="footer-link">SEO &amp; Growth</a>
+            <a href="services.html#branding"        class="footer-link">Branding</a>
+            <a href="services.html#ai"              class="footer-link">AI &amp; Automation</a>
+            <a href="services.html#erp"             class="footer-link">ERP Systems</a>
+          </nav>
+        </div>
+        <div class="footer-col">
+          <h4>Contact</h4>
+          <div class="footer-contact-item">
+            <i class="fas fa-phone" aria-hidden="true"></i>
+            <a href="tel:+254741980127">+254 741 980 127</a>
+          </div>
+          <div class="footer-contact-item">
+            <i class="fab fa-whatsapp" aria-hidden="true"></i>
+            <a href="https://wa.me/254741980127" target="_blank" rel="noopener">WhatsApp Chat</a>
+          </div>
+          <div class="footer-contact-item">
+            <i class="fas fa-envelope" aria-hidden="true"></i>
+            <a href="mailto:info.brightexsolutions@gmail.com">info.brightexsolutions@gmail.com</a>
+          </div>
+          <div class="footer-contact-item">
+            <i class="fas fa-map-marker-alt" aria-hidden="true"></i>
+            <span>Nairobi, Kenya</span>
+          </div>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <span>© <span id="year"></span> Brightex Solutions. All rights reserved.</span>
+        <div class="footer-bottom-links">
+          <a href="design-system.html" class="footer-bottom-link">Design System</a>
+          <a href="#" class="footer-bottom-link">Privacy Policy</a>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- WhatsApp Float -->
+  <a href="https://wa.me/254741980127?text=Hi%20Brightex%20Solutions%2C%20I%27d%20like%20to%20learn%20more%20about%20your%20services." target="_blank" rel="noopener" class="whatsapp-float" aria-label="Chat on WhatsApp">
+    <i class="fab fa-whatsapp"></i>
+  </a>
+
+  <script>document.getElementById('year').textContent = new Date().getFullYear();</script>
+  <script src="js/main.js"></script>
+</body>
+</html>
