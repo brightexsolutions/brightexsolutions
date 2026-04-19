@@ -128,6 +128,25 @@ Phone: [Your Number]
 
 Please get in touch so we can discuss the right solution for my business.`,
   },
+  'consultancy': {
+    subject: 'Technology Consultancy Inquiry - Brightex Solutions',
+    body: `Hi Brightex Solutions Team,
+
+I'm interested in exploring a Technology Consultancy engagement with Brightex.
+
+About what we need:
+- Company / Product: [Your company and what you're building]
+- Engagement type: [Embedded team partner / Advisory / Project-based / Ongoing retainer]
+- Skills needed: [Engineering / UI/UX Design / Product Strategy / Analytics / Other]
+- Team size & context: [Brief description of your team and current situation]
+- Timeline: [When you'd need us to start]
+
+Name: [Your Name]
+Company: [Your Company / Business]
+Phone: [Your Number]
+
+Looking forward to discussing how we can embed with your team.`,
+  },
 };
 
 document.addEventListener('DOMContentLoaded', () => {
