@@ -32,10 +32,10 @@ export function AnnouncementBanner({ announcement }: Props) {
   }
 
   return (
-    <div className="bg-[--color-brand-gold] text-[--color-brand-navy] text-sm px-4 py-2.5 flex items-center justify-center gap-3 relative">
+    <div className="bg-brand-gold text-brand-navy text-sm px-4 py-2.5 flex items-center justify-center gap-3 relative">
       <span className="font-semibold">{announcement.title}</span>
       {announcement.body && (
-        <span className="hidden sm:inline text-[--color-brand-navy]/80">
+        <span className="hidden sm:inline text-brand-navy/80">
           — {announcement.body}
         </span>
       )}
@@ -49,7 +49,7 @@ export function AnnouncementBanner({ announcement }: Props) {
       )}
       <button
         onClick={dismiss}
-        className="absolute right-4 top-1/2 -translate-y-1/2 text-[--color-brand-navy]/60 hover:text-[--color-brand-navy] transition-colors"
+        className="absolute right-4 top-1/2 -translate-y-1/2 text-brand-navy/60 hover:text-brand-navy transition-colors"
         aria-label="Dismiss"
       >
         <X size={16} />

@@ -12,12 +12,12 @@ const reasons = [
 
 export function WhySection() {
   return (
-    <section className="py-24 bg-[--color-brand-navy]">
+    <section className="py-24 bg-brand-navy">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
           {/* Left */}
           <FadeIn direction="left">
-            <span className="text-[--color-brand-gold] text-xs font-semibold tracking-widest uppercase">
+            <span className="text-brand-gold text-xs font-semibold tracking-widest uppercase">
               Why Brightex
             </span>
             <h2 className="font-display text-4xl sm:text-5xl font-bold text-white mt-3 mb-6 leading-tight">
@@ -39,7 +39,7 @@ export function WhySection() {
                 <div className="flex items-start gap-3">
                   <CheckCircle2
                     size={20}
-                    className="text-[--color-brand-gold] flex-shrink-0 mt-0.5"
+                    className="text-brand-gold flex-shrink-0 mt-0.5"
                   />
                   <span className="text-white/80 text-sm leading-relaxed">
                     {r}

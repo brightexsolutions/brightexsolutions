@@ -29,16 +29,16 @@ const steps = [
 
 export function ProcessSection() {
   return (
-    <section className="py-24 bg-[--color-brand-bg] dark:bg-[--color-brand-navy]">
+    <section className="py-24 bg-brand-bg dark:bg-brand-navy">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <FadeIn className="text-center mb-16">
-          <span className="text-[--color-brand-gold] text-xs font-semibold tracking-widest uppercase">
+          <span className="text-brand-gold text-xs font-semibold tracking-widest uppercase">
             How We Work
           </span>
-          <h2 className="font-display text-4xl sm:text-5xl font-bold text-[--color-brand-navy] dark:text-white mt-3 mb-4">
+          <h2 className="font-display text-4xl sm:text-5xl font-bold text-brand-navy dark:text-white mt-3 mb-4">
             A Process Built for Clarity
           </h2>
-          <p className="text-[--color-brand-muted] text-lg max-w-xl mx-auto">
+          <p className="text-brand-muted text-lg max-w-xl mx-auto">
             From first call to launch, you always know what's happening and what's next.
           </p>
         </FadeIn>
@@ -49,15 +49,15 @@ export function ProcessSection() {
               <div className="relative">
                 {/* Connector line */}
                 {i < steps.length - 1 && (
-                  <div className="hidden lg:block absolute top-6 left-[calc(50%+2rem)] right-0 h-px bg-[--color-brand-border] dark:bg-white/10" />
+                  <div className="hidden lg:block absolute top-6 left-[calc(50%+2rem)] right-0 h-px bg-brand-border dark:bg-white/10" />
                 )}
-                <div className="font-display text-6xl font-bold text-[--color-brand-gold]/20 mb-4 leading-none">
+                <div className="font-display text-6xl font-bold text-brand-gold/20 mb-4 leading-none">
                   {step.number}
                 </div>
-                <h3 className="font-semibold text-[--color-brand-navy] dark:text-white text-xl mb-3">
+                <h3 className="font-semibold text-brand-navy dark:text-white text-xl mb-3">
                   {step.title}
                 </h3>
-                <p className="text-[--color-brand-muted] text-sm leading-relaxed">
+                <p className="text-brand-muted text-sm leading-relaxed">
                   {step.description}
                 </p>
               </div>

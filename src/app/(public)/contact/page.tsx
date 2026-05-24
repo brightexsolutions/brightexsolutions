@@ -23,10 +23,10 @@ export default function ContactPage() {
   return (
     <>
       {/* Hero */}
-      <section className="pt-32 pb-16 bg-[--color-brand-navy]">
+      <section className="pt-32 pb-16 bg-brand-navy">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <FadeIn className="max-w-2xl">
-            <span className="text-[--color-brand-gold] text-xs font-semibold tracking-widest uppercase mb-4 block">
+            <span className="text-brand-gold text-xs font-semibold tracking-widest uppercase mb-4 block">
               Get in Touch
             </span>
             <h1 className="font-display text-5xl sm:text-6xl font-bold text-white mb-6 leading-tight">
@@ -43,34 +43,34 @@ export default function ContactPage() {
       </section>
 
       {/* Content */}
-      <section className="py-24 bg-[--color-brand-bg] dark:bg-[--color-brand-navy-dark]">
+      <section className="py-24 bg-brand-bg dark:bg-brand-navy-dark">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 lg:grid-cols-[1fr_2fr] gap-16">
             {/* Left — contact info */}
             <FadeIn direction="left" className="space-y-10">
               <div>
-                <h2 className="font-display text-2xl font-bold text-[--color-brand-navy] dark:text-white mb-6">
+                <h2 className="font-display text-2xl font-bold text-brand-navy dark:text-white mb-6">
                   Contact Details
                 </h2>
                 <div className="space-y-5">
                   {contactInfo.map((item) => (
                     <div key={item.label} className="flex items-start gap-4">
-                      <div className="w-10 h-10 rounded-sm bg-[--color-brand-gold]/10 flex items-center justify-center flex-shrink-0">
-                        <item.icon size={18} className="text-[--color-brand-gold]" />
+                      <div className="w-10 h-10 rounded-sm bg-brand-gold/10 flex items-center justify-center flex-shrink-0">
+                        <item.icon size={18} className="text-brand-gold" />
                       </div>
                       <div>
-                        <div className="text-xs font-semibold text-[--color-brand-muted] uppercase tracking-wider mb-1">
+                        <div className="text-xs font-semibold text-brand-muted uppercase tracking-wider mb-1">
                           {item.label}
                         </div>
                         {item.href ? (
                           <a
                             href={item.href}
-                            className="text-[--color-brand-navy] dark:text-white text-sm hover:text-[--color-brand-gold] transition-colors"
+                            className="text-brand-navy dark:text-white text-sm hover:text-brand-gold transition-colors"
                           >
                             {item.value}
                           </a>
                         ) : (
-                          <span className="text-[--color-brand-navy] dark:text-white text-sm">
+                          <span className="text-brand-navy dark:text-white text-sm">
                             {item.value}
                           </span>
                         )}
@@ -81,14 +81,14 @@ export default function ContactPage() {
               </div>
 
               {/* WhatsApp direct */}
-              <div className="p-6 rounded-sm bg-white dark:bg-[--color-brand-navy-light] border border-[--color-brand-border] dark:border-white/10">
+              <div className="p-6 rounded-sm bg-white dark:bg-brand-navy-light border border-brand-border dark:border-white/10">
                 <div className="flex items-center gap-3 mb-3">
                   <MessageCircle size={20} className="text-[#25D366]" />
-                  <span className="font-semibold text-[--color-brand-navy] dark:text-white text-sm">
+                  <span className="font-semibold text-brand-navy dark:text-white text-sm">
                     Prefer WhatsApp?
                   </span>
                 </div>
-                <p className="text-[--color-brand-muted] text-sm mb-4 leading-relaxed">
+                <p className="text-brand-muted text-sm mb-4 leading-relaxed">
                   Send us a message directly — we typically reply within 2 hours during business hours (Mon–Fri, 8am–6pm EAT).
                 </p>
                 <a
@@ -106,8 +106,8 @@ export default function ContactPage() {
             {/* Right — form */}
             <SectionErrorBoundary
               fallback={
-                <div className="p-8 rounded-sm bg-white dark:bg-[--color-brand-navy-light] border border-[--color-brand-border] text-center">
-                  <p className="text-[--color-brand-muted] mb-4">
+                <div className="p-8 rounded-sm bg-white dark:bg-brand-navy-light border border-brand-border text-center">
+                  <p className="text-brand-muted mb-4">
                     The form is temporarily unavailable.
                   </p>
                   <a

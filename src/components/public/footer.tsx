@@ -21,7 +21,7 @@ const navigation = [
 
 export function PublicFooter() {
   return (
-    <footer className="bg-[--color-brand-navy-dark] text-white">
+    <footer className="bg-brand-navy-dark text-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10">
           {/* Brand */}
@@ -42,7 +42,7 @@ export function PublicFooter() {
                 href="https://facebook.com"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="w-9 h-9 rounded-sm bg-white/10 hover:bg-[--color-brand-gold] flex items-center justify-center transition-colors"
+                className="w-9 h-9 rounded-sm bg-white/10 hover:bg-brand-gold flex items-center justify-center transition-colors"
                 aria-label="Facebook"
               >
                 <svg viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4">
@@ -53,7 +53,7 @@ export function PublicFooter() {
                 href="https://instagram.com"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="w-9 h-9 rounded-sm bg-white/10 hover:bg-[--color-brand-gold] flex items-center justify-center transition-colors"
+                className="w-9 h-9 rounded-sm bg-white/10 hover:bg-brand-gold flex items-center justify-center transition-colors"
                 aria-label="Instagram"
               >
                 <svg viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4">
@@ -65,7 +65,7 @@ export function PublicFooter() {
                 href="https://tiktok.com"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="w-9 h-9 rounded-sm bg-white/10 hover:bg-[--color-brand-gold] flex items-center justify-center transition-colors"
+                className="w-9 h-9 rounded-sm bg-white/10 hover:bg-brand-gold flex items-center justify-center transition-colors"
                 aria-label="TikTok"
               >
                 <svg
@@ -89,7 +89,7 @@ export function PublicFooter() {
                 <li key={item.href}>
                   <Link
                     href={item.href}
-                    className="text-sm text-white/70 hover:text-[--color-brand-gold] transition-colors"
+                    className="text-sm text-white/70 hover:text-brand-gold transition-colors"
                   >
                     {item.label}
                   </Link>
@@ -108,7 +108,7 @@ export function PublicFooter() {
                 <li key={s}>
                   <Link
                     href="/services"
-                    className="text-sm text-white/70 hover:text-[--color-brand-gold] transition-colors"
+                    className="text-sm text-white/70 hover:text-brand-gold transition-colors"
                   >
                     {s}
                   </Link>
@@ -128,7 +128,7 @@ export function PublicFooter() {
                   href="https://wa.me/254741980127"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-sm text-white/70 hover:text-[--color-brand-gold] transition-colors flex items-center gap-2"
+                  className="text-sm text-white/70 hover:text-brand-gold transition-colors flex items-center gap-2"
                 >
                   <span className="text-[#25D366]">WhatsApp</span>
                   <span>+254 741 980 127</span>
@@ -137,7 +137,7 @@ export function PublicFooter() {
               <li>
                 <a
                   href="tel:+254741980127"
-                  className="text-sm text-white/70 hover:text-[--color-brand-gold] transition-colors"
+                  className="text-sm text-white/70 hover:text-brand-gold transition-colors"
                 >
                   +254 741 980 127
                 </a>
@@ -145,7 +145,7 @@ export function PublicFooter() {
               <li>
                 <a
                   href="mailto:info.brightexsolutions@gmail.com"
-                  className="text-sm text-white/70 hover:text-[--color-brand-gold] transition-colors"
+                  className="text-sm text-white/70 hover:text-brand-gold transition-colors"
                 >
                   info.brightexsolutions@gmail.com
                 </a>

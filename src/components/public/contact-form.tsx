@@ -58,14 +58,14 @@ export function ContactForm() {
 
   if (submitted) {
     return (
-      <div className="p-10 rounded-sm bg-white dark:bg-[--color-brand-navy-light] border border-[--color-brand-border] dark:border-white/10 text-center">
-        <div className="w-16 h-16 rounded-full bg-[--color-brand-gold]/10 flex items-center justify-center mx-auto mb-6">
-          <CheckCircle2 size={32} className="text-[--color-brand-gold]" />
+      <div className="p-10 rounded-sm bg-white dark:bg-brand-navy-light border border-brand-border dark:border-white/10 text-center">
+        <div className="w-16 h-16 rounded-full bg-brand-gold/10 flex items-center justify-center mx-auto mb-6">
+          <CheckCircle2 size={32} className="text-brand-gold" />
         </div>
-        <h3 className="font-display text-2xl font-bold text-[--color-brand-navy] dark:text-white mb-3">
+        <h3 className="font-display text-2xl font-bold text-brand-navy dark:text-white mb-3">
           Message received!
         </h3>
-        <p className="text-[--color-brand-muted] leading-relaxed">
+        <p className="text-brand-muted leading-relaxed">
           Thanks for reaching out. We'll get back to you within 24 hours. Check your inbox for a confirmation.
         </p>
       </div>
@@ -73,8 +73,8 @@ export function ContactForm() {
   }
 
   return (
-    <div className="p-8 sm:p-10 rounded-sm bg-white dark:bg-[--color-brand-navy-light] border border-[--color-brand-border] dark:border-white/10">
-      <h2 className="font-display text-2xl font-bold text-[--color-brand-navy] dark:text-white mb-8">
+    <div className="p-8 sm:p-10 rounded-sm bg-white dark:bg-brand-navy-light border border-brand-border dark:border-white/10">
+      <h2 className="font-display text-2xl font-bold text-brand-navy dark:text-white mb-8">
         Send a Message
       </h2>
 
@@ -82,14 +82,14 @@ export function ContactForm() {
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
           {/* Name */}
           <div>
-            <label className="block text-xs font-semibold text-[--color-brand-navy] dark:text-white uppercase tracking-wider mb-2">
-              Full Name <span className="text-[--color-brand-gold]">*</span>
+            <label className="block text-xs font-semibold text-brand-navy dark:text-white uppercase tracking-wider mb-2">
+              Full Name <span className="text-brand-gold">*</span>
             </label>
             <input
               {...register("name")}
               type="text"
               placeholder="Jane Doe"
-              className="w-full px-4 py-3 rounded-sm border border-[--color-brand-border] dark:border-white/15 bg-[--color-brand-bg] dark:bg-white/5 text-[--color-brand-navy] dark:text-white placeholder:text-[--color-brand-muted] focus:outline-none focus:border-[--color-brand-gold] focus:ring-1 focus:ring-[--color-brand-gold] transition-colors text-sm"
+              className="w-full px-4 py-3 rounded-sm border border-brand-border dark:border-white/15 bg-brand-bg dark:bg-white/5 text-brand-navy dark:text-white placeholder:text-brand-muted focus:outline-none focus:border-brand-gold focus:ring-1 focus:ring-brand-gold transition-colors text-sm"
             />
             {errors.name && (
               <p className="mt-1.5 text-xs text-red-500">{errors.name.message}</p>
@@ -98,28 +98,28 @@ export function ContactForm() {
 
           {/* Company */}
           <div>
-            <label className="block text-xs font-semibold text-[--color-brand-navy] dark:text-white uppercase tracking-wider mb-2">
-              Company <span className="text-[--color-brand-muted] font-normal normal-case">(optional)</span>
+            <label className="block text-xs font-semibold text-brand-navy dark:text-white uppercase tracking-wider mb-2">
+              Company <span className="text-brand-muted font-normal normal-case">(optional)</span>
             </label>
             <input
               {...register("company")}
               type="text"
               placeholder="Acme Ltd"
-              className="w-full px-4 py-3 rounded-sm border border-[--color-brand-border] dark:border-white/15 bg-[--color-brand-bg] dark:bg-white/5 text-[--color-brand-navy] dark:text-white placeholder:text-[--color-brand-muted] focus:outline-none focus:border-[--color-brand-gold] focus:ring-1 focus:ring-[--color-brand-gold] transition-colors text-sm"
+              className="w-full px-4 py-3 rounded-sm border border-brand-border dark:border-white/15 bg-brand-bg dark:bg-white/5 text-brand-navy dark:text-white placeholder:text-brand-muted focus:outline-none focus:border-brand-gold focus:ring-1 focus:ring-brand-gold transition-colors text-sm"
             />
           </div>
         </div>
 
         {/* Contact */}
         <div>
-          <label className="block text-xs font-semibold text-[--color-brand-navy] dark:text-white uppercase tracking-wider mb-2">
-            Email or Phone <span className="text-[--color-brand-gold]">*</span>
+          <label className="block text-xs font-semibold text-brand-navy dark:text-white uppercase tracking-wider mb-2">
+            Email or Phone <span className="text-brand-gold">*</span>
           </label>
           <input
             {...register("contact")}
             type="text"
             placeholder="jane@company.com or +254 7XX XXX XXX"
-            className="w-full px-4 py-3 rounded-sm border border-[--color-brand-border] dark:border-white/15 bg-[--color-brand-bg] dark:bg-white/5 text-[--color-brand-navy] dark:text-white placeholder:text-[--color-brand-muted] focus:outline-none focus:border-[--color-brand-gold] focus:ring-1 focus:ring-[--color-brand-gold] transition-colors text-sm"
+            className="w-full px-4 py-3 rounded-sm border border-brand-border dark:border-white/15 bg-brand-bg dark:bg-white/5 text-brand-navy dark:text-white placeholder:text-brand-muted focus:outline-none focus:border-brand-gold focus:ring-1 focus:ring-brand-gold transition-colors text-sm"
           />
           {errors.contact && (
             <p className="mt-1.5 text-xs text-red-500">{errors.contact.message}</p>
@@ -128,12 +128,12 @@ export function ContactForm() {
 
         {/* Service */}
         <div>
-          <label className="block text-xs font-semibold text-[--color-brand-navy] dark:text-white uppercase tracking-wider mb-2">
+          <label className="block text-xs font-semibold text-brand-navy dark:text-white uppercase tracking-wider mb-2">
             Service Interested In
           </label>
           <select
             {...register("service")}
-            className="w-full px-4 py-3 rounded-sm border border-[--color-brand-border] dark:border-white/15 bg-[--color-brand-bg] dark:bg-[--color-brand-navy] text-[--color-brand-navy] dark:text-white focus:outline-none focus:border-[--color-brand-gold] focus:ring-1 focus:ring-[--color-brand-gold] transition-colors text-sm"
+            className="w-full px-4 py-3 rounded-sm border border-brand-border dark:border-white/15 bg-brand-bg dark:bg-brand-navy text-brand-navy dark:text-white focus:outline-none focus:border-brand-gold focus:ring-1 focus:ring-brand-gold transition-colors text-sm"
           >
             <option value="">Select a service…</option>
             {services.map((s) => (
@@ -144,14 +144,14 @@ export function ContactForm() {
 
         {/* Message */}
         <div>
-          <label className="block text-xs font-semibold text-[--color-brand-navy] dark:text-white uppercase tracking-wider mb-2">
-            Message <span className="text-[--color-brand-gold]">*</span>
+          <label className="block text-xs font-semibold text-brand-navy dark:text-white uppercase tracking-wider mb-2">
+            Message <span className="text-brand-gold">*</span>
           </label>
           <textarea
             {...register("message")}
             rows={5}
             placeholder="Tell us about your project — what you're building, your timeline, and any specific requirements."
-            className="w-full px-4 py-3 rounded-sm border border-[--color-brand-border] dark:border-white/15 bg-[--color-brand-bg] dark:bg-white/5 text-[--color-brand-navy] dark:text-white placeholder:text-[--color-brand-muted] focus:outline-none focus:border-[--color-brand-gold] focus:ring-1 focus:ring-[--color-brand-gold] transition-colors text-sm resize-none"
+            className="w-full px-4 py-3 rounded-sm border border-brand-border dark:border-white/15 bg-brand-bg dark:bg-white/5 text-brand-navy dark:text-white placeholder:text-brand-muted focus:outline-none focus:border-brand-gold focus:ring-1 focus:ring-brand-gold transition-colors text-sm resize-none"
           />
           {errors.message && (
             <p className="mt-1.5 text-xs text-red-500">{errors.message.message}</p>
@@ -178,7 +178,7 @@ export function ContactForm() {
         <button
           type="submit"
           disabled={isSubmitting}
-          className="w-full inline-flex items-center justify-center gap-2 px-8 py-4 rounded-sm bg-[--color-brand-navy] dark:bg-[--color-brand-gold] text-white dark:text-[--color-brand-navy] font-semibold text-sm hover:bg-[--color-brand-navy-hover] dark:hover:bg-[--color-brand-gold-hover] transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+          className="w-full inline-flex items-center justify-center gap-2 px-8 py-4 rounded-sm bg-brand-navy dark:bg-brand-gold text-white dark:text-brand-navy font-semibold text-sm hover:bg-brand-navy-hover dark:hover:bg-brand-gold-hover transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
         >
           {isSubmitting ? (
             <>

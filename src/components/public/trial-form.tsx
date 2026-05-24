@@ -53,14 +53,14 @@ export function TrialForm({ productSlug, productName, trialDays, pricingFrom }: 
 
   if (submitted) {
     return (
-      <div className="p-8 rounded-sm bg-white dark:bg-[--color-brand-navy-light] border border-[--color-brand-border] dark:border-white/10 text-center">
-        <div className="w-14 h-14 rounded-full bg-[--color-brand-gold]/10 flex items-center justify-center mx-auto mb-5">
-          <CheckCircle2 size={28} className="text-[--color-brand-gold]" />
+      <div className="p-8 rounded-sm bg-white dark:bg-brand-navy-light border border-brand-border dark:border-white/10 text-center">
+        <div className="w-14 h-14 rounded-full bg-brand-gold/10 flex items-center justify-center mx-auto mb-5">
+          <CheckCircle2 size={28} className="text-brand-gold" />
         </div>
-        <h3 className="font-display text-xl font-bold text-[--color-brand-navy] dark:text-white mb-2">
+        <h3 className="font-display text-xl font-bold text-brand-navy dark:text-white mb-2">
           Trial request received!
         </h3>
-        <p className="text-[--color-brand-muted] text-sm leading-relaxed">
+        <p className="text-brand-muted text-sm leading-relaxed">
           We'll set up your {trialDays}-day trial and send access details to your email within a few hours.
         </p>
       </div>
@@ -68,16 +68,16 @@ export function TrialForm({ productSlug, productName, trialDays, pricingFrom }: 
   }
 
   return (
-    <div className="p-8 rounded-sm bg-white dark:bg-[--color-brand-navy-light] border border-[--color-brand-border] dark:border-white/10">
+    <div className="p-8 rounded-sm bg-white dark:bg-brand-navy-light border border-brand-border dark:border-white/10">
       <div className="flex items-center gap-3 mb-6">
-        <div className="w-10 h-10 rounded-sm bg-[--color-brand-gold]/10 flex items-center justify-center">
-          <Zap size={18} className="text-[--color-brand-gold]" />
+        <div className="w-10 h-10 rounded-sm bg-brand-gold/10 flex items-center justify-center">
+          <Zap size={18} className="text-brand-gold" />
         </div>
         <div>
-          <div className="font-semibold text-[--color-brand-navy] dark:text-white text-sm">
+          <div className="font-semibold text-brand-navy dark:text-white text-sm">
             Start your {trialDays}-day free trial
           </div>
-          <div className="text-xs text-[--color-brand-muted]">
+          <div className="text-xs text-brand-muted">
             {productName} · then from {pricingFrom}
           </div>
         </div>
@@ -85,52 +85,52 @@ export function TrialForm({ productSlug, productName, trialDays, pricingFrom }: 
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate>
         <div>
-          <label className="block text-xs font-semibold text-[--color-brand-navy] dark:text-white uppercase tracking-wider mb-1.5">
-            Full Name <span className="text-[--color-brand-gold]">*</span>
+          <label className="block text-xs font-semibold text-brand-navy dark:text-white uppercase tracking-wider mb-1.5">
+            Full Name <span className="text-brand-gold">*</span>
           </label>
           <input
             {...register("name")}
             type="text"
             placeholder="Jane Doe"
-            className="w-full px-4 py-3 rounded-sm border border-[--color-brand-border] dark:border-white/15 bg-[--color-brand-bg] dark:bg-white/5 text-[--color-brand-navy] dark:text-white placeholder:text-[--color-brand-muted] focus:outline-none focus:border-[--color-brand-gold] focus:ring-1 focus:ring-[--color-brand-gold] transition-colors text-sm"
+            className="w-full px-4 py-3 rounded-sm border border-brand-border dark:border-white/15 bg-brand-bg dark:bg-white/5 text-brand-navy dark:text-white placeholder:text-brand-muted focus:outline-none focus:border-brand-gold focus:ring-1 focus:ring-brand-gold transition-colors text-sm"
           />
           {errors.name && <p className="mt-1 text-xs text-red-500">{errors.name.message}</p>}
         </div>
 
         <div>
-          <label className="block text-xs font-semibold text-[--color-brand-navy] dark:text-white uppercase tracking-wider mb-1.5">
-            Work Email <span className="text-[--color-brand-gold]">*</span>
+          <label className="block text-xs font-semibold text-brand-navy dark:text-white uppercase tracking-wider mb-1.5">
+            Work Email <span className="text-brand-gold">*</span>
           </label>
           <input
             {...register("email")}
             type="email"
             placeholder="jane@school.ac.ke"
-            className="w-full px-4 py-3 rounded-sm border border-[--color-brand-border] dark:border-white/15 bg-[--color-brand-bg] dark:bg-white/5 text-[--color-brand-navy] dark:text-white placeholder:text-[--color-brand-muted] focus:outline-none focus:border-[--color-brand-gold] focus:ring-1 focus:ring-[--color-brand-gold] transition-colors text-sm"
+            className="w-full px-4 py-3 rounded-sm border border-brand-border dark:border-white/15 bg-brand-bg dark:bg-white/5 text-brand-navy dark:text-white placeholder:text-brand-muted focus:outline-none focus:border-brand-gold focus:ring-1 focus:ring-brand-gold transition-colors text-sm"
           />
           {errors.email && <p className="mt-1 text-xs text-red-500">{errors.email.message}</p>}
         </div>
 
         <div>
-          <label className="block text-xs font-semibold text-[--color-brand-navy] dark:text-white uppercase tracking-wider mb-1.5">
+          <label className="block text-xs font-semibold text-brand-navy dark:text-white uppercase tracking-wider mb-1.5">
             Organisation
           </label>
           <input
             {...register("company")}
             type="text"
             placeholder="School / Company name"
-            className="w-full px-4 py-3 rounded-sm border border-[--color-brand-border] dark:border-white/15 bg-[--color-brand-bg] dark:bg-white/5 text-[--color-brand-navy] dark:text-white placeholder:text-[--color-brand-muted] focus:outline-none focus:border-[--color-brand-gold] focus:ring-1 focus:ring-[--color-brand-gold] transition-colors text-sm"
+            className="w-full px-4 py-3 rounded-sm border border-brand-border dark:border-white/15 bg-brand-bg dark:bg-white/5 text-brand-navy dark:text-white placeholder:text-brand-muted focus:outline-none focus:border-brand-gold focus:ring-1 focus:ring-brand-gold transition-colors text-sm"
           />
         </div>
 
         <div>
-          <label className="block text-xs font-semibold text-[--color-brand-navy] dark:text-white uppercase tracking-wider mb-1.5">
+          <label className="block text-xs font-semibold text-brand-navy dark:text-white uppercase tracking-wider mb-1.5">
             Phone
           </label>
           <input
             {...register("phone")}
             type="tel"
             placeholder="+254 7XX XXX XXX"
-            className="w-full px-4 py-3 rounded-sm border border-[--color-brand-border] dark:border-white/15 bg-[--color-brand-bg] dark:bg-white/5 text-[--color-brand-navy] dark:text-white placeholder:text-[--color-brand-muted] focus:outline-none focus:border-[--color-brand-gold] focus:ring-1 focus:ring-[--color-brand-gold] transition-colors text-sm"
+            className="w-full px-4 py-3 rounded-sm border border-brand-border dark:border-white/15 bg-brand-bg dark:bg-white/5 text-brand-navy dark:text-white placeholder:text-brand-muted focus:outline-none focus:border-brand-gold focus:ring-1 focus:ring-brand-gold transition-colors text-sm"
           />
         </div>
 
@@ -143,10 +143,10 @@ export function TrialForm({ productSlug, productName, trialDays, pricingFrom }: 
         <button
           type="submit"
           disabled={isSubmitting}
-          className="w-full inline-flex items-center justify-center gap-2 px-6 py-4 rounded-sm bg-[--color-brand-gold] text-[--color-brand-navy] font-semibold text-sm hover:bg-[--color-brand-gold-hover] transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+          className="w-full inline-flex items-center justify-center gap-2 px-6 py-4 rounded-sm bg-brand-gold text-brand-navy font-semibold text-sm hover:bg-brand-gold-hover transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
         >
           {isSubmitting ? (
-            <span className="w-4 h-4 border-2 border-[--color-brand-navy]/30 border-t-[--color-brand-navy] rounded-full animate-spin" />
+            <span className="w-4 h-4 border-2 border-brand-navy/30 border-t-brand-navy rounded-full animate-spin" />
           ) : (
             <>
               <Zap size={15} />
@@ -155,7 +155,7 @@ export function TrialForm({ productSlug, productName, trialDays, pricingFrom }: 
           )}
         </button>
 
-        <p className="text-xs text-center text-[--color-brand-muted]">
+        <p className="text-xs text-center text-brand-muted">
           No credit card required. Cancel anytime.
         </p>
       </form>

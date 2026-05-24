@@ -31,20 +31,20 @@ const projects = [
 
 export function PortfolioSection() {
   return (
-    <section className="py-24 bg-white dark:bg-[--color-brand-navy-dark]">
+    <section className="py-24 bg-white dark:bg-brand-navy-dark">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <FadeIn className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-16">
           <div>
-            <span className="text-[--color-brand-gold] text-xs font-semibold tracking-widest uppercase">
+            <span className="text-brand-gold text-xs font-semibold tracking-widest uppercase">
               Our Work
             </span>
-            <h2 className="font-display text-4xl sm:text-5xl font-bold text-[--color-brand-navy] dark:text-white mt-3">
+            <h2 className="font-display text-4xl sm:text-5xl font-bold text-brand-navy dark:text-white mt-3">
               Projects We're Proud Of
             </h2>
           </div>
           <Link
             href="/services"
-            className="text-sm font-semibold text-[--color-brand-muted] hover:text-[--color-brand-navy] dark:hover:text-white transition-colors whitespace-nowrap"
+            className="text-sm font-semibold text-brand-muted hover:text-brand-navy dark:hover:text-white transition-colors whitespace-nowrap"
           >
             See all work →
           </Link>
@@ -53,7 +53,7 @@ export function PortfolioSection() {
         <FadeInStagger className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {projects.map((p) => (
             <StaggerChild key={p.name}>
-              <div className="group relative p-8 rounded-sm bg-[--color-brand-bg] dark:bg-[--color-brand-navy-light] border border-[--color-brand-border] dark:border-white/10 hover:border-[--color-brand-gold]/40 hover:-translate-y-1 transition-all duration-200 overflow-hidden">
+              <div className="group relative p-8 rounded-sm bg-brand-bg dark:bg-brand-navy-light border border-brand-border dark:border-white/10 hover:border-brand-gold/40 hover:-translate-y-1 transition-all duration-200 overflow-hidden">
                 {/* Accent bar */}
                 <div
                   className="absolute top-0 left-0 right-0 h-0.5"
@@ -61,19 +61,19 @@ export function PortfolioSection() {
                 />
 
                 <div className="flex items-start justify-between mb-4">
-                  <span className="text-xs font-semibold text-[--color-brand-muted] tracking-wider uppercase">
+                  <span className="text-xs font-semibold text-brand-muted tracking-wider uppercase">
                     {p.category}
                   </span>
                   <ArrowUpRight
                     size={16}
-                    className="text-[--color-brand-muted] group-hover:text-[--color-brand-gold] transition-colors"
+                    className="text-brand-muted group-hover:text-brand-gold transition-colors"
                   />
                 </div>
 
-                <h3 className="font-display text-2xl font-bold text-[--color-brand-navy] dark:text-white mb-3">
+                <h3 className="font-display text-2xl font-bold text-brand-navy dark:text-white mb-3">
                   {p.name}
                 </h3>
-                <p className="text-[--color-brand-muted] text-sm leading-relaxed mb-6">
+                <p className="text-brand-muted text-sm leading-relaxed mb-6">
                   {p.description}
                 </p>
 
@@ -81,7 +81,7 @@ export function PortfolioSection() {
                   {p.tags.map((t) => (
                     <span
                       key={t}
-                      className="px-2.5 py-1 rounded-sm text-xs font-medium bg-[--color-brand-navy]/8 dark:bg-white/10 text-[--color-brand-navy] dark:text-white/70"
+                      className="px-2.5 py-1 rounded-sm text-xs font-medium bg-brand-navy/8 dark:bg-white/10 text-brand-navy dark:text-white/70"
                     >
                       {t}
                     </span>

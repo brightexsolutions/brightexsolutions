@@ -103,12 +103,12 @@ export function BrixoWidget() {
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.8, opacity: 0 }}
               onClick={() => setOpen(true)}
-              className="relative w-14 h-14 rounded-full bg-[--color-brand-navy] shadow-lg flex items-center justify-center hover:bg-[--color-brand-navy-hover] transition-colors"
+              className="relative w-14 h-14 rounded-full bg-brand-navy shadow-lg flex items-center justify-center hover:bg-brand-navy-hover transition-colors"
               aria-label="Open Brixo chat"
             >
               <MessageCircle size={24} className="text-white" />
               {/* Pulse ring — fires once on mount */}
-              <span className="absolute inset-0 rounded-full border-2 border-[--color-brand-gold] animate-ping opacity-60 [animation-iteration-count:3]" />
+              <span className="absolute inset-0 rounded-full border-2 border-brand-gold animate-ping opacity-60 [animation-iteration-count:3]" />
             </motion.button>
           )}
         </AnimatePresence>
@@ -122,12 +122,12 @@ export function BrixoWidget() {
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: 20, scale: 0.95 }}
               transition={{ duration: 0.2, ease: "easeOut" }}
-              className="absolute bottom-0 right-0 w-[360px] sm:w-[380px] max-h-[580px] rounded-sm shadow-2xl bg-white dark:bg-[--color-brand-navy-light] border border-[--color-brand-border] dark:border-white/10 flex flex-col overflow-hidden"
+              className="absolute bottom-0 right-0 w-[360px] sm:w-[380px] max-h-[580px] rounded-sm shadow-2xl bg-white dark:bg-brand-navy-light border border-brand-border dark:border-white/10 flex flex-col overflow-hidden"
             >
               {/* Header */}
-              <div className="bg-[--color-brand-navy] px-4 py-3 flex items-center justify-between flex-shrink-0">
+              <div className="bg-brand-navy px-4 py-3 flex items-center justify-between flex-shrink-0">
                 <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-full bg-[--color-brand-gold] flex items-center justify-center text-[--color-brand-navy] font-bold text-sm">
+                  <div className="w-8 h-8 rounded-full bg-brand-gold flex items-center justify-center text-brand-navy font-bold text-sm">
                     B
                   </div>
                   <div>
@@ -145,15 +145,15 @@ export function BrixoWidget() {
               </div>
 
               {/* Mode tabs */}
-              <div className="flex border-b border-[--color-brand-border] dark:border-white/10 flex-shrink-0">
+              <div className="flex border-b border-brand-border dark:border-white/10 flex-shrink-0">
                 {(["bot", "whatsapp"] as Mode[]).map((m) => (
                   <button
                     key={m}
                     onClick={() => setMode(m)}
                     className={`flex-1 py-2.5 text-xs font-semibold transition-colors ${
                       mode === m
-                        ? "text-[--color-brand-navy] dark:text-white border-b-2 border-[--color-brand-gold]"
-                        : "text-[--color-brand-muted] hover:text-[--color-brand-navy] dark:hover:text-white"
+                        ? "text-brand-navy dark:text-white border-b-2 border-brand-gold"
+                        : "text-brand-muted hover:text-brand-navy dark:hover:text-white"
                     }`}
                   >
                     {m === "bot" ? "🤖 Assistant" : "💬 WhatsApp"}
@@ -173,8 +173,8 @@ export function BrixoWidget() {
                         <div
                           className={`max-w-[80%] px-3.5 py-2.5 rounded-sm text-sm leading-relaxed ${
                             msg.role === "user"
-                              ? "bg-[--color-brand-navy] text-white"
-                              : "bg-[--color-brand-bg] dark:bg-white/8 text-[--color-brand-text] dark:text-white/90"
+                              ? "bg-brand-navy text-white"
+                              : "bg-brand-bg dark:bg-white/8 text-brand-text dark:text-white/90"
                           }`}
                         >
                           {msg.content}
@@ -185,11 +185,11 @@ export function BrixoWidget() {
                     {/* Loading dots */}
                     {loading && (
                       <div className="flex justify-start">
-                        <div className="bg-[--color-brand-bg] dark:bg-white/8 px-4 py-3 rounded-sm flex gap-1.5">
+                        <div className="bg-brand-bg dark:bg-white/8 px-4 py-3 rounded-sm flex gap-1.5">
                           {[0, 1, 2].map((i) => (
                             <span
                               key={i}
-                              className="w-1.5 h-1.5 rounded-full bg-[--color-brand-muted] animate-bounce"
+                              className="w-1.5 h-1.5 rounded-full bg-brand-muted animate-bounce"
                               style={{ animationDelay: `${i * 0.15}s` }}
                             />
                           ))}
@@ -201,7 +201,7 @@ export function BrixoWidget() {
                     {escalated && (
                       <button
                         onClick={() => setMode("whatsapp")}
-                        className="flex items-center gap-2 text-xs font-semibold text-[--color-brand-gold] hover:underline"
+                        className="flex items-center gap-2 text-xs font-semibold text-brand-gold hover:underline"
                       >
                         Switch to WhatsApp <ArrowRight size={12} />
                       </button>
@@ -217,7 +217,7 @@ export function BrixoWidget() {
                         <button
                           key={q}
                           onClick={() => sendMessage(q)}
-                          className="px-3 py-1.5 rounded-full border border-[--color-brand-border] dark:border-white/15 text-xs font-medium text-[--color-brand-navy] dark:text-white hover:border-[--color-brand-gold] hover:text-[--color-brand-gold] transition-colors"
+                          className="px-3 py-1.5 rounded-full border border-brand-border dark:border-white/15 text-xs font-medium text-brand-navy dark:text-white hover:border-brand-gold hover:text-brand-gold transition-colors"
                         >
                           {q}
                         </button>
@@ -226,18 +226,18 @@ export function BrixoWidget() {
                   )}
 
                   {/* Input */}
-                  <div className="p-3 border-t border-[--color-brand-border] dark:border-white/10 flex gap-2 flex-shrink-0">
+                  <div className="p-3 border-t border-brand-border dark:border-white/10 flex gap-2 flex-shrink-0">
                     <input
                       value={input}
                       onChange={(e) => setInput(e.target.value)}
                       onKeyDown={(e) => e.key === "Enter" && sendMessage(input)}
                       placeholder="Type a message…"
-                      className="flex-1 px-3 py-2 rounded-sm border border-[--color-brand-border] dark:border-white/15 bg-[--color-brand-bg] dark:bg-white/5 text-[--color-brand-navy] dark:text-white text-sm placeholder:text-[--color-brand-muted] focus:outline-none focus:border-[--color-brand-gold] transition-colors"
+                      className="flex-1 px-3 py-2 rounded-sm border border-brand-border dark:border-white/15 bg-brand-bg dark:bg-white/5 text-brand-navy dark:text-white text-sm placeholder:text-brand-muted focus:outline-none focus:border-brand-gold transition-colors"
                     />
                     <button
                       onClick={() => sendMessage(input)}
                       disabled={!input.trim() || loading}
-                      className="w-9 h-9 rounded-sm bg-[--color-brand-navy] flex items-center justify-center text-white hover:bg-[--color-brand-navy-hover] transition-colors disabled:opacity-40"
+                      className="w-9 h-9 rounded-sm bg-brand-navy flex items-center justify-center text-white hover:bg-brand-navy-hover transition-colors disabled:opacity-40"
                       aria-label="Send"
                     >
                       <Send size={15} />
@@ -253,11 +253,11 @@ export function BrixoWidget() {
                     <MessageCircle size={28} className="text-[#25D366]" />
                   </div>
                   <div>
-                    <h3 className="font-semibold text-[--color-brand-navy] dark:text-white mb-1">
+                    <h3 className="font-semibold text-brand-navy dark:text-white mb-1">
                       Chat directly with Godwin
                     </h3>
-                    <p className="text-[--color-brand-muted] text-xs mb-1">+254 741 980 127</p>
-                    <p className="text-[--color-brand-muted] text-xs">
+                    <p className="text-brand-muted text-xs mb-1">+254 741 980 127</p>
+                    <p className="text-brand-muted text-xs">
                       Mon–Fri, 8am–6pm EAT · Typical reply: within 2 hours
                     </p>
                   </div>

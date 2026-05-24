@@ -59,10 +59,10 @@ export default function ProductsPage() {
   return (
     <>
       {/* Hero */}
-      <section className="pt-32 pb-16 bg-[--color-brand-navy]">
+      <section className="pt-32 pb-16 bg-brand-navy">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <FadeIn className="max-w-2xl">
-            <span className="text-[--color-brand-gold] text-xs font-semibold tracking-widest uppercase mb-4 block">
+            <span className="text-brand-gold text-xs font-semibold tracking-widest uppercase mb-4 block">
               Our Software
             </span>
             <h1 className="font-display text-5xl sm:text-6xl font-bold text-white mb-6 leading-tight">
@@ -78,42 +78,42 @@ export default function ProductsPage() {
       </section>
 
       {/* Products grid */}
-      <section className="py-24 bg-[--color-brand-bg] dark:bg-[--color-brand-navy-dark]">
+      <section className="py-24 bg-brand-bg dark:bg-brand-navy-dark">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
           <FadeInStagger staggerDelay={0.1}>
             {products.map((p) => (
               <StaggerChild key={p.slug}>
-                <div className="p-8 sm:p-10 rounded-sm bg-white dark:bg-[--color-brand-navy-light] border border-[--color-brand-border] dark:border-white/10 hover:border-[--color-brand-gold]/30 transition-all duration-200">
+                <div className="p-8 sm:p-10 rounded-sm bg-white dark:bg-brand-navy-light border border-brand-border dark:border-white/10 hover:border-brand-gold/30 transition-all duration-200">
                   <div className="grid grid-cols-1 lg:grid-cols-[2fr_1fr] gap-10">
                     <div>
                       <div className="flex items-center gap-3 mb-5">
-                        <div className="w-10 h-10 rounded-sm bg-[--color-brand-gold]/10 flex items-center justify-center">
-                          <p.icon size={20} className="text-[--color-brand-gold]" />
+                        <div className="w-10 h-10 rounded-sm bg-brand-gold/10 flex items-center justify-center">
+                          <p.icon size={20} className="text-brand-gold" />
                         </div>
-                        <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-[--color-brand-navy]/8 dark:bg-white/10 text-[--color-brand-navy] dark:text-white/70">
+                        <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-brand-navy/8 dark:bg-white/10 text-brand-navy dark:text-white/70">
                           {p.category}
                         </span>
                       </div>
-                      <h2 className="font-display text-3xl font-bold text-[--color-brand-navy] dark:text-white mb-2">
+                      <h2 className="font-display text-3xl font-bold text-brand-navy dark:text-white mb-2">
                         {p.name}
                       </h2>
-                      <p className="text-[--color-brand-gold] text-sm font-semibold mb-4">
+                      <p className="text-brand-gold text-sm font-semibold mb-4">
                         {p.tagline}
                       </p>
-                      <p className="text-[--color-brand-muted] leading-relaxed mb-6">
+                      <p className="text-brand-muted leading-relaxed mb-6">
                         {p.description}
                       </p>
                       <div className="grid grid-cols-2 gap-2 mb-6">
                         {p.features.map((f) => (
-                          <div key={f} className="flex items-center gap-2 text-sm text-[--color-brand-text] dark:text-white/70">
-                            <span className="w-1.5 h-1.5 rounded-full bg-[--color-brand-gold] flex-shrink-0" />
+                          <div key={f} className="flex items-center gap-2 text-sm text-brand-text dark:text-white/70">
+                            <span className="w-1.5 h-1.5 rounded-full bg-brand-gold flex-shrink-0" />
                             {f}
                           </div>
                         ))}
                       </div>
                       <div className="flex flex-wrap gap-2">
                         {p.industries.map((ind) => (
-                          <span key={ind} className="px-2.5 py-1 rounded-sm text-xs font-medium bg-[--color-brand-bg] dark:bg-white/5 border border-[--color-brand-border] dark:border-white/10 text-[--color-brand-muted]">
+                          <span key={ind} className="px-2.5 py-1 rounded-sm text-xs font-medium bg-brand-bg dark:bg-white/5 border border-brand-border dark:border-white/10 text-brand-muted">
                             {ind}
                           </span>
                         ))}
@@ -122,20 +122,20 @@ export default function ProductsPage() {
 
                     <div className="flex flex-col justify-between gap-6 lg:items-end">
                       <div className="text-right">
-                        <div className="text-xs text-[--color-brand-muted] uppercase tracking-wider mb-1">Starting from</div>
-                        <div className="font-display text-2xl font-bold text-[--color-brand-navy] dark:text-white">{p.pricingFrom}</div>
-                        <div className="text-xs text-[--color-brand-muted] mt-1">{p.trialDays}-day free trial included</div>
+                        <div className="text-xs text-brand-muted uppercase tracking-wider mb-1">Starting from</div>
+                        <div className="font-display text-2xl font-bold text-brand-navy dark:text-white">{p.pricingFrom}</div>
+                        <div className="text-xs text-brand-muted mt-1">{p.trialDays}-day free trial included</div>
                       </div>
                       <div className="flex flex-col gap-3 lg:items-end">
                         <Link
                           href={`/products/${p.slug}`}
-                          className="inline-flex items-center gap-2 px-6 py-3 rounded-sm bg-[--color-brand-navy] dark:bg-[--color-brand-gold] text-white dark:text-[--color-brand-navy] text-sm font-semibold hover:bg-[--color-brand-navy-hover] dark:hover:bg-[--color-brand-gold-hover] transition-colors"
+                          className="inline-flex items-center gap-2 px-6 py-3 rounded-sm bg-brand-navy dark:bg-brand-gold text-white dark:text-brand-navy text-sm font-semibold hover:bg-brand-navy-hover dark:hover:bg-brand-gold-hover transition-colors"
                         >
                           Start Free Trial <ArrowRight size={14} />
                         </Link>
                         <Link
                           href="/book"
-                          className="inline-flex items-center gap-2 px-6 py-3 rounded-sm border border-[--color-brand-border] dark:border-white/20 text-[--color-brand-navy] dark:text-white text-sm font-semibold hover:border-[--color-brand-gold]/50 transition-colors"
+                          className="inline-flex items-center gap-2 px-6 py-3 rounded-sm border border-brand-border dark:border-white/20 text-brand-navy dark:text-white text-sm font-semibold hover:border-brand-gold/50 transition-colors"
                         >
                           Book a Demo
                         </Link>

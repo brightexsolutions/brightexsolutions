@@ -77,10 +77,10 @@ export default function ServicesPage() {
   return (
     <>
       {/* Hero */}
-      <section className="pt-32 pb-16 bg-[--color-brand-navy]">
+      <section className="pt-32 pb-16 bg-brand-navy">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <FadeIn className="max-w-3xl">
-            <span className="text-[--color-brand-gold] text-xs font-semibold tracking-widest uppercase mb-4 block">
+            <span className="text-brand-gold text-xs font-semibold tracking-widest uppercase mb-4 block">
               What We Offer
             </span>
             <h1 className="font-display text-5xl sm:text-6xl font-bold text-white mb-6 leading-tight">
@@ -98,39 +98,39 @@ export default function ServicesPage() {
       </section>
 
       {/* Services list */}
-      <section className="py-24 bg-[--color-brand-bg] dark:bg-[--color-brand-navy-dark]">
+      <section className="py-24 bg-brand-bg dark:bg-brand-navy-dark">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
           <FadeInStagger staggerDelay={0.06}>
             {services.map((s, i) => (
               <StaggerChild key={s.title}>
-                <div className="group p-8 sm:p-10 rounded-sm bg-white dark:bg-[--color-brand-navy-light] border border-[--color-brand-border] dark:border-white/10 hover:border-[--color-brand-gold]/40 transition-all duration-200">
+                <div className="group p-8 sm:p-10 rounded-sm bg-white dark:bg-brand-navy-light border border-brand-border dark:border-white/10 hover:border-brand-gold/40 transition-all duration-200">
                   <div className="grid grid-cols-1 lg:grid-cols-[1fr_2fr] gap-8 lg:gap-16">
                     {/* Left */}
                     <div>
-                      <div className="w-12 h-12 rounded-sm bg-[--color-brand-gold]/10 flex items-center justify-center mb-5">
-                        <s.icon size={22} className="text-[--color-brand-gold]" />
+                      <div className="w-12 h-12 rounded-sm bg-brand-gold/10 flex items-center justify-center mb-5">
+                        <s.icon size={22} className="text-brand-gold" />
                       </div>
-                      <div className="text-3xl font-display text-[--color-brand-border] dark:text-white/10 font-bold mb-2 leading-none">
+                      <div className="text-3xl font-display text-brand-border dark:text-white/10 font-bold mb-2 leading-none">
                         {String(i + 1).padStart(2, "0")}
                       </div>
-                      <h2 className="font-display text-2xl font-bold text-[--color-brand-navy] dark:text-white mb-2">
+                      <h2 className="font-display text-2xl font-bold text-brand-navy dark:text-white mb-2">
                         {s.title}
                       </h2>
-                      <p className="text-[--color-brand-gold] text-sm font-semibold">
+                      <p className="text-brand-gold text-sm font-semibold">
                         {s.tagline}
                       </p>
                     </div>
 
                     {/* Right */}
                     <div>
-                      <p className="text-[--color-brand-muted] leading-relaxed mb-6">
+                      <p className="text-brand-muted leading-relaxed mb-6">
                         {s.description}
                       </p>
                       <div className="flex flex-wrap gap-2 mb-6">
                         {s.deliverables.map((d) => (
                           <span
                             key={d}
-                            className="px-3 py-1.5 rounded-sm text-xs font-medium bg-[--color-brand-bg] dark:bg-white/8 text-[--color-brand-navy] dark:text-white/70 border border-[--color-brand-border] dark:border-white/10"
+                            className="px-3 py-1.5 rounded-sm text-xs font-medium bg-brand-bg dark:bg-white/8 text-brand-navy dark:text-white/70 border border-brand-border dark:border-white/10"
                           >
                             {d}
                           </span>
@@ -138,7 +138,7 @@ export default function ServicesPage() {
                       </div>
                       <Link
                         href="/contact"
-                        className="inline-flex items-center gap-2 text-sm font-semibold text-[--color-brand-navy] dark:text-white hover:text-[--color-brand-gold] transition-colors"
+                        className="inline-flex items-center gap-2 text-sm font-semibold text-brand-navy dark:text-white hover:text-brand-gold transition-colors"
                       >
                         Get a quote <ArrowRight size={14} />
                       </Link>

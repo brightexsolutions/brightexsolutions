@@ -13,12 +13,17 @@ export async function proxy(request: NextRequest) {
     return NextResponse.rewrite(new URL("/admin/maintenance", request.url));
   }
 
+  // If Supabase is not configured, allow all protected routes through (local dev)
+  if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+    return NextResponse.next({ request: { headers: request.headers } });
+  }
+
   // Build a mutable response so session cookies can be refreshed
   let response = NextResponse.next({ request: { headers: request.headers } });
 
   const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    process.env.NEXT_PUBLIC_SUPABASE_URL,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
     {
       cookies: {
         getAll() {
@@ -44,9 +49,13 @@ export async function proxy(request: NextRequest) {
 
   const role = user?.app_metadata?.app_role as string | undefined;
 
-  // /admin/* — requires admin role
+  // /admin/* — requires authenticated user with admin role (or no role set, for initial setup)
   if (pathname.startsWith("/admin") && !pathname.startsWith("/admin/login")) {
-    if (!user || role !== "admin") {
+    if (!user) {
+      return NextResponse.redirect(new URL("/admin/login", request.url));
+    }
+    // Block team members from admin; allow admin role or unset role (owner account)
+    if (role && role !== "admin") {
       return NextResponse.redirect(new URL("/admin/login", request.url));
     }
     return response;

@@ -18,10 +18,10 @@ export default function BlogPage() {
   return (
     <>
       {/* Hero */}
-      <section className="pt-32 pb-16 bg-[--color-brand-navy]">
+      <section className="pt-32 pb-16 bg-brand-navy">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <FadeIn className="max-w-2xl">
-            <span className="text-[--color-brand-gold] text-xs font-semibold tracking-widest uppercase mb-4 block">
+            <span className="text-brand-gold text-xs font-semibold tracking-widest uppercase mb-4 block">
               Insights
             </span>
             <h1 className="font-display text-5xl sm:text-6xl font-bold text-white mb-6 leading-tight">
@@ -35,10 +35,10 @@ export default function BlogPage() {
       </section>
 
       {/* Articles */}
-      <section className="py-24 bg-[--color-brand-bg] dark:bg-[--color-brand-navy-dark]">
+      <section className="py-24 bg-brand-bg dark:bg-brand-navy-dark">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {posts.length === 0 ? (
-            <FadeIn className="text-center text-[--color-brand-muted]">
+            <FadeIn className="text-center text-brand-muted">
               Articles coming soon.
             </FadeIn>
           ) : (
@@ -47,26 +47,26 @@ export default function BlogPage() {
                 <StaggerChild key={post.slug}>
                   <Link
                     href={`/blog/${post.slug}`}
-                    className="group block p-8 rounded-sm bg-white dark:bg-[--color-brand-navy-light] border border-[--color-brand-border] dark:border-white/10 hover:border-[--color-brand-gold]/40 hover:-translate-y-1 transition-all duration-200"
+                    className="group block p-8 rounded-sm bg-white dark:bg-brand-navy-light border border-brand-border dark:border-white/10 hover:border-brand-gold/40 hover:-translate-y-1 transition-all duration-200"
                   >
                     <div className="flex items-center gap-3 mb-5">
-                      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[--color-brand-gold]/10 text-[--color-brand-gold] text-xs font-semibold">
+                      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-brand-gold/10 text-brand-gold text-xs font-semibold">
                         <Tag size={10} />
                         {post.category}
                       </span>
-                      <span className="flex items-center gap-1 text-xs text-[--color-brand-muted]">
+                      <span className="flex items-center gap-1 text-xs text-brand-muted">
                         <Clock size={11} />
                         {post.readingTime} min read
                       </span>
                     </div>
-                    <h2 className="font-display text-xl font-bold text-[--color-brand-navy] dark:text-white mb-3 leading-snug group-hover:text-[--color-brand-gold] transition-colors">
+                    <h2 className="font-display text-xl font-bold text-brand-navy dark:text-white mb-3 leading-snug group-hover:text-brand-gold transition-colors">
                       {post.title}
                     </h2>
-                    <p className="text-[--color-brand-muted] text-sm leading-relaxed mb-5 line-clamp-3">
+                    <p className="text-brand-muted text-sm leading-relaxed mb-5 line-clamp-3">
                       {post.description}
                     </p>
                     <div className="flex items-center justify-between">
-                      <span className="text-xs text-[--color-brand-muted]">
+                      <span className="text-xs text-brand-muted">
                         {new Date(post.date).toLocaleDateString("en-KE", {
                           year: "numeric",
                           month: "long",
@@ -75,7 +75,7 @@ export default function BlogPage() {
                       </span>
                       <ArrowRight
                         size={16}
-                        className="text-[--color-brand-muted] group-hover:text-[--color-brand-gold] group-hover:translate-x-1 transition-all"
+                        className="text-brand-muted group-hover:text-brand-gold group-hover:translate-x-1 transition-all"
                       />
                     </div>
                   </Link>

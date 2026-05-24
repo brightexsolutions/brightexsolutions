@@ -49,17 +49,17 @@ const services = [
 
 export function ServicesSection() {
   return (
-    <section className="py-24 bg-[--color-brand-bg] dark:bg-[--color-brand-navy-dark]">
+    <section className="py-24 bg-brand-bg dark:bg-brand-navy-dark">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <FadeIn className="text-center mb-16">
-          <span className="text-[--color-brand-gold] text-xs font-semibold tracking-widest uppercase">
+          <span className="text-brand-gold text-xs font-semibold tracking-widest uppercase">
             What We Do
           </span>
-          <h2 className="font-display text-4xl sm:text-5xl font-bold text-[--color-brand-navy] dark:text-white mt-3 mb-4">
+          <h2 className="font-display text-4xl sm:text-5xl font-bold text-brand-navy dark:text-white mt-3 mb-4">
             End-to-End Digital Services
           </h2>
-          <p className="text-[--color-brand-muted] text-lg max-w-2xl mx-auto">
+          <p className="text-brand-muted text-lg max-w-2xl mx-auto">
             Everything your business needs to compete online — under one roof,
             with one team that knows your goals.
           </p>
@@ -69,14 +69,14 @@ export function ServicesSection() {
         <FadeInStagger className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6" staggerDelay={0.08}>
           {services.slice(0, 6).map((s) => (
             <StaggerChild key={s.title}>
-              <div className="group p-8 rounded-sm bg-white dark:bg-[--color-brand-navy-light] border border-[--color-brand-border] dark:border-white/10 hover:border-[--color-brand-gold]/50 hover:-translate-y-1 transition-all duration-200">
-                <div className="w-10 h-10 rounded-sm bg-[--color-brand-gold]/10 flex items-center justify-center mb-5">
-                  <s.icon size={20} className="text-[--color-brand-gold]" />
+              <div className="group p-8 rounded-sm bg-white dark:bg-brand-navy-light border border-brand-border dark:border-white/10 hover:border-brand-gold/50 hover:-translate-y-1 transition-all duration-200">
+                <div className="w-10 h-10 rounded-sm bg-brand-gold/10 flex items-center justify-center mb-5">
+                  <s.icon size={20} className="text-brand-gold" />
                 </div>
-                <h3 className="font-semibold text-[--color-brand-navy] dark:text-white text-lg mb-2">
+                <h3 className="font-semibold text-brand-navy dark:text-white text-lg mb-2">
                   {s.title}
                 </h3>
-                <p className="text-[--color-brand-muted] text-sm leading-relaxed">
+                <p className="text-brand-muted text-sm leading-relaxed">
                   {s.description}
                 </p>
               </div>
@@ -88,7 +88,7 @@ export function ServicesSection() {
         <FadeIn className="text-center mt-12">
           <Link
             href="/services"
-            className="inline-flex items-center gap-2 text-[--color-brand-navy] dark:text-white font-semibold text-sm hover:text-[--color-brand-gold] transition-colors"
+            className="inline-flex items-center gap-2 text-brand-navy dark:text-white font-semibold text-sm hover:text-brand-gold transition-colors"
           >
             View all {services.length} services
             <ArrowRight size={16} />

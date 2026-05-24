@@ -29,7 +29,7 @@ export function PublicNav() {
       className={cn(
         "fixed top-0 inset-x-0 z-50 transition-all duration-300",
         scrolled
-          ? "bg-white/95 backdrop-blur-sm shadow-sm border-b border-[--color-brand-border]"
+          ? "bg-white/95 backdrop-blur-sm shadow-sm border-b border-brand-border"
           : "bg-transparent"
       )}
     >
@@ -59,7 +59,7 @@ export function PublicNav() {
               className={cn(
                 "text-sm font-medium transition-colors",
                 scrolled
-                  ? "text-[--color-brand-text] hover:text-[--color-brand-navy]"
+                  ? "text-brand-text hover:text-brand-navy"
                   : "text-white/90 hover:text-white"
               )}
             >
@@ -72,7 +72,7 @@ export function PublicNav() {
         <div className="flex items-center gap-3">
           <Link
             href="/book"
-            className="hidden lg:inline-flex items-center px-5 py-2.5 rounded-sm text-sm font-semibold bg-[--color-brand-gold] text-[--color-brand-navy] hover:bg-[--color-brand-gold-hover] transition-colors"
+            className="hidden lg:inline-flex items-center px-5 py-2.5 rounded-sm text-sm font-semibold bg-brand-gold text-brand-navy hover:bg-brand-gold-hover transition-colors"
           >
             Book a Call
           </Link>
@@ -80,7 +80,7 @@ export function PublicNav() {
             onClick={() => setOpen(!open)}
             className={cn(
               "lg:hidden p-2 rounded-sm transition-colors",
-              scrolled ? "text-[--color-brand-navy]" : "text-white"
+              scrolled ? "text-brand-navy" : "text-white"
             )}
             aria-label="Toggle menu"
           >
@@ -91,14 +91,14 @@ export function PublicNav() {
 
       {/* Mobile drawer */}
       {open && (
-        <div className="lg:hidden bg-white border-t border-[--color-brand-border] shadow-lg">
+        <div className="lg:hidden bg-white border-t border-brand-border shadow-lg">
           <div className="max-w-7xl mx-auto px-4 py-4 flex flex-col gap-1">
             {links.map((l) => (
               <Link
                 key={l.href}
                 href={l.href}
                 onClick={() => setOpen(false)}
-                className="px-3 py-3 text-sm font-medium text-[--color-brand-text] hover:text-[--color-brand-navy] hover:bg-[--color-brand-bg] rounded-sm transition-colors"
+                className="px-3 py-3 text-sm font-medium text-brand-text hover:text-brand-navy hover:bg-brand-bg rounded-sm transition-colors"
               >
                 {l.label}
               </Link>
@@ -106,7 +106,7 @@ export function PublicNav() {
             <Link
               href="/book"
               onClick={() => setOpen(false)}
-              className="mt-2 px-5 py-3 text-center text-sm font-semibold bg-[--color-brand-gold] text-[--color-brand-navy] rounded-sm hover:bg-[--color-brand-gold-hover] transition-colors"
+              className="mt-2 px-5 py-3 text-center text-sm font-semibold bg-brand-gold text-brand-navy rounded-sm hover:bg-brand-gold-hover transition-colors"
             >
               Book a Call
             </Link>

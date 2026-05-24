@@ -12,22 +12,22 @@ const stats = [
 
 export function Hero() {
   return (
-    <section className="relative min-h-screen flex items-center justify-center overflow-hidden bg-[--color-brand-navy]">
+    <section className="relative min-h-screen flex items-center justify-center overflow-hidden bg-brand-navy">
       {/* Gradient mesh background */}
       <div className="absolute inset-0 pointer-events-none">
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_60%_at_50%_-10%,rgba(249,168,37,0.12),transparent)]" />
-        <div className="absolute bottom-0 left-0 right-0 h-64 bg-gradient-to-t from-[--color-brand-navy] to-transparent" />
+        <div className="absolute bottom-0 left-0 right-0 h-64 bg-gradient-to-t from-brand-navy to-transparent" />
         {/* Decorative circles */}
         <div className="absolute top-1/4 right-[8%] w-72 h-72 rounded-full border border-white/5" />
         <div className="absolute top-1/4 right-[8%] w-48 h-48 translate-x-12 translate-y-12 rounded-full border border-white/5" />
-        <div className="absolute -bottom-20 -left-20 w-80 h-80 rounded-full border border-[--color-brand-gold]/5" />
+        <div className="absolute -bottom-20 -left-20 w-80 h-80 rounded-full border border-brand-gold/5" />
       </div>
 
       <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-32 pb-24 text-center">
         {/* Badge */}
         <FadeIn delay={0}>
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-[--color-brand-gold]/30 bg-[--color-brand-gold]/10 text-[--color-brand-gold] text-xs font-semibold tracking-widest uppercase mb-8">
-            <span className="w-1.5 h-1.5 rounded-full bg-[--color-brand-gold] animate-pulse" />
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-brand-gold/30 bg-brand-gold/10 text-brand-gold text-xs font-semibold tracking-widest uppercase mb-8">
+            <span className="w-1.5 h-1.5 rounded-full bg-brand-gold animate-pulse" />
             Nairobi · Africa-Focused · Globally Capable
           </div>
         </FadeIn>
@@ -37,7 +37,7 @@ export function Hero() {
           <h1 className="font-display text-5xl sm:text-6xl lg:text-7xl xl:text-8xl font-bold text-white leading-[1.05] tracking-tight mb-6">
             Digital Solutions
             <br />
-            <span className="text-[--color-brand-gold]">Built to Grow</span>
+            <span className="text-brand-gold">Built to Grow</span>
             <br />
             Your Business
           </h1>
@@ -56,7 +56,7 @@ export function Hero() {
           <div className="flex flex-col sm:flex-row gap-4 justify-center mb-20">
             <Link
               href="/contact"
-              className="inline-flex items-center justify-center gap-2 px-8 py-4 rounded-sm bg-[--color-brand-gold] text-[--color-brand-navy] font-semibold text-sm hover:bg-[--color-brand-gold-hover] transition-colors"
+              className="inline-flex items-center justify-center gap-2 px-8 py-4 rounded-sm bg-brand-gold text-brand-navy font-semibold text-sm hover:bg-brand-gold-hover transition-colors"
             >
               Start a Project
               <ArrowRight size={16} />

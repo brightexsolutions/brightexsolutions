@@ -10,16 +10,16 @@ export const metadata: Metadata = {
 
 export default function BookPage() {
   return (
-    <section className="pt-32 pb-24 min-h-screen bg-[--color-brand-bg] dark:bg-[--color-brand-navy-dark]">
+    <section className="pt-32 pb-24 min-h-screen bg-brand-bg dark:bg-brand-navy-dark">
       <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8">
         <FadeIn className="text-center">
-          <span className="text-[--color-brand-gold] text-xs font-semibold tracking-widest uppercase">
+          <span className="text-brand-gold text-xs font-semibold tracking-widest uppercase">
             Schedule a Call
           </span>
-          <h1 className="font-display text-5xl font-bold text-[--color-brand-navy] dark:text-white mt-3 mb-4">
+          <h1 className="font-display text-5xl font-bold text-brand-navy dark:text-white mt-3 mb-4">
             Book a Call
           </h1>
-          <p className="text-[--color-brand-muted] text-lg">
+          <p className="text-brand-muted text-lg">
             Booking system coming soon. In the meantime, reach out via WhatsApp.
           </p>
           <a

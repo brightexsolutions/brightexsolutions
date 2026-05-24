@@ -75,7 +75,7 @@ export default async function BlogPostPage({
       />
 
       {/* Hero */}
-      <section className="pt-32 pb-12 bg-[--color-brand-navy]">
+      <section className="pt-32 pb-12 bg-brand-navy">
         <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
           <FadeIn>
             <Link
@@ -86,7 +86,7 @@ export default async function BlogPostPage({
               Back to Blog
             </Link>
             <div className="flex items-center gap-3 mb-5">
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[--color-brand-gold]/15 text-[--color-brand-gold] text-xs font-semibold">
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-brand-gold/15 text-brand-gold text-xs font-semibold">
                 <Tag size={10} />
                 {post.category}
               </span>
@@ -111,7 +111,7 @@ export default async function BlogPostPage({
       </section>
 
       {/* Body */}
-      <section className="py-16 bg-white dark:bg-[--color-brand-navy-dark]">
+      <section className="py-16 bg-white dark:bg-brand-navy-dark">
         <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
           <FadeIn>
             <article className="prose-custom">
