@@ -52,9 +52,9 @@ export default function AdminDashboardPage() {
   return (
     <div className="space-y-6">
       {/* System health strip */}
-      <div className="flex items-center gap-3 p-4 rounded-sm bg-emerald-950/40 border border-emerald-800/40 text-sm">
-        <CheckCircle2 size={16} className="text-emerald-400 shrink-0" />
-        <span className="text-emerald-300 font-medium">All systems operational</span>
+      <div className="flex items-center gap-3 p-4 rounded-sm bg-emerald-50 border border-emerald-200 dark:bg-emerald-950/40 dark:border-emerald-800/40 text-sm">
+        <CheckCircle2 size={16} className="text-emerald-600 dark:text-emerald-400 shrink-0" />
+        <span className="text-emerald-700 dark:text-emerald-300 font-medium">All systems operational</span>
         <span className="text-muted-foreground ml-auto text-xs">
           Connect Supabase to enable live monitoring
         </span>
@@ -134,14 +134,14 @@ export default function AdminDashboardPage() {
       </div>
 
       {/* Setup notice */}
-      <Card className="border-amber-800/30 bg-amber-950/20">
+      <Card className="border-amber-200 bg-amber-50 dark:border-amber-800/30 dark:bg-amber-950/20">
         <CardContent className="pt-6">
           <div className="flex items-start gap-3">
-            <AlertTriangle size={16} className="text-amber-400 mt-0.5 shrink-0" />
+            <AlertTriangle size={16} className="text-amber-600 dark:text-amber-400 mt-0.5 shrink-0" />
             <div>
-              <p className="text-sm font-medium text-amber-300 mb-1">Setup required</p>
+              <p className="text-sm font-medium text-amber-700 dark:text-amber-300 mb-1">Setup required</p>
               <p className="text-sm text-muted-foreground">
-                Add Supabase URL and keys to <code className="text-amber-300 text-xs bg-amber-950/60 px-1.5 py-0.5 rounded">.env.local</code> to enable database features. Until then, the dashboard renders in preview mode.
+                Add Supabase URL and keys to <code className="text-amber-700 dark:text-amber-300 text-xs bg-amber-100 dark:bg-amber-950/60 px-1.5 py-0.5 rounded">.env.local</code> to enable database features. Until then, the dashboard renders in preview mode.
               </p>
             </div>
           </div>

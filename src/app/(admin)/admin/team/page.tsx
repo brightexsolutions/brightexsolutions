@@ -18,12 +18,12 @@ export default function AdminTeamPage() {
         <TeamInviteModal />
       </div>
 
-      <Card className="border-amber-800/30 bg-amber-950/20">
+      <Card className="border-amber-200 bg-amber-50 dark:border-amber-800/30 dark:bg-amber-950/20">
         <CardContent className="pt-6">
           <div className="flex items-start gap-3">
-            <AlertTriangle size={16} className="text-amber-400 mt-0.5 shrink-0" />
+            <AlertTriangle size={16} className="text-amber-600 dark:text-amber-400 mt-0.5 shrink-0" />
             <div>
-              <p className="text-sm font-medium text-amber-300 mb-1">Supabase required</p>
+              <p className="text-sm font-medium text-amber-700 dark:text-amber-300 mb-1">Supabase required</p>
               <p className="text-sm text-muted-foreground">
                 Connect Supabase to enable team invites, portal access, and role management. Team members will receive login invites via email.
               </p>
