@@ -86,6 +86,22 @@
   --sidebar-accent-foreground: #ffffff;
   --sidebar-border: #1c2f4f;
   --sidebar-ring: #f9a825;
+
+  /* Brand tokens as CSS custom properties (needed for var(--color-brand-*) in arbitrary values) */
+  --color-brand-navy: #152238;
+  --color-brand-navy-hover: #1c2f4f;
+  --color-brand-navy-light: #1e3a5f;
+  --color-brand-navy-dark: #0d1928;
+  --color-brand-gold: #f9a825;
+  --color-brand-gold-hover: #e09000;
+  --color-brand-gold-light: #ffd054;
+  --color-brand-gold-pale: #fff8e1;
+  --color-brand-success: #10b981;
+  --color-brand-text: #1e2840;
+  --color-brand-muted: #64748b;
+  --color-brand-border: #dde3eb;
+  --color-brand-bg: #f4f6f8;
+  --color-brand-bg-alt: #eaecf0;
 }
 
 /* Dark mode — admin dashboard dark theme */
