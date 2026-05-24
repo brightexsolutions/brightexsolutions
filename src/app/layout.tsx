@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Fraunces, Plus_Jakarta_Sans } from "next/font/google";
 import { ThemeProvider } from "@/components/theme-provider";
+import { SiteLoader } from "@/components/site-loader";
 import "./globals.css";
 
 const fraunces = Fraunces({
@@ -90,6 +91,7 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
+          <SiteLoader />
           {children}
         </ThemeProvider>
       </body>
