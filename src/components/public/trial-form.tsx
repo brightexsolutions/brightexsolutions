@@ -5,6 +5,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { CheckCircle2, Zap } from "lucide-react";
+import { normalisePhone } from "@/lib/utils";
 
 const schema = z.object({
   name: z.string().min(2).max(100).trim(),
@@ -28,6 +29,7 @@ export function TrialForm({ productSlug, productName, trialDays, pricingFrom }: 
 
   const {
     register,
+    setValue,
     handleSubmit,
     formState: { errors, isSubmitting },
   } = useForm<FormData>({ resolver: zodResolver(schema) });
@@ -126,12 +128,21 @@ export function TrialForm({ productSlug, productName, trialDays, pricingFrom }: 
           <label className="block text-xs font-semibold text-brand-navy dark:text-white uppercase tracking-wider mb-1.5">
             Phone
           </label>
-          <input
-            {...register("phone")}
-            type="tel"
-            placeholder="+254 7XX XXX XXX"
-            className="w-full px-4 py-3 rounded-sm border border-brand-border dark:border-white/15 bg-brand-bg dark:bg-white/5 text-brand-navy dark:text-white placeholder:text-brand-muted focus:outline-none focus:border-brand-gold focus:ring-1 focus:ring-brand-gold transition-colors text-sm"
-          />
+          {(() => {
+            const phoneReg = register("phone");
+            return (
+              <input
+                {...phoneReg}
+                type="tel"
+                placeholder="+254 7XX XXX XXX"
+                className="w-full px-4 py-3 rounded-sm border border-brand-border dark:border-white/15 bg-brand-bg dark:bg-white/5 text-brand-navy dark:text-white placeholder:text-brand-muted focus:outline-none focus:border-brand-gold focus:ring-1 focus:ring-brand-gold transition-colors text-sm"
+                onBlur={(e) => {
+                  setValue("phone", normalisePhone(e.target.value));
+                  phoneReg.onBlur(e);
+                }}
+              />
+            );
+          })()}
         </div>
 
         {error && (

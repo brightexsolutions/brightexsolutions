@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, createAdminClient } from "@/lib/supabase/server";
 import { rateLimit } from "@/lib/rate-limit";
 
 interface SiteRow {
@@ -91,8 +91,8 @@ export async function GET(request: NextRequest) {
   const limited = await rateLimit(request, "admin");
   if (limited) return limited;
 
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const { data: { user } } = await (await createClient()).auth.getUser();
+  const supabase = createAdminClient();
   if (!user) return NextResponse.json({ error: "Unauthorised" }, { status: 401 });
 
   const { searchParams } = new URL(request.url);

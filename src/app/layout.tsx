@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Fraunces, Plus_Jakarta_Sans } from "next/font/google";
 import { ThemeProvider } from "@/components/theme-provider";
 import { SiteLoader } from "@/components/site-loader";
+import { SITE_NAME, SITE_URL } from "@/lib/constants";
 import "./globals.css";
 
 const fraunces = Fraunces({
@@ -19,12 +20,10 @@ const plusJakartaSans = Plus_Jakarta_Sans({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL(
-    process.env.NEXT_PUBLIC_SITE_URL ?? "https://www.brightexsolutions.com"
-  ),
+  metadataBase: new URL(SITE_URL),
   title: {
-    default: "Brightex Solutions",
-    template: "%s | Brightex Solutions",
+    default: SITE_NAME,
+    template: `%s | ${SITE_NAME}`,
   },
   description:
     "Nairobi-based digital agency building custom websites, platforms, ERP systems, and AI-powered tools for businesses across Kenya and East Africa.",
@@ -37,14 +36,14 @@ export const metadata: Metadata = {
     "SEO Kenya",
     "Brightex Solutions",
   ],
-  authors: [{ name: "Brightex Solutions" }],
-  creator: "Brightex Solutions",
+  authors: [{ name: SITE_NAME }],
+  creator: SITE_NAME,
   openGraph: {
     type: "website",
     locale: "en_KE",
-    url: "https://www.brightexsolutions.com",
-    siteName: "Brightex Solutions",
-    title: "Brightex Solutions",
+    url: SITE_URL,
+    siteName: SITE_NAME,
+    title: SITE_NAME,
     description:
       "Nairobi-based digital agency building premium digital experiences that drive growth.",
     images: [
@@ -52,13 +51,13 @@ export const metadata: Metadata = {
         url: "/og/og-default.png",
         width: 1200,
         height: 630,
-        alt: "Brightex Solutions",
+        alt: SITE_NAME,
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Brightex Solutions",
+    title: SITE_NAME,
     description:
       "Nairobi-based digital agency building premium digital experiences that drive growth.",
     images: ["/og/og-default.png"],
@@ -69,7 +68,7 @@ export const metadata: Metadata = {
     googleBot: { index: true, follow: true },
   },
   alternates: {
-    canonical: "https://www.brightexsolutions.com",
+    canonical: SITE_URL,
   },
 };
 
@@ -84,7 +83,7 @@ export default function RootLayout({
       suppressHydrationWarning
       className={`${fraunces.variable} ${plusJakartaSans.variable}`}
     >
-      <body>
+      <body suppressHydrationWarning>
         <ThemeProvider
           attribute="class"
           defaultTheme="system"

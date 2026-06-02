@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { rateLimit } from "@/lib/rate-limit";
+import { SITE_NAME, BUSINESS_PHONE, BUSINESS_EMAIL, whatsappUrl } from "@/lib/constants";
 
 const ChatSchema = z.object({
   message: z.string().min(1).max(500).trim(),
@@ -27,7 +28,7 @@ const FALLBACK_FAQS = [
   {
     keywords: ["contact", "reach", "talk", "call", "phone", "whatsapp"],
     answer:
-      "You can reach us at +254 741 980 127 (WhatsApp/phone) or email info.brightexsolutions@gmail.com. You can also book a call at /book.",
+      "You can reach us at ${BUSINESS_PHONE} (WhatsApp/phone) or email ${BUSINESS_EMAIL}. You can also book a call at /book.",
   },
   {
     keywords: ["location", "where", "nairobi", "kenya", "africa"],
@@ -78,8 +79,8 @@ export async function POST(request: NextRequest) {
   let answer: string | null = null;
   if (process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY) {
     try {
-      const { createClient } = await import("@/lib/supabase/server");
-      const supabase = await createClient();
+      const { createAdminClient } = await import("@/lib/supabase/server");
+      const supabase = createAdminClient();
       const { data } = await supabase
         .from("chat_faqs")
         .select("answer, keywords")

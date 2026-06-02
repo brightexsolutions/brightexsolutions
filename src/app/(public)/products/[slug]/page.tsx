@@ -1,17 +1,18 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { products } from "../page";
 import { TrialForm } from "@/components/public/trial-form";
 import { FadeIn } from "@/components/public/fade-in";
 import { CtaSection } from "@/components/public/cta-section";
 import { SectionErrorBoundary } from "@/components/section-error-boundary";
 import { ArrowLeft, CheckCircle2 } from "lucide-react";
+import { getProductBySlug, getPublishedProducts } from "@/lib/products";
 
 export const revalidate = 3600;
 
 export async function generateStaticParams() {
-  return products.map((p) => ({ slug: p.slug }));
+  const products = await getPublishedProducts();
+  return products.map((product) => ({ slug: product.slug }));
 }
 
 export async function generateMetadata({
@@ -20,11 +21,11 @@ export async function generateMetadata({
   params: Promise<{ slug: string }>;
 }): Promise<Metadata> {
   const { slug } = await params;
-  const product = products.find((p) => p.slug === slug);
+  const product = await getProductBySlug(slug);
   if (!product) return {};
   return {
     title: product.name,
-    description: product.description,
+    description: product.description || product.tagline,
     alternates: { canonical: `/products/${slug}` },
   };
 }
@@ -35,7 +36,7 @@ export default async function ProductPage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  const product = products.find((p) => p.slug === slug);
+  const product = await getProductBySlug(slug);
   if (!product) notFound();
 
   const schema = {
@@ -88,7 +89,7 @@ export default async function ProductPage({
               {product.name}
             </h1>
             <p className="text-white/60 text-xl leading-relaxed max-w-2xl">
-              {product.description}
+              {product.description || product.tagline}
             </p>
           </FadeIn>
         </div>
@@ -101,18 +102,25 @@ export default async function ProductPage({
             {/* Left — features */}
             <FadeIn direction="left">
               <h2 className="font-display text-3xl font-bold text-brand-navy dark:text-white mb-8">
-                What's included
+                What&apos;s included
               </h2>
               <div className="space-y-4 mb-12">
-                {product.features.map((f) => (
-                  <div key={f} className="flex items-start gap-3">
+                {product.features.map((feature) => (
+                  <div key={feature.title} className="flex items-start gap-3">
                     <CheckCircle2
                       size={20}
-                      className="text-brand-gold flex-shrink-0 mt-0.5"
+                      className="text-brand-gold shrink-0 mt-0.5"
                     />
-                    <span className="text-brand-text dark:text-white/80 leading-relaxed">
-                      {f}
-                    </span>
+                    <div>
+                      <p className="text-brand-text dark:text-white/90 leading-relaxed font-medium">
+                        {feature.title}
+                      </p>
+                      {feature.description && (
+                        <p className="text-sm text-brand-muted leading-relaxed mt-1">
+                          {feature.description}
+                        </p>
+                      )}
+                    </div>
                   </div>
                 ))}
               </div>
@@ -122,7 +130,7 @@ export default async function ProductPage({
                   Built for these industries
                 </h3>
                 <div className="flex flex-wrap gap-2">
-                  {product.industries.map((ind) => (
+                  {product.targetIndustries.map((ind) => (
                     <span
                       key={ind}
                       className="px-3 py-1.5 rounded-sm text-sm font-medium bg-white dark:bg-brand-navy-light border border-brand-border dark:border-white/10 text-brand-navy dark:text-white"
@@ -148,7 +156,12 @@ export default async function ProductPage({
                   </div>
                 }
               >
-                <TrialForm productSlug={product.slug} productName={product.name} trialDays={product.trialDays} pricingFrom={product.pricingFrom} />
+                <TrialForm
+                  productSlug={product.slug}
+                  productName={product.name}
+                  trialDays={product.trialDays}
+                  pricingFrom={product.pricingFrom}
+                />
               </SectionErrorBoundary>
             </FadeIn>
           </div>

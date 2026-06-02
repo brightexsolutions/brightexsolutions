@@ -18,8 +18,12 @@ export default function BlogPage() {
   return (
     <>
       {/* Hero */}
-      <section className="pt-32 pb-16 bg-brand-navy">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <section
+        className="relative pt-32 pb-20 bg-brand-navy bg-cover bg-center overflow-hidden"
+        style={{ backgroundImage: "url('https://images.unsplash.com/photo-1499750310107-5fef28a66643?auto=format&fit=crop&w=1920&q=80')" }}
+      >
+        <div className="absolute inset-0 bg-brand-navy/87" />
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <FadeIn className="max-w-2xl">
             <span className="text-brand-gold text-xs font-semibold tracking-widest uppercase mb-4 block">
               Insights

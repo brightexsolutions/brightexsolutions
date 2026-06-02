@@ -146,6 +146,16 @@
   }
 }
 
+/* Buttons and interactive elements always show pointer */
+button,
+[role="button"],
+[role="tab"],
+summary,
+label[for],
+select {
+  cursor: pointer;
+}
+
 /* Smooth scroll */
 html {
   scroll-behavior: smooth;

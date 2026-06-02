@@ -7,11 +7,45 @@ import { ProcessSection } from "@/components/public/process-section";
 import { TestimonialsSection } from "@/components/public/testimonials-section";
 import { WhySection } from "@/components/public/why-section";
 import { CtaSection } from "@/components/public/cta-section";
+import {
+  SITE_NAME,
+  SITE_URL,
+  BUSINESS_PHONE,
+  BUSINESS_EMAIL,
+  BUSINESS_CITY,
+  BUSINESS_COUNTRY,
+  SOCIAL_FACEBOOK,
+  SOCIAL_INSTAGRAM,
+} from "@/lib/constants";
 
 export const revalidate = 3600;
 
+type HeroAnnouncement = { id: string; title: string; body?: string | null; cta_label?: string | null; cta_url?: string | null } | null;
+
+async function getHeroAnnouncement(): Promise<HeroAnnouncement> {
+  if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) return null;
+  try {
+    const { createAdminClient } = await import("@/lib/supabase/server");
+    const supabase = createAdminClient();
+    const now = new Date().toISOString();
+    const { data } = await supabase
+      .from("announcements")
+      .select("id, title, body, cta_label, cta_url")
+      .eq("active", true)
+      .contains("display_location", ["home_hero"])
+      .or(`starts_at.is.null,starts_at.lte.${now}`)
+      .or(`ends_at.is.null,ends_at.gte.${now}`)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .single();
+    return data ?? null;
+  } catch {
+    return null;
+  }
+}
+
 export const metadata: Metadata = {
-  title: "Brightex Solutions — Digital Agency Nairobi",
+  title: `${SITE_NAME} — Digital Agency Nairobi`,
   description:
     "Nairobi-based digital agency building custom websites, ERP systems, AI tools, and platforms for businesses across Kenya and East Africa.",
   alternates: {
@@ -22,15 +56,15 @@ export const metadata: Metadata = {
 const localBusinessSchema = {
   "@context": "https://schema.org",
   "@type": "LocalBusiness",
-  name: "Brightex Solutions",
+  name: SITE_NAME,
   description:
     "Digital agency based in Nairobi, Kenya offering web development, UI/UX design, SEO, branding, ERP systems, AI automation, and technology consultancy.",
-  url: "https://www.brightexsolutions.com",
-  telephone: "+254741980127",
-  email: "info.brightexsolutions@gmail.com",
+  url: SITE_URL,
+  telephone: BUSINESS_PHONE,
+  email: BUSINESS_EMAIL,
   address: {
     "@type": "PostalAddress",
-    addressLocality: "Nairobi",
+    addressLocality: BUSINESS_CITY,
     addressCountry: "KE",
   },
   geo: {
@@ -45,13 +79,15 @@ const localBusinessSchema = {
     closes: "18:00",
   },
   sameAs: [
-    "https://facebook.com/brightexsolutions",
-    "https://instagram.com/brightexsolutions",
+    ...(SOCIAL_FACEBOOK ? [`https://facebook.com/${SOCIAL_FACEBOOK}`] : []),
+    ...(SOCIAL_INSTAGRAM ? [`https://instagram.com/${SOCIAL_INSTAGRAM}`] : []),
   ],
   priceRange: "KES",
 };
 
-export default function HomePage() {
+export default async function HomePage() {
+  const heroAnnouncement = await getHeroAnnouncement();
+
   return (
     <>
       <script
@@ -60,7 +96,7 @@ export default function HomePage() {
       />
 
       <SectionErrorBoundary>
-        <Hero />
+        <Hero announcement={heroAnnouncement} />
       </SectionErrorBoundary>
 
       <SectionErrorBoundary>

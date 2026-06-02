@@ -8,6 +8,7 @@ const limiters = {
   join: new RateLimiterMemory({ points: 5, duration: 60 }),
   trial: new RateLimiterMemory({ points: 3, duration: 60 }),
   admin: new RateLimiterMemory({ points: 120, duration: 60 }),
+  team: new RateLimiterMemory({ points: 60, duration: 60 }),
   public: new RateLimiterMemory({ points: 60, duration: 60 }),
 };
 

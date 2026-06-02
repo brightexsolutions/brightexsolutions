@@ -3,6 +3,12 @@
 import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, MessageCircle, Send, ArrowRight } from "lucide-react";
+import {
+  BUSINESS_PHONE,
+  OPERATING_HOURS,
+  WHATSAPP_REPLY_TIME,
+  whatsappUrl,
+} from "@/lib/constants";
 
 type Mode = "bot" | "whatsapp";
 type Message = { role: "user" | "bot"; content: string };
@@ -14,13 +20,11 @@ const QUICK_REPLIES = [
   "How to get started",
 ];
 
-const WHATSAPP_NUMBER = "254741980127";
-
 function buildWaLink(context?: string) {
   const msg = context
     ? `Hi Godwin, I was on the Brightex website and I'd like to chat about: ${context}`
     : "Hi Godwin, I was on the Brightex website and I'd like to chat.";
-  return `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(msg)}`;
+  return whatsappUrl(msg);
 }
 
 export function BrixoWidget() {
@@ -256,9 +260,9 @@ export function BrixoWidget() {
                     <h3 className="font-semibold text-brand-navy dark:text-white mb-1">
                       Chat directly with Godwin
                     </h3>
-                    <p className="text-brand-muted text-xs mb-1">+254 741 980 127</p>
+                    <p className="text-brand-muted text-xs mb-1">{BUSINESS_PHONE}</p>
                     <p className="text-brand-muted text-xs">
-                      Mon–Fri, 8am–6pm EAT · Typical reply: within 2 hours
+                      {OPERATING_HOURS} · Typical reply: {WHATSAPP_REPLY_TIME}
                     </p>
                   </div>
                   <a

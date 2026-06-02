@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, createAdminClient } from "@/lib/supabase/server";
 import { verifyCronSecret } from "@/lib/cron-auth";
 
 export async function GET(request: NextRequest) {
@@ -20,7 +20,7 @@ export async function GET(request: NextRequest) {
     },
   });
 
-  const supabase = await createClient();
+  const supabase = createAdminClient();
   const { data: sites } = await supabase.from("sites").select("id, url, platform, integration_level, health_endpoint, health_token");
 
   if (!sites?.length) {

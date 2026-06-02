@@ -1,9 +1,10 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { createBrowserClient } from "@supabase/ssr";
 import { useTheme } from "next-themes";
-import { Sun, Moon, Monitor, LogOut, Menu } from "lucide-react";
+import { Sun, Moon, Monitor, LogOut, Menu, BookOpen } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -20,6 +21,8 @@ interface AdminHeaderProps {
 export function AdminHeader({ onMenuClick, title }: AdminHeaderProps) {
   const router = useRouter();
   const { theme, setTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => { setMounted(true); }, []);
 
   async function handleSignOut() {
     const supabase = createBrowserClient(
@@ -31,7 +34,7 @@ export function AdminHeader({ onMenuClick, title }: AdminHeaderProps) {
     router.refresh();
   }
 
-  const themeIcon =
+  const themeIcon = !mounted ? <Monitor size={16} /> :
     theme === "light" ? <Sun size={16} /> :
     theme === "dark" ? <Moon size={16} /> :
     <Monitor size={16} />;
@@ -56,6 +59,17 @@ export function AdminHeader({ onMenuClick, title }: AdminHeaderProps) {
       )}
 
       <div className="ml-auto flex items-center gap-2">
+        {/* System docs */}
+        <a
+          href="/SYSTEM_DOCS.html"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="w-9 h-9 rounded-sm flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+          title="System documentation"
+        >
+          <BookOpen size={16} />
+        </a>
+
         {/* Theme toggle */}
         <DropdownMenu>
           <DropdownMenuTrigger className="w-9 h-9 rounded-sm flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted transition-colors">

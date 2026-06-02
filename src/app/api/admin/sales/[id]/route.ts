@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, createAdminClient } from "@/lib/supabase/server";
 import { rateLimit } from "@/lib/rate-limit";
 
 const UpdateSaleSchema = z.object({
@@ -15,8 +15,8 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
   const limited = await rateLimit(request, "admin");
   if (limited) return limited;
 
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const { data: { user } } = await (await createClient()).auth.getUser();
+  const supabase = createAdminClient();
   if (!user) return NextResponse.json({ error: "Unauthorised" }, { status: 401 });
 
   const { id } = await params;
@@ -45,12 +45,12 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
   const limited = await rateLimit(request, "admin");
   if (limited) return limited;
 
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const { data: { user } } = await (await createClient()).auth.getUser();
+  const supabase = createAdminClient();
   if (!user) return NextResponse.json({ error: "Unauthorised" }, { status: 401 });
 
   const { id } = await params;
-  const { error } = await supabase.from("sales").delete().eq("id", id);
+  const { error } = await supabase.from("sales").update({ deleted_at: new Date().toISOString() }).eq("id", id);
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
   return NextResponse.json({ success: true });

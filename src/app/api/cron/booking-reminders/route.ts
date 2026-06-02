@@ -1,7 +1,24 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/server";
 import { transporter } from "@/lib/mail";
 import { verifyCronSecret } from "@/lib/cron-auth";
+import { SITE_NAME, BUSINESS_EMAIL, BUSINESS_PHONE, whatsappUrl } from "@/lib/constants";
+import {
+  emailTemplate,
+  emailRow,
+  emailInfoTable,
+  emailParagraph,
+  emailButton,
+  emailDivider,
+  emailSignoff,
+} from "@/lib/email-templates";
+
+const purposeLabels: Record<string, string> = {
+  intro_call: "Intro Call",
+  project_review: "Project Review",
+  consultation: "Consultation",
+  other: "Meeting",
+};
 
 export async function GET(request: NextRequest) {
   const denied = verifyCronSecret(request);
@@ -11,7 +28,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ status: "skipped", reason: "Supabase not configured" });
   }
 
-  const supabase = await createClient();
+  const supabase = createAdminClient();
 
   // Find confirmed bookings scheduled in next 24–26 hours that haven't had a reminder sent
   const in24h = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
@@ -31,19 +48,43 @@ export async function GET(request: NextRequest) {
 
   let sent = 0;
   for (const booking of bookings) {
+    const purposeLabel = purposeLabels[booking.purpose] ?? "Meeting";
+    const formattedDate = new Date(booking.scheduled_at).toLocaleDateString("en-KE", {
+      weekday: "long", day: "numeric", month: "long", year: "numeric", timeZone: "Africa/Nairobi",
+    });
+    const formattedTime = new Date(booking.scheduled_at).toLocaleTimeString("en-KE", {
+      hour: "2-digit", minute: "2-digit", timeZone: "Africa/Nairobi", timeZoneName: "short",
+    });
+
     try {
       await transporter.sendMail({
-        from: `"Brightex Solutions" <${process.env.SMTP_USER}>`,
+        from: `${SITE_NAME} <${process.env.SMTP_USER}>`,
         to: booking.booker_email,
-        subject: "Reminder: Your Brightex meeting is tomorrow",
-        html: `<div style="font-family:sans-serif;max-width:600px;margin:0 auto;padding:24px;">
-          <p>Hi <strong>${booking.booker_name}</strong>,</p>
-          <p>Just a reminder that your meeting with Brightex Solutions is tomorrow.</p>
-          <p><strong>Time:</strong> ${new Date(booking.scheduled_at).toLocaleString("en-KE", { dateStyle: "full", timeStyle: "short", timeZone: "Africa/Nairobi" })}</p>
-          <p><strong>Purpose:</strong> ${String(booking.purpose).replace("_", " ")}</p>
-          ${booking.meeting_link ? `<p><strong>Meeting link:</strong> <a href="${booking.meeting_link}">${booking.meeting_link}</a></p>` : ""}
-          <p>See you then! — Brightex Solutions</p>
-        </div>`,
+        subject: `Reminder: Your ${purposeLabel} with ${SITE_NAME} is tomorrow`,
+        html: emailTemplate({
+          title: "Meeting Reminder",
+          subtitle: purposeLabel,
+          preheader: `Your ${purposeLabel} with ${SITE_NAME} is tomorrow`,
+          body:
+            emailParagraph(`Hi <strong>${booking.booker_name}</strong>, just a reminder that your ${purposeLabel} is tomorrow.`) +
+            emailInfoTable(
+              emailRow("Type", purposeLabel) +
+              emailRow("Date", formattedDate) +
+              emailRow("Time", formattedTime) +
+              (booking.duration_minutes ? emailRow("Duration", `${booking.duration_minutes} minutes`) : "") +
+              (booking.meeting_link
+                ? emailRow("Meeting Link", `<a href="${booking.meeting_link}" style="color:#152238;font-weight:600">Join Meeting</a>`)
+                : "")
+            ) +
+            (booking.meeting_link
+              ? emailButton("Join Meeting", booking.meeting_link, "primary")
+              : "") +
+            emailDivider() +
+            emailParagraph(
+              `Need to reschedule? Reply to this email or reach us at <a href="mailto:${BUSINESS_EMAIL}" style="color:#152238">${BUSINESS_EMAIL}</a> or <a href="${whatsappUrl()}" style="color:#f9a825">${BUSINESS_PHONE}</a>`
+            ) +
+            emailSignoff(),
+        }),
       });
 
       await supabase.from("bookings").update({ reminder_sent: true }).eq("id", booking.id);

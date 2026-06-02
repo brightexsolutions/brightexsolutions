@@ -8,8 +8,8 @@ async function getActiveAnnouncement() {
     return null;
   }
   try {
-    const { createClient } = await import("@/lib/supabase/server");
-    const supabase = await createClient();
+    const { createAdminClient } = await import("@/lib/supabase/server");
+    const supabase = createAdminClient();
     const now = new Date().toISOString();
     const { data } = await supabase
       .from("announcements")

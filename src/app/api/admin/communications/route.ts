@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, createAdminClient } from "@/lib/supabase/server";
 import { rateLimit } from "@/lib/rate-limit";
+import { logAction } from "@/lib/audit";
 
 const CommSchema = z.object({
   client_id: z.string().uuid().optional(),
@@ -17,8 +18,8 @@ export async function GET(request: NextRequest) {
   const limited = await rateLimit(request, "admin");
   if (limited) return limited;
 
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const { data: { user } } = await (await createClient()).auth.getUser();
+  const supabase = createAdminClient();
   if (!user) return NextResponse.json({ error: "Unauthorised" }, { status: 401 });
 
   const { searchParams } = new URL(request.url);
@@ -28,6 +29,7 @@ export async function GET(request: NextRequest) {
   let query = supabase
     .from("communications")
     .select("*, clients(id, name, company)")
+    .is("deleted_at", null)
     .order("sent_at", { ascending: false });
 
   if (type && type !== "all") query = query.eq("type", type);
@@ -43,8 +45,8 @@ export async function POST(request: NextRequest) {
   const limited = await rateLimit(request, "admin");
   if (limited) return limited;
 
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const { data: { user } } = await (await createClient()).auth.getUser();
+  const supabase = createAdminClient();
   if (!user) return NextResponse.json({ error: "Unauthorised" }, { status: 401 });
 
   const body = await request.json().catch(() => ({}));
@@ -59,10 +61,19 @@ export async function POST(request: NextRequest) {
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
-  // Update last_contacted_at on the client
   if (result.data.client_id) {
     await supabase.from("clients").update({ last_contacted_at: new Date().toISOString() }).eq("id", result.data.client_id);
   }
+
+  await logAction({
+    actor_id: user.id,
+    actor_name: user.email ?? user.id,
+    action: "logged_comm",
+    entity_type: "communication",
+    entity_id: data.id,
+    entity_label: result.data.subject ?? result.data.type,
+    notes: `Type: ${result.data.type} · ${result.data.direction}bound`,
+  });
 
   return NextResponse.json({ data }, { status: 201 });
 }

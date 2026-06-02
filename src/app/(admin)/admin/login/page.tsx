@@ -43,7 +43,7 @@ export default function AdminLoginPage() {
         {/* Logo */}
         <div className="flex justify-center mb-10">
           <Image
-            src="/assets/brightex-logo-light.png"
+            src="/assets/Brightex Solutions Logo-light-v1-no-bg.png"
             alt="Brightex Solutions"
             width={160}
             height={40}

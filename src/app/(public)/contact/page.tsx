@@ -2,7 +2,16 @@ import type { Metadata } from "next";
 import { SectionErrorBoundary } from "@/components/section-error-boundary";
 import { ContactForm } from "@/components/public/contact-form";
 import { FadeIn } from "@/components/public/fade-in";
-import { Phone, Mail, MapPin, MessageCircle } from "lucide-react";
+import { Phone, Mail, MapPin, MessageCircle, Clock } from "lucide-react";
+import {
+  BUSINESS_PHONE,
+  BUSINESS_EMAIL,
+  BUSINESS_CITY,
+  BUSINESS_COUNTRY,
+  OPERATING_HOURS,
+  WHATSAPP_REPLY_TIME,
+  whatsappUrl,
+} from "@/lib/constants";
 
 export const revalidate = 3600;
 
@@ -13,119 +22,116 @@ export const metadata: Metadata = {
   alternates: { canonical: "/contact" },
 };
 
-const contactInfo = [
-  { icon: Phone, label: "Phone", value: "+254 741 980 127", href: "tel:+254741980127" },
-  { icon: Mail, label: "Email", value: "info.brightexsolutions@gmail.com", href: "mailto:info.brightexsolutions@gmail.com" },
-  { icon: MapPin, label: "Location", value: "Nairobi, Kenya", href: null },
-];
-
 export default function ContactPage() {
   return (
-    <>
-      {/* Hero */}
-      <section className="pt-32 pb-16 bg-brand-navy">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <FadeIn className="max-w-2xl">
-            <span className="text-brand-gold text-xs font-semibold tracking-widest uppercase mb-4 block">
+    <main className="min-h-screen grid grid-cols-1 lg:grid-cols-[1fr_1fr]">
+
+      {/* ── Left panel — navy brand panel ── */}
+      <div className="relative bg-brand-navy overflow-hidden flex flex-col pt-32 pb-16 px-8 sm:px-12 lg:px-16">
+        {/* Decorative circles */}
+        <div className="absolute -bottom-24 -right-24 w-80 h-80 rounded-full border border-white/5 pointer-events-none" />
+        <div className="absolute top-40 -right-8 w-48 h-48 rounded-full border border-brand-gold/8 pointer-events-none" />
+        <div className="absolute -top-16 -left-16 w-64 h-64 rounded-full bg-brand-gold/3 pointer-events-none" />
+
+        <FadeIn className="relative flex flex-col gap-10 flex-1">
+          {/* Eyebrow + heading */}
+          <div>
+            <span className="text-brand-gold text-xs font-semibold tracking-widest uppercase block mb-5">
               Get in Touch
             </span>
-            <h1 className="font-display text-5xl sm:text-6xl font-bold text-white mb-6 leading-tight">
-              Let's Talk About
+            <h1 className="font-display text-5xl sm:text-6xl font-bold text-white leading-tight mb-6">
+              Tell us about
               <br />
-              Your Project
+              your project.
             </h1>
-            <p className="text-white/60 text-lg leading-relaxed">
-              Tell us what you're building and we'll get back to you within 24 hours
-              with a clear assessment and next steps.
+            <p className="text-white/55 text-lg leading-relaxed max-w-md">
+              Whether you know exactly what you need or you're still figuring it out — we'd love to hear from you. We reply within 24 hours.
             </p>
-          </FadeIn>
-        </div>
-      </section>
+          </div>
 
-      {/* Content */}
-      <section className="py-24 bg-brand-bg dark:bg-brand-navy-dark">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 lg:grid-cols-[1fr_2fr] gap-16">
-            {/* Left — contact info */}
-            <FadeIn direction="left" className="space-y-10">
-              <div>
-                <h2 className="font-display text-2xl font-bold text-brand-navy dark:text-white mb-6">
-                  Contact Details
-                </h2>
-                <div className="space-y-5">
-                  {contactInfo.map((item) => (
-                    <div key={item.label} className="flex items-start gap-4">
-                      <div className="w-10 h-10 rounded-sm bg-brand-gold/10 flex items-center justify-center flex-shrink-0">
-                        <item.icon size={18} className="text-brand-gold" />
-                      </div>
-                      <div>
-                        <div className="text-xs font-semibold text-brand-muted uppercase tracking-wider mb-1">
-                          {item.label}
-                        </div>
-                        {item.href ? (
-                          <a
-                            href={item.href}
-                            className="text-brand-navy dark:text-white text-sm hover:text-brand-gold transition-colors"
-                          >
-                            {item.value}
-                          </a>
-                        ) : (
-                          <span className="text-brand-navy dark:text-white text-sm">
-                            {item.value}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
+          {/* Divider */}
+          <div className="w-12 h-px bg-brand-gold/40" />
 
-              {/* WhatsApp direct */}
-              <div className="p-6 rounded-sm bg-white dark:bg-brand-navy-light border border-brand-border dark:border-white/10">
-                <div className="flex items-center gap-3 mb-3">
-                  <MessageCircle size={20} className="text-[#25D366]" />
-                  <span className="font-semibold text-brand-navy dark:text-white text-sm">
-                    Prefer WhatsApp?
-                  </span>
-                </div>
-                <p className="text-brand-muted text-sm mb-4 leading-relaxed">
-                  Send us a message directly — we typically reply within 2 hours during business hours (Mon–Fri, 8am–6pm EAT).
-                </p>
+          {/* Contact details */}
+          <div className="space-y-5">
+            <ContactDetail icon={Phone} label="Phone" value={BUSINESS_PHONE} href={`tel:${BUSINESS_PHONE}`} />
+            <ContactDetail icon={Mail} label="Email" value={BUSINESS_EMAIL} href={`mailto:${BUSINESS_EMAIL}`} />
+            <ContactDetail icon={MapPin} label="Location" value={`${BUSINESS_CITY}, ${BUSINESS_COUNTRY}`} />
+            <ContactDetail icon={Clock} label="Hours" value={OPERATING_HOURS} />
+          </div>
+
+          {/* WhatsApp CTA */}
+          <div className="mt-auto pt-4">
+            <p className="text-white/40 text-xs uppercase tracking-widest font-semibold mb-3">Prefer WhatsApp?</p>
+            <a
+              href={whatsappUrl("Hi Godwin, I was on the Brightex website and I'd like to discuss a project.")}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-3 px-5 py-3 rounded-sm bg-[#25D366]/10 border border-[#25D366]/30 text-[#25D366] text-sm font-semibold hover:bg-[#25D366]/20 transition-colors"
+            >
+              <MessageCircle size={16} />
+              Chat on WhatsApp
+              <span className="ml-auto text-[#25D366]/60 text-xs font-normal">
+                Replies in {WHATSAPP_REPLY_TIME}
+              </span>
+            </a>
+          </div>
+        </FadeIn>
+      </div>
+
+      {/* ── Right panel — form ── */}
+      <div className="bg-brand-bg dark:bg-brand-navy-dark flex items-start lg:items-center pt-12 lg:pt-24 pb-16 px-8 sm:px-12 lg:px-16">
+        <FadeIn direction="right" className="w-full max-w-xl mx-auto">
+          <SectionErrorBoundary
+            fallback={
+              <div className="p-8 rounded-sm bg-white dark:bg-brand-navy-light border border-brand-border text-center">
+                <p className="text-brand-muted mb-4">The form is temporarily unavailable.</p>
                 <a
-                  href="https://wa.me/254741980127?text=Hi%20Godwin%2C%20I%20was%20on%20the%20Brightex%20website%20and%20I%27d%20like%20to%20discuss%20a%20project."
+                  href={whatsappUrl()}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-sm bg-[#25D366] text-white text-sm font-semibold hover:opacity-90 transition-opacity"
+                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-sm bg-[#25D366] text-white text-sm font-semibold"
                 >
-                  <MessageCircle size={16} />
-                  Chat on WhatsApp
+                  Reach us on WhatsApp
                 </a>
               </div>
-            </FadeIn>
+            }
+          >
+            <ContactForm />
+          </SectionErrorBoundary>
+        </FadeIn>
+      </div>
 
-            {/* Right — form */}
-            <SectionErrorBoundary
-              fallback={
-                <div className="p-8 rounded-sm bg-white dark:bg-brand-navy-light border border-brand-border text-center">
-                  <p className="text-brand-muted mb-4">
-                    The form is temporarily unavailable.
-                  </p>
-                  <a
-                    href="https://wa.me/254741980127"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-2 px-5 py-2.5 rounded-sm bg-[#25D366] text-white text-sm font-semibold"
-                  >
-                    Reach us on WhatsApp
-                  </a>
-                </div>
-              }
-            >
-              <ContactForm />
-            </SectionErrorBoundary>
-          </div>
-        </div>
-      </section>
-    </>
+    </main>
+  );
+}
+
+function ContactDetail({
+  icon: Icon,
+  label,
+  value,
+  href,
+}: {
+  icon: React.ComponentType<{ size?: number; className?: string }>;
+  label: string;
+  value: string;
+  href?: string;
+}) {
+  return (
+    <div className="flex items-start gap-4">
+      <div className="w-9 h-9 rounded-sm bg-white/6 flex items-center justify-center shrink-0 mt-0.5">
+        <Icon size={15} className="text-brand-gold" />
+      </div>
+      <div>
+        <div className="text-white/35 text-[10px] font-semibold uppercase tracking-widest mb-0.5">{label}</div>
+        {href ? (
+          <a href={href} className="text-white/85 text-sm hover:text-brand-gold transition-colors">
+            {value}
+          </a>
+        ) : (
+          <span className="text-white/85 text-sm">{value}</span>
+        )}
+      </div>
+    </div>
   );
 }

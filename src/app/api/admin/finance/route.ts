@@ -1,13 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, createAdminClient } from "@/lib/supabase/server";
 import { rateLimit } from "@/lib/rate-limit";
+import { logAction } from "@/lib/audit";
 
 const ExpenseSchema = z.object({
   description: z.string().min(1).max(300).trim(),
   category: z.enum([
     "subcontractor", "subscription", "software", "equipment",
-    "transport", "marketing", "office", "tax", "professional_fees", "other",
+    "transport", "marketing", "office", "tax", "professional_fees",
+    "salary", "team_payment", "other",
   ]),
   amount: z.number().min(0),
   currency: z.string().max(3).default("KES"),
@@ -33,8 +35,8 @@ export async function GET(request: NextRequest) {
   const limited = await rateLimit(request, "admin");
   if (limited) return limited;
 
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const { data: { user } } = await (await createClient()).auth.getUser();
+  const supabase = createAdminClient();
   if (!user) return NextResponse.json({ error: "Unauthorised" }, { status: 401 });
 
   const { searchParams } = new URL(request.url);
@@ -82,8 +84,8 @@ export async function POST(request: NextRequest) {
   const limited = await rateLimit(request, "admin");
   if (limited) return limited;
 
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const { data: { user } } = await (await createClient()).auth.getUser();
+  const supabase = createAdminClient();
   if (!user) return NextResponse.json({ error: "Unauthorised" }, { status: 401 });
 
   const { searchParams } = new URL(request.url);
@@ -105,5 +107,16 @@ export async function POST(request: NextRequest) {
 
   const { data, error } = await supabase.from("expenses").insert({ ...result.data, added_by: user.id }).select().single();
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+
+  await logAction({
+    actor_id: user.id,
+    actor_name: user.email ?? user.id,
+    action: "added_expense",
+    entity_type: "expense",
+    entity_id: data.id,
+    entity_label: `${result.data.description} (KES ${result.data.amount})`,
+    notes: `Category: ${result.data.category}`,
+  });
+
   return NextResponse.json({ data }, { status: 201 });
 }

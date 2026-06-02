@@ -1,0 +1,910 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Brightex Solutions — System Documentation</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --navy: #152238; --navy-dark: #0d1928; --gold: #f9a825; --gold-hover: #e09000;
+    --text: #1e293b; --muted: #64748b; --border: #e2e8f0; --bg: #f8fafc;
+    --card: #ffffff; --accent: #f0f7ff; --green: #059669; --red: #dc2626; --amber: #d97706;
+  }
+  body { font-family: 'Segoe UI', system-ui, sans-serif; font-size: 14px; color: var(--text); background: var(--bg); line-height: 1.6; }
+
+  /* Print */
+  @media print { .no-print { display: none !important; } .page-break { page-break-before: always; } body { background: white; } }
+
+  /* Sticky bar */
+  .top-bar { position: sticky; top: 0; z-index: 100; background: var(--navy); color: white; padding: 10px 32px; display: flex; align-items: center; justify-content: space-between; font-size: 12px; }
+  .top-bar-title { font-weight: 700; letter-spacing: 0.05em; }
+  .print-btn { background: var(--gold); color: var(--navy); border: none; padding: 6px 16px; border-radius: 4px; font-size: 12px; font-weight: 700; cursor: pointer; }
+
+  /* Cover */
+  .cover { background: var(--navy); color: white; padding: 64px 48px 56px; position: relative; overflow: hidden; }
+  .cover::before, .cover::after { content: ''; position: absolute; border-radius: 50%; }
+  .cover::before { width: 400px; height: 400px; top: -160px; right: -80px; background: radial-gradient(circle, rgba(249,168,37,.15) 0%, transparent 70%); }
+  .cover::after { width: 240px; height: 240px; bottom: -80px; left: 40px; background: radial-gradient(circle, rgba(249,168,37,.08) 0%, transparent 70%); }
+  .cover-tag { display: inline-block; background: rgba(249,168,37,.15); border: 1px solid rgba(249,168,37,.3); color: var(--gold); padding: 4px 12px; border-radius: 4px; font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 20px; }
+  .cover h1 { font-size: 38px; font-weight: 800; line-height: 1.15; max-width: 560px; margin-bottom: 12px; }
+  .cover h1 span { color: var(--gold); }
+  .cover-sub { color: rgba(255,255,255,.65); font-size: 16px; max-width: 500px; margin-bottom: 36px; }
+  .cover-badges { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 40px; }
+  .badge { background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.15); color: rgba(255,255,255,.85); padding: 6px 14px; border-radius: 4px; font-size: 11px; font-weight: 600; }
+  .cover-meta { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; border-top: 1px solid rgba(255,255,255,.1); padding-top: 28px; }
+  .meta-item { }
+  .meta-label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.1em; color: rgba(255,255,255,.5); margin-bottom: 4px; }
+  .meta-value { font-size: 13px; font-weight: 600; color: white; }
+
+  /* Layout */
+  .container { max-width: 1080px; margin: 0 auto; padding: 48px 32px; }
+
+  /* TOC */
+  .toc { background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 28px 32px; margin-bottom: 48px; }
+  .toc h2 { font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); margin-bottom: 16px; }
+  .toc-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 32px; }
+  .toc-item { display: flex; align-items: baseline; gap: 6px; padding: 4px 0; text-decoration: none; color: var(--text); font-size: 13px; border-bottom: 1px dotted var(--border); }
+  .toc-item:hover { color: var(--navy); }
+  .toc-num { font-weight: 700; color: var(--navy); min-width: 20px; font-size: 12px; }
+
+  /* Sections */
+  .section { margin-bottom: 60px; }
+  .section-header { display: flex; align-items: flex-start; gap: 16px; margin-bottom: 28px; }
+  .section-num { width: 36px; height: 36px; background: var(--navy); color: white; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 800; shrink: 0; flex-shrink: 0; }
+  .section-meta { }
+  .section-tag { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.12em; color: var(--gold-hover); margin-bottom: 4px; }
+  .section-title { font-size: 22px; font-weight: 800; color: var(--navy); line-height: 1.2; }
+
+  /* Components */
+  h3 { font-size: 15px; font-weight: 700; color: var(--navy); margin: 24px 0 10px; padding-bottom: 6px; border-bottom: 2px solid var(--border); }
+  h4 { font-size: 13px; font-weight: 700; color: var(--text); margin: 16px 0 8px; }
+  p { margin-bottom: 10px; color: var(--text); }
+  ul, ol { margin: 8px 0 12px 20px; }
+  li { margin-bottom: 4px; }
+  strong { font-weight: 700; }
+  code { font-family: 'Courier New', monospace; font-size: 12px; background: #f1f5f9; padding: 1px 5px; border-radius: 3px; color: #0f172a; }
+  pre { background: var(--navy-dark); color: #e2e8f0; padding: 16px 20px; border-radius: 6px; overflow-x: auto; font-size: 12px; line-height: 1.6; margin: 12px 0; }
+  pre code { background: none; color: inherit; padding: 0; }
+
+  /* Cards */
+  .card { background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 20px 24px; margin: 12px 0; }
+  .card-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; margin: 16px 0; }
+  .kpi-card { background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 16px 20px; }
+  .kpi-label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); margin-bottom: 4px; }
+  .kpi-value { font-size: 22px; font-weight: 800; color: var(--navy); }
+  .kpi-sub { font-size: 11px; color: var(--muted); margin-top: 2px; }
+
+  /* Tables */
+  table { width: 100%; border-collapse: collapse; margin: 16px 0; font-size: 13px; }
+  th { background: var(--navy); color: white; padding: 10px 14px; text-align: left; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; }
+  td { padding: 9px 14px; border-bottom: 1px solid var(--border); vertical-align: top; }
+  tr:nth-child(even) td { background: #f8fafc; }
+  tr:hover td { background: var(--accent); }
+
+  /* Status/badges */
+  .tag { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; }
+  .tag-green { background: #d1fae5; color: #065f46; }
+  .tag-amber { background: #fef3c7; color: #92400e; }
+  .tag-red { background: #fee2e2; color: #991b1b; }
+  .tag-blue { background: #dbeafe; color: #1e40af; }
+  .tag-purple { background: #ede9fe; color: #5b21b6; }
+  .tag-gray { background: #f1f5f9; color: #475569; }
+
+  /* Checklist */
+  .checklist { list-style: none; margin: 12px 0; padding: 0; }
+  .checklist li { display: flex; align-items: flex-start; gap: 10px; padding: 7px 0; border-bottom: 1px solid var(--border); font-size: 13px; }
+  .checklist li:last-child { border-bottom: none; }
+  .check { width: 18px; height: 18px; border-radius: 50%; background: #d1fae5; color: #065f46; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 700; flex-shrink: 0; margin-top: 1px; }
+  .check-todo { background: var(--border); color: var(--muted); }
+
+  /* Timeline */
+  .timeline { position: relative; padding-left: 28px; margin: 16px 0; }
+  .timeline::before { content: ''; position: absolute; left: 7px; top: 8px; bottom: 8px; width: 2px; background: var(--border); }
+  .timeline-item { position: relative; margin-bottom: 20px; }
+  .timeline-dot { position: absolute; left: -25px; top: 4px; width: 14px; height: 14px; border-radius: 50%; background: var(--navy); border: 2px solid white; box-shadow: 0 0 0 2px var(--navy); }
+  .timeline-dot.gold { background: var(--gold); box-shadow: 0 0 0 2px var(--gold); }
+  .timeline-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin-bottom: 3px; }
+  .timeline-content { font-size: 13px; }
+
+  /* Note box */
+  .note { background: #fffbeb; border: 1px solid #fcd34d; border-radius: 6px; padding: 12px 16px; margin: 12px 0; font-size: 13px; }
+  .note-title { font-weight: 700; color: var(--amber); margin-bottom: 4px; font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; }
+  .info-box { background: var(--accent); border: 1px solid #bfdbfe; border-radius: 6px; padding: 12px 16px; margin: 12px 0; font-size: 13px; }
+  .info-title { font-weight: 700; color: #1d4ed8; margin-bottom: 4px; font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; }
+
+  /* About box */
+  .about-box { background: var(--navy); color: white; border-radius: 8px; padding: 32px 36px; margin-top: 48px; display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+  .about-name { font-size: 20px; font-weight: 800; margin-bottom: 8px; }
+  .about-desc { color: rgba(255,255,255,.7); font-size: 13px; line-height: 1.6; }
+  .about-detail { font-size: 13px; color: rgba(255,255,255,.85); margin-bottom: 6px; }
+  .about-detail strong { color: var(--gold); }
+
+  /* Footer */
+  .doc-footer { background: var(--navy-dark); color: rgba(255,255,255,.5); padding: 20px 32px; text-align: center; font-size: 11px; margin-top: 48px; }
+  .doc-footer strong { color: var(--gold); }
+
+  hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
+
+  @media (max-width: 640px) {
+    .cover { padding: 40px 24px; }
+    .cover h1 { font-size: 26px; }
+    .cover-meta { grid-template-columns: 1fr 1fr; }
+    .container { padding: 32px 16px; }
+    .toc-grid { grid-template-columns: 1fr; }
+    .card-grid { grid-template-columns: 1fr; }
+    .about-box { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Sticky top bar -->
+<div class="top-bar no-print">
+  <span class="top-bar-title">BRIGHTEX SOLUTIONS — SYSTEM DOCUMENTATION · 2026</span>
+  <button class="print-btn" onclick="window.print()">Download / Print PDF</button>
+</div>
+
+<!-- Cover -->
+<div class="cover">
+  <div class="cover-tag">Internal Reference · Confidential</div>
+  <h1>Brightex Solutions<br /><span>Platform Documentation</span></h1>
+  <p class="cover-sub">Complete technical reference for the Next.js + Supabase business platform — architecture, modules, deployment, and future roadmap.</p>
+  <div class="cover-badges">
+    <span class="badge">Next.js 15 App Router</span>
+    <span class="badge">Supabase Postgres</span>
+    <span class="badge">11 Admin Modules</span>
+    <span class="badge">4 Team Portals</span>
+    <span class="badge">7 Cron Jobs</span>
+    <span class="badge">100% Free Tier</span>
+  </div>
+  <div class="cover-meta">
+    <div class="meta-item"><div class="meta-label">Document Date</div><div class="meta-value">May 2026</div></div>
+    <div class="meta-item"><div class="meta-label">Stack Version</div><div class="meta-value">Next.js 15 / Node 20</div></div>
+    <div class="meta-item"><div class="meta-label">Database</div><div class="meta-value">Supabase (Postgres)</div></div>
+    <div class="meta-item"><div class="meta-label">Hosting</div><div class="meta-value">Vercel Hobby → Pro</div></div>
+  </div>
+</div>
+
+<!-- Main content -->
+<div class="container">
+
+  <!-- TOC -->
+  <div class="toc">
+    <h2>Table of Contents</h2>
+    <div class="toc-grid">
+      <a href="#s1" class="toc-item"><span class="toc-num">1</span> System Overview</a>
+      <a href="#s8" class="toc-item"><span class="toc-num">8</span> Activity Log — What Gets Recorded</a>
+      <a href="#s2" class="toc-item"><span class="toc-num">2</span> Architecture &amp; Directory Structure</a>
+      <a href="#s9" class="toc-item"><span class="toc-num">9</span> Settings &amp; Environment Variables</a>
+      <a href="#s3" class="toc-item"><span class="toc-num">3</span> Admin Dashboard Modules</a>
+      <a href="#s10" class="toc-item"><span class="toc-num">10</span> Cron Jobs Reference</a>
+      <a href="#s4" class="toc-item"><span class="toc-num">4</span> Team Portals &amp; Role Access</a>
+      <a href="#s11" class="toc-item"><span class="toc-num">11</span> Netlify → Vercel Migration Guide</a>
+      <a href="#s5" class="toc-item"><span class="toc-num">5</span> Projects &amp; Collaboration</a>
+      <a href="#s12" class="toc-item"><span class="toc-num">12</span> Security Architecture</a>
+      <a href="#s6" class="toc-item"><span class="toc-num">6</span> Database Schema Reference</a>
+      <a href="#s13" class="toc-item"><span class="toc-num">13</span> Free Tier Limits &amp; Scale Triggers</a>
+      <a href="#s7" class="toc-item"><span class="toc-num">7</span> API Endpoints Reference</a>
+      <a href="#s14" class="toc-item"><span class="toc-num">14</span> Future Roadmap</a>
+    </div>
+  </div>
+
+  <!-- S1: Overview -->
+  <div class="section" id="s1">
+    <div class="section-header">
+      <div class="section-num">1</div>
+      <div class="section-meta">
+        <div class="section-tag">Foundation</div>
+        <div class="section-title">System Overview</div>
+      </div>
+    </div>
+
+    <p>The Brightex Solutions platform is a full-stack Next.js 15 (App Router) web application backed by Supabase (Postgres). It replaces a static HTML/CSS marketing site with a complete business management system — including a public marketing site, an admin dashboard, and role-gated portals for team members.</p>
+
+    <div class="card-grid">
+      <div class="kpi-card"><div class="kpi-label">Public Pages</div><div class="kpi-value">7</div><div class="kpi-sub">Home, Services, Blog, Contact, Products, Book, Join</div></div>
+      <div class="kpi-card"><div class="kpi-label">Admin Modules</div><div class="kpi-value">16</div><div class="kpi-sub">Projects, Clients, Sales, Invoices, Finance…</div></div>
+      <div class="kpi-card"><div class="kpi-label">Team Portals</div><div class="kpi-value">4</div><div class="kpi-sub">Subcontractor, Marketing, Finance, Support</div></div>
+      <div class="kpi-card"><div class="kpi-label">API Routes</div><div class="kpi-value">65+</div><div class="kpi-sub">All server-side, rate-limited, validated</div></div>
+      <div class="kpi-card"><div class="kpi-label">Cron Jobs</div><div class="kpi-value">7</div><div class="kpi-sub">DB keepalive, site health, reminders, cleanup</div></div>
+      <div class="kpi-card"><div class="kpi-label">Monthly Cost</div><div class="kpi-value">KES 0</div><div class="kpi-sub">Fully on free tiers at current scale</div></div>
+    </div>
+
+    <h3>What the platform covers</h3>
+    <ul>
+      <li><strong>Public site</strong> — Marketing, services, portfolio, blog, contact form, product showcase, booking page, Brixo chat widget</li>
+      <li><strong>Client management</strong> — Lead-to-active lifecycle, classification, contact history, ghost follow-up nudges</li>
+      <li><strong>Sales pipeline</strong> — Kanban from lead to won/lost, auto-project creation on win</li>
+      <li><strong>Project management</strong> — One-off and retainer projects, task assignment (internal + external subcontractors), document storage</li>
+      <li><strong>Invoicing &amp; payments</strong> — PDF invoices, HTML email delivery, payment recording, automatic income linkage</li>
+      <li><strong>Finance</strong> — Full P&amp;L, expense tracking, tax summaries, CSV/PDF export</li>
+      <li><strong>Team management</strong> — Role-gated portal logins, invite flow, external contractor tracking (no login required)</li>
+      <li><strong>Social media planning</strong> — Content calendar, approval workflow, media uploads</li>
+      <li><strong>Site monitoring</strong> — Passive ping + active health endpoint + WordPress integration</li>
+      <li><strong>Bookings</strong> — Public scheduling page, admin confirmation, 24h reminders</li>
+      <li><strong>Subscriptions</strong> — Business tool/domain renewal tracking, auto-alerts</li>
+      <li><strong>Chat (Brixo)</strong> — FAQ-powered bot + WhatsApp escalation, session transcripts in admin</li>
+      <li><strong>Audit trail</strong> — Every significant action logged to <code>activity_log</code>, paginated viewer in admin</li>
+    </ul>
+  </div>
+
+  <!-- S2: Architecture -->
+  <div class="section" id="s2">
+    <div class="section-header">
+      <div class="section-num">2</div>
+      <div class="section-meta">
+        <div class="section-tag">Technical</div>
+        <div class="section-title">Architecture &amp; Directory Structure</div>
+      </div>
+    </div>
+
+    <h3>Tech Stack</h3>
+    <table>
+      <tr><th>Layer</th><th>Technology</th><th>Purpose</th></tr>
+      <tr><td>Framework</td><td>Next.js 15 (App Router)</td><td>Full-stack React, SSR, ISR, API routes</td></tr>
+      <tr><td>Database</td><td>Supabase (Postgres)</td><td>All data, auth, storage</td></tr>
+      <tr><td>Auth</td><td>Supabase Auth</td><td>Admin login, team invite flow, JWT roles</td></tr>
+      <tr><td>UI</td><td>shadcn/ui + Tailwind CSS</td><td>Component library + utility styling</td></tr>
+      <tr><td>Email</td><td>Nodemailer + Gmail SMTP</td><td>All outbound emails</td></tr>
+      <tr><td>PDF</td><td>@react-pdf/renderer</td><td>Invoice and report PDF generation</td></tr>
+      <tr><td>Animations</td><td>Framer Motion</td><td>Public site scroll animations</td></tr>
+      <tr><td>Calendar</td><td>FullCalendar (free plugins)</td><td>Admin unified calendar view</td></tr>
+      <tr><td>Rate Limiting</td><td>rate-limiter-flexible</td><td>In-memory per-IP throttling on all API routes</td></tr>
+      <tr><td>Cron</td><td>cron-job.org (external)</td><td>Scheduled jobs — free, unlimited, 1-min minimum</td></tr>
+      <tr><td>Hosting</td><td>Vercel Hobby</td><td>Deployment, preview URLs, atomic deploys</td></tr>
+      <tr><td>Storage</td><td>Supabase Storage</td><td>Document uploads, social media images</td></tr>
+    </table>
+
+    <h3>Route Groups</h3>
+    <table>
+      <tr><th>Group</th><th>Path prefix</th><th>Auth</th><th>Description</th></tr>
+      <tr><td><code>(public)</code></td><td><code>/</code>, <code>/services</code>, <code>/blog</code>, <code>/contact</code>, <code>/products</code></td><td>None</td><td>Public marketing site — ISR cached, zero middleware</td></tr>
+      <tr><td><code>(admin)</code></td><td><code>/admin/*</code></td><td>Supabase session (admin)</td><td>Full business dashboard</td></tr>
+      <tr><td><code>(team)</code></td><td><code>/work</code>, <code>/team/*</code></td><td>Supabase session + <code>app_role</code> JWT claim</td><td>Role-scoped team portals</td></tr>
+      <tr><td><code>(booking)</code></td><td><code>/book</code></td><td>None</td><td>Public scheduling page</td></tr>
+      <tr><td>—</td><td><code>/join</code></td><td>None (token-gated)</td><td>Team invite acceptance</td></tr>
+    </table>
+
+    <h3>Data Access Rules</h3>
+    <div class="info-box">
+      <div class="info-title">Golden Rule</div>
+      The <strong>service_role Supabase key</strong> never leaves the server. All data reads/writes happen in API Route Handlers or Server Components. Client Components call <code>/api/*</code> routes — they never touch Supabase directly. Supabase RLS blocks everything from the anon key as a hard second line of defence.
+    </div>
+
+    <h3>Proxy / Middleware</h3>
+    <p><code>src/proxy.ts</code> intercepts all <code>/admin/*</code>, <code>/work/*</code>, and <code>/team/*</code> routes. It checks the Supabase session cookie and redirects unauthenticated requests to the appropriate login page. For team routes it also verifies the <code>app_metadata.app_role</code> JWT claim matches the expected role.</p>
+  </div>
+
+  <!-- S3: Admin Modules -->
+  <div class="section" id="s3">
+    <div class="section-header">
+      <div class="section-num">3</div>
+      <div class="section-meta">
+        <div class="section-tag">Features</div>
+        <div class="section-title">Admin Dashboard Modules</div>
+      </div>
+    </div>
+
+    <table>
+      <tr><th>Module</th><th>Route</th><th>Key Features</th></tr>
+      <tr><td><strong>Overview</strong></td><td><code>/admin</code></td><td>KPI cards, system health strip, team activity feed, recent contacts, quick actions</td></tr>
+      <tr><td><strong>Projects</strong></td><td><code>/admin/projects</code></td><td>One-off + retainer projects, status pipeline, per-project task board with assignees, document uploads, invoice links, rate history for retainers</td></tr>
+      <tr><td><strong>Clients</strong></td><td><code>/admin/clients</code></td><td>Lead → Active lifecycle, classification filter tabs, ghost follow-up nudges, per-client detail (projects, invoices, comms)</td></tr>
+      <tr><td><strong>Sales</strong></td><td><code>/admin/sales</code></td><td>Kanban pipeline (Lead→Won/Lost), pipeline value summary, win auto-creates project + reclassifies client</td></tr>
+      <tr><td><strong>Invoices</strong></td><td><code>/admin/invoices</code></td><td>Line-item creation, PDF generation, HTML email send, payment reminders, preview-before-send</td></tr>
+      <tr><td><strong>Payments</strong></td><td><code>/admin/payments</code></td><td>Record M-Pesa/bank/PayPal/cash, auto-marks invoice paid, sends confirmation receipt</td></tr>
+      <tr><td><strong>Finance</strong></td><td><code>/admin/finance</code></td><td>Income + Expenses + Documents tabs, P&amp;L report, tax summary, CSV + PDF export, withholding tax (WHT) support. Documents tab: upload and track eTIMS invoices, supplier invoices, client receipts, and expense receipts; filter by direction (income / expense); signed URL access to stored files.</td></tr>
+      <tr><td><strong>Team</strong></td><td><code>/admin/team</code></td><td>Invite (portal login) or add external contractors (no login), view tasks, payouts, permissions per member. <strong>Login as member</strong> — admin can generate a one-time session and open any team member's portal in a new tab for quick diagnosis (uses <code>verifyOtp</code> flow, no redirect URL whitelist required).</td></tr>
+      <tr><td><strong>Communications</strong></td><td><code>/admin/communications</code></td><td>Log calls, WhatsApp, meetings, emails; outbound email history; filter by client/type</td></tr>
+      <tr><td><strong>Social</strong></td><td><code>/admin/social</code></td><td>Content calendar, post drafts with media upload, approval workflow (pending → approved → posted)</td></tr>
+      <tr><td><strong>Calendar</strong></td><td><code>/admin/calendar</code></td><td>FullCalendar unified view — tasks, project milestones, bookings, subscription renewals, social posts</td></tr>
+      <tr><td><strong>Bookings</strong></td><td><code>/admin/bookings</code></td><td>Incoming booking list, confirm/decline, add meeting link, 24h reminder cron</td></tr>
+      <tr><td><strong>Subscriptions</strong></td><td><code>/admin/subscriptions</code></td><td>Business tool/domain renewals, auto-calendar events, 14-day renewal alerts</td></tr>
+      <tr><td><strong>Sites</strong></td><td><code>/admin/sites</code></td><td>Register sites (passive/active/WordPress), manual health check, SSL expiry alerts, WP update flags</td></tr>
+      <tr><td><strong>Products</strong></td><td><code>/admin/products</code></td><td>Manage licensable software products, trials, subscriptions, MRR summary</td></tr>
+      <tr><td><strong>Chat (Brixo)</strong></td><td><code>/admin/chat</code></td><td>FAQ manager, "Test Brixo" panel, session transcripts, escalation analytics</td></tr>
+      <tr><td><strong>Activity Log</strong></td><td><code>/admin/logs</code></td><td>Paginated audit trail (50/page), filter by category, expandable change diffs</td></tr>
+      <tr><td><strong>Announcements</strong></td><td><code>/admin/announcements</code></td><td>Push banners/offers to public site, schedule start/end dates, display location control</td></tr>
+      <tr><td><strong>Settings</strong></td><td><code>/admin/settings</code></td><td>Business name, contact details, logos, invoice payment details, social handles, integrations</td></tr>
+    </table>
+  </div>
+
+  <!-- S4: Team Portals -->
+  <div class="section" id="s4">
+    <div class="section-header">
+      <div class="section-num">4</div>
+      <div class="section-meta">
+        <div class="section-tag">Access Control</div>
+        <div class="section-title">Team Portals &amp; Role Access</div>
+      </div>
+    </div>
+
+    <h3>Invite Flow</h3>
+    <div class="timeline">
+      <div class="timeline-item"><div class="timeline-dot gold"></div><div class="timeline-label">Step 1</div><div class="timeline-content">Admin opens <strong>/admin/team</strong> → "Add Team Member"</div></div>
+      <div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-label">Step 2a — Portal member</div><div class="timeline-content">Selects "Portal Access" → fills name, email, role → system sends invite email with one-time link</div></div>
+      <div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-label">Step 2b — External contractor</div><div class="timeline-content">Selects "External Only" → fills name, optional email/phone, rate → record created with <code>user_id = null</code>, no email sent</div></div>
+      <div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-label">Step 3 (portal only)</div><div class="timeline-content">New member clicks link → <strong>/join?token=&amp;role=</strong> → sets password → redirected to their portal</div></div>
+      <div class="timeline-item"><div class="timeline-dot gold"></div><div class="timeline-label">Step 4</div><div class="timeline-content"><code>app_metadata.app_role</code> JWT claim set via Supabase DB trigger — controls portal access from this point forward</div></div>
+    </div>
+
+    <h3>Portal Permissions Matrix</h3>
+    <table>
+      <tr><th>Feature</th><th>Admin</th><th>Subcontractor</th><th>Marketing</th><th>Finance</th><th>Support</th></tr>
+      <tr><td>View own tasks</td><td>✓</td><td>✓</td><td>—</td><td>—</td><td>—</td></tr>
+      <tr><td>Update task status / upload deliverable</td><td>✓</td><td>✓</td><td>—</td><td>—</td><td>—</td></tr>
+      <tr><td>Add task to assigned project</td><td>✓</td><td>✓</td><td>—</td><td>—</td><td>—</td></tr>
+      <tr><td>Write progress notes</td><td>✓</td><td>✓</td><td>—</td><td>—</td><td>—</td></tr>
+      <tr><td>View / draft social posts</td><td>✓</td><td>—</td><td>✓</td><td>—</td><td>—</td></tr>
+      <tr><td>Approve social posts</td><td>✓</td><td>—</td><td>—</td><td>—</td><td>—</td></tr>
+      <tr><td>View income + expenses</td><td>✓</td><td>—</td><td>—</td><td>✓ (read)</td><td>—</td></tr>
+      <tr><td>Add expenses</td><td>✓</td><td>—</td><td>—</td><td>✓</td><td>—</td></tr>
+      <tr><td>Upload / view finance documents (eTIMS, receipts)</td><td>✓</td><td>—</td><td>—</td><td>✓</td><td>—</td></tr>
+      <tr><td>Create / send invoices</td><td>✓</td><td>—</td><td>—</td><td>✗ (blocked)</td><td>—</td></tr>
+      <tr><td>View clients + pipeline</td><td>✓</td><td>—</td><td>—</td><td>—</td><td>✓ (read)</td></tr>
+      <tr><td>Log communications</td><td>✓</td><td>—</td><td>—</td><td>—</td><td>✓</td></tr>
+      <tr><td>Export P&amp;L / tax report</td><td>✓</td><td>—</td><td>—</td><td>✓</td><td>—</td></tr>
+    </table>
+
+    <h3>Admin Impersonation — "Login as Member"</h3>
+    <p>From <strong>/admin/team</strong> the admin can open any portal-member's account in a new browser tab for quick diagnosis or testing.</p>
+    <div class="timeline">
+      <div class="timeline-item"><div class="timeline-dot gold"></div><div class="timeline-label">Step 1</div><div class="timeline-content">Admin clicks "Login as member" in the team member's row or detail panel</div></div>
+      <div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-label">Step 2</div><div class="timeline-content"><code>POST /api/admin/team/[id]/impersonate</code> — server calls Supabase Admin <code>generateLink({ type: 'magiclink', email })</code>, extracts the raw OTP token from the returned <code>action_link</code> URL, and returns <code>{ token, email, next }</code></div></div>
+      <div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-label">Step 3</div><div class="timeline-content">Browser opens <code>/auth/impersonate?token=…&amp;email=…&amp;next=/team/finance</code> in a new tab (outside the Supabase redirect URL whitelist — no dashboard config needed)</div></div>
+      <div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-label">Step 4</div><div class="timeline-content"><code>/auth/impersonate</code> calls <code>supabase.auth.verifyOtp({ email, token, type: 'magiclink' })</code> client-side — exchanges the token for a live session</div></div>
+      <div class="timeline-item"><div class="timeline-dot gold"></div><div class="timeline-label">Step 5</div><div class="timeline-content">On success, hard-navigates to <code>next</code> (e.g. <code>/team/finance</code>). The tab is now signed in as the team member. The admin's original session is unaffected in the original tab.</div></div>
+    </div>
+    <div class="note"><div class="note-title">Important</div>The impersonation token is single-use. The original admin session is NOT disturbed — this opens a separate session in the new tab only. The action is recorded in the Activity Log under entity type <code>team</code>, action <code>impersonated</code>.</div>
+
+    <h3>External Contractors (No Portal)</h3>
+    <p>External/outsourced subcontractors are added with the "External Only" toggle. They receive:</p>
+    <ul>
+      <li>A <code>team_members</code> record with <code>user_id = null</code> (no Supabase Auth account)</li>
+      <li>Full visibility in the admin — can be assigned tasks, have payouts recorded, have expenses logged</li>
+      <li>No portal access — they never log in; you track work on their behalf</li>
+    </ul>
+  </div>
+
+  <!-- S5: Projects & Collaboration -->
+  <div class="section" id="s5">
+    <div class="section-header">
+      <div class="section-num">5</div>
+      <div class="section-meta">
+        <div class="section-tag">Workflow</div>
+        <div class="section-title">Projects &amp; Collaboration</div>
+      </div>
+    </div>
+
+    <h3>Assigning a Subcontractor to a Project</h3>
+    <ol>
+      <li>Open <strong>/admin/projects</strong> → click a project to open the detail sheet</li>
+      <li>Scroll to the <strong>Tasks</strong> section → click <strong>Add Task</strong></li>
+      <li>Fill in title, priority, due date, and select a subcontractor in the <strong>Assign To</strong> dropdown</li>
+      <li>The dropdown lists all active subcontractors (internal with portal + external with no portal)</li>
+      <li>The task now appears in the subcontractor's <strong>/work</strong> portal (if they have portal access)</li>
+      <li>External contractors are assigned the same way — their tasks are visible in admin but they don't see a portal</li>
+    </ol>
+
+    <h3>Task Lifecycle</h3>
+    <div class="card">
+      <code>todo</code> → <code>in_progress</code> → <code>review</code> → <code>done</code><br />
+      <br />
+      <ul>
+        <li>Subcontractor can advance their own task status from their portal</li>
+        <li>Admin can advance any task status from the project detail sheet</li>
+        <li>Subcontractor can upload a deliverable URL at any status</li>
+        <li>Every status change and deliverable upload is logged to the activity log</li>
+        <li>Progress notes are created as a "done" task immediately — they appear in the task list for the project</li>
+      </ul>
+    </div>
+
+    <h3>Project Types</h3>
+    <table>
+      <tr><th>Type</th><th>How it works</th></tr>
+      <tr><td><strong>One-off</strong></td><td>Fixed scope. Status pipeline from Discovery → Live → Completed. One or more invoices, final delivery.</td></tr>
+      <tr><td><strong>Retainer</strong></td><td>Monthly engagement. Rate history tracked. Auto-drafts invoice each billing cycle. Shown as "Active retainer — ongoing" when status is Live.</td></tr>
+    </table>
+  </div>
+
+  <!-- S6: Database Schema -->
+  <div class="section" id="s6">
+    <div class="section-header">
+      <div class="section-num">6</div>
+      <div class="section-meta">
+        <div class="section-tag">Data</div>
+        <div class="section-title">Database Schema Reference</div>
+      </div>
+    </div>
+
+    <h3>Core Tables</h3>
+    <table>
+      <tr><th>Table</th><th>Purpose</th><th>Key Columns</th></tr>
+      <tr><td><code>contacts</code></td><td>Public form submissions</td><td>name, contact, service, message, status (new/read/replied/archived)</td></tr>
+      <tr><td><code>clients</code></td><td>All leads and clients</td><td>classification (lead/qualified/unqualified/ghost/active/past), source, last_contacted_at</td></tr>
+      <tr><td><code>projects</code></td><td>Client projects</td><td>status, type, is_retainer, budget, monthly_rate, start/end_date</td></tr>
+      <tr><td><code>sales</code></td><td>Sales pipeline entries</td><td>status (lead→won/lost), estimated_value, service</td></tr>
+      <tr><td><code>tasks</code></td><td>Project tasks</td><td>assigned_to → team_members.id (null = admin), status, priority, deliverable_url, completed_at</td></tr>
+      <tr><td><code>invoices</code></td><td>Client invoices</td><td>invoice_number (auto), items (jsonb), status (draft/sent/paid/overdue/cancelled), due_date</td></tr>
+      <tr><td><code>payments</code></td><td>Payment records</td><td>invoice_id, amount, method, reference, confirmation_sent</td></tr>
+      <tr><td><code>income_records</code></td><td>All income</td><td>source, amount, date, client_id, payment_id (link)</td></tr>
+      <tr><td><code>expenses</code></td><td>Business expenses</td><td>category (subcontractor/salary/team_payment/software/…), amount, tax_deductible, receipt_url</td></tr>
+      <tr><td><code>team_members</code></td><td>All collaborators</td><td>user_id (null = external), role, skill_tags, rate_type, default_rate</td></tr>
+      <tr><td><code>team_invites</code></td><td>Pending invites</td><td>email, role, token (single-use), expires_at, accepted</td></tr>
+      <tr><td><code>communications</code></td><td>Client comms log</td><td>type (email/whatsapp/call/meeting), direction (in/out), subject, body</td></tr>
+      <tr><td><code>social_posts</code></td><td>Content calendar</td><td>platforms[], status (draft/pending_approval/approved/posted), scheduled_at, media_urls[]</td></tr>
+      <tr><td><code>bookings</code></td><td>Meeting bookings</td><td>scheduled_at, purpose, status (pending/confirmed/cancelled/completed), meeting_link, reminder_sent</td></tr>
+      <tr><td><code>subscriptions</code></td><td>Business subscriptions</td><td>next_renewal_date, billing_cycle, provider, auto_renew</td></tr>
+      <tr><td><code>sites</code></td><td>Monitored sites</td><td>url, platform, status (up/down/degraded), last_checked, ssl_expiry, requires_update</td></tr>
+      <tr><td><code>system_alerts</code></td><td>Dashboard alerts</td><td>type, severity (info/warning/critical), acknowledged</td></tr>
+      <tr><td><code>activity_log</code></td><td>Audit trail</td><td>actor_id, actor_name, action, entity_type, entity_id, entity_label, changes (jsonb), notes</td></tr>
+      <tr><td><code>announcements</code></td><td>Public site banners</td><td>type, display_location[], active, starts_at, ends_at</td></tr>
+      <tr><td><code>site_settings</code></td><td>Runtime config</td><td>key–value pairs: business_name, email, phone, invoice payment details, logos, socials</td></tr>
+      <tr><td><code>chat_faqs</code></td><td>Brixo bot FAQ pairs</td><td>question, answer, keywords[], category, active</td></tr>
+      <tr><td><code>chat_sessions</code></td><td>Visitor chat sessions</td><td>visitor_id, messages (jsonb), escalated, escalation_type</td></tr>
+      <tr><td><code>products</code></td><td>Licensable software</td><td>slug (unique), features (jsonb), pricing_tiers (jsonb), status (draft/published)</td></tr>
+      <tr><td><code>product_trials</code></td><td>7-day free trials</td><td>product_id, requester_email, expires_at, status (active/expired/converted)</td></tr>
+      <tr><td><code>calendar_events</code></td><td>Unified calendar</td><td>type, start_at, entity_type, entity_id, repeat_rule</td></tr>
+      <tr><td><code>finance_documents</code></td><td>eTIMS invoices, supplier invoices, receipts</td><td>doc_type (etims_invoice/supplier_invoice/client_receipt/expense_receipt/other), direction (income/expense), party_name, invoice_number, amount, doc_date, storage_path, original_filename, size_bytes, linked_income_id, linked_expense_id, uploaded_by</td></tr>
+    </table>
+
+    <h3>Supabase Storage Buckets</h3>
+    <table>
+      <tr><th>Bucket</th><th>Visibility</th><th>Used for</th><th>Max file size</th></tr>
+      <tr><td><code>finance-docs</code></td><td>Private (signed URLs only)</td><td>Finance documents — eTIMS invoices, receipts, supplier invoices. Accessible by admin and finance team members.</td><td>15 MB</td></tr>
+      <tr><td><code>project-docs</code></td><td>Private (signed URLs only)</td><td>Project document uploads from admin project workspace</td><td>15 MB</td></tr>
+      <tr><td><code>social-media</code></td><td>Private (signed URLs only)</td><td>Social post images and media uploaded by marketing</td><td>10 MB</td></tr>
+      <tr><td><code>logos</code></td><td>Private (signed URLs only)</td><td>Brightex logo variants (dark/light) uploaded via settings</td><td>2 MB</td></tr>
+    </table>
+
+    <h3>finance_documents SQL</h3>
+    <pre><code>CREATE TABLE finance_documents (
+  id               uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  doc_type         text NOT NULL CHECK (doc_type IN ('etims_invoice','supplier_invoice','client_receipt','expense_receipt','other')),
+  direction        text NOT NULL CHECK (direction IN ('income','expense')),
+  party_name       text NOT NULL,
+  invoice_number   text,
+  amount           numeric,
+  currency         text DEFAULT 'KES',
+  doc_date         date NOT NULL,
+  storage_path     text NOT NULL,
+  original_filename text,
+  size_bytes       integer,
+  linked_income_id  uuid REFERENCES income_records(id) ON DELETE SET NULL,
+  linked_expense_id uuid REFERENCES expenses(id) ON DELETE SET NULL,
+  notes            text,
+  uploaded_by      uuid REFERENCES auth.users(id),
+  created_at       timestamptz DEFAULT now()
+);
+GRANT SELECT, INSERT, UPDATE, DELETE ON finance_documents TO service_role;</code></pre>
+
+    <div class="info-box">
+      <div class="info-title">Supabase Storage Setup</div>
+      Create a private bucket named <strong>finance-docs</strong> in your Supabase project (Storage → New bucket → Private). Files are accessed exclusively through 1-hour signed URLs generated server-side. The <code>finance-docs</code> bucket stores files under the path <code>{direction}/{uuid}.{ext}</code> (e.g. <code>income/abc123.pdf</code>).
+    </div>
+
+    <div class="note">
+      <div class="note-title">Supabase GRANT Note</div>
+      All new Supabase projects (May 2026+) require explicit <code>GRANT SELECT, INSERT, UPDATE, DELETE ON table_name TO service_role;</code> after each <code>CREATE TABLE</code>. Include these in all migration SQL files.
+    </div>
+  </div>
+
+  <!-- S7: API -->
+  <div class="section" id="s7">
+    <div class="section-header">
+      <div class="section-num">7</div>
+      <div class="section-meta">
+        <div class="section-tag">Backend</div>
+        <div class="section-title">API Endpoints Reference</div>
+      </div>
+    </div>
+
+    <h3>Public Endpoints</h3>
+    <table>
+      <tr><th>Method</th><th>Route</th><th>Purpose</th></tr>
+      <tr><td><span class="tag tag-blue">GET</span></td><td><code>/api/health</code></td><td>Public uptime ping — returns status + DB connectivity</td></tr>
+      <tr><td><span class="tag tag-green">POST</span></td><td><code>/api/contact</code></td><td>Contact form → DB + admin email + auto-reply</td></tr>
+      <tr><td><span class="tag tag-green">POST</span></td><td><code>/api/book</code></td><td>Public booking submission</td></tr>
+      <tr><td><span class="tag tag-green">POST</span></td><td><code>/api/chat</code></td><td>Brixo bot message → FAQ match response</td></tr>
+      <tr><td><span class="tag tag-green">POST</span></td><td><code>/api/join</code></td><td>Team invite completion (validates token + creates member)</td></tr>
+      <tr><td><span class="tag tag-green">POST</span></td><td><code>/api/products/[slug]/trial</code></td><td>7-day free trial request</td></tr>
+    </table>
+
+    <h3>Admin Endpoints (auth required)</h3>
+    <table>
+      <tr><th>Methods</th><th>Route</th><th>Purpose</th></tr>
+      <tr><td>GET, POST</td><td><code>/api/admin/projects</code></td><td>List / create projects</td></tr>
+      <tr><td>GET, PATCH, DELETE</td><td><code>/api/admin/projects/[id]</code></td><td>Project detail, update, delete</td></tr>
+      <tr><td>GET, POST, PATCH, DELETE</td><td><code>/api/admin/projects/[id]/tasks</code></td><td>Task management with assignees</td></tr>
+      <tr><td>GET, POST, DELETE</td><td><code>/api/admin/projects/[id]/documents</code></td><td>File uploads (Supabase Storage)</td></tr>
+      <tr><td>GET, POST, PATCH, DELETE</td><td><code>/api/admin/clients</code> / <code>[id]</code></td><td>Client directory CRUD</td></tr>
+      <tr><td>GET, POST, PATCH, DELETE</td><td><code>/api/admin/sales</code> / <code>[id]</code></td><td>Sales pipeline CRUD</td></tr>
+      <tr><td>GET, POST</td><td><code>/api/admin/invoices</code></td><td>Invoice list / create (team members blocked from write)</td></tr>
+      <tr><td>GET, PATCH, DELETE</td><td><code>/api/admin/invoices/[id]</code></td><td>Invoice detail (team members blocked from write)</td></tr>
+      <tr><td>POST</td><td><code>/api/admin/invoices/[id]/send</code></td><td>Send invoice email (team members blocked)</td></tr>
+      <tr><td>POST</td><td><code>/api/admin/invoices/[id]/reminder</code></td><td>Send payment reminder (team members blocked)</td></tr>
+      <tr><td>GET</td><td><code>/api/admin/invoices/[id]/pdf</code></td><td>Stream PDF bytes</td></tr>
+      <tr><td>GET, POST, PATCH</td><td><code>/api/admin/payments</code> / <code>[id]</code></td><td>Payment recording + confirmation email</td></tr>
+      <tr><td>GET, POST</td><td><code>/api/admin/finance</code></td><td>Income / expenses / summary</td></tr>
+      <tr><td>GET, POST</td><td><code>/api/admin/finance/documents</code></td><td>Finance document list (with signed URLs) / upload. Accepts: PDF, JPEG, PNG, WebP — max 15 MB. Also accessible to finance team members.</td></tr>
+      <tr><td>DELETE</td><td><code>/api/admin/finance/documents/[id]</code></td><td>Delete finance document (removes from Storage + DB). Also accessible to finance team members.</td></tr>
+      <tr><td>GET, POST</td><td><code>/api/admin/team</code></td><td>List all members / create external member</td></tr>
+      <tr><td>GET, PATCH, DELETE</td><td><code>/api/admin/team/[id]</code></td><td>Member detail / update / deactivate</td></tr>
+      <tr><td>GET, POST, DELETE</td><td><code>/api/admin/team/invite</code></td><td>List pending invites / send invite email / revoke</td></tr>
+      <tr><td>POST</td><td><code>/api/admin/team/[id]/impersonate</code></td><td>Generate a one-time OTP token for the team member's email. Returns <code>{ token, email, next }</code> for the <code>/auth/impersonate</code> verifyOtp flow.</td></tr>
+      <tr><td>GET, POST</td><td><code>/api/admin/communications</code> / <code>[id]</code></td><td>Communications log CRUD</td></tr>
+      <tr><td>GET, POST, PATCH, DELETE</td><td><code>/api/admin/social</code> / <code>[id]</code></td><td>Social post drafts + approval</td></tr>
+      <tr><td>GET, POST</td><td><code>/api/admin/sites</code></td><td>Monitored sites list / register</td></tr>
+      <tr><td>GET</td><td><code>/api/admin/sites/health</code></td><td>Trigger health check for all sites</td></tr>
+      <tr><td>GET, POST</td><td><code>/api/admin/bookings</code> / <code>[id]</code></td><td>Booking management</td></tr>
+      <tr><td>GET, POST</td><td><code>/api/admin/subscriptions</code> / <code>[id]</code></td><td>Subscription CRUD</td></tr>
+      <tr><td>GET, POST</td><td><code>/api/admin/calendar</code> / <code>[id]</code></td><td>Calendar events CRUD</td></tr>
+      <tr><td>GET, POST, DELETE</td><td><code>/api/admin/chat/faqs</code> / <code>[id]</code></td><td>Brixo FAQ management</td></tr>
+      <tr><td>GET</td><td><code>/api/admin/chat/sessions</code></td><td>Chat session transcripts</td></tr>
+      <tr><td>GET, POST, PATCH, DELETE</td><td><code>/api/admin/products</code> / <code>[id]</code></td><td>Product catalogue management</td></tr>
+      <tr><td>GET</td><td><code>/api/admin/activity-log</code></td><td>Paginated audit trail (50/page, filterable by category)</td></tr>
+      <tr><td>GET, POST</td><td><code>/api/admin/settings</code></td><td>Site settings read / save</td></tr>
+      <tr><td>POST</td><td><code>/api/admin/settings/logo</code></td><td>Logo upload to Supabase Storage</td></tr>
+      <tr><td>GET, POST</td><td><code>/api/admin/announcements</code> / <code>[id]</code></td><td>Public site announcements CRUD</td></tr>
+    </table>
+
+    <h3>Team Member Endpoints (role-gated)</h3>
+    <table>
+      <tr><th>Method</th><th>Route</th><th>Who</th><th>Purpose</th></tr>
+      <tr><td>GET, POST, PATCH</td><td><code>/api/team/tasks</code></td><td>Subcontractor</td><td>Own tasks, create task, update status/deliverable</td></tr>
+      <tr><td>GET, POST, PATCH, DELETE</td><td><code>/api/team/social</code> / <code>[id]</code></td><td>Marketing</td><td>Own draft posts</td></tr>
+      <tr><td>GET, POST</td><td><code>/api/team/finance</code></td><td>Finance</td><td>Income/expenses (read + add expenses)</td></tr>
+      <tr><td>GET</td><td><code>/api/team/calendar</code></td><td>All team roles</td><td>Role-filtered calendar events</td></tr>
+    </table>
+  </div>
+
+  <!-- S8: Activity Log -->
+  <div class="section" id="s8">
+    <div class="section-header">
+      <div class="section-num">8</div>
+      <div class="section-meta">
+        <div class="section-tag">Audit</div>
+        <div class="section-title">Activity Log — What Gets Recorded</div>
+      </div>
+    </div>
+
+    <p>Every significant action is written to the <code>activity_log</code> table by <code>src/lib/audit.ts</code>. The log is viewable at <strong>/admin/logs</strong> — paginated (50 per page), filterable by category.</p>
+
+    <h3>Logged Actions</h3>
+    <table>
+      <tr><th>Action</th><th>Trigger</th><th>Entity Type</th><th>Who</th></tr>
+      <tr><td><code>created</code></td><td>New project, client, team member, invoice, payment, site, social post, etc.</td><td>Varies</td><td>Admin</td></tr>
+      <tr><td><code>updated</code></td><td>Any PATCH/update that modifies a record (with field-level change diff in <code>changes</code> column)</td><td>Varies</td><td>Admin</td></tr>
+      <tr><td><code>deleted</code></td><td>Any DELETE action</td><td>Varies</td><td>Admin</td></tr>
+      <tr><td><code>sent</code></td><td>Invoice email sent to client</td><td>invoice</td><td>Admin</td></tr>
+      <tr><td><code>paid</code></td><td>Payment recorded and invoice marked paid</td><td>payment / invoice</td><td>Admin</td></tr>
+      <tr><td><code>invited</code></td><td>Team member invite email sent</td><td>team</td><td>Admin</td></tr>
+      <tr><td><code>resent_invite</code></td><td>Invite email resent to existing user</td><td>team</td><td>Admin</td></tr>
+      <tr><td><code>revoked_invite</code></td><td>Pending invite deleted before acceptance</td><td>team</td><td>Admin</td></tr>
+      <tr><td><code>update_failed</code></td><td>A project/invoice update attempted and failed at DB level</td><td>invoice / project</td><td>Admin</td></tr>
+      <tr><td><code>added_expense</code></td><td>New expense added (admin or finance portal)</td><td>expense</td><td>Admin / Finance</td></tr>
+      <tr><td><code>created_task</code></td><td>New task created (admin project workspace or subcontractor portal)</td><td>task</td><td>Admin / Subcontractor</td></tr>
+      <tr><td><code>updated_task_status</code></td><td>Task status changed (subcontractor portal)</td><td>task</td><td>Subcontractor</td></tr>
+      <tr><td><code>submitted_deliverable</code></td><td>Subcontractor uploaded a deliverable URL</td><td>task</td><td>Subcontractor</td></tr>
+      <tr><td><code>logged_comm</code></td><td>Communication entry added (admin or support portal)</td><td>communication</td><td>Admin / Support</td></tr>
+      <tr><td><code>uploaded_document</code></td><td>Finance document uploaded (eTIMS invoice, receipt, etc.)</td><td>finance_document</td><td>Admin / Finance</td></tr>
+      <tr><td><code>impersonated</code></td><td>Admin opened a team member's portal via one-time login token</td><td>team</td><td>Admin</td></tr>
+    </table>
+
+    <h3>Activity Log Structure</h3>
+    <pre><code>activity_log {
+  id          uuid
+  actor_id    uuid           -- auth.users.id of the person who did it
+  actor_name  text           -- email or display name for readability
+  action      text           -- one of the values above
+  entity_type text           -- 'project' | 'invoice' | 'task' | 'team' | etc.
+  entity_id   uuid           -- ID of the affected record
+  entity_label text          -- human-readable name (invoice number, task title, etc.)
+  changes     jsonb          -- { field: { from: old_value, to: new_value } }
+  notes       text           -- freeform context (e.g. "Status → done")
+  created_at  timestamptz
+}</code></pre>
+
+    <h3>Log Viewer Features</h3>
+    <ul>
+      <li>Paginated at 50 entries per page — no endless scrolling</li>
+      <li>Category filter tabs: All, Invoices, Payments, Projects, Clients, Subscriptions, Settings, Team, Sites, Social, Tasks, Expenses, Comms</li>
+      <li>Click any row with a <code>notes</code> or <code>changes</code> field to expand it and see the full diff</li>
+      <li>Refresh button top-right for live updates</li>
+    </ul>
+  </div>
+
+  <!-- S9: Settings & Env -->
+  <div class="section" id="s9">
+    <div class="section-header">
+      <div class="section-num">9</div>
+      <div class="section-meta">
+        <div class="section-tag">Configuration</div>
+        <div class="section-title">Settings &amp; Environment Variables</div>
+      </div>
+    </div>
+
+    <h3>Runtime Settings (Editable via /admin/settings)</h3>
+    <p>These are stored in the <code>site_settings</code> database table and take effect immediately without redeployment:</p>
+    <table>
+      <tr><th>Setting</th><th>What it controls</th></tr>
+      <tr><td>Business Name</td><td>Appears in email templates, PDFs, public nav, chat widget greeting</td></tr>
+      <tr><td>Tagline</td><td>Used in SEO metadata and branded materials</td></tr>
+      <tr><td>Address</td><td>Invoice footer, contact page</td></tr>
+      <tr><td>Email</td><td>Admin notification recipient, reply-to address on all emails</td></tr>
+      <tr><td>Phone</td><td>Invoice footer, reminder emails, Brixo WhatsApp fallback</td></tr>
+      <tr><td>WhatsApp number</td><td>wa.me link in Brixo widget, reminder emails, contact page</td></tr>
+      <tr><td>Booking URL</td><td>CTA links across the site</td></tr>
+      <tr><td>Social handles</td><td>Footer links, social post planning references</td></tr>
+      <tr><td>Logo (dark + light)</td><td>Public nav, footer, PDF invoices, finance reports — placement-configurable</td></tr>
+      <tr><td>M-Pesa / Till / Bank / PayPal details</td><td>Invoice payment instructions section</td></tr>
+      <tr><td>Invoice footer note</td><td>Custom message on all invoices</td></tr>
+      <tr><td>Google Analytics Tag</td><td>Injected into root layout</td></tr>
+    </table>
+
+    <h3>Environment Variables (Vercel Dashboard)</h3>
+    <p>These must be set in Vercel → Project → Settings → Environment Variables. They do NOT change at runtime:</p>
+    <table>
+      <tr><th>Variable</th><th>Purpose</th><th>Server only?</th></tr>
+      <tr><td><code>NEXT_PUBLIC_SUPABASE_URL</code></td><td>Supabase project URL</td><td>No</td></tr>
+      <tr><td><code>NEXT_PUBLIC_SUPABASE_ANON_KEY</code></td><td>Supabase anon key — auth session only, no data access</td><td>No</td></tr>
+      <tr><td><code>SUPABASE_SERVICE_ROLE_KEY</code></td><td>Full DB access — never expose to browser</td><td>Yes ✓</td></tr>
+      <tr><td><code>SMTP_HOST</code>, <code>SMTP_PORT</code>, <code>SMTP_USER</code>, <code>SMTP_PASS</code></td><td>Gmail SMTP credentials for Nodemailer</td><td>Yes ✓</td></tr>
+      <tr><td><code>ADMIN_EMAIL</code></td><td>Notification recipient fallback (overridden by settings table)</td><td>Yes ✓</td></tr>
+      <tr><td><code>ADMIN_PHONE</code></td><td>Phone fallback for emails</td><td>Yes ✓</td></tr>
+      <tr><td><code>CRON_SECRET</code></td><td>Auth header for all <code>/api/cron/*</code> routes</td><td>Yes ✓</td></tr>
+      <tr><td><code>NEXT_PUBLIC_SITE_URL</code></td><td>Canonical URL for invite links, OG tags, canonical metadata</td><td>No</td></tr>
+      <tr><td><code>NEXT_PUBLIC_SITE_NAME</code></td><td>Site name fallback (overridden by settings table)</td><td>No</td></tr>
+      <tr><td><code>ADMIN_MAINTENANCE</code></td><td>Set to <code>true</code> to lock admin routes — public site unaffected</td><td>Yes ✓</td></tr>
+      <tr><td><code>BRIGHTEX_HEALTH_TOKEN</code></td><td>Shared secret for the site's own <code>/api/health</code> detailed response</td><td>Yes ✓</td></tr>
+    </table>
+
+    <div class="note">
+      <div class="note-title">Things That Are NOT Hardcoded</div>
+      All business contact details, payment instructions, logos, and social handles are stored in the database (<code>site_settings</code> table) and editable from <strong>/admin/settings</strong> without touching code or redeploying.
+    </div>
+  </div>
+
+  <!-- S10: Cron Jobs -->
+  <div class="section" id="s10">
+    <div class="section-header">
+      <div class="section-num">10</div>
+      <div class="section-meta">
+        <div class="section-tag">Automation</div>
+        <div class="section-title">Cron Jobs Reference</div>
+      </div>
+    </div>
+
+    <div class="info-box">
+      <div class="info-title">How Crons Work</div>
+      We do NOT use Vercel's built-in cron (limited to 2 jobs on Hobby, daily minimum). Instead, <strong>cron-job.org</strong> (free, unlimited jobs, 1-minute minimum) sends a GET request to each API route on schedule. Every cron route verifies <code>x-cron-secret: CRON_SECRET</code> header — requests without it return 401.
+    </div>
+
+    <h3>Setup on cron-job.org</h3>
+    <ol>
+      <li>Create a free account at <strong>cron-job.org</strong></li>
+      <li>For each job below: click "Create Cronjob" → set URL, schedule, and add the custom request header <code>x-cron-secret: &lt;your CRON_SECRET value&gt;</code></li>
+      <li>Enable email alerts on 3 consecutive failures for all jobs</li>
+      <li>Test each job manually by clicking "Execute now" — confirm it returns 200 with a JSON body</li>
+    </ol>
+
+    <h3>Job Schedule</h3>
+    <table>
+      <tr><th>Route</th><th>Schedule</th><th>Purpose</th></tr>
+      <tr><td><code>/api/health</code></td><td>Every 5 minutes</td><td>Public uptime check — no secret needed. cron-job.org alerts on 3 consecutive non-200 responses.</td></tr>
+      <tr><td><code>/api/cron/db-keepalive</code></td><td>Every 12 hours</td><td>Prevents Supabase free tier DB pause (pauses after 7 days inactivity). Runs a lightweight <code>SELECT 1</code>.</td></tr>
+      <tr><td><code>/api/cron/site-health</code></td><td>Every 6 hours</td><td>Pings all registered sites, records status/response time/SSL expiry, checks WP updates, generates system_alerts.</td></tr>
+      <tr><td><code>/api/cron/payment-reminders</code></td><td>Daily — 08:00 EAT</td><td>Emails overdue invoice reminders to clients. Skips already-reminded invoices. Logs to activity_log.</td></tr>
+      <tr><td><code>/api/cron/booking-reminders</code></td><td>Daily — 07:00 EAT</td><td>Sends 24h-ahead reminder emails for confirmed bookings. Sets <code>reminder_sent = true</code> to prevent duplicates.</td></tr>
+      <tr><td><code>/api/cron/subscription-alerts</code></td><td>Daily — 09:00 EAT</td><td>Flags subscriptions renewing within 14 days as system_alerts (warning) or past renewal date (critical).</td></tr>
+      <tr><td><code>/api/cron/trial-expiry</code></td><td>Daily — 10:00 EAT</td><td>Marks product trials past 7 days as expired, sends "subscribe to continue" email to each trial requester.</td></tr>
+      <tr><td><code>/api/cron/cleanup</code></td><td>Sundays — 02:00 EAT</td><td>Archives old replied contacts (&gt;90 days), removes stale draft invoices (&gt;60 days), prunes acknowledged alerts.</td></tr>
+    </table>
+
+    <div class="note">
+      <div class="note-title">Critical: DB Keepalive Must Always Run</div>
+      If the db-keepalive cron stops firing for &gt;7 days, the Supabase free tier database will pause. Recovery requires logging into the Supabase dashboard and manually unpausing. Set up the cron-job.org email alert to catch this before it happens.
+    </div>
+  </div>
+
+  <!-- S11: Migration Guide -->
+  <div class="section" id="s11">
+    <div class="section-header">
+      <div class="section-num">11</div>
+      <div class="section-meta">
+        <div class="section-tag">Deployment</div>
+        <div class="section-title">Netlify → Vercel Migration Guide</div>
+      </div>
+    </div>
+
+    <div class="info-box">
+      <div class="info-title">Expected Downtime</div>
+      Zero visible downtime when done in the correct order. Vercel builds and serves the new version before DNS is switched. DNS propagation varies (15 min to 48h) — during this period some visitors may still hit the old Netlify site, which is fine since it remains live until you remove the domain there.
+    </div>
+
+    <h3>Phase 1 — Deploy to Vercel (before touching DNS)</h3>
+    <ul class="checklist">
+      <li><span class="check">1</span> Create a Vercel account at vercel.com and import the GitHub repository</li>
+      <li><span class="check">2</span> Set the <strong>Root Directory</strong> to <code>brightex-website</code> (or wherever <code>package.json</code> lives)</li>
+      <li><span class="check">3</span> Set <strong>Framework Preset</strong> to Next.js</li>
+      <li><span class="check">4</span> Add all environment variables in Vercel → Project → Settings → Environment Variables (copy from your local <code>.env.local</code>)</li>
+      <li><span class="check">5</span> Deploy — Vercel will give you a preview URL like <code>brightex-website.vercel.app</code></li>
+      <li><span class="check">6</span> Visit the preview URL and verify: public pages load, admin login works, contact form saves, <code>/api/health</code> returns <code>"db": "connected"</code></li>
+      <li><span class="check">7</span> Send a test email through the contact form and confirm it arrives</li>
+    </ul>
+
+    <h3>Phase 2 — Add the Custom Domain to Vercel</h3>
+    <ul class="checklist">
+      <li><span class="check">1</span> In Vercel → Project → Settings → <strong>Domains</strong></li>
+      <li><span class="check">2</span> Add <code>www.brightexsolutions.co.ke</code> → Vercel will show you the required DNS records</li>
+      <li><span class="check">3</span> Also add <code>brightexsolutions.co.ke</code> (apex/root) — Vercel will redirect it to www automatically</li>
+      <li><span class="check">4</span> Note the records Vercel gives you (will be A records or CNAME depending on your registrar)</li>
+    </ul>
+
+    <h3>Phase 3 — Update DNS at Your Registrar</h3>
+    <ul class="checklist">
+      <li><span class="check">1</span> Log into your domain registrar (wherever you registered <code>brightexsolutions.co.ke</code>)</li>
+      <li><span class="check">2</span> For <strong>www</strong>: change the CNAME record to point to <code>cname.vercel-dns.com</code></li>
+      <li><span class="check">3</span> For the apex (<code>@</code> / root): change the A record to Vercel's IP (shown in your Vercel domain settings, typically <code>76.76.19.61</code>)</li>
+      <li><span class="check">4</span> Save DNS changes — propagation takes 15 min to 48h depending on registrar TTL</li>
+      <li><span class="check">5</span> You can monitor propagation at <strong>dnschecker.org</strong></li>
+    </ul>
+
+    <h3>Phase 4 — Remove Domain from Netlify</h3>
+    <ul class="checklist">
+      <li><span class="check">1</span> Wait until DNS has propagated and <code>www.brightexsolutions.co.ke</code> resolves to Vercel (confirmed by visiting the site — Vercel SSL cert will show)</li>
+      <li><span class="check">2</span> In Netlify → Site → Domain management → <strong>Remove custom domain</strong></li>
+      <li><span class="check">3</span> Netlify site itself can remain (free tier, no cost) — just the domain is no longer pointing to it</li>
+      <li><span class="check">4</span> Vercel auto-provisions the SSL certificate for your domain — confirm HTTPS shows the padlock with no warning</li>
+    </ul>
+
+    <h3>Phase 5 — Setup cron-job.org</h3>
+    <ul class="checklist">
+      <li><span class="check">1</span> Visit <strong>cron-job.org</strong> and create a free account</li>
+      <li><span class="check">2</span> Create 8 cronjobs (see Section 10 for schedules and URLs)</li>
+      <li><span class="check">3</span> For each job, add custom header: <code>x-cron-secret</code> = your <code>CRON_SECRET</code> env var value</li>
+      <li><span class="check">4</span> Enable email failure notifications (Settings → Notifications)</li>
+      <li><span class="check">5</span> Click "Execute now" on the <code>db-keepalive</code> job first — confirm 200 response</li>
+      <li><span class="check">6</span> Execute all other jobs manually once to verify they all return 200</li>
+    </ul>
+
+    <h3>Post-Migration Verification Checklist</h3>
+    <ul class="checklist">
+      <li><span class="check">✓</span> <code>https://www.brightexsolutions.co.ke</code> loads over HTTPS with valid cert</li>
+      <li><span class="check">✓</span> <code>/api/health</code> returns <code>{"status":"ok","db":"connected"}</code></li>
+      <li><span class="check">✓</span> Contact form submission saves to Supabase and email arrives</li>
+      <li><span class="check">✓</span> Admin login at <code>/admin/login</code> works</li>
+      <li><span class="check">✓</span> Team member can log into their portal</li>
+      <li><span class="check">✓</span> <code>/book</code> shows available slots and accepts a booking</li>
+      <li><span class="check">✓</span> All 8 cron jobs execute successfully (check cron-job.org history)</li>
+      <li><span class="check">✓</span> Google Search Console — submit new sitemap at <code>/sitemap.xml</code></li>
+      <li><span class="check">✓</span> Monitor error logs in Vercel → Project → Functions for 24h</li>
+    </ul>
+  </div>
+
+  <!-- S12: Security -->
+  <div class="section" id="s12">
+    <div class="section-header">
+      <div class="section-num">12</div>
+      <div class="section-meta">
+        <div class="section-tag">Security</div>
+        <div class="section-title">Security Architecture</div>
+      </div>
+    </div>
+
+    <h3>Defence Layers</h3>
+    <table>
+      <tr><th>Layer</th><th>Mechanism</th><th>Applied to</th></tr>
+      <tr><td>1 — Validation</td><td>Zod schema on every API route input. Bad payload → 400, never reaches DB.</td><td>All API routes</td></tr>
+      <tr><td>2 — Rate Limiting</td><td><code>rate-limiter-flexible</code> in-memory, per IP. Returns 429 when exceeded.</td><td>All API routes (public: 5–10/min, admin: 120/min)</td></tr>
+      <tr><td>3 — Auth (middleware)</td><td>Proxy checks Supabase session cookie. No session → redirect to login.</td><td><code>/admin/*</code>, <code>/work/*</code>, <code>/team/*</code></td></tr>
+      <tr><td>4 — Auth (route handler)</td><td>Each API route independently calls <code>auth.getUser()</code>. Middleware bypass doesn't help.</td><td>All <code>/api/admin/*</code>, <code>/api/team/*</code></td></tr>
+      <tr><td>5 — Role guard</td><td><code>forbidTeamMember()</code> blocks finance/marketing/support/subcontractor from admin write operations (invoices, etc.)</td><td>Invoice create/send/delete, project admin writes</td></tr>
+      <tr><td>6 — Cron secret</td><td><code>x-cron-secret</code> header verified in all cron routes. Requests without it → 401.</td><td>All <code>/api/cron/*</code></td></tr>
+      <tr><td>7 — File uploads</td><td>MIME type whitelist, 5MB max, UUID-based filenames (no path traversal). Signed URLs for access.</td><td>Document + media uploads</td></tr>
+      <tr><td>8 — HTTP headers</td><td>X-Frame-Options DENY, X-Content-Type-Options, CSP, HSTS, Permissions-Policy</td><td>All responses (next.config.ts)</td></tr>
+      <tr><td>9 — Supabase RLS</td><td>Anon key has no permissions on any business table. Even if code breaks, DB access is blocked.</td><td>All tables</td></tr>
+      <tr><td>10 — Email escaping</td><td>User content in emails uses JSX templates (auto-escaped) — no raw string interpolation.</td><td>All Nodemailer sends</td></tr>
+    </table>
+  </div>
+
+  <!-- S13: Free Tier -->
+  <div class="section" id="s13">
+    <div class="section-header">
+      <div class="section-num">13</div>
+      <div class="section-meta">
+        <div class="section-tag">Infrastructure</div>
+        <div class="section-title">Free Tier Limits &amp; Scale Triggers</div>
+      </div>
+    </div>
+
+    <table>
+      <tr><th>Service</th><th>Free Limit</th><th>Scale Trigger</th><th>Paid Tier</th></tr>
+      <tr><td>Supabase</td><td>500MB DB · 1GB storage · 5GB bandwidth/mo · 2 projects</td><td>DB &gt; 500MB or bandwidth &gt; 5GB/mo</td><td>$25/mo (Pro) — 8GB DB, 250GB bandwidth, daily backups</td></tr>
+      <tr><td>Vercel</td><td>100GB bandwidth/mo · 100GB-hrs serverless · 1 build at a time</td><td>Consistent commercial traffic or team seats needed</td><td>$20/mo (Pro) — analytics, 12 cron jobs built-in, team members</td></tr>
+      <tr><td>Gmail SMTP</td><td>~500 emails/day via App Password</td><td>Getting "daily sending limit" bounce-backs</td><td>Switch to Resend (free: 3K/mo) or Brevo (free: 300/day) — config change only</td></tr>
+      <tr><td>cron-job.org</td><td>Unlimited jobs · 1-min minimum</td><td>Never — fully free</td><td>N/A</td></tr>
+      <tr><td>FullCalendar</td><td>MIT core plugins (daygrid, timegrid, list, interaction)</td><td>Only if resource scheduling needed</td><td>$699/yr — premium resource views</td></tr>
+      <tr><td>Supabase Storage</td><td>1GB included</td><td>Documents + social media images exceed 1GB</td><td>Included in Supabase Pro</td></tr>
+    </table>
+
+    <div class="card">
+      <strong>Current monthly cost: KES 0</strong><br />
+      Estimated cost at full growth stage (all services upgraded): ~KES 8,450/month (Supabase Pro + Vercel Pro + Resend)
+    </div>
+  </div>
+
+  <!-- S14: Roadmap -->
+  <div class="section" id="s14">
+    <div class="section-header">
+      <div class="section-num">14</div>
+      <div class="section-meta">
+        <div class="section-tag">Future</div>
+        <div class="section-title">Future Roadmap — Post-Launch Opportunities</div>
+      </div>
+    </div>
+
+    <p>These are ideas to pursue after the platform is stable in production. They are organised by impact and effort.</p>
+
+    <h3>High Impact, Low Effort</h3>
+    <ul>
+      <li><strong>Client portal</strong> — Let clients log in to view their project status, invoices, and download receipts. Same pattern as team portals — new role <code>client</code> with read-only access to their own data.</li>
+      <li><strong>WhatsApp Business API integration</strong> — Replace the wa.me link with actual WhatsApp message delivery for payment reminders and booking confirmations. Meta Business API + Twilio or 360dialog (both have free tiers for low volume).</li>
+      <li><strong>Mpesa Daraja integration</strong> — Receive M-Pesa STK push payments directly from invoice links. Auto-marks invoice paid and records payment. Daraja API is free (Safaricom paybill/till required).</li>
+      <li><strong>Email auto-replies for enquiries</strong> — When a contact form submission comes in, Brixo can draft a personalised reply based on the service enquired about, for Godwin to review and send with one click.</li>
+    </ul>
+
+    <h3>Medium Impact, Medium Effort</h3>
+    <ul>
+      <li><strong>Proposal builder</strong> — Generate PDF proposals from a template, pre-filled with client name, service, scope, and pricing. Attach to the sales pipeline and send directly from the admin.</li>
+      <li><strong>Time tracking</strong> — Allow subcontractors to log hours per task. Auto-calculate payout amounts for hourly-rate contractors. Integrates with the existing task and payout tables.</li>
+      <li><strong>Recurring invoice automation</strong> — Retainer invoices are already drafted monthly — automate the send (Godwin still approves, but clicks once instead of four times).</li>
+      <li><strong>Product subscription billing</strong> — Automated renewal reminders + payment link for product subscribers. Currently reminders are manual.</li>
+      <li><strong>Brixo AI upgrade</strong> — Replace keyword FAQ matching with an LLM-based response (Claude API) that answers naturally. The current session storage and escalation flow remains the same — only the matching logic changes.</li>
+      <li><strong>Google Calendar sync</strong> — Sync admin calendar events to Google Calendar via Google Calendar API. Two-way or one-way. Free API quota for personal use.</li>
+    </ul>
+
+    <h3>High Effort, High Long-term Value</h3>
+    <ul>
+      <li><strong>Multi-tenant SaaS</strong> — The platform architecture (Next.js + Supabase + role-based access) is a solid foundation for a productised version sold to other agencies. Each agency gets their own Supabase project (or a schema-per-tenant approach).</li>
+      <li><strong>Mobile app (React Native)</strong> — A lightweight companion app for Godwin: push notifications for new bookings, quick invoice approval, task status updates. Expo + Supabase is a natural stack extension.</li>
+      <li><strong>Analytics dashboard</strong> — Business intelligence layer on top of existing data: revenue trends, client acquisition sources, project profitability, team productivity metrics. Recharts is already installed.</li>
+      <li><strong>Automated social media publishing</strong> — Replace the current "mark as posted manually" flow with actual API publishing to Instagram, Facebook, LinkedIn via their respective APIs. Requires business account verification on each platform.</li>
+      <li><strong>Contract management</strong> — Digital contract templates, e-signature via Docusign or PandaDoc API (both have free tiers), auto-linkage to projects and clients.</li>
+      <li><strong>Supplier/vendor management</strong> — Track recurring vendors (hosting providers, freelancers, tool subscriptions) beyond the current expense categories. Purchase orders, vendor contacts, payment history per vendor.</li>
+    </ul>
+
+    <h3>Infrastructure Upgrades to Watch For</h3>
+    <ul>
+      <li>When Gmail hitting daily limits → switch to <strong>Resend</strong> (3K free emails/month, Nodemailer-compatible, change 3 config lines)</li>
+      <li>When Supabase DB approaches 400MB → audit large tables, add indexes, consider archiving old activity_log entries</li>
+      <li>When deploying across multiple regions → replace in-memory rate limiter with <strong>Upstash Redis</strong> (10K commands/day free) for shared rate limit state</li>
+      <li>When Vercel bandwidth approaches 80GB/month → upgrade to Pro for compliance + team features</li>
+    </ul>
+  </div>
+
+  <hr />
+
+  <!-- About box -->
+  <div class="about-box">
+    <div>
+      <div class="about-name">Brightex Solutions</div>
+      <div class="about-desc">Technology &amp; Business Consulting. We design, build, and support digital systems for modern businesses across East Africa.</div>
+    </div>
+    <div>
+      <div class="about-detail"><strong>Email:</strong> info.brightexsolutions@gmail.com</div>
+      <div class="about-detail"><strong>Phone:</strong> +254 741 980 127</div>
+      <div class="about-detail"><strong>WhatsApp:</strong> wa.me/254741980127</div>
+      <div class="about-detail"><strong>Location:</strong> Nairobi, Kenya</div>
+      <div class="about-detail"><strong>Web:</strong> www.brightexsolutions.co.ke</div>
+    </div>
+  </div>
+</div>
+
+<div class="doc-footer">
+  <strong>Brightex Solutions</strong> — Internal System Documentation · Confidential · May 2026 · Not for public distribution
+</div>
+
+</body>
+</html>

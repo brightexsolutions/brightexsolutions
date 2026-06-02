@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, createAdminClient } from "@/lib/supabase/server";
 import { verifyCronSecret } from "@/lib/cron-auth";
 
 export async function GET(request: NextRequest) {
@@ -10,7 +10,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ status: "skipped", reason: "Supabase not configured" });
   }
 
-  const supabase = await createClient();
+  const supabase = createAdminClient();
   const stats: Record<string, number> = {};
 
   // Archive old replied contacts (> 90 days)

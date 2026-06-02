@@ -1,4 +1,8 @@
 import nodemailer from "nodemailer";
+import {
+  SITE_NAME, SITE_URL,
+  BUSINESS_EMAIL, BUSINESS_PHONE, BUSINESS_WHATSAPP,
+} from "@/lib/constants";
 
 export const transporter = nodemailer.createTransport({
   host: process.env.SMTP_HOST ?? "smtp.gmail.com",
@@ -10,8 +14,8 @@ export const transporter = nodemailer.createTransport({
   },
 });
 
-export const ADMIN_EMAIL = process.env.ADMIN_EMAIL!;
-export const ADMIN_PHONE = process.env.ADMIN_PHONE!;
-export const ADMIN_WHATSAPP = process.env.ADMIN_WHATSAPP!;
-export const SITE_NAME = "Brightex Solutions";
-export const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL!;
+// Re-export for backward-compat with existing API routes
+export const ADMIN_EMAIL = BUSINESS_EMAIL;
+export const ADMIN_PHONE = BUSINESS_PHONE;
+export const ADMIN_WHATSAPP = BUSINESS_WHATSAPP;
+export { SITE_NAME, SITE_URL };

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, createAdminClient } from "@/lib/supabase/server";
 import { rateLimit } from "@/lib/rate-limit";
 
 const PostSchema = z.object({
@@ -17,8 +17,8 @@ export async function GET(request: NextRequest) {
   const limited = await rateLimit(request, "admin");
   if (limited) return limited;
 
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const { data: { user } } = await (await createClient()).auth.getUser();
+  const supabase = createAdminClient();
   if (!user) return NextResponse.json({ error: "Unauthorised" }, { status: 401 });
 
   const { searchParams } = new URL(request.url);
@@ -27,6 +27,7 @@ export async function GET(request: NextRequest) {
   let query = supabase
     .from("social_posts")
     .select("*")
+    .is("deleted_at", null)
     .order("scheduled_at", { ascending: false, nullsFirst: false });
 
   if (status && status !== "all") query = query.eq("status", status);
@@ -41,8 +42,8 @@ export async function POST(request: NextRequest) {
   const limited = await rateLimit(request, "admin");
   if (limited) return limited;
 
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const { data: { user } } = await (await createClient()).auth.getUser();
+  const supabase = createAdminClient();
   if (!user) return NextResponse.json({ error: "Unauthorised" }, { status: 401 });
 
   const body = await request.json().catch(() => ({}));

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, createAdminClient } from "@/lib/supabase/server";
 import { rateLimit } from "@/lib/rate-limit";
 
 const ProductSchema = z.object({
@@ -32,8 +32,8 @@ export async function GET(request: NextRequest) {
   const limited = await rateLimit(request, "admin");
   if (limited) return limited;
 
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const { data: { user } } = await (await createClient()).auth.getUser();
+  const supabase = createAdminClient();
   if (!user) return NextResponse.json({ error: "Unauthorised" }, { status: 401 });
 
   const { searchParams } = new URL(request.url);
@@ -59,7 +59,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ data });
   }
 
-  let q = supabase.from("products").select("*").order("created_at", { ascending: false });
+  let q = supabase.from("products").select("*").is("deleted_at", null).order("created_at", { ascending: false });
   if (status && status !== "all") q = q.eq("status", status);
 
   const { data, error } = await q;
@@ -71,8 +71,8 @@ export async function POST(request: NextRequest) {
   const limited = await rateLimit(request, "admin");
   if (limited) return limited;
 
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const { data: { user } } = await (await createClient()).auth.getUser();
+  const supabase = createAdminClient();
   if (!user) return NextResponse.json({ error: "Unauthorised" }, { status: 401 });
 
   const body = await request.json().catch(() => ({}));

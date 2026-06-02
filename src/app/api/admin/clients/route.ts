@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, createAdminClient } from "@/lib/supabase/server";
 import { rateLimit } from "@/lib/rate-limit";
+import { logAction } from "@/lib/audit";
 
 const ClientSchema = z.object({
   name: z.string().min(1).max(200).trim(),
@@ -17,14 +18,14 @@ export async function GET(request: NextRequest) {
   const limited = await rateLimit(request, "admin");
   if (limited) return limited;
 
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const { data: { user } } = await (await createClient()).auth.getUser();
+  const supabase = createAdminClient();
   if (!user) return NextResponse.json({ error: "Unauthorised" }, { status: 401 });
 
   const { searchParams } = new URL(request.url);
   const classification = searchParams.get("classification");
 
-  let query = supabase.from("clients").select("*").order("created_at", { ascending: false });
+  let query = supabase.from("clients").select("*").is("deleted_at", null).order("created_at", { ascending: false });
   if (classification && classification !== "all") {
     query = query.eq("classification", classification);
   }
@@ -39,8 +40,8 @@ export async function POST(request: NextRequest) {
   const limited = await rateLimit(request, "admin");
   if (limited) return limited;
 
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const { data: { user } } = await (await createClient()).auth.getUser();
+  const supabase = createAdminClient();
   if (!user) return NextResponse.json({ error: "Unauthorised" }, { status: 401 });
 
   const body = await request.json().catch(() => ({}));
@@ -49,6 +50,16 @@ export async function POST(request: NextRequest) {
 
   const { data, error } = await supabase.from("clients").insert(result.data).select().single();
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+
+  await logAction({
+    actor_id: user.id,
+    actor_name: user.email ?? user.id,
+    action: "created",
+    entity_type: "client",
+    entity_id: data.id,
+    entity_label: data.name,
+    notes: `Classification: ${data.classification}${data.company ? ` · ${data.company}` : ""}`,
+  });
 
   return NextResponse.json({ data }, { status: 201 });
 }

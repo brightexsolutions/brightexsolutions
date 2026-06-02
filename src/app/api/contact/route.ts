@@ -2,7 +2,17 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { rateLimit } from "@/lib/rate-limit";
 import { verifyOrigin } from "@/lib/verify-origin";
-import { transporter, ADMIN_EMAIL, SITE_NAME, SITE_URL } from "@/lib/mail";
+import { transporter, ADMIN_EMAIL, SITE_NAME } from "@/lib/mail";
+import { BUSINESS_PHONE, whatsappUrl } from "@/lib/constants";
+import {
+  emailTemplate,
+  emailRow,
+  emailInfoTable,
+  emailParagraph,
+  emailButton,
+  emailDivider,
+  emailSignoff,
+} from "@/lib/email-templates";
 
 const ContactSchema = z.object({
   name: z.string().min(2).max(100).trim(),
@@ -36,13 +46,15 @@ export async function POST(request: NextRequest) {
   }
 
   const { name, company, contact, service, message } = result.data;
+  const isEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contact);
 
   // Layer 4 — DB insert (skip gracefully if Supabase not yet configured)
   let dbSaved = false;
   if (process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY) {
     try {
-      const { createClient } = await import("@/lib/supabase/server");
-      const supabase = await createClient();
+      const { createAdminClient } = await import("@/lib/supabase/server");
+      const supabase = createAdminClient();
+
       await supabase.from("contacts").insert({
         name,
         company: company ?? null,
@@ -50,32 +62,61 @@ export async function POST(request: NextRequest) {
         service: service ?? null,
         message,
       });
+
+      // Auto-create or update a lead in the clients table.
+      const matchField = isEmail ? "email" : "phone";
+      const { data: existing } = await supabase
+        .from("clients")
+        .select("id, classification")
+        .eq(matchField, contact)
+        .maybeSingle();
+
+      if (existing) {
+        await supabase
+          .from("clients")
+          .update({ last_contacted_at: new Date().toISOString() })
+          .eq("id", existing.id);
+      } else {
+        const basePayload = {
+          name,
+          company: company ?? null,
+          source: "contact_form",
+          classification: "lead",
+          notes: service ? `Interested in: ${service}` : null,
+          last_contacted_at: new Date().toISOString(),
+        };
+        await supabase.from("clients").insert(
+          isEmail ? { ...basePayload, email: contact } : { ...basePayload, phone: contact }
+        );
+      }
+
       dbSaved = true;
     } catch (err) {
       console.error("[contact] DB insert failed:", err);
     }
   }
 
-  // Layer 5 — email notification to admin
+  // Layer 5 — admin notification email
   let emailSent = false;
   try {
     await transporter.sendMail({
       from: `${SITE_NAME} <${process.env.SMTP_USER}>`,
       to: ADMIN_EMAIL,
       subject: `New enquiry from ${name}${company ? ` (${company})` : ""}`,
-      html: `
-        <div style="font-family:sans-serif;max-width:600px;margin:0 auto;padding:24px">
-          <h2 style="color:#152238;margin-bottom:16px">New Contact Enquiry</h2>
-          <table style="width:100%;border-collapse:collapse">
-            <tr><td style="padding:8px 0;font-weight:600;color:#152238;width:120px">Name</td><td style="padding:8px 0;color:#1e2840">${name}</td></tr>
-            ${company ? `<tr><td style="padding:8px 0;font-weight:600;color:#152238">Company</td><td style="padding:8px 0;color:#1e2840">${company}</td></tr>` : ""}
-            <tr><td style="padding:8px 0;font-weight:600;color:#152238">Contact</td><td style="padding:8px 0;color:#1e2840">${contact}</td></tr>
-            ${service ? `<tr><td style="padding:8px 0;font-weight:600;color:#152238">Service</td><td style="padding:8px 0;color:#1e2840">${service}</td></tr>` : ""}
-            <tr><td style="padding:8px 0;font-weight:600;color:#152238;vertical-align:top">Message</td><td style="padding:8px 0;color:#1e2840;white-space:pre-wrap">${message}</td></tr>
-          </table>
-          <p style="margin-top:24px;color:#64748b;font-size:13px">Sent via ${SITE_URL}</p>
-        </div>
-      `,
+      html: emailTemplate({
+        title: "New Contact Enquiry",
+        subtitle: "New Lead",
+        preheader: `${name} submitted a contact enquiry`,
+        body:
+          emailInfoTable(
+            emailRow("Name", name) +
+            (company ? emailRow("Company", company) : "") +
+            emailRow("Contact", contact) +
+            (service ? emailRow("Service Interest", service) : "") +
+            emailRow("Message", message.replace(/\n/g, "<br>"))
+          ) +
+          emailSignoff(),
+      }),
     });
     emailSent = true;
   } catch (err) {
@@ -83,34 +124,36 @@ export async function POST(request: NextRequest) {
   }
 
   // Auto-reply if the contact field looks like an email
-  const isEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contact);
   if (isEmail && emailSent) {
+    const firstName = name.split(" ")[0];
     try {
       await transporter.sendMail({
         from: `${SITE_NAME} <${process.env.SMTP_USER}>`,
         to: contact,
-        subject: `Thanks for reaching out, ${name.split(" ")[0]}!`,
-        html: `
-          <div style="font-family:sans-serif;max-width:600px;margin:0 auto;padding:24px">
-            <h2 style="color:#152238;margin-bottom:12px">We got your message.</h2>
-            <p style="color:#1e2840;line-height:1.6">Hi ${name.split(" ")[0]}, thanks for reaching out to Brightex Solutions. We've received your enquiry and will get back to you within 24 hours.</p>
-            <p style="color:#1e2840;line-height:1.6">In the meantime, you can reach us directly on WhatsApp: <a href="https://wa.me/254741980127" style="color:#f9a825">+254 741 980 127</a></p>
-            <p style="margin-top:24px;color:#64748b;font-size:13px">— The Brightex Solutions Team</p>
-          </div>
-        `,
+        subject: `Thanks for reaching out, ${firstName}!`,
+        html: emailTemplate({
+          title: `We received your message, ${firstName}!`,
+          preheader: "Thanks for reaching out — we'll respond within 24 hours",
+          body:
+            emailParagraph(
+              `Hi ${firstName}, thanks for reaching out to <strong>${SITE_NAME}</strong>. We've received your enquiry and will get back to you within 24 hours.`
+            ) +
+            emailParagraph("In the meantime, you can reach us directly on WhatsApp:") +
+            emailButton("Chat on WhatsApp", whatsappUrl(), "secondary") +
+            emailDivider() +
+            emailSignoff(),
+        }),
       });
     } catch (err) {
       console.error("[contact] Auto-reply failed:", err);
     }
   }
 
-  // If nothing worked, return a graceful degradation message
   if (!dbSaved && !emailSent) {
     return NextResponse.json(
       {
         success: false,
-        message:
-          "We couldn't process your submission right now. Please reach out via WhatsApp at +254 741 980 127.",
+        message: `We couldn't process your submission right now. Please reach out via WhatsApp at ${BUSINESS_PHONE}.`,
       },
       { status: 503 }
     );

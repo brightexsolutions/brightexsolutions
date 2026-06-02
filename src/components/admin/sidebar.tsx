@@ -2,12 +2,12 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   LayoutDashboard, FolderOpen, Users, TrendingUp, MessageSquare,
   FileText, CreditCard, Calendar, Globe, Package, BarChart3,
-  Megaphone, ChevronLeft, ChevronRight, BookOpen,
-  DollarSign, UserCheck, Rss, ChevronDown,
+  Megaphone, ChevronLeft, ChevronRight, BookOpen, CheckSquare,
+  DollarSign, UserCheck, Rss, ChevronDown, Settings, ScrollText,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -34,6 +34,7 @@ const navGroups = [
     defaultOpen: true,
     items: [
       { href: "/admin/projects", icon: FolderOpen, label: "Projects" },
+      { href: "/admin/tasks", icon: CheckSquare, label: "Tasks", showTaskBadge: true },
     ],
   },
   {
@@ -71,6 +72,14 @@ const navGroups = [
       { href: "/admin/sites", icon: Globe, label: "Site Monitoring" },
     ],
   },
+  {
+    label: "Settings",
+    defaultOpen: false,
+    items: [
+      { href: "/admin/settings", icon: Settings, label: "Settings" },
+      { href: "/admin/logs", icon: ScrollText, label: "Activity Log" },
+    ],
+  },
 ];
 
 interface SidebarProps {
@@ -80,13 +89,21 @@ interface SidebarProps {
 
 export function AdminSidebar({ collapsed, onToggle }: SidebarProps) {
   const pathname = usePathname();
+  const [taskCount, setTaskCount] = useState<{ active: number; total: number } | null>(null);
+
+  useEffect(() => {
+    fetch("/api/admin/tasks/count")
+      .then((r) => r.ok ? r.json() : null)
+      .then((j) => j && setTaskCount(j))
+      .catch(() => {});
+  }, [pathname]); // refetch on navigation so the badge stays fresh
 
   // Track which groups are open; auto-open group that contains the active route
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>(() => {
     const initial: Record<string, boolean> = {};
     navGroups.forEach((g) => {
       const hasActive = g.items.some((item) =>
-        item.exact ? pathname === item.href : pathname === item.href || pathname.startsWith(item.href + "/")
+        ("exact" in item && item.exact) ? pathname === item.href : pathname === item.href || pathname.startsWith(item.href + "/")
       );
       initial[g.label] = hasActive || g.defaultOpen;
     });
@@ -125,7 +142,7 @@ export function AdminSidebar({ collapsed, onToggle }: SidebarProps) {
       <nav className="flex-1 overflow-y-auto py-3 px-2 space-y-1">
         {navGroups.map((group) => {
           const isOpen = openGroups[group.label] ?? group.defaultOpen;
-          const hasActiveItem = group.items.some((item) => isActive(item.href, item.exact));
+          const hasActiveItem = group.items.some((item) => isActive(item.href, "exact" in item ? item.exact : undefined));
 
           return (
             <div key={group.label}>
@@ -151,23 +168,35 @@ export function AdminSidebar({ collapsed, onToggle }: SidebarProps) {
               {/* Items — always visible when sidebar is icon-only; controlled by isOpen when expanded */}
               {(collapsed || isOpen) && (
                 <ul className="space-y-0.5 mt-0.5 mb-2">
-                  {group.items.map((item) => (
-                    <li key={item.href}>
-                      <Link
-                        href={item.href}
-                        title={collapsed ? item.label : undefined}
-                        className={cn(
-                          "flex items-center gap-3 px-2 py-2 rounded-sm text-sm transition-colors",
-                          isActive(item.href, item.exact)
-                            ? "bg-sidebar-accent text-sidebar-accent-foreground font-semibold"
-                            : "text-sidebar-foreground/70 hover:bg-sidebar-accent/60 hover:text-sidebar-foreground"
-                        )}
-                      >
-                        <item.icon size={16} className="shrink-0" />
-                        {!collapsed && <span className="truncate">{item.label}</span>}
-                      </Link>
-                    </li>
-                  ))}
+                  {group.items.map((item) => {
+                    const hasBadge = "showTaskBadge" in item && item.showTaskBadge && taskCount;
+                    return (
+                      <li key={item.href}>
+                        <Link
+                          href={item.href}
+                          title={collapsed ? item.label : undefined}
+                          className={cn(
+                            "flex items-center gap-3 px-2 py-2 rounded-sm text-sm transition-colors",
+                            isActive(item.href, "exact" in item ? item.exact : undefined)
+                              ? "bg-sidebar-accent text-sidebar-accent-foreground font-semibold"
+                              : "text-sidebar-foreground/70 hover:bg-sidebar-accent/60 hover:text-sidebar-foreground"
+                          )}
+                        >
+                          <item.icon size={16} className="shrink-0" />
+                          {!collapsed && (
+                            <>
+                              <span className="truncate flex-1">{item.label}</span>
+                              {hasBadge && taskCount && (
+                                <span className="ml-auto text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-brand-gold/20 text-brand-gold shrink-0">
+                                  {taskCount.active}/{taskCount.total}
+                                </span>
+                              )}
+                            </>
+                          )}
+                        </Link>
+                      </li>
+                    );
+                  })}
                 </ul>
               )}
 

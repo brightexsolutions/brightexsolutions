@@ -1,16 +1,19 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, createAdminClient } from "@/lib/supabase/server";
 import { rateLimit } from "@/lib/rate-limit";
 
 const ProjectSchema = z.object({
   client_id: z.string().uuid().optional(),
   name: z.string().min(1).max(200).trim(),
   type: z.string().max(80).trim().optional(),
-  status: z.enum(["discovery", "design", "development", "review", "live", "paused"]).default("discovery"),
+  status: z.enum(["discovery", "design", "development", "review", "live", "paused", "completed"]).default("discovery"),
   budget: z.number().min(0).optional(),
   start_date: z.string().date().optional(),
   end_date: z.string().date().optional(),
+  is_retainer: z.boolean().optional(),
+  retainer_cycle: z.enum(["monthly", "quarterly", "yearly"]).optional(),
+  monthly_rate: z.number().min(0).optional(),
   notes: z.string().max(2000).trim().optional(),
 });
 
@@ -18,8 +21,8 @@ export async function GET(request: NextRequest) {
   const limited = await rateLimit(request, "admin");
   if (limited) return limited;
 
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const { data: { user } } = await (await createClient()).auth.getUser();
+  const supabase = createAdminClient();
   if (!user) return NextResponse.json({ error: "Unauthorised" }, { status: 401 });
 
   const { searchParams } = new URL(request.url);
@@ -28,6 +31,7 @@ export async function GET(request: NextRequest) {
   let query = supabase
     .from("projects")
     .select("*, clients(id, name, company)")
+    .is("deleted_at", null)
     .order("created_at", { ascending: false });
 
   if (status && status !== "all") {
@@ -44,8 +48,8 @@ export async function POST(request: NextRequest) {
   const limited = await rateLimit(request, "admin");
   if (limited) return limited;
 
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const { data: { user } } = await (await createClient()).auth.getUser();
+  const supabase = createAdminClient();
   if (!user) return NextResponse.json({ error: "Unauthorised" }, { status: 401 });
 
   const body = await request.json().catch(() => ({}));
