@@ -63,9 +63,19 @@ export function PublicFooter() {
   return (
     <footer className="bg-[#090f1a] text-white">
 
-      {/* ── 1. CTA STRIP ────────────────────────────────────────────────── */}
-      <div className="border-b border-white/[0.06]">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-28 sm:pt-32 lg:pt-36 pb-20 lg:pb-24">
+      {/* ── 1. CTA STRIP — cinematic background ────────────────────────── */}
+      <div className="relative overflow-hidden border-b border-white/[0.06]">
+        {/* Background image */}
+        <div
+          className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+          style={{ backgroundImage: "url('https://images.unsplash.com/photo-1519389950473-47ba0277781c?auto=format&fit=crop&w=2400&q=80')" }}
+        />
+        {/* Cinematic overlay — deep navy gradient */}
+        <div className="absolute inset-0 bg-gradient-to-r from-[#090f1a]/96 via-[#090f1a]/88 to-[#090f1a]/80" />
+        {/* Subtle gold radial glow */}
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_65%_50%,rgba(249,168,37,0.06)_0%,transparent_60%)] pointer-events-none" />
+
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 lg:py-28">
           <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-10">
 
             {/* Headline */}

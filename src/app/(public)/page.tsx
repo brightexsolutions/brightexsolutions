@@ -6,7 +6,6 @@ import { PortfolioSection } from "@/components/public/portfolio-section";
 import { ProcessSection } from "@/components/public/process-section";
 import { TestimonialsSection } from "@/components/public/testimonials-section";
 import { WhySection } from "@/components/public/why-section";
-import { CtaSection } from "@/components/public/cta-section";
 import {
   SITE_NAME,
   SITE_URL,
@@ -125,9 +124,6 @@ export default async function HomePage() {
         <WhySection />
       </SectionErrorBoundary>
 
-      <SectionErrorBoundary>
-        <CtaSection />
-      </SectionErrorBoundary>
     </>
   );
 }

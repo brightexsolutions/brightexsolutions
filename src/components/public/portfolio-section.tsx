@@ -35,7 +35,7 @@ const FALLBACK_PROJECTS: PortfolioProject[] = [
     description: "A warm, welcoming digital home for a worship community — events, sermons, and a clean UI that reflects their brand and values.",
     tags: ["Web Development", "UI Design"],
     url: "https://thegreenhouse-w-s.netlify.app/",
-    accent_color: "#8b5cf6",
+    accent_color: "#a78bfa",
   },
   {
     name: "Africa Feature Network",
@@ -51,7 +51,7 @@ const FALLBACK_PROJECTS: PortfolioProject[] = [
     description: "Online ordering system for a bakery — digital menu, cart, order management, and an admin dashboard for the owner to track and fulfil orders daily.",
     tags: ["E-Commerce", "Web App", "Bakery"],
     url: "https://amuches-oven.netlify.app/",
-    accent_color: "#f97316",
+    accent_color: "#fb923c",
   },
   {
     name: "CBC App — Verb Education",
@@ -59,19 +59,9 @@ const FALLBACK_PROJECTS: PortfolioProject[] = [
     description: "A Kenya CBC learning platform for students and teachers — curriculum-aligned content, progress tracking, and analytics built to Material Design 3 standards.",
     tags: ["SaaS", "EdTech", "Analytics"],
     url: "https://cbcapp.co.ke/",
-    accent_color: "#6366f1",
+    accent_color: "#818cf8",
   },
 ];
-
-function screenshotUrl(url: string, customImage?: string | null): string {
-  if (customImage) return customImage;
-  try {
-    const encoded = encodeURIComponent(url);
-    return `https://image.thum.io/get/width/1200/crop/750/${encoded}`;
-  } catch {
-    return "";
-  }
-}
 
 async function getProjects(): Promise<PortfolioProject[]> {
   if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
@@ -91,6 +81,70 @@ async function getProjects(): Promise<PortfolioProject[]> {
   } catch {
     return FALLBACK_PROJECTS;
   }
+}
+
+function CardBackground({ accent, imageUrl }: { accent: string; imageUrl?: string | null }) {
+  if (imageUrl) {
+    return (
+      <>
+        <div
+          className="absolute inset-0 bg-cover bg-center transition-transform duration-700 ease-out group-hover:scale-105"
+          style={{ backgroundImage: `url(${imageUrl})` }}
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-[#0a101e]/95 via-[#0a101e]/50 to-[#0a101e]/10 group-hover:from-[#0a101e]/98 transition-colors duration-300" />
+      </>
+    );
+  }
+
+  return (
+    <>
+      {/* Base gradient */}
+      <div
+        className="absolute inset-0 transition-transform duration-700 ease-out group-hover:scale-[1.02]"
+        style={{
+          background: `linear-gradient(135deg, ${accent}28 0%, ${accent}10 40%, #0d1928 100%)`,
+        }}
+      />
+
+      {/* Dot grid pattern */}
+      <div
+        className="absolute inset-0 opacity-[0.08]"
+        style={{
+          backgroundImage: `radial-gradient(circle, ${accent} 1px, transparent 1px)`,
+          backgroundSize: "24px 24px",
+        }}
+      />
+
+      {/* Primary radial glow — bottom-left */}
+      <div
+        className="absolute inset-0"
+        style={{
+          background: `radial-gradient(ellipse at 20% 80%, ${accent}45 0%, transparent 55%)`,
+        }}
+      />
+
+      {/* Secondary radial glow — top-right (complementary) */}
+      <div
+        className="absolute inset-0 opacity-50"
+        style={{
+          background: `radial-gradient(ellipse at 85% 15%, ${accent}20 0%, transparent 45%)`,
+        }}
+      />
+
+      {/* Decorative rings */}
+      <div
+        className="absolute -top-12 -right-12 w-52 h-52 rounded-full border pointer-events-none opacity-[0.12] group-hover:opacity-20 transition-opacity duration-500"
+        style={{ borderColor: accent }}
+      />
+      <div
+        className="absolute -bottom-8 -left-8 w-36 h-36 rounded-full border pointer-events-none opacity-[0.08] group-hover:opacity-14 transition-opacity duration-500"
+        style={{ borderColor: accent }}
+      />
+
+      {/* Bottom text overlay */}
+      <div className="absolute inset-0 bg-gradient-to-t from-[#0a101e]/90 via-[#0a101e]/30 to-transparent" />
+    </>
+  );
 }
 
 export async function PortfolioSection() {
@@ -113,54 +167,49 @@ export async function PortfolioSection() {
 
         <FadeInStagger className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
           {projects.map((p) => {
-            const imgSrc = screenshotUrl(p.url, p.image_url);
+            const accent = p.accent_color ?? "#f9a825";
             return (
               <StaggerChild key={p.name}>
                 <a
                   href={p.url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="group relative flex flex-col h-72 rounded-sm overflow-hidden focus-visible:ring-2 focus-visible:ring-brand-gold"
+                  className="group relative flex flex-col h-72 rounded-sm overflow-hidden focus-visible:ring-2 focus-visible:ring-brand-gold bg-[#0d1928]"
                 >
-                  {/* Background: screenshot or accent gradient */}
-                  <div
-                    className="absolute inset-0 bg-cover bg-center transition-transform duration-700 ease-out group-hover:scale-105"
-                    style={{
-                      backgroundImage: imgSrc ? `url(${imgSrc})` : "none",
-                      backgroundColor: p.accent_color ?? "#152238",
-                    }}
-                  />
-
-                  {/* Fallback pattern when no image */}
-                  {!imgSrc && (
-                    <div
-                      className="absolute inset-0 opacity-20"
-                      style={{
-                        backgroundImage: `radial-gradient(circle at 30% 40%, ${p.accent_color ?? "#f9a825"} 0%, transparent 60%)`,
-                      }}
-                    />
-                  )}
-
-                  {/* Cinematic gradient overlay — darker at bottom */}
-                  <div className="absolute inset-0 bg-gradient-to-t from-[#0a101e]/95 via-[#0a101e]/55 to-[#0a101e]/15 group-hover:from-[#0a101e]/98 transition-colors duration-300" />
+                  <CardBackground accent={accent} imageUrl={p.image_url} />
 
                   {/* Top row: category badge + arrow */}
                   <div className="relative flex items-start justify-between p-5">
                     <span
-                      className="px-2.5 py-1 rounded-full text-[10px] font-semibold text-white/90 backdrop-blur-sm"
-                      style={{ backgroundColor: `${p.accent_color ?? "#152238"}88` }}
+                      className="px-2.5 py-1 rounded-full text-[10px] font-semibold text-white/90 backdrop-blur-sm border"
+                      style={{
+                        backgroundColor: `${accent}22`,
+                        borderColor: `${accent}35`,
+                      }}
                     >
                       {p.category}
                     </span>
-                    <span className="w-8 h-8 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center text-white/60 group-hover:bg-brand-gold/90 group-hover:text-brand-navy transition-all duration-200">
-                      <ArrowUpRight size={14} className="group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
+                    <span
+                      className="w-8 h-8 rounded-full flex items-center justify-center text-white/50 transition-all duration-200 backdrop-blur-sm group-hover:text-white"
+                      style={{
+                        backgroundColor: "rgba(255,255,255,0.08)",
+                      }}
+                    >
+                      <ArrowUpRight
+                        size={14}
+                        className="group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform"
+                        style={{ color: "inherit" }}
+                      />
                     </span>
                   </div>
 
                   {/* Bottom content */}
                   <div className="relative mt-auto p-5 pt-3">
-                    <h3 className="font-display text-xl font-bold text-white mb-1.5 leading-snug group-hover:text-brand-gold transition-colors">
-                      {p.name}
+                    <h3
+                      className="font-display text-xl font-bold text-white mb-1.5 leading-snug transition-colors duration-200"
+                      style={{ "--hover-color": accent } as React.CSSProperties}
+                    >
+                      <span className="group-hover:opacity-90 transition-opacity">{p.name}</span>
                     </h3>
                     <p className="text-white/55 text-xs leading-relaxed mb-3 line-clamp-2">
                       {p.description}
@@ -169,13 +218,23 @@ export async function PortfolioSection() {
                       {p.tags.slice(0, 3).map((t) => (
                         <span
                           key={t}
-                          className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-white/10 text-white/70"
+                          className="px-2 py-0.5 rounded-full text-[10px] font-medium"
+                          style={{
+                            backgroundColor: "rgba(255,255,255,0.08)",
+                            color: "rgba(255,255,255,0.65)",
+                          }}
                         >
                           {t}
                         </span>
                       ))}
                     </div>
                   </div>
+
+                  {/* Accent bottom line on hover */}
+                  <div
+                    className="absolute bottom-0 left-0 h-[2px] w-0 group-hover:w-full transition-all duration-500 ease-out"
+                    style={{ backgroundColor: accent }}
+                  />
                 </a>
               </StaggerChild>
             );
