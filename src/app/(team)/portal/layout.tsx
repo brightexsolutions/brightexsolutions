@@ -14,14 +14,14 @@ export default function WorkLayout({ children }: { children: ReactNode }) {
         </span>
         <nav className="ml-4 flex items-center gap-1">
           <Link
-            href="/work"
+            href="/portal"
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-sm text-sm text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
           >
             <ClipboardList size={14} />
             My Tasks
           </Link>
           <Link
-            href="/work/calendar"
+            href="/portal/calendar"
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-sm text-sm text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
           >
             <CalendarDays size={14} />

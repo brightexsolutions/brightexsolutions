@@ -10,13 +10,13 @@ import { Logo } from "@/components/public/logo";
 const links = [
   { label: "Home", href: "/", exact: true },
   { label: "Services", href: "/services", exact: false },
-  { label: "Products", href: "/products", exact: false },
+  { label: "Our Work", href: "/work", exact: false },
   { label: "Blog", href: "/blog", exact: false },
   { label: "Contact", href: "/contact", exact: true },
 ];
 
 // Routes where the top of the page is a full-width dark hero — nav starts transparent with white text
-const DARK_HERO_ROUTES = ["/", "/services", "/products", "/projects", "/blog"];
+const DARK_HERO_ROUTES = ["/", "/services", "/work", "/blog"];
 
 export function PublicNav() {
   const [scrolled, setScrolled] = useState(false);

@@ -44,6 +44,9 @@ const nextConfig: NextConfig = {
         destination: "https://www.brightexsolutions.co.ke/:path*",
         permanent: true,
       },
+      // Legacy page redirects — both merged into /work
+      { source: "/projects", destination: "/work#projects", permanent: true },
+      { source: "/products", destination: "/work#products", permanent: true },
     ];
   },
   async headers() {

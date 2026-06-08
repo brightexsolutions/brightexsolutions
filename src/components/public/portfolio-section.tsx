@@ -168,7 +168,7 @@ export async function PortfolioSection() {
             </p>
           </div>
           <Link
-            href="/projects"
+            href="/work#projects"
             className="inline-flex items-center gap-2 text-sm font-semibold text-brand-navy dark:text-white hover:text-brand-gold dark:hover:text-brand-gold transition-colors shrink-0 group"
           >
             View all projects
@@ -255,7 +255,7 @@ export async function PortfolioSection() {
         {/* Bottom CTA */}
         <FadeIn className="mt-12 text-center">
           <Link
-            href="/projects"
+            href="/work"
             className="inline-flex items-center gap-2 px-7 py-3.5 rounded-sm border border-brand-navy/20 dark:border-white/15 text-brand-navy dark:text-white text-sm font-semibold hover:border-brand-gold hover:text-brand-gold transition-colors group"
           >
             See all our work

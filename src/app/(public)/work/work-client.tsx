@@ -16,14 +16,13 @@ interface Project {
 
 const BATCH = 3;
 
-export function ProjectsList({ projects }: { projects: Project[] }) {
+export function ClientProjectsList({ projects }: { projects: Project[] }) {
   const [visible, setVisible] = useState(BATCH);
   const shown = projects.slice(0, visible);
   const hasMore = visible < projects.length;
 
   return (
     <>
-      {/* Editorial list */}
       <div className="divide-y divide-brand-border dark:divide-white/8">
         {shown.map((p, i) => {
           const accent = p.accent_color ?? "#f9a825";
@@ -37,7 +36,6 @@ export function ProjectsList({ projects }: { projects: Project[] }) {
                 rel="noopener noreferrer"
                 className="group flex items-start gap-6 sm:gap-10 py-8 sm:py-10 transition-colors hover:bg-brand-gold/[0.025] -mx-4 sm:-mx-6 px-4 sm:px-6 rounded-sm"
               >
-                {/* Number */}
                 <span
                   className="font-display font-black text-4xl sm:text-5xl leading-none tabular-nums shrink-0 transition-colors duration-300 select-none pt-1"
                   style={{ color: `${accent}30` }}
@@ -45,9 +43,7 @@ export function ProjectsList({ projects }: { projects: Project[] }) {
                   {num}
                 </span>
 
-                {/* Content */}
                 <div className="flex-1 min-w-0">
-                  {/* Category + tags row */}
                   <div className="flex flex-wrap items-center gap-2 mb-3">
                     <span
                       className="px-2.5 py-0.5 rounded-full text-[10px] font-semibold border"
@@ -66,18 +62,15 @@ export function ProjectsList({ projects }: { projects: Project[] }) {
                     ))}
                   </div>
 
-                  {/* Name */}
                   <h3 className="font-display text-2xl sm:text-3xl font-bold text-brand-navy dark:text-white leading-snug mb-3 group-hover:text-brand-gold transition-colors">
                     {p.name}
                   </h3>
 
-                  {/* Description */}
                   <p className="text-brand-muted text-sm leading-relaxed max-w-2xl line-clamp-2">
                     {p.description}
                   </p>
                 </div>
 
-                {/* Arrow */}
                 <div
                   className="shrink-0 w-10 h-10 rounded-full border flex items-center justify-center transition-all duration-200 mt-1 group-hover:scale-110"
                   style={{
@@ -94,7 +87,6 @@ export function ProjectsList({ projects }: { projects: Project[] }) {
         })}
       </div>
 
-      {/* Load more */}
       {hasMore && (
         <FadeIn className="mt-10 text-center">
           <button
