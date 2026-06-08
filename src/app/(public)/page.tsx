@@ -16,6 +16,9 @@ import {
   BUSINESS_COUNTRY,
   SOCIAL_FACEBOOK,
   SOCIAL_INSTAGRAM,
+  SOCIAL_TIKTOK,
+  SOCIAL_LINKEDIN,
+  SOCIAL_TWITTER,
 } from "@/lib/constants";
 
 export const revalidate = 3600;
@@ -79,8 +82,11 @@ const localBusinessSchema = {
     closes: "18:00",
   },
   sameAs: [
-    ...(SOCIAL_FACEBOOK ? [`https://facebook.com/${SOCIAL_FACEBOOK}`] : []),
-    ...(SOCIAL_INSTAGRAM ? [`https://instagram.com/${SOCIAL_INSTAGRAM}`] : []),
+    ...(SOCIAL_FACEBOOK  ? [`https://facebook.com/${SOCIAL_FACEBOOK}`]          : []),
+    ...(SOCIAL_INSTAGRAM ? [`https://instagram.com/${SOCIAL_INSTAGRAM}`]         : []),
+    ...(SOCIAL_TIKTOK    ? [`https://tiktok.com/@${SOCIAL_TIKTOK}`]              : []),
+    ...(SOCIAL_LINKEDIN  ? [`https://linkedin.com/company/${SOCIAL_LINKEDIN}`]   : []),
+    ...(SOCIAL_TWITTER   ? [`https://x.com/${SOCIAL_TWITTER}`]                   : []),
   ],
   priceRange: "KES",
 };
