@@ -3,7 +3,6 @@ import { notFound } from "next/navigation";
 import { getAllPosts, getPostBySlug } from "@/lib/blog";
 import { SITE_NAME, SITE_URL } from "@/lib/constants";
 import { FadeIn } from "@/components/public/fade-in";
-import { CtaSection } from "@/components/public/cta-section";
 import { SectionErrorBoundary } from "@/components/section-error-boundary";
 import { ArrowLeft, Clock, Tag } from "lucide-react";
 import Link from "next/link";
@@ -124,9 +123,6 @@ export default async function BlogPostPage({
         </div>
       </section>
 
-      <SectionErrorBoundary>
-        <CtaSection />
-      </SectionErrorBoundary>
     </>
   );
 }

@@ -122,7 +122,7 @@ export function BlogList({ posts }: { posts: BlogPost[] }) {
       </div>
 
       {filtered.length === 0 ? (
-        <section className="py-24 bg-brand-bg dark:bg-brand-navy-dark">
+        <section className="py-24 dark:bg-brand-navy-dark" style={{ background: "linear-gradient(160deg, #f4f6f8 0%, #ede9e2 55%, #f2efe9 100%)" }}>
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center py-16">
               <p className="font-display text-xl font-bold text-brand-navy dark:text-white mb-2">
@@ -141,7 +141,7 @@ export function BlogList({ posts }: { posts: BlogPost[] }) {
         <>
           {/* Featured article */}
           {featured && (
-            <section className="pt-14 pb-4 bg-brand-bg dark:bg-brand-navy-dark">
+            <section className="pt-14 pb-4 dark:bg-brand-navy-dark" style={{ background: "linear-gradient(160deg, #f4f6f8 0%, #ede9e2 100%)" }}>
               <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <FadeIn className="mb-6">
                   <span className="text-[11px] font-black uppercase tracking-[0.18em] text-brand-muted">
@@ -198,7 +198,7 @@ export function BlogList({ posts }: { posts: BlogPost[] }) {
 
           {/* Rest of articles */}
           {rest.length > 0 && (
-            <section className="py-10 bg-brand-bg dark:bg-brand-navy-dark">
+            <section className="py-10 dark:bg-brand-navy-dark" style={{ background: "linear-gradient(160deg, #f4f6f8 0%, #ede9e2 100%)" }}>
               <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <FadeIn className="mb-7">
                   <span className="text-[11px] font-black uppercase tracking-[0.18em] text-brand-muted">
@@ -245,7 +245,7 @@ export function BlogList({ posts }: { posts: BlogPost[] }) {
       )}
 
       {/* Browse topics */}
-      <section className="py-8 bg-brand-bg dark:bg-brand-navy-dark border-t border-brand-border dark:border-white/[0.06]">
+      <section className="py-8 dark:bg-brand-navy-dark border-t border-brand-border dark:border-white/[0.06]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-wrap items-center gap-2.5">
             <span className="text-[11px] font-black uppercase tracking-[0.18em] text-brand-muted mr-1">Browse topics:</span>

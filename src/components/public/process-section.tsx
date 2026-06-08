@@ -29,7 +29,7 @@ const steps = [
 
 export function ProcessSection() {
   return (
-    <section className="py-24 bg-brand-bg dark:bg-brand-navy">
+    <section className="py-24 dark:bg-brand-navy" style={{ background: "linear-gradient(160deg, #f4f6f8 0%, #ece8e0 55%, #f5f1ec 100%)" }}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <FadeIn className="text-center mb-16">
           <span className="text-brand-gold text-xs font-semibold tracking-widest uppercase">

@@ -44,7 +44,7 @@ export default function BlogPage() {
       </section>
 
       {posts.length === 0 ? (
-        <section className="py-24 bg-brand-bg dark:bg-brand-navy-dark">
+        <section className="py-24 dark:bg-brand-navy-dark" style={{ background: "linear-gradient(160deg, #f4f6f8 0%, #edeae2 55%, #f2efe9 100%)" }}>
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <FadeIn className="text-center py-20">
               <p className="font-display text-2xl font-bold text-brand-navy dark:text-white mb-3">

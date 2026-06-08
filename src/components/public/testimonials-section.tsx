@@ -37,7 +37,7 @@ export function TestimonialsSection() {
   const [t1, t2, t3, t4] = testimonials;
 
   return (
-    <section className="py-24 bg-white dark:bg-brand-navy-dark">
+    <section className="py-24 dark:bg-brand-navy-dark" style={{ background: "linear-gradient(175deg, #ffffff 0%, #f6f2ec 60%, #f9f6f2 100%)" }}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <FadeIn className="text-center mb-16">
           <span className="text-brand-gold text-xs font-semibold tracking-widest uppercase">

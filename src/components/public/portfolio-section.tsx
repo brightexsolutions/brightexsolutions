@@ -151,7 +151,7 @@ export async function PortfolioSection() {
   const projects = await getProjects();
 
   return (
-    <section className="py-24 bg-white dark:bg-brand-navy-dark">
+    <section className="py-24 dark:bg-brand-navy-dark" style={{ background: "linear-gradient(160deg, #fafaf8 0%, #f4f0ea 55%, #f8f5f1 100%)" }}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <FadeIn className="max-w-xl mb-14">
           <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-brand-gold block mb-3">

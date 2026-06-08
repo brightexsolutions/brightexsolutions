@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { FadeIn, FadeInStagger, StaggerChild } from "@/components/public/fade-in";
-import { CtaSection } from "@/components/public/cta-section";
 import { SectionErrorBoundary } from "@/components/section-error-boundary";
 import { ArrowRight, Zap, MessageCircle, Wrench, Code2, Layers } from "lucide-react";
 import { whatsappUrl } from "@/lib/constants";
@@ -203,9 +202,6 @@ export default async function ProductsPage() {
         </div>
       </section>
 
-      <SectionErrorBoundary>
-        <CtaSection />
-      </SectionErrorBoundary>
     </>
   );
 }

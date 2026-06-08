@@ -49,7 +49,7 @@ const services = [
 
 export function ServicesSection() {
   return (
-    <section className="py-24 bg-brand-bg dark:bg-brand-navy-dark">
+    <section className="py-24 dark:bg-brand-navy-dark" style={{ background: "linear-gradient(155deg, #f4f6f8 0%, #edeae2 55%, #f2efe9 100%)" }}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <FadeIn className="text-center mb-16">

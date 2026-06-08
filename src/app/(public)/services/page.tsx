@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowRight, Globe, Palette, TrendingUp, Cpu, Database, BarChart3, Lightbulb, CheckCircle2, Users, Award, Zap } from "lucide-react";
 import { FadeIn, FadeInStagger, StaggerChild } from "@/components/public/fade-in";
-import { CtaSection } from "@/components/public/cta-section";
 import { SectionErrorBoundary } from "@/components/section-error-boundary";
 
 export const revalidate = 3600;
@@ -148,7 +147,7 @@ export default function ServicesPage() {
       </section>
 
       {/* Stats strip */}
-      <section className="py-0 bg-white dark:bg-brand-navy-light border-b border-brand-border dark:border-white/8">
+      <section className="py-0 dark:bg-brand-navy-light border-b border-brand-border dark:border-white/8" style={{ background: "linear-gradient(90deg, #f8f7f4 0%, #f0ece4 100%)" }}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <FadeInStagger className="grid grid-cols-2 md:grid-cols-4 divide-x divide-brand-border dark:divide-white/8">
             {stats.map((s) => (
@@ -169,7 +168,7 @@ export default function ServicesPage() {
       </section>
 
       {/* Services grid */}
-      <section className="py-24 bg-brand-bg dark:bg-brand-navy-dark">
+      <section className="py-24 dark:bg-brand-navy-dark" style={{ background: "linear-gradient(155deg, #f4f6f8 0%, #edeae2 55%, #f2efe9 100%)" }}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 
           <FadeIn className="max-w-xl mb-14">
@@ -315,9 +314,6 @@ export default function ServicesPage() {
         </div>
       </section>
 
-      <SectionErrorBoundary>
-        <CtaSection />
-      </SectionErrorBoundary>
     </>
   );
 }
