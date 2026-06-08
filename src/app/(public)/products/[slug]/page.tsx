@@ -3,7 +3,6 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { TrialForm } from "@/components/public/trial-form";
 import { FadeIn } from "@/components/public/fade-in";
-import { CtaSection } from "@/components/public/cta-section";
 import { SectionErrorBoundary } from "@/components/section-error-boundary";
 import { ArrowLeft, CheckCircle2 } from "lucide-react";
 import { getProductBySlug, getPublishedProducts } from "@/lib/products";
@@ -168,9 +167,6 @@ export default async function ProductPage({
         </div>
       </section>
 
-      <SectionErrorBoundary>
-        <CtaSection />
-      </SectionErrorBoundary>
     </>
   );
 }

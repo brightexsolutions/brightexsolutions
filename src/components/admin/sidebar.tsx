@@ -62,6 +62,7 @@ const navGroups = [
       { href: "/admin/team", icon: UserCheck, label: "Team" },
       { href: "/admin/social", icon: BarChart3, label: "Social Media" },
       { href: "/admin/announcements", icon: Megaphone, label: "Announcements" },
+      { href: "/admin/portfolio", icon: Globe, label: "Portfolio" },
       { href: "/admin/chat", icon: MessageSquare, label: "Brixo Chat" },
     ],
   },

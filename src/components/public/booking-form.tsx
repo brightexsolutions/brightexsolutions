@@ -4,8 +4,9 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { CalendarDays, CheckCircle2, Clock3, Send } from "lucide-react";
+import { CheckCircle2, Clock3, Send } from "lucide-react";
 import { normalisePhone } from "@/lib/utils";
+import { cn } from "@/lib/utils";
 
 const schema = z.object({
   booker_name: z.string().min(2, "Name must be at least 2 characters").max(100).trim(),
@@ -31,7 +32,14 @@ function toNairobiIso(value: string) {
     : value;
 }
 
-export function BookingForm() {
+interface BookingFormProps {
+  variant?: "card" | "embedded";
+}
+
+const fieldClass = "w-full px-4 py-3 rounded-sm border border-brand-border dark:border-white/15 bg-brand-bg dark:bg-white/5 text-brand-navy dark:text-white placeholder:text-brand-muted focus:outline-none focus:border-brand-gold focus:ring-1 focus:ring-brand-gold transition-colors text-sm";
+const labelClass = "block text-[10px] font-bold text-brand-muted dark:text-white/40 uppercase tracking-[0.15em] mb-2";
+
+export function BookingForm({ variant = "card" }: BookingFormProps) {
   const [submitted, setSubmitted] = useState(false);
   const [serverError, setServerError] = useState<string | null>(null);
 
@@ -42,191 +50,145 @@ export function BookingForm() {
     formState: { errors, isSubmitting },
   } = useForm<FormData>({
     resolver: zodResolver(schema),
-    defaultValues: {
-      purpose: "intro_call",
-    },
+    defaultValues: { purpose: "intro_call" },
   });
 
   async function onSubmit(data: FormData) {
     setServerError(null);
-
     try {
       const res = await fetch("/api/book", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          ...data,
-          scheduled_at: toNairobiIso(data.scheduled_at),
-        }),
+        body: JSON.stringify({ ...data, scheduled_at: toNairobiIso(data.scheduled_at) }),
       });
-
       const json = await res.json().catch(() => ({}));
-
       if (!res.ok || !json.success) {
-        setServerError(json.error ?? "We could not save your booking right now. Please try again.");
+        setServerError(json.error ?? "We could not save your booking. Please try again.");
         return;
       }
-
       setSubmitted(true);
     } catch {
       setServerError("Network error. Please try again in a moment.");
     }
   }
 
-  if (submitted) {
-    return (
-      <div className="p-8 rounded-sm bg-white dark:bg-brand-navy-light border border-brand-border dark:border-white/10 text-center">
-        <div className="w-16 h-16 rounded-full bg-brand-gold/10 flex items-center justify-center mx-auto mb-6">
-          <CheckCircle2 size={30} className="text-brand-gold" />
-        </div>
-        <h2 className="font-display text-2xl font-bold text-brand-navy dark:text-white mb-3">
-          Booking received
-        </h2>
-        <p className="text-brand-muted leading-relaxed">
-          We&apos;ve saved your request and sent the details to the Brightex team. You&apos;ll get a confirmation email shortly.
-        </p>
+  const successContent = (
+    <div className={cn("text-center", variant === "card" ? "p-8 rounded-sm bg-white dark:bg-brand-navy-light border border-brand-border dark:border-white/10" : "py-8")}>
+      <div className="w-16 h-16 rounded-full bg-brand-gold/10 flex items-center justify-center mx-auto mb-6">
+        <CheckCircle2 size={30} className="text-brand-gold" />
       </div>
-    );
-  }
+      <h2 className="font-display text-2xl font-bold text-brand-navy dark:text-white mb-3">Booking received</h2>
+      <p className="text-brand-muted leading-relaxed">
+        We&apos;ve saved your request and will confirm the slot by email shortly.
+      </p>
+    </div>
+  );
+
+  if (submitted) return successContent;
+
+  const formContent = (
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6" noValidate>
+      {/* Name + Email */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+        <div>
+          <label className={labelClass}>Full Name <span className="text-brand-gold">*</span></label>
+          <input {...register("booker_name")} type="text" placeholder="Jane Doe" className={fieldClass} />
+          {errors.booker_name && <p className="mt-1.5 text-xs text-red-500">{errors.booker_name.message}</p>}
+        </div>
+        <div>
+          <label className={labelClass}>Email <span className="text-brand-gold">*</span></label>
+          <input {...register("booker_email")} type="email" placeholder="jane@company.com" className={fieldClass} />
+          {errors.booker_email && <p className="mt-1.5 text-xs text-red-500">{errors.booker_email.message}</p>}
+        </div>
+      </div>
+
+      {/* Phone + Call Type */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+        <div>
+          <label className={labelClass}>Phone</label>
+          {(() => {
+            const phoneReg = register("booker_phone");
+            return (
+              <input
+                {...phoneReg}
+                type="tel"
+                placeholder="+254 7XX XXX XXX"
+                className={fieldClass}
+                onBlur={(e) => {
+                  setValue("booker_phone", normalisePhone(e.target.value));
+                  phoneReg.onBlur(e);
+                }}
+              />
+            );
+          })()}
+        </div>
+        <div>
+          <label className={labelClass}>Call Type <span className="text-brand-gold">*</span></label>
+          <select {...register("purpose")} className={cn(fieldClass, "dark:bg-brand-navy")}>
+            {purposeOptions.map((o) => (
+              <option key={o.value} value={o.value}>{o.label}</option>
+            ))}
+          </select>
+        </div>
+      </div>
+
+      {/* Preferred Time */}
+      <div>
+        <label className={labelClass}>Preferred Date & Time <span className="text-brand-gold">*</span></label>
+        <div className="relative">
+          <input
+            {...register("scheduled_at")}
+            type="datetime-local"
+            className={fieldClass}
+          />
+          <Clock3 size={15} className="absolute right-4 top-1/2 -translate-y-1/2 text-brand-muted pointer-events-none" />
+        </div>
+        {errors.scheduled_at && <p className="mt-1.5 text-xs text-red-500">{errors.scheduled_at.message}</p>}
+        <p className="mt-1.5 text-[11px] text-brand-muted">All times in Nairobi time (EAT, UTC+3). Mon–Fri 9am–5pm.</p>
+      </div>
+
+      {/* Notes */}
+      <div>
+        <label className={labelClass}>Notes <span className="text-brand-muted/60">(optional)</span></label>
+        <textarea
+          {...register("notes")}
+          rows={3}
+          placeholder="Briefly describe what you'd like to discuss."
+          className={cn(fieldClass, "resize-none")}
+        />
+      </div>
+
+      {serverError && (
+        <div className="rounded-sm border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-950/30 px-4 py-3 text-sm text-red-700 dark:text-red-400">
+          {serverError}
+        </div>
+      )}
+
+      <button
+        type="submit"
+        disabled={isSubmitting}
+        className="w-full inline-flex items-center justify-center gap-2 px-8 py-4 rounded-sm bg-brand-gold text-brand-navy font-bold text-sm hover:bg-brand-gold-hover transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+      >
+        {isSubmitting ? (
+          <>
+            <span className="w-4 h-4 border-2 border-brand-navy/30 border-t-brand-navy rounded-full animate-spin" />
+            Sending…
+          </>
+        ) : (
+          <>
+            Confirm Booking
+            <Send size={14} />
+          </>
+        )}
+      </button>
+    </form>
+  );
+
+  if (variant === "embedded") return formContent;
 
   return (
     <div className="p-8 rounded-sm bg-white dark:bg-brand-navy-light border border-brand-border dark:border-white/10">
-      <div className="flex items-start gap-3 mb-8">
-        <div className="w-11 h-11 rounded-sm bg-brand-gold/10 flex items-center justify-center shrink-0">
-          <CalendarDays size={20} className="text-brand-gold" />
-        </div>
-        <div>
-          <h2 className="font-display text-2xl font-bold text-brand-navy dark:text-white">
-            Request a Call
-          </h2>
-          <p className="text-sm text-brand-muted mt-1">
-            Share a preferred time in Nairobi time (EAT). We&apos;ll confirm the slot by email.
-          </p>
-        </div>
-      </div>
-
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-5" noValidate>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-          <div>
-            <label className="block text-xs font-semibold text-brand-navy dark:text-white uppercase tracking-wider mb-2">
-              Full Name <span className="text-brand-gold">*</span>
-            </label>
-            <input
-              {...register("booker_name")}
-              type="text"
-              placeholder="Jane Doe"
-              className="w-full px-4 py-3 rounded-sm border border-brand-border dark:border-white/15 bg-brand-bg dark:bg-white/5 text-brand-navy dark:text-white placeholder:text-brand-muted focus:outline-none focus:border-brand-gold focus:ring-1 focus:ring-brand-gold transition-colors text-sm"
-            />
-            {errors.booker_name && <p className="mt-1.5 text-xs text-red-500">{errors.booker_name.message}</p>}
-          </div>
-
-          <div>
-            <label className="block text-xs font-semibold text-brand-navy dark:text-white uppercase tracking-wider mb-2">
-              Email <span className="text-brand-gold">*</span>
-            </label>
-            <input
-              {...register("booker_email")}
-              type="email"
-              placeholder="jane@company.com"
-              className="w-full px-4 py-3 rounded-sm border border-brand-border dark:border-white/15 bg-brand-bg dark:bg-white/5 text-brand-navy dark:text-white placeholder:text-brand-muted focus:outline-none focus:border-brand-gold focus:ring-1 focus:ring-brand-gold transition-colors text-sm"
-            />
-            {errors.booker_email && <p className="mt-1.5 text-xs text-red-500">{errors.booker_email.message}</p>}
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-          <div>
-            <label className="block text-xs font-semibold text-brand-navy dark:text-white uppercase tracking-wider mb-2">
-              Phone
-            </label>
-            {(() => {
-              const phoneReg = register("booker_phone");
-              return (
-                <input
-                  {...phoneReg}
-                  type="tel"
-                  placeholder="+254 7XX XXX XXX"
-                  className="w-full px-4 py-3 rounded-sm border border-brand-border dark:border-white/15 bg-brand-bg dark:bg-white/5 text-brand-navy dark:text-white placeholder:text-brand-muted focus:outline-none focus:border-brand-gold focus:ring-1 focus:ring-brand-gold transition-colors text-sm"
-                  onBlur={(e) => {
-                    setValue("booker_phone", normalisePhone(e.target.value));
-                    phoneReg.onBlur(e);
-                  }}
-                />
-              );
-            })()}
-          </div>
-
-          <div>
-            <label className="block text-xs font-semibold text-brand-navy dark:text-white uppercase tracking-wider mb-2">
-              Call Type <span className="text-brand-gold">*</span>
-            </label>
-            <select
-              {...register("purpose")}
-              className="w-full px-4 py-3 rounded-sm border border-brand-border dark:border-white/15 bg-brand-bg dark:bg-brand-navy text-brand-navy dark:text-white focus:outline-none focus:border-brand-gold focus:ring-1 focus:ring-brand-gold transition-colors text-sm"
-            >
-              {purposeOptions.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-          </div>
-        </div>
-
-        <div>
-          <label className="block text-xs font-semibold text-brand-navy dark:text-white uppercase tracking-wider mb-2">
-            Preferred Time <span className="text-brand-gold">*</span>
-          </label>
-          <div className="relative">
-            <input
-              {...register("scheduled_at")}
-              type="datetime-local"
-              className="w-full px-4 py-3 rounded-sm border border-brand-border dark:border-white/15 bg-brand-bg dark:bg-white/5 text-brand-navy dark:text-white focus:outline-none focus:border-brand-gold focus:ring-1 focus:ring-brand-gold transition-colors text-sm"
-            />
-            <Clock3 size={16} className="absolute right-4 top-1/2 -translate-y-1/2 text-brand-muted pointer-events-none" />
-          </div>
-          {errors.scheduled_at && <p className="mt-1.5 text-xs text-red-500">{errors.scheduled_at.message}</p>}
-          <p className="mt-1.5 text-xs text-brand-muted">
-            Available hours are typically Monday to Friday, 9am to 5pm EAT.
-          </p>
-        </div>
-
-        <div>
-          <label className="block text-xs font-semibold text-brand-navy dark:text-white uppercase tracking-wider mb-2">
-            Notes
-          </label>
-          <textarea
-            {...register("notes")}
-            rows={4}
-            placeholder="Briefly share what you’d like to discuss."
-            className="w-full px-4 py-3 rounded-sm border border-brand-border dark:border-white/15 bg-brand-bg dark:bg-white/5 text-brand-navy dark:text-white placeholder:text-brand-muted focus:outline-none focus:border-brand-gold focus:ring-1 focus:ring-brand-gold transition-colors text-sm resize-none"
-          />
-        </div>
-
-        {serverError && (
-          <div className="rounded-sm border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-950/30 px-4 py-3 text-sm text-red-700 dark:text-red-400">
-            {serverError}
-          </div>
-        )}
-
-        <button
-          type="submit"
-          disabled={isSubmitting}
-          className="w-full inline-flex items-center justify-center gap-2 px-8 py-4 rounded-sm bg-brand-gold text-brand-navy font-semibold text-sm hover:bg-brand-gold-hover transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
-        >
-          {isSubmitting ? (
-            <>
-              <span className="w-4 h-4 border-2 border-brand-navy/30 border-t-brand-navy rounded-full animate-spin" />
-              Sending…
-            </>
-          ) : (
-            <>
-              Confirm Request
-              <Send size={15} />
-            </>
-          )}
-        </button>
-      </form>
+      {formContent}
     </div>
   );
 }
