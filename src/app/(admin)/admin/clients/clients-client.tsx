@@ -3,8 +3,9 @@
 import { useEffect, useState, useCallback } from "react";
 import { Users, UserPlus, Pencil, Trash2, Loader2, PanelRightOpen } from "lucide-react";
 import { QuickClientPanel } from "@/components/admin/quick-client-panel";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import { StatCard } from "@/components/admin/stat-card";
+import { DataTable, StackedCell, type Column, type RowAction } from "@/components/admin/data-table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -22,7 +23,19 @@ const classificationColors: Record<string, string> = {
   past: "bg-muted text-muted-foreground border-border",
 };
 
-const tabs = ["All", "Leads", "Qualified", "Active", "Unqualified", "Ghost", "Past"];
+const CLASSIFICATION_FILTER = {
+  key: "classification",
+  label: "Type",
+  options: [
+    { label: "All", value: "" },
+    { label: "Leads", value: "lead" },
+    { label: "Qualified", value: "qualified" },
+    { label: "Active", value: "active" },
+    { label: "Unqualified", value: "unqualified" },
+    { label: "Ghost", value: "ghost" },
+    { label: "Past", value: "past" },
+  ],
+};
 
 const emptyForm = { name: "", email: "", phone: "", company: "", classification: "lead", source: "direct", notes: "" };
 
@@ -35,7 +48,7 @@ type Client = {
 export function ClientsPageClient() {
   const [clients, setClients] = useState<Client[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState("All");
+  const [classFilter, setClassFilter] = useState("");
   const [open, setOpen] = useState(false);
   const [panelClientId, setPanelClientId] = useState<string | null>(null);
   const [editTarget, setEditTarget] = useState<Client | null>(null);
@@ -107,9 +120,86 @@ export function ClientsPageClient() {
     }
   }
 
-  const filtered = clients.filter((c) =>
-    activeTab === "All" || c.classification.toLowerCase() === activeTab.toLowerCase().replace(/s$/, "")
-  );
+  const displayClients = classFilter
+    ? clients.filter((c) => c.classification === classFilter)
+    : clients;
+
+  const clientColumns: Column<Record<string, unknown>>[] = [
+    {
+      key: "name",
+      label: "Client",
+      sortable: true,
+      render: (row) => (
+        <StackedCell
+          primary={String(row.name)}
+          secondary={row.company ? String(row.company) : undefined}
+        />
+      ),
+    },
+    {
+      key: "classification",
+      label: "Type",
+      render: (row) => (
+        <span className={cn(
+          "px-2 py-0.5 rounded-md text-[11px] font-medium border capitalize",
+          classificationColors[String(row.classification)] ?? "bg-muted text-muted-foreground border-border"
+        )}>
+          {String(row.classification)}
+        </span>
+      ),
+    },
+    {
+      key: "email",
+      label: "Contact",
+      className: "hidden md:table-cell",
+      render: (row) => (
+        <StackedCell
+          primary={row.email ? String(row.email) : "—"}
+          secondary={row.phone ? String(row.phone) : undefined}
+        />
+      ),
+    },
+    {
+      key: "source",
+      label: "Source",
+      className: "hidden lg:table-cell",
+      render: (row) => (
+        <span className="text-sm text-muted-foreground capitalize">
+          {row.source ? String(row.source).replace(/_/g, " ") : "—"}
+        </span>
+      ),
+    },
+    {
+      key: "created_at",
+      label: "Added",
+      className: "hidden xl:table-cell",
+      sortable: true,
+      render: (row) => (
+        <span className="text-xs text-muted-foreground whitespace-nowrap">
+          {new Date(String(row.created_at)).toLocaleDateString("en-KE", { day: "numeric", month: "short", year: "numeric" })}
+        </span>
+      ),
+    },
+  ];
+
+  const clientActions: RowAction<Record<string, unknown>>[] = [
+    {
+      label: "Quick view",
+      icon: <PanelRightOpen size={13} />,
+      onClick: (row) => setPanelClientId(String(row.id)),
+    },
+    {
+      label: "Edit",
+      icon: <Pencil size={13} />,
+      onClick: (row) => openEdit(row as unknown as Client),
+    },
+    {
+      label: "Delete",
+      icon: <Trash2 size={13} />,
+      destructive: true,
+      onClick: (row) => handleDelete(row as unknown as Client),
+    },
+  ];
 
   return (
     <div className="space-y-6">
@@ -118,77 +208,32 @@ export function ClientsPageClient() {
           <h1 className="font-display text-2xl font-bold text-foreground">Clients</h1>
           <p className="text-sm text-muted-foreground mt-1">Manage your client directory and pipeline.</p>
         </div>
-        <button onClick={openCreate} className="inline-flex items-center gap-2 px-4 py-2.5 rounded-sm bg-brand-gold text-brand-navy font-semibold text-sm hover:bg-brand-gold-hover transition-colors">
+        <button onClick={openCreate} className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-brand-gold text-brand-navy font-semibold text-sm hover:bg-brand-gold-hover transition-colors">
           <UserPlus size={15} />Add Client
         </button>
       </div>
 
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-        <StatCard title="Total Clients" value={clients.length} icon={Users} />
-        <StatCard title="Active" value={clients.filter((c) => c.classification === "active").length} icon={Users} iconColor="text-emerald-400" iconBg="bg-emerald-400/10" />
-        <StatCard title="Leads" value={clients.filter((c) => c.classification === "lead").length} icon={Users} iconColor="text-blue-400" iconBg="bg-blue-400/10" />
-        <StatCard title="Ghost Follow-ups" value={clients.filter((c) => c.classification === "ghost").length} icon={Users} iconColor="text-amber-400" iconBg="bg-amber-400/10" />
+        <StatCard title="Total Clients" value={clients.length} icon={Users} accent={{ bg: "bg-blue-400/10", text: "text-blue-400" }} />
+        <StatCard title="Active" value={clients.filter((c) => c.classification === "active").length} icon={Users} accent={{ bg: "bg-emerald-400/10", text: "text-emerald-400" }} />
+        <StatCard title="Leads" value={clients.filter((c) => c.classification === "lead").length} icon={Users} accent={{ bg: "bg-brand-gold/10", text: "text-brand-gold" }} />
+        <StatCard title="Ghost Follow-ups" value={clients.filter((c) => c.classification === "ghost").length} icon={Users} accent={{ bg: "bg-amber-400/10", text: "text-amber-400" }} />
       </div>
 
-      <div className="flex gap-1 flex-wrap">
-        {tabs.map((tab) => (
-          <button key={tab} onClick={() => setActiveTab(tab)}
-            className={cn("px-3 py-1.5 rounded-sm text-xs font-medium border transition-colors",
-              activeTab === tab ? "bg-muted text-foreground border-transparent" : "border-border text-muted-foreground hover:text-foreground hover:border-brand-gold/40")}>
-            {tab}
-          </button>
-        ))}
-      </div>
-
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-base flex items-center gap-2"><Users size={16} />Client Directory</CardTitle>
-        </CardHeader>
-        <CardContent className="p-0">
-          {loading ? (
-            <div className="py-12 text-center text-sm text-muted-foreground">Loading clients…</div>
-          ) : filtered.length === 0 ? (
-            <div className="text-center py-12 text-muted-foreground">
-              <Users size={40} className="mx-auto mb-3 opacity-20" />
-              <p className="text-sm">No clients in this segment yet.</p>
-            </div>
-          ) : (
-            <div className="divide-y divide-border">
-              {filtered.map((client) => (
-                <div key={client.id} className="px-6 py-4 flex items-start justify-between gap-4 group">
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <p className="text-sm font-semibold text-foreground">{client.name}</p>
-                      <span className={cn("px-2 py-0.5 rounded-sm text-[11px] font-medium border capitalize", classificationColors[client.classification] ?? "bg-muted text-muted-foreground border-border")}>
-                        {client.classification}
-                      </span>
-                    </div>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      {client.company || "No company"}{client.email ? ` · ${client.email}` : ""}{client.phone ? ` · ${client.phone}` : ""}
-                    </p>
-                    <p className="text-xs text-muted-foreground">Source: {client.source?.replace("_", " ") || "unspecified"}</p>
-                    {client.notes && <p className="text-xs text-muted-foreground mt-1 line-clamp-1">{client.notes}</p>}
-                  </div>
-                  <div className="flex items-center gap-1 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <button onClick={() => setPanelClientId(client.id)} className="p-1.5 rounded-sm hover:bg-muted text-muted-foreground hover:text-brand-gold transition-colors" title="Quick view">
-                      <PanelRightOpen size={13} />
-                    </button>
-                    <button onClick={() => openEdit(client)} disabled={busyId === client.id} className="p-1.5 rounded-sm hover:bg-muted text-muted-foreground hover:text-foreground transition-colors disabled:opacity-40" title="Edit">
-                      <Pencil size={13} />
-                    </button>
-                    <button onClick={() => handleDelete(client)} disabled={busyId === client.id} className="p-1.5 rounded-sm hover:bg-red-50 dark:hover:bg-red-950/20 text-muted-foreground hover:text-red-500 transition-colors disabled:opacity-40" title="Delete">
-                      {busyId === client.id ? <Loader2 size={13} className="animate-spin" /> : <Trash2 size={13} />}
-                    </button>
-                  </div>
-                  <div className="text-right shrink-0 text-xs text-muted-foreground">
-                    <p>Added {new Date(client.created_at).toLocaleDateString("en-KE")}</p>
-                    {client.last_contacted_at && <p className="mt-1">Last contact {new Date(client.last_contacted_at).toLocaleDateString("en-KE")}</p>}
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </CardContent>
+      <Card className="overflow-hidden">
+        <DataTable
+          columns={clientColumns}
+          data={displayClients as unknown as Record<string, unknown>[]}
+          actions={clientActions}
+          searchable
+          searchPlaceholder="Search clients…"
+          searchKeys={["name", "company", "email", "phone"]}
+          filters={[CLASSIFICATION_FILTER]}
+          activeFilters={{ classification: classFilter }}
+          onFilterChange={(_, v) => setClassFilter(v)}
+          maxHeight="520px"
+          emptyMessage={loading ? "Loading clients…" : "No clients in this segment."}
+        />
       </Card>
 
       <QuickClientPanel clientId={panelClientId} onClose={() => setPanelClientId(null)} />

@@ -6,15 +6,19 @@ import { useState, useEffect } from "react";
 import {
   LayoutDashboard, FolderOpen, Users, TrendingUp, MessageSquare,
   FileText, CreditCard, Calendar, Globe, Package, BarChart3,
-  Megaphone, ChevronLeft, ChevronRight, BookOpen, CheckSquare,
-  DollarSign, UserCheck, Rss, ChevronDown, Settings, ScrollText,
+  Megaphone, BookOpen, CheckSquare, DollarSign, UserCheck,
+  Rss, Settings, ScrollText, Search, ChevronLeft, ChevronRight,
+  LogOut, User, ChevronDown,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { createBrowserClient } from "@supabase/ssr";
+import { useRouter } from "next/navigation";
+
+// ─── Nav structure ─────────────────────────────────────────────────────────────
 
 const navGroups = [
   {
     label: "Overview",
-    defaultOpen: true,
     items: [
       { href: "/admin", icon: LayoutDashboard, label: "Dashboard", exact: true },
       { href: "/admin/calendar", icon: Calendar, label: "Calendar" },
@@ -22,7 +26,6 @@ const navGroups = [
   },
   {
     label: "Clients & Pipeline",
-    defaultOpen: true,
     items: [
       { href: "/admin/clients", icon: Users, label: "Clients" },
       { href: "/admin/sales", icon: TrendingUp, label: "Sales Pipeline" },
@@ -31,15 +34,13 @@ const navGroups = [
   },
   {
     label: "Projects & Work",
-    defaultOpen: true,
     items: [
       { href: "/admin/projects", icon: FolderOpen, label: "Projects" },
-      { href: "/admin/tasks", icon: CheckSquare, label: "Tasks", showTaskBadge: true },
+      { href: "/admin/tasks", icon: CheckSquare, label: "Tasks", badge: true },
     ],
   },
   {
     label: "Finance",
-    defaultOpen: false,
     items: [
       { href: "/admin/invoices", icon: FileText, label: "Invoices" },
       { href: "/admin/payments", icon: CreditCard, label: "Payments" },
@@ -49,7 +50,6 @@ const navGroups = [
   },
   {
     label: "Products",
-    defaultOpen: false,
     items: [
       { href: "/admin/products", icon: Package, label: "Products" },
       { href: "/admin/bookings", icon: BookOpen, label: "Bookings" },
@@ -57,7 +57,6 @@ const navGroups = [
   },
   {
     label: "Team & Content",
-    defaultOpen: false,
     items: [
       { href: "/admin/team", icon: UserCheck, label: "Team" },
       { href: "/admin/social", icon: BarChart3, label: "Social Media" },
@@ -68,14 +67,12 @@ const navGroups = [
   },
   {
     label: "Infrastructure",
-    defaultOpen: false,
     items: [
       { href: "/admin/sites", icon: Globe, label: "Site Monitoring" },
     ],
   },
   {
     label: "Settings",
-    defaultOpen: false,
     items: [
       { href: "/admin/settings", icon: Settings, label: "Settings" },
       { href: "/admin/logs", icon: ScrollText, label: "Activity Log" },
@@ -90,26 +87,27 @@ interface SidebarProps {
 
 export function AdminSidebar({ collapsed, onToggle }: SidebarProps) {
   const pathname = usePathname();
-  const [taskCount, setTaskCount] = useState<{ active: number; total: number } | null>(null);
+  const router = useRouter();
+  const [taskBadge, setTaskBadge] = useState<{ active: number; total: number } | null>(null);
+  const [openGroups, setOpenGroups] = useState<Record<string, boolean>>(() => {
+    const init: Record<string, boolean> = {};
+    navGroups.forEach((g) => {
+      const hasActive = g.items.some((item) =>
+        "exact" in item && item.exact ? pathname === item.href
+          : pathname === item.href || pathname.startsWith(item.href + "/")
+      );
+      // Always open the first two groups + any group with active item
+      init[g.label] = hasActive || g.label === "Overview" || g.label === "Clients & Pipeline" || g.label === "Projects & Work";
+    });
+    return init;
+  });
 
   useEffect(() => {
     fetch("/api/admin/tasks/count")
       .then((r) => r.ok ? r.json() : null)
-      .then((j) => j && setTaskCount(j))
+      .then((j) => j && setTaskBadge(j))
       .catch(() => {});
-  }, [pathname]); // refetch on navigation so the badge stays fresh
-
-  // Track which groups are open; auto-open group that contains the active route
-  const [openGroups, setOpenGroups] = useState<Record<string, boolean>>(() => {
-    const initial: Record<string, boolean> = {};
-    navGroups.forEach((g) => {
-      const hasActive = g.items.some((item) =>
-        ("exact" in item && item.exact) ? pathname === item.href : pathname === item.href || pathname.startsWith(item.href + "/")
-      );
-      initial[g.label] = hasActive || g.defaultOpen;
-    });
-    return initial;
-  });
+  }, [pathname]);
 
   function isActive(href: string, exact?: boolean) {
     if (exact) return pathname === href;
@@ -117,82 +115,127 @@ export function AdminSidebar({ collapsed, onToggle }: SidebarProps) {
   }
 
   function toggleGroup(label: string) {
-    setOpenGroups((prev) => ({ ...prev, [label]: !prev[label] }));
+    setOpenGroups((p) => ({ ...p, [label]: !p[label] }));
+  }
+
+  async function handleSignOut() {
+    const supabase = createBrowserClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    );
+    await supabase.auth.signOut();
+    router.push("/admin/login");
+    router.refresh();
   }
 
   return (
     <aside
       className={cn(
-        "flex flex-col bg-sidebar border-r border-sidebar-border transition-all duration-300 shrink-0",
-        collapsed ? "w-16" : "w-60"
+        "flex flex-col bg-sidebar border-r border-sidebar-border transition-[width] duration-300 shrink-0 overflow-hidden",
+        collapsed ? "w-[60px]" : "w-[228px]"
       )}
     >
-      {/* Logo / Brand */}
-      <div className="flex items-center gap-3 px-4 py-5 border-b border-sidebar-border min-h-16">
-        <div className="w-8 h-8 rounded-sm bg-brand-gold flex items-center justify-center shrink-0">
-          <span className="text-brand-navy font-bold text-sm font-display">B</span>
+      {/* ── Brand ── */}
+      <div className={cn(
+        "flex items-center border-b border-sidebar-border shrink-0",
+        collapsed ? "h-14 justify-center px-0" : "h-14 gap-2.5 px-4"
+      )}>
+        <div className="w-7 h-7 rounded-lg bg-brand-gold flex items-center justify-center shrink-0 shadow-sm">
+          <span className="text-[#0b1120] font-black text-xs font-display tracking-tight">B</span>
         </div>
         {!collapsed && (
-          <span className="font-display font-bold text-sidebar-foreground text-sm truncate">
-            Brightex Admin
-          </span>
+          <div className="min-w-0">
+            <p className="text-[13px] font-bold text-sidebar-foreground leading-none truncate">Brightex</p>
+            <p className="text-[10px] text-sidebar-foreground/40 leading-none mt-0.5">Admin Console</p>
+          </div>
         )}
       </div>
 
-      {/* Nav */}
-      <nav className="flex-1 overflow-y-auto py-3 px-2 space-y-1">
+      {/* ── Search shortcut ── */}
+      {!collapsed && (
+        <div className="px-3 pt-3 pb-1 shrink-0">
+          <button className="w-full flex items-center gap-2 px-3 py-2 rounded-lg bg-sidebar-accent/60 hover:bg-sidebar-accent text-sidebar-foreground/50 hover:text-sidebar-foreground/80 transition-colors text-xs">
+            <Search size={12} />
+            <span className="flex-1 text-left">Search…</span>
+            <kbd className="text-[9px] bg-sidebar-border/50 px-1 py-0.5 rounded font-mono opacity-60">⌘K</kbd>
+          </button>
+        </div>
+      )}
+      {collapsed && (
+        <div className="flex justify-center pt-3 pb-1 shrink-0">
+          <button className="w-9 h-8 rounded-lg bg-sidebar-accent/60 hover:bg-sidebar-accent flex items-center justify-center text-sidebar-foreground/50 hover:text-sidebar-foreground/80 transition-colors">
+            <Search size={13} />
+          </button>
+        </div>
+      )}
+
+      {/* ── Nav ── */}
+      <nav className="flex-1 overflow-y-auto py-2 px-2 space-y-0.5 scrollbar-thin">
         {navGroups.map((group) => {
-          const isOpen = openGroups[group.label] ?? group.defaultOpen;
-          const hasActiveItem = group.items.some((item) => isActive(item.href, "exact" in item ? item.exact : undefined));
+          const isOpen = openGroups[group.label] ?? false;
+          const hasActive = group.items.some((item) => isActive(item.href, "exact" in item ? item.exact : undefined));
 
           return (
-            <div key={group.label}>
-              {/* Group header — only shown when sidebar is expanded */}
-              {!collapsed && (
+            <div key={group.label} className="mb-1">
+              {/* Group header */}
+              {!collapsed ? (
                 <button
                   onClick={() => toggleGroup(group.label)}
-                  className="w-full flex items-center justify-between px-2 py-1.5 rounded-sm text-sidebar-foreground/40 hover:text-sidebar-foreground/70 transition-colors group"
+                  className={cn(
+                    "w-full flex items-center justify-between px-2 py-1.5 rounded-md transition-colors",
+                    "text-sidebar-foreground/35 hover:text-sidebar-foreground/60",
+                  )}
                 >
                   <span className={cn(
-                    "text-[10px] font-semibold uppercase tracking-widest transition-colors",
-                    hasActiveItem && "text-sidebar-foreground/60"
+                    "text-[10px] font-semibold uppercase tracking-[0.1em]",
+                    hasActive && "text-sidebar-foreground/55"
                   )}>
                     {group.label}
                   </span>
-                  <ChevronDown
-                    size={12}
-                    className={cn("transition-transform duration-200", isOpen ? "rotate-0" : "-rotate-90")}
-                  />
+                  <ChevronDown size={11} className={cn("transition-transform duration-200 opacity-50", isOpen ? "" : "-rotate-90")} />
                 </button>
+              ) : (
+                <div className="h-px bg-sidebar-border/50 mx-2 my-2" />
               )}
 
-              {/* Items — always visible when sidebar is icon-only; controlled by isOpen when expanded */}
+              {/* Items */}
               {(collapsed || isOpen) && (
-                <ul className="space-y-0.5 mt-0.5 mb-2">
+                <ul className="space-y-0.5">
                   {group.items.map((item) => {
-                    const hasBadge = "showTaskBadge" in item && item.showTaskBadge && taskCount;
+                    const active = isActive(item.href, "exact" in item ? item.exact : undefined);
+                    const hasBadge = "badge" in item && item.badge && taskBadge;
+
                     return (
                       <li key={item.href}>
                         <Link
                           href={item.href}
                           title={collapsed ? item.label : undefined}
                           className={cn(
-                            "flex items-center gap-3 px-2 py-2 rounded-sm text-sm transition-colors",
-                            isActive(item.href, "exact" in item ? item.exact : undefined)
-                              ? "bg-sidebar-accent text-sidebar-accent-foreground font-semibold"
-                              : "text-sidebar-foreground/70 hover:bg-sidebar-accent/60 hover:text-sidebar-foreground"
+                            "relative flex items-center gap-2.5 rounded-lg transition-all duration-150",
+                            collapsed ? "justify-center h-9 w-9 mx-auto" : "px-2.5 py-2 h-9",
+                            active
+                              ? "bg-sidebar-accent text-sidebar-foreground font-semibold"
+                              : "text-sidebar-foreground/55 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground/90"
                           )}
                         >
-                          <item.icon size={16} className="shrink-0" />
+                          {/* Active indicator bar */}
+                          {active && !collapsed && (
+                            <span className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-5 bg-brand-gold rounded-full" />
+                          )}
+                          <item.icon size={15} className={cn("shrink-0", active ? "text-brand-gold" : "")} />
                           {!collapsed && (
                             <>
-                              <span className="truncate flex-1">{item.label}</span>
-                              {hasBadge && taskCount && (
-                                <span className="ml-auto text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-brand-gold/20 text-brand-gold shrink-0">
-                                  {taskCount.active}/{taskCount.total}
+                              <span className="text-[13px] truncate flex-1 leading-none">{item.label}</span>
+                              {hasBadge && taskBadge && (
+                                <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-brand-gold/15 text-brand-gold border border-brand-gold/20 shrink-0">
+                                  {taskBadge.active}/{taskBadge.total}
                                 </span>
                               )}
                             </>
+                          )}
+                          {/* Tooltip dot for active in collapsed mode */}
+                          {active && collapsed && (
+                            <span className="absolute right-0.5 top-1/2 -translate-y-1/2 w-1 h-1 rounded-full bg-brand-gold" />
                           )}
                         </Link>
                       </li>
@@ -200,23 +243,49 @@ export function AdminSidebar({ collapsed, onToggle }: SidebarProps) {
                   })}
                 </ul>
               )}
-
-              {/* In icon-only mode, add a small separator between groups */}
-              {collapsed && <div className="h-px bg-sidebar-border/50 mx-2 my-1" />}
             </div>
           );
         })}
       </nav>
 
-      {/* Collapse toggle */}
-      <div className="border-t border-sidebar-border p-2">
+      {/* ── User / footer ── */}
+      <div className="border-t border-sidebar-border shrink-0 p-2 space-y-0.5">
+        {/* User row */}
+        <div className={cn(
+          "flex items-center rounded-lg px-2 py-2 gap-2.5",
+          collapsed ? "justify-center" : ""
+        )}>
+          <div className="w-7 h-7 rounded-full bg-brand-gold/20 border border-brand-gold/30 flex items-center justify-center shrink-0">
+            <span className="text-brand-gold text-xs font-bold">G</span>
+          </div>
+          {!collapsed && (
+            <div className="flex-1 min-w-0">
+              <p className="text-[12px] font-semibold text-sidebar-foreground truncate leading-none">Godwin Brown</p>
+              <p className="text-[10px] text-sidebar-foreground/40 truncate leading-none mt-0.5">Administrator</p>
+            </div>
+          )}
+          {!collapsed && (
+            <button
+              onClick={handleSignOut}
+              className="w-7 h-7 rounded-md flex items-center justify-center text-sidebar-foreground/35 hover:text-sidebar-foreground hover:bg-sidebar-accent transition-colors shrink-0"
+              title="Sign out"
+            >
+              <LogOut size={12} />
+            </button>
+          )}
+        </div>
+
+        {/* Collapse toggle */}
         <button
           onClick={onToggle}
-          className="w-full flex items-center justify-center gap-2 px-2 py-2 rounded-sm text-sidebar-foreground/50 hover:text-sidebar-foreground hover:bg-sidebar-accent/60 transition-colors text-xs"
+          className={cn(
+            "w-full flex items-center gap-2 rounded-lg px-2 py-2 text-[12px] text-sidebar-foreground/35 hover:text-sidebar-foreground/70 hover:bg-sidebar-accent/60 transition-colors",
+            collapsed ? "justify-center" : ""
+          )}
         >
-          {collapsed ? <ChevronRight size={14} /> : (
+          {collapsed ? <ChevronRight size={13} /> : (
             <>
-              <ChevronLeft size={14} />
+              <ChevronLeft size={13} />
               <span>Collapse</span>
             </>
           )}

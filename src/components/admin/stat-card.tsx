@@ -57,7 +57,7 @@ export function StatCard({
       className={cn(
         "rounded-xl border p-5 flex flex-col gap-4 transition-all duration-200 select-none h-full",
         featured
-          ? "bg-brand-navy border-transparent text-white shadow-[0_8px_32px_-8px_rgba(21,34,56,0.40)]"
+          ? "bg-brand-navy dark:bg-[#1a3a62] border-transparent text-white shadow-[0_8px_32px_-8px_rgba(21,34,56,0.40)] dark:shadow-[0_8px_32px_-8px_rgba(26,58,98,0.50)]"
           : "bg-card border-border hover:border-brand-gold/30 hover:shadow-md",
         href && "cursor-pointer",
         className

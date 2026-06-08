@@ -72,7 +72,7 @@ export function RevenueChart({ data }: RevenueChartProps) {
           wrapperStyle={{ fontSize: 11, paddingTop: 12 }}
         />
         <Bar dataKey="income" name="Income" fill="#f9a825" radius={[4, 4, 0, 0]} />
-        <Bar dataKey="expenses" name="Expenses" fill="#152238" radius={[4, 4, 0, 0]} />
+        <Bar dataKey="expenses" name="Expenses" fill="#3b82f6" radius={[4, 4, 0, 0]} />
       </BarChart>
     </ResponsiveContainer>
   );
