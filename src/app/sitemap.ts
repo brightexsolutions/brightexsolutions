@@ -1,8 +1,18 @@
 import type { MetadataRoute } from "next";
+import { getAllPosts } from "@/lib/blog";
 
 const BASE = process.env.NEXT_PUBLIC_SITE_URL ?? "https://www.brightexsolutions.co.ke";
 
 export default function sitemap(): MetadataRoute.Sitemap {
+  const posts = getAllPosts();
+
+  const blogEntries: MetadataRoute.Sitemap = posts.map((post) => ({
+    url: `${BASE}/blog/${post.slug}`,
+    lastModified: new Date(post.date),
+    changeFrequency: "monthly",
+    priority: 0.7,
+  }));
+
   return [
     {
       url: BASE,
@@ -40,5 +50,6 @@ export default function sitemap(): MetadataRoute.Sitemap {
       changeFrequency: "monthly",
       priority: 0.7,
     },
+    ...blogEntries,
   ];
 }

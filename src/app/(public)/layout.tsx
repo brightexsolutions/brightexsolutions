@@ -35,12 +35,12 @@ export default async function PublicLayout({
   const announcement = await getActiveAnnouncement();
 
   return (
-    <>
+    <div className="force-light min-h-screen bg-white text-[#1e2840] flex flex-col">
       <AnnouncementBanner announcement={announcement} />
       <PublicNav />
       <main className="flex-1">{children}</main>
       <PublicFooter />
       <BrixoWidget />
-    </>
+    </div>
   );
 }

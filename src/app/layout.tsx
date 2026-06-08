@@ -34,6 +34,8 @@ export const metadata: Metadata = {
     "ERP Kenya",
     "UI UX design Nairobi",
     "SEO Kenya",
+    "web developer Nairobi",
+    "software company Kenya",
     "Brightex Solutions",
   ],
   authors: [{ name: SITE_NAME }],
@@ -46,30 +48,29 @@ export const metadata: Metadata = {
     title: SITE_NAME,
     description:
       "Nairobi-based digital agency building premium digital experiences that drive growth.",
-    images: [
-      {
-        url: "/og/og-default.png",
-        width: 1200,
-        height: 630,
-        alt: SITE_NAME,
-      },
-    ],
   },
   twitter: {
     card: "summary_large_image",
     title: SITE_NAME,
     description:
       "Nairobi-based digital agency building premium digital experiences that drive growth.",
-    images: ["/og/og-default.png"],
   },
   robots: {
     index: true,
     follow: true,
-    googleBot: { index: true, follow: true },
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+      "max-video-preview": -1,
+    },
   },
   alternates: {
     canonical: SITE_URL,
   },
+  // Add your Google Search Console verification token here once you have it:
+  // verification: { google: "YOUR_VERIFICATION_TOKEN" },
 };
 
 export default function RootLayout({

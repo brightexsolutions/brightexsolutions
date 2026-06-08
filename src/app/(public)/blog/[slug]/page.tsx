@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getAllPosts, getPostBySlug } from "@/lib/blog";
+import { SITE_NAME, SITE_URL } from "@/lib/constants";
 import { FadeIn } from "@/components/public/fade-in";
 import { CtaSection } from "@/components/public/cta-section";
 import { SectionErrorBoundary } from "@/components/section-error-boundary";
@@ -59,12 +60,14 @@ export default async function BlogPostPage({
     headline: post.title,
     description: post.description,
     datePublished: post.date,
-    author: { "@type": "Organization", name: post.author },
+    url: `${SITE_URL}/blog/${slug}`,
+    author: { "@type": "Organization", name: SITE_NAME },
     publisher: {
       "@type": "Organization",
-      name: "Brightex Solutions",
-      url: "https://www.brightexsolutions.com",
+      name: SITE_NAME,
+      url: SITE_URL,
     },
+    mainEntityOfPage: { "@type": "WebPage", "@id": `${SITE_URL}/blog/${slug}` },
   };
 
   return (
@@ -111,7 +114,7 @@ export default async function BlogPostPage({
       </section>
 
       {/* Body */}
-      <section className="py-16 bg-white dark:bg-brand-navy-dark">
+      <section className="py-16 bg-white">
         <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
           <FadeIn>
             <article className="prose-custom">

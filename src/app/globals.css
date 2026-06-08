@@ -2,7 +2,7 @@
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
 
-@custom-variant dark (&:is(.dark *));
+@custom-variant dark (&:is(.dark *):not(.force-light *));
 
 @theme inline {
   --color-background: var(--background);
@@ -132,6 +132,29 @@
   --sidebar-accent-foreground: #ffffff;
   --sidebar-border: rgba(255, 255, 255, 0.06);
   --sidebar-ring: #f9a825;
+}
+
+/* Force light mode — applied to public layout so dark-mode toggle never affects client-facing pages */
+.force-light {
+  color-scheme: light;
+  --background: #ffffff;
+  --foreground: #1e2840;
+  --card: #ffffff;
+  --card-foreground: #1e2840;
+  --popover: #ffffff;
+  --popover-foreground: #1e2840;
+  --primary: #152238;
+  --primary-foreground: #ffffff;
+  --secondary: #f4f6f8;
+  --secondary-foreground: #1e2840;
+  --muted: #f4f6f8;
+  --muted-foreground: #64748b;
+  --accent: #f9a825;
+  --accent-foreground: #152238;
+  --destructive: oklch(0.577 0.245 27.325);
+  --border: #dde3eb;
+  --input: #dde3eb;
+  --ring: #152238;
 }
 
 @layer base {
