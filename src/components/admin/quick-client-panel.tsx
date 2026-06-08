@@ -1,0 +1,363 @@
+"use client";
+
+import { useState, useEffect } from "react";
+import {
+  X, Mail, Phone, MessageSquare, Send, AlertCircle,
+  FileText, TrendingUp, Clock, CheckCircle2, Loader2,
+  ExternalLink,
+} from "lucide-react";
+import { cn } from "@/lib/utils";
+import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
+import { whatsappUrl } from "@/lib/constants";
+
+type Client = {
+  id: string;
+  name: string;
+  email?: string;
+  phone?: string;
+  company?: string;
+  classification: string;
+  notes?: string;
+  last_contacted_at?: string;
+};
+
+type Invoice = {
+  id: string;
+  invoice_number: string;
+  total: number;
+  status: string;
+  due_date?: string;
+};
+
+type Deal = {
+  id: string;
+  service?: string;
+  estimated_value?: number;
+  status: string;
+};
+
+type Comm = {
+  id: string;
+  type: string;
+  subject?: string;
+  direction: string;
+  status: string;
+  sent_at: string;
+};
+
+type ClientDetail = {
+  client: Client;
+  invoices: Invoice[];
+  deals: Deal[];
+  comms: Comm[];
+};
+
+const classColour: Record<string, string> = {
+  active: "text-emerald-600 bg-emerald-50 dark:bg-emerald-950/30 dark:text-emerald-400",
+  qualified: "text-blue-600 bg-blue-50 dark:bg-blue-950/30 dark:text-blue-400",
+  lead: "text-amber-600 bg-amber-50 dark:bg-amber-950/30 dark:text-amber-400",
+  ghost: "text-slate-500 bg-slate-100 dark:bg-slate-800 dark:text-slate-400",
+  past: "text-purple-600 bg-purple-50 dark:bg-purple-950/30 dark:text-purple-400",
+  unqualified: "text-red-500 bg-red-50 dark:bg-red-950/30 dark:text-red-400",
+};
+
+const invoiceStatusColour: Record<string, string> = {
+  overdue: "text-red-500",
+  sent: "text-amber-500",
+  paid: "text-emerald-500",
+  draft: "text-muted-foreground",
+};
+
+export function QuickClientPanel({
+  clientId,
+  onClose,
+}: {
+  clientId: string | null;
+  onClose: () => void;
+}) {
+  const [detail, setDetail] = useState<ClientDetail | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [composing, setComposing] = useState(false);
+  const [subject, setSubject] = useState("");
+  const [body, setBody] = useState("");
+  const [sending, setSending] = useState(false);
+  const [sent, setSent] = useState(false);
+
+  useEffect(() => {
+    if (!clientId) { setDetail(null); return; }
+    setLoading(true);
+    setComposing(false);
+    setSent(false);
+
+    Promise.all([
+      fetch(`/api/admin/clients/${clientId}`).then((r) => r.json()),
+      fetch(`/api/admin/invoices?client_id=${clientId}`).then((r) => r.json()),
+      fetch(`/api/admin/sales?client_id=${clientId}`).then((r) => r.json()),
+      fetch(`/api/admin/communications?client_id=${clientId}&limit=5`).then((r) => r.json()),
+    ]).then(([clientRes, invRes, dealRes, commRes]) => {
+      setDetail({
+        client: clientRes.data ?? clientRes,
+        invoices: invRes.data ?? [],
+        deals: dealRes.data ?? [],
+        comms: commRes.data ?? [],
+      });
+    }).catch(() => {}).finally(() => setLoading(false));
+  }, [clientId]);
+
+  async function sendEmail(e: React.FormEvent) {
+    e.preventDefault();
+    if (!detail?.client.email || !subject || !body) return;
+    setSending(true);
+    try {
+      await fetch("/api/admin/communications", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          client_id: clientId,
+          type: "email",
+          subject,
+          body,
+          direction: "out",
+          send_email: true,
+          to_email: detail.client.email,
+          to_name: detail.client.name,
+        }),
+      });
+      setSent(true);
+      setSubject("");
+      setBody("");
+      setComposing(false);
+    } finally {
+      setSending(false);
+    }
+  }
+
+  const client = detail?.client;
+  const overdueInvoices = (detail?.invoices ?? []).filter((i) => i.status === "overdue" || (i.status === "sent" && i.due_date && new Date(i.due_date) < new Date()));
+  const openDeals = (detail?.deals ?? []).filter((d) => !["won", "lost"].includes(d.status));
+
+  return (
+    <Sheet open={!!clientId} onOpenChange={(v) => !v && onClose()}>
+      <SheetContent className="w-full sm:max-w-md flex flex-col overflow-hidden p-0" side="right">
+        {loading ? (
+          <div className="flex-1 flex items-center justify-center">
+            <Loader2 size={24} className="animate-spin text-muted-foreground" />
+          </div>
+        ) : !client ? null : (
+          <>
+            {/* Header */}
+            <div className="px-5 py-4 border-b border-border bg-muted/30 shrink-0">
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="w-10 h-10 rounded-full bg-brand-gold/10 text-brand-gold flex items-center justify-center shrink-0 text-sm font-bold">
+                    {client.name.charAt(0).toUpperCase()}
+                  </div>
+                  <div className="min-w-0">
+                    <SheetTitle className="font-display text-base font-bold text-foreground leading-tight truncate">
+                      {client.name}
+                    </SheetTitle>
+                    {client.company && (
+                      <p className="text-xs text-muted-foreground truncate">{client.company}</p>
+                    )}
+                    <span className={cn("inline-block mt-1 text-[10px] font-semibold px-1.5 py-0.5 rounded-full capitalize",
+                      classColour[client.classification] ?? "bg-muted text-muted-foreground")}>
+                      {client.classification}
+                    </span>
+                  </div>
+                </div>
+                <button onClick={onClose} className="shrink-0 w-7 h-7 rounded-sm hover:bg-muted flex items-center justify-center text-muted-foreground transition-colors">
+                  <X size={14} />
+                </button>
+              </div>
+            </div>
+
+            {/* Scrollable body */}
+            <div className="flex-1 overflow-y-auto divide-y divide-border">
+
+              {/* Contact quick-actions */}
+              <section className="px-5 py-4">
+                <h3 className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest mb-3">Contact</h3>
+                <div className="space-y-2">
+                  {client.email && (
+                    <div className="flex items-center justify-between gap-3">
+                      <a href={`mailto:${client.email}`}
+                        className="flex items-center gap-2 text-sm text-foreground hover:text-brand-gold transition-colors truncate">
+                        <Mail size={13} className="text-muted-foreground shrink-0" />
+                        <span className="truncate">{client.email}</span>
+                      </a>
+                      <button onClick={() => { setComposing(true); setSent(false); }}
+                        className="shrink-0 flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground border border-border rounded-sm px-2 py-1 hover:bg-muted transition-colors">
+                        <Send size={10} />Compose
+                      </button>
+                    </div>
+                  )}
+                  {client.phone && (
+                    <div className="flex items-center justify-between gap-3">
+                      <a href={`tel:${client.phone}`}
+                        className="flex items-center gap-2 text-sm text-foreground hover:text-brand-gold transition-colors">
+                        <Phone size={13} className="text-muted-foreground shrink-0" />
+                        {client.phone}
+                      </a>
+                      <a href={whatsappUrl(`Hi ${client.name.split(" ")[0]}, this is the Brightex team reaching out.`)}
+                        target="_blank" rel="noopener noreferrer"
+                        className="shrink-0 flex items-center gap-1 text-xs text-muted-foreground hover:text-green-600 border border-border rounded-sm px-2 py-1 hover:bg-green-50 dark:hover:bg-green-950/20 transition-colors">
+                        <MessageSquare size={10} />WhatsApp
+                      </a>
+                    </div>
+                  )}
+                </div>
+              </section>
+
+              {/* Compose email */}
+              {composing && (
+                <section className="px-5 py-4 bg-muted/20">
+                  {sent ? (
+                    <div className="flex items-center gap-2 text-sm text-emerald-600">
+                      <CheckCircle2 size={14} />Email sent successfully.
+                    </div>
+                  ) : (
+                    <form onSubmit={sendEmail} className="space-y-3">
+                      <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest">Compose Email</p>
+                      <input
+                        value={subject}
+                        onChange={(e) => setSubject(e.target.value)}
+                        placeholder="Subject"
+                        required
+                        className="w-full px-3 py-2 rounded-sm border border-input bg-background text-sm focus:outline-none focus:ring-1 focus:ring-ring"
+                      />
+                      <textarea
+                        value={body}
+                        onChange={(e) => setBody(e.target.value)}
+                        placeholder={`Hi ${client.name.split(" ")[0]},`}
+                        required
+                        rows={4}
+                        className="w-full px-3 py-2 rounded-sm border border-input bg-background text-sm resize-none focus:outline-none focus:ring-1 focus:ring-ring"
+                      />
+                      <div className="flex gap-2">
+                        <button type="button" onClick={() => setComposing(false)}
+                          className="flex-1 py-2 rounded-sm border border-input text-sm text-muted-foreground hover:bg-muted transition-colors">
+                          Cancel
+                        </button>
+                        <button type="submit" disabled={sending}
+                          className="flex-1 py-2 rounded-sm bg-brand-gold text-brand-navy text-sm font-semibold hover:bg-brand-gold-hover transition-colors disabled:opacity-60 flex items-center justify-center gap-1.5">
+                          {sending ? <Loader2 size={13} className="animate-spin" /> : <Send size={13} />}
+                          {sending ? "Sending…" : "Send"}
+                        </button>
+                      </div>
+                    </form>
+                  )}
+                </section>
+              )}
+
+              {/* Pending actions */}
+              {(overdueInvoices.length > 0 || openDeals.length > 0) && (
+                <section className="px-5 py-4">
+                  <h3 className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest mb-3">
+                    Pending Actions
+                  </h3>
+                  <div className="space-y-2">
+                    {overdueInvoices.map((inv) => (
+                      <div key={inv.id} className="flex items-start gap-2 p-2.5 rounded-sm bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-800/30">
+                        <AlertCircle size={13} className="text-red-500 mt-0.5 shrink-0" />
+                        <div className="min-w-0">
+                          <p className="text-xs font-medium text-red-700 dark:text-red-400">
+                            Invoice {inv.invoice_number} overdue
+                          </p>
+                          <p className="text-[11px] text-red-500">
+                            KES {Number(inv.total).toLocaleString()} · {inv.status}
+                          </p>
+                        </div>
+                      </div>
+                    ))}
+                    {openDeals.map((deal) => (
+                      <div key={deal.id} className="flex items-start gap-2 p-2.5 rounded-sm bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800/30">
+                        <TrendingUp size={13} className="text-amber-500 mt-0.5 shrink-0" />
+                        <div className="min-w-0">
+                          <p className="text-xs font-medium text-amber-700 dark:text-amber-400">
+                            Open deal: {deal.service ?? "—"}
+                          </p>
+                          <p className="text-[11px] text-amber-500 capitalize">{deal.status}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </section>
+              )}
+
+              {/* Recent communications */}
+              {(detail?.comms ?? []).length > 0 && (
+                <section className="px-5 py-4">
+                  <h3 className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest mb-3">Recent Comms</h3>
+                  <div className="space-y-2">
+                    {(detail?.comms ?? []).map((c) => (
+                      <div key={c.id} className="flex items-start gap-2">
+                        <div className={cn("w-1.5 h-1.5 rounded-full mt-1.5 shrink-0",
+                          c.direction === "out" ? "bg-brand-gold" : "bg-emerald-500")} />
+                        <div className="min-w-0">
+                          <p className="text-xs font-medium text-foreground truncate">{c.subject ?? c.type}</p>
+                          <p className="text-[11px] text-muted-foreground">
+                            {c.direction === "out" ? "Sent" : "Received"} ·{" "}
+                            {new Date(c.sent_at).toLocaleDateString("en-KE", { day: "numeric", month: "short" })}
+                          </p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </section>
+              )}
+
+              {/* Invoices */}
+              {(detail?.invoices ?? []).length > 0 && (
+                <section className="px-5 py-4">
+                  <h3 className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest mb-3">Invoices</h3>
+                  <div className="space-y-2">
+                    {(detail?.invoices ?? []).slice(0, 4).map((inv) => (
+                      <div key={inv.id} className="flex items-center justify-between gap-2">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <FileText size={12} className="text-muted-foreground shrink-0" />
+                          <span className="text-xs text-foreground truncate">{inv.invoice_number}</span>
+                        </div>
+                        <div className="flex items-center gap-2 shrink-0">
+                          <span className="text-xs text-muted-foreground">KES {Number(inv.total).toLocaleString()}</span>
+                          <span className={cn("text-[10px] font-semibold capitalize", invoiceStatusColour[inv.status] ?? "text-muted-foreground")}>
+                            {inv.status}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </section>
+              )}
+
+              {/* Notes */}
+              {client.notes && (
+                <section className="px-5 py-4">
+                  <h3 className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest mb-2">Notes</h3>
+                  <p className="text-xs text-muted-foreground leading-relaxed">{client.notes}</p>
+                </section>
+              )}
+
+              {/* Last contacted */}
+              {client.last_contacted_at && (
+                <section className="px-5 py-3">
+                  <p className="text-xs text-muted-foreground flex items-center gap-1.5">
+                    <Clock size={11} />
+                    Last contacted {new Date(client.last_contacted_at).toLocaleDateString("en-KE", { day: "numeric", month: "long", year: "numeric" })}
+                  </p>
+                </section>
+              )}
+
+              {/* Admin link (only visible to admin, not support portal) */}
+              <section className="px-5 py-3">
+                <a href={`/admin/clients?id=${client.id}`}
+                  className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-brand-gold transition-colors">
+                  <ExternalLink size={11} />Open full client record
+                </a>
+              </section>
+            </div>
+          </>
+        )}
+      </SheetContent>
+    </Sheet>
+  );
+}
