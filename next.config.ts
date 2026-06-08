@@ -20,7 +20,7 @@ const securityHeaders = [
       `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ""} https://www.googletagmanager.com`,
       "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
       "font-src 'self' https://fonts.gstatic.com",
-      "img-src 'self' data: blob: https://*.supabase.co https://images.unsplash.com",
+      "img-src 'self' data: blob: https://*.supabase.co https://images.unsplash.com https://image.thum.io",
       "connect-src 'self' https://*.supabase.co https://wa.me",
       "frame-src 'self' blob:",
       "frame-ancestors 'self'",

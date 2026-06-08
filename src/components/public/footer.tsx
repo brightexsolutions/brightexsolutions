@@ -65,7 +65,7 @@ export function PublicFooter() {
 
       {/* ── 1. CTA STRIP ────────────────────────────────────────────────── */}
       <div className="border-b border-white/[0.06]">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 lg:py-24">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-28 sm:pt-32 lg:pt-36 pb-20 lg:pb-24">
           <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-10">
 
             {/* Headline */}
