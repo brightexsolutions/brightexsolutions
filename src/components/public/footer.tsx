@@ -253,6 +253,21 @@ export function PublicFooter() {
                 </span>
                 <span>{BUSINESS_CITY}, {BUSINESS_COUNTRY}</span>
               </li>
+              <li>
+                <a
+                  href="https://g.page/r/Cbl_7Qt16KK_EAI/review"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-start gap-3 text-sm text-white/50 hover:text-brand-gold transition-colors"
+                >
+                  <span className="mt-0.5 w-5 h-5 shrink-0">
+                    <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5 text-brand-gold/70">
+                      <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+                    </svg>
+                  </span>
+                  <span>Leave us a Google review</span>
+                </a>
+              </li>
             </ul>
           </div>
         </div>
@@ -276,7 +291,7 @@ export function PublicFooter() {
       <div className="relative overflow-hidden" style={{ height: "clamp(5rem, 12vw, 9rem)" }}>
         <div className="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-[20%] whitespace-nowrap select-none pointer-events-none">
           <span
-            className="font-display font-black leading-none tracking-[-0.04em] text-white/[0.028]"
+            className="font-display font-black leading-none tracking-[-0.04em] text-brand-gold/[0.12]"
             style={{ fontSize: "clamp(5rem, 16vw, 14rem)" }}
           >
             Brightex

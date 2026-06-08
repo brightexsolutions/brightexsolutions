@@ -2,7 +2,8 @@
 
 import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, MessageCircle, Send, ArrowRight } from "lucide-react";
+import { X, MessageCircle, Send, ArrowRight, Calendar } from "lucide-react";
+import Link from "next/link";
 import {
   BUSINESS_PHONE,
   OPERATING_HOURS,
@@ -16,9 +17,30 @@ type Message = { role: "user" | "bot"; content: string };
 const QUICK_REPLIES = [
   "Our Services",
   "Our Products",
-  "Pricing",
   "How to get started",
+  "How do I book a call?",
 ];
+
+const BOOKING_KEYWORDS = ["book", "schedule", "appointment", "meeting", "demo", "booking page", "discovery call"];
+
+function isBookingResponse(text: string) {
+  const lower = text.toLowerCase();
+  return BOOKING_KEYWORDS.some((k) => lower.includes(k));
+}
+
+function renderBotMessage(content: string) {
+  const parts = content.split(/(products page|our work page)/gi);
+  return parts.map((part, i) => {
+    if (/products page|our work page/i.test(part)) {
+      return (
+        <Link key={i} href="/work#products" className="text-brand-gold underline underline-offset-2 hover:opacity-80 transition-opacity">
+          {part}
+        </Link>
+      );
+    }
+    return part;
+  });
+}
 
 function buildWaLink(context?: string) {
   const msg = context
@@ -40,6 +62,7 @@ export function BrixoWidget() {
   const [loading, setLoading] = useState(false);
   const [escalated, setEscalated] = useState(false);
   const [lastTopic, setLastTopic] = useState("");
+  const [showBookCTA, setShowBookCTA] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
   const visitorId = useRef(
     typeof crypto !== "undefined" ? crypto.randomUUID() : "anon"
@@ -85,6 +108,7 @@ export function BrixoWidget() {
           ...prev,
           { role: "bot", content: data.answer },
         ]);
+        if (isBookingResponse(data.answer)) setShowBookCTA(true);
       }
     } catch {
       setMessages((prev) => [
@@ -186,7 +210,7 @@ export function BrixoWidget() {
                               : "bg-brand-bg dark:bg-white/8 text-brand-text dark:text-white/90"
                           }`}
                         >
-                          {msg.content}
+                          {msg.role === "bot" ? renderBotMessage(msg.content) : msg.content}
                         </div>
                       </div>
                     ))}
@@ -214,6 +238,18 @@ export function BrixoWidget() {
                       >
                         Switch to WhatsApp <ArrowRight size={12} />
                       </button>
+                    )}
+
+                    {/* Book CTA — shown after booking-related bot responses */}
+                    {showBookCTA && (
+                      <Link
+                        href="/book"
+                        onClick={() => setOpen(false)}
+                        className="inline-flex items-center gap-2 px-4 py-2.5 rounded-sm bg-brand-gold text-brand-navy text-xs font-bold hover:opacity-90 transition-opacity w-fit"
+                      >
+                        <Calendar size={13} />
+                        Book a Discovery Call →
+                      </Link>
                     )}
 
                     <div ref={bottomRef} />

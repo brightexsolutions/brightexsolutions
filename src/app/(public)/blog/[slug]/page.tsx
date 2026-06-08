@@ -77,8 +77,12 @@ export default async function BlogPostPage({
       />
 
       {/* Hero */}
-      <section className="pt-32 pb-12 bg-brand-navy">
-        <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+      <section
+        className="relative pt-32 pb-12 bg-brand-navy bg-cover bg-center overflow-hidden"
+        style={post.heroImage ? { backgroundImage: `url('${post.heroImage}')` } : undefined}
+      >
+        {post.heroImage && <div className="absolute inset-0 bg-brand-navy/80" />}
+        <div className="relative max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
           <FadeIn>
             <Link
               href="/blog"
