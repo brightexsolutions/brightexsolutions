@@ -58,10 +58,15 @@ export function BrixoWidget() {
     setLoading(true);
 
     try {
+      // Send last 6 messages as history so AI has conversation context
+      const history = messages
+        .slice(-6)
+        .map((m) => ({ role: m.role === "bot" ? "assistant" : "user", content: m.content }));
+
       const res = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: userMsg, visitorId: visitorId.current }),
+        body: JSON.stringify({ message: userMsg, visitorId: visitorId.current, history }),
       });
       const data = await res.json();
 
@@ -72,7 +77,7 @@ export function BrixoWidget() {
           {
             role: "bot",
             content:
-              "I don't have a direct answer for that. You can switch to WhatsApp to chat with Godwin directly.",
+              "I don't have a direct answer for that right now. Switch to WhatsApp to chat with Godwin directly — he'll respond within 2 hours.",
           },
         ]);
       } else {

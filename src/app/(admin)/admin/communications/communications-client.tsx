@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { MessageSquare, Plus, Pencil, Trash2 } from "lucide-react";
+import { MessageSquare, Plus, Pencil, Trash2, Sparkles, Loader2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { StatCard } from "@/components/admin/stat-card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -49,6 +49,7 @@ export function CommunicationsPageClient() {
   const [activeFilter, setActiveFilter] = useState("All");
   const [form, setForm] = useState(defaultForm);
   const [saving, setSaving] = useState(false);
+  const [drafting, setDrafting] = useState(false);
   const [error, setError] = useState("");
   const [communications, setCommunications] = useState<Communication[]>([]);
   const [loading, setLoading] = useState(true);
@@ -104,6 +105,32 @@ export function CommunicationsPageClient() {
       setOpen(false);
     } catch { setError("Network error."); }
     finally { setSaving(false); }
+  }
+
+  async function draftWithAI() {
+    if (!form.subject.trim()) { setError("Add a subject first so AI knows what to draft."); return; }
+    setDrafting(true);
+    setError("");
+    try {
+      const res = await fetch("/api/admin/ai", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          intent: "draft_reply",
+          clientName: "the client",
+          subject: form.subject,
+          context: form.body || form.subject,
+          tone: "warm",
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok && data.result) {
+        set("body", data.result);
+      } else {
+        setError(data.error ?? "AI draft failed. Try again.");
+      }
+    } catch { setError("Network error."); }
+    finally { setDrafting(false); }
   }
 
   async function handleDelete(entry: Communication) {
@@ -222,7 +249,20 @@ export function CommunicationsPageClient() {
               <Input id="comm-subject" value={form.subject} onChange={(e) => set("subject", e.target.value)} required placeholder="Brief description" />
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="comm-body">Notes / Body</Label>
+              <div className="flex items-center justify-between">
+                <Label htmlFor="comm-body">Notes / Body</Label>
+                {form.type === "email" && (
+                  <button
+                    type="button"
+                    onClick={draftWithAI}
+                    disabled={drafting}
+                    className="inline-flex items-center gap-1.5 text-xs text-brand-gold hover:text-brand-gold-hover font-medium transition-colors disabled:opacity-50"
+                  >
+                    {drafting ? <Loader2 size={12} className="animate-spin" /> : <Sparkles size={12} />}
+                    {drafting ? "Drafting…" : "Draft with AI"}
+                  </button>
+                )}
+              </div>
               <Textarea id="comm-body" rows={4} value={form.body} onChange={(e) => set("body", e.target.value)} placeholder="Key points, outcomes, follow-ups…" />
             </div>
             {error && <p className="text-sm text-red-500">{error}</p>}
