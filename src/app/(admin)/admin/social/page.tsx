@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { BarChart3, Plus, Pencil, Trash2, CheckCircle2, Clock, Loader2, Eye, Calendar, Hash, FileText } from "lucide-react";
+import { BarChart3, Plus, Pencil, Trash2, CheckCircle2, Clock, Loader2, Eye, Calendar, Hash, FileText, Sparkles } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { StatCard } from "@/components/admin/stat-card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -55,6 +55,7 @@ export default function SocialMediaPage() {
   const [detailPost, setDetailPost] = useState<SocialPost | null>(null);
   const [form, setForm] = useState(defaultForm);
   const [saving, setSaving] = useState(false);
+  const [aiDrafting, setAiDrafting] = useState(false);
   const [busyIds, setBusyIds] = useState<Set<string>>(new Set());
   const [error, setError] = useState("");
 
@@ -166,6 +167,34 @@ export default function SocialMediaPage() {
     } finally {
       setBusy(post.id, false);
     }
+  }
+
+  async function writeWithAI() {
+    if (form.platforms.length === 0) { setError("Select at least one platform so AI knows where this will be posted."); return; }
+    const topic = form.notes.trim() || form.caption.trim();
+    if (!topic) { setError("Add a topic in the Notes field (or start the caption) so AI knows what to write about."); return; }
+    setAiDrafting(true);
+    setError("");
+    try {
+      const res = await fetch("/api/admin/ai", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          intent: "write_caption",
+          topic,
+          platforms: form.platforms,
+          tone: "professional",
+          includeHashtags: true,
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok && data.result) {
+        setForm((f) => ({ ...f, caption: data.result }));
+      } else {
+        setError(data.error ?? "AI draft failed. Try again.");
+      }
+    } catch { setError("Network error."); }
+    finally { setAiDrafting(false); }
   }
 
   // Derived
@@ -413,8 +442,19 @@ export default function SocialMediaPage() {
           </DialogHeader>
           <form onSubmit={handleSubmit} className="space-y-4 mt-2">
             <div className="space-y-1.5">
-              <Label>Caption *</Label>
-              <Textarea rows={4} placeholder="Write your caption…" value={form.caption} onChange={(e) => setForm((f) => ({ ...f, caption: e.target.value }))} required />
+              <div className="flex items-center justify-between">
+                <Label>Caption *</Label>
+                <button
+                  type="button"
+                  onClick={writeWithAI}
+                  disabled={aiDrafting}
+                  className="inline-flex items-center gap-1.5 text-xs text-brand-gold hover:text-brand-gold-hover font-medium transition-colors disabled:opacity-50"
+                >
+                  {aiDrafting ? <Loader2 size={12} className="animate-spin" /> : <Sparkles size={12} />}
+                  {aiDrafting ? "Drafting…" : "Write with AI"}
+                </button>
+              </div>
+              <Textarea rows={4} placeholder="Write your caption… or select platforms + add a topic in Notes, then click Write with AI" value={form.caption} onChange={(e) => setForm((f) => ({ ...f, caption: e.target.value }))} required />
             </div>
             <div className="space-y-1.5">
               <Label>Hashtags <span className="text-muted-foreground font-normal">(space or comma separated)</span></Label>

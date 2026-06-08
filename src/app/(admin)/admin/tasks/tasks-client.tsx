@@ -13,7 +13,7 @@ import { CSS } from "@dnd-kit/utilities";
 import {
   Plus, X, Pencil, Trash2, User, FolderOpen, Calendar, Flag,
   CheckCircle2, BarChart3, Clock, AlertTriangle, CheckSquare,
-  Link2, Link2Off, RefreshCw,
+  Link2, Link2Off, RefreshCw, Sparkles, Loader2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -25,7 +25,7 @@ import { Textarea } from "@/components/ui/textarea";
 // ── Types ─────────────────────────────────────────────────────────────────────
 
 type Member = { id: string; name: string; role: string };
-type Project = { id: string; name: string; status: string };
+type Project = { id: string; name: string; status: string; type?: string | null; notes?: string | null; budget?: number | null };
 
 type Task = {
   id: string;
@@ -219,6 +219,7 @@ export function TasksClient() {
   const [createForm, setCreateForm] = useState({ ...EMPTY_FORM });
   const [createSaving, setCreateSaving] = useState(false);
   const [createError, setCreateError] = useState("");
+  const [aiSuggesting, setAiSuggesting] = useState(false);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } })
@@ -349,6 +350,42 @@ export function TasksClient() {
     setCreateForm({ ...EMPTY_FORM, status: defaultStatus ?? "todo" });
     setCreateError("");
     setCreateOpen(true);
+  }
+
+  async function suggestTasksWithAI() {
+    const projectId = createForm.project_id;
+    const project = projects.find((p) => p.id === projectId);
+    if (!project) { setCreateError("Select a project first so AI can suggest relevant tasks."); return; }
+    setAiSuggesting(true);
+    setCreateError("");
+    try {
+      const res = await fetch("/api/admin/ai", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          intent: "suggest_tasks",
+          projectName: project.name,
+          projectType: project.type || undefined,
+          description: project.notes || undefined,
+          budget: project.budget || undefined,
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok && Array.isArray(data.result) && data.result.length > 0) {
+        const first = data.result[0];
+        setCreateForm((f) => ({
+          ...f,
+          title: first.title ?? f.title,
+          description: first.description ?? f.description,
+          priority: (first.priority as "low" | "normal" | "high") ?? f.priority,
+          category: first.category ?? f.category,
+        }));
+        setCreateError(`AI suggested ${data.result.length} tasks. Showing task 1 of ${data.result.length}. Edit and save, then create the rest manually or re-run AI.`);
+      } else {
+        setCreateError(data.error ?? "AI suggestion failed. Try again.");
+      }
+    } catch { setCreateError("Network error."); }
+    finally { setAiSuggesting(false); }
   }
 
   async function handleCreate(e: React.FormEvent) {
@@ -571,7 +608,27 @@ export function TasksClient() {
           </DialogHeader>
           <form onSubmit={handleCreate} className="space-y-3 mt-1">
             <div>
-              <Label>Title *</Label>
+              <Label>Link to Project <span className="text-muted-foreground font-normal">(optional)</span></Label>
+              <select value={createForm.project_id} onChange={(e) => setCreateForm((f) => ({ ...f, project_id: e.target.value }))}
+                className="mt-1 w-full px-2.5 py-2 text-sm rounded-sm border border-input bg-background text-foreground focus:outline-none focus:ring-1 focus:ring-ring">
+                <option value="">Standalone (no project)</option>
+                {projects.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
+              </select>
+            </div>
+            <div>
+              <div className="flex items-center justify-between">
+                <Label>Title *</Label>
+                <button
+                  type="button"
+                  onClick={suggestTasksWithAI}
+                  disabled={aiSuggesting || !createForm.project_id}
+                  title={!createForm.project_id ? "Select a project first" : "Suggest task with AI"}
+                  className="inline-flex items-center gap-1.5 text-xs text-brand-gold hover:text-brand-gold-hover font-medium transition-colors disabled:opacity-40"
+                >
+                  {aiSuggesting ? <Loader2 size={12} className="animate-spin" /> : <Sparkles size={12} />}
+                  {aiSuggesting ? "Thinking…" : "Suggest with AI"}
+                </button>
+              </div>
               <Input value={createForm.title} onChange={(e) => setCreateForm((f) => ({ ...f, title: e.target.value }))}
                 required placeholder="What needs to be done?" className="mt-1" />
             </div>
@@ -605,14 +662,6 @@ export function TasksClient() {
                   {CATEGORIES.map((c) => <option key={c} value={c} className="capitalize">{c}</option>)}
                 </select>
               </div>
-            </div>
-            <div>
-              <Label>Link to Project <span className="text-muted-foreground font-normal">(optional)</span></Label>
-              <select value={createForm.project_id} onChange={(e) => setCreateForm((f) => ({ ...f, project_id: e.target.value }))}
-                className="mt-1 w-full px-2.5 py-2 text-sm rounded-sm border border-input bg-background text-foreground focus:outline-none focus:ring-1 focus:ring-ring">
-                <option value="">Standalone (no project)</option>
-                {projects.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
-              </select>
             </div>
             <div>
               <Label>Assign To <span className="text-muted-foreground font-normal">(optional)</span></Label>
