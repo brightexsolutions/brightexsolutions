@@ -1,9 +1,10 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { Megaphone, Plus, Pencil, Trash2 } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Megaphone, Plus, Pencil, Trash2, ToggleLeft, ToggleRight } from "lucide-react";
+import { Card } from "@/components/ui/card";
 import { StatCard } from "@/components/admin/stat-card";
+import { DataTable, StackedCell, type Column, type RowAction, type FilterConfig } from "@/components/admin/data-table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -181,64 +182,81 @@ export function AnnouncementsPageClient() {
         <StatCard title="Total" value={announcements.length} icon={Megaphone} />
       </div>
 
-      <div className="flex items-center gap-3">
-        {[{ label: "All", val: false }, { label: "Active Only", val: true }].map(({ label, val }) => (
-          <button key={label} onClick={() => setActiveOnly(val)}
-            className={cn("px-3 py-1.5 rounded-sm text-xs font-medium border transition-colors",
-              activeOnly === val ? "bg-muted text-foreground border-transparent" : "border-border text-muted-foreground hover:text-foreground"
-            )}>{label}</button>
-        ))}
-      </div>
-
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-base flex items-center gap-2"><Megaphone size={16} />Announcements</CardTitle>
-        </CardHeader>
-        <CardContent className="p-0">
-          {loading && announcements.length === 0 ? (
-            <div className="text-center py-12 text-muted-foreground"><p className="text-sm">Loading announcements…</p></div>
-          ) : filteredAnnouncements.length === 0 ? (
-            <div className="text-center py-12 text-muted-foreground">
-              <Megaphone size={40} className="mx-auto mb-3 opacity-20" />
-              <p className="text-sm">No announcements yet.</p>
-              <button onClick={openCreate} className="mt-4 inline-flex items-center gap-2 px-3 py-1.5 rounded-sm border border-border text-xs font-medium hover:border-brand-gold/40 transition-colors">
-                <Plus size={13} />New Announcement
-              </button>
-            </div>
-          ) : (
-            <div className="divide-y divide-border">
-              {filteredAnnouncements.map((ann) => (
-                <div key={ann.id} className="px-6 py-4 flex items-start justify-between gap-4 group">
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <p className="text-sm font-semibold text-foreground">{ann.title}</p>
-                      <span className={`px-2 py-0.5 rounded-sm text-[11px] font-medium border capitalize ${typeColors[ann.type] ?? "bg-muted text-muted-foreground border-border"}`}>{ann.type}</span>
-                      {ann.active && <span className="px-2 py-0.5 rounded-sm text-[11px] font-medium bg-emerald-400/10 text-emerald-500 border border-emerald-400/20">Live</span>}
+      <Card className="overflow-hidden">
+        <DataTable
+          columns={[
+            {
+              key: "title",
+              label: "Announcement",
+              sortable: true,
+              render: (row) => {
+                const ann = row as unknown as Announcement;
+                return (
+                  <div className="flex flex-col gap-1 min-w-0">
+                    <StackedCell primary={ann.title} secondary={ann.body ? ann.body.slice(0, 80) + (ann.body.length > 80 ? "…" : "") : undefined} />
+                    <div className="flex items-center gap-1 flex-wrap">
+                      <span className={`px-1.5 py-0.5 rounded text-[10px] font-medium border capitalize ${typeColors[ann.type] ?? "bg-muted text-muted-foreground border-border"}`}>{ann.type}</span>
+                      {ann.active && <span className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-emerald-400/10 text-emerald-500 border border-emerald-400/20">Live</span>}
                     </div>
-                    {ann.body && <p className="text-xs text-muted-foreground mt-1 line-clamp-1">{ann.body}</p>}
-                    <p className="text-xs text-muted-foreground mt-1">
-                      {(ann.display_location ?? []).map((l) => locationLabels[l] ?? l).join(", ") || "No location"}
-                    </p>
                   </div>
-                  <div className="flex items-center gap-1 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <button onClick={() => handleToggleActive(ann)} className={cn("px-2 py-1 rounded-sm text-[11px] font-medium border transition-colors", ann.active ? "border-red-200 text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20" : "border-emerald-200 text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/20")} title={ann.active ? "Deactivate" : "Activate"}>
-                      {ann.active ? "Deactivate" : "Activate"}
-                    </button>
-                    <button onClick={() => openEdit(ann)} className="p-1.5 rounded-sm hover:bg-muted text-muted-foreground hover:text-foreground transition-colors" title="Edit">
-                      <Pencil size={13} />
-                    </button>
-                    <button onClick={() => handleDelete(ann)} className="p-1.5 rounded-sm hover:bg-red-50 dark:hover:bg-red-950/20 text-muted-foreground hover:text-red-500 transition-colors" title="Delete">
-                      <Trash2 size={13} />
-                    </button>
-                  </div>
-                  <div className="text-right shrink-0">
-                    {ann.ends_at && <p className="text-xs text-muted-foreground">Ends {new Date(ann.ends_at).toLocaleDateString("en-KE")}</p>}
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </CardContent>
+                );
+              },
+            },
+            {
+              key: "display_location",
+              label: "Location",
+              render: (row) => {
+                const ann = row as unknown as Announcement;
+                return <span className="text-xs text-muted-foreground">{(ann.display_location ?? []).map((l) => locationLabels[l] ?? l).join(", ") || "No location"}</span>;
+              },
+            },
+            {
+              key: "ends_at",
+              label: "Ends",
+              render: (row) => {
+                const ann = row as unknown as Announcement;
+                return ann.ends_at
+                  ? <span className="text-sm text-muted-foreground">{new Date(ann.ends_at).toLocaleDateString("en-KE")}</span>
+                  : <span className="text-xs text-muted-foreground">No expiry</span>;
+              },
+            },
+            {
+              key: "toggle",
+              label: "",
+              className: "w-28",
+              render: (row) => {
+                const ann = row as unknown as Announcement;
+                return (
+                  <button
+                    onClick={(e) => { e.stopPropagation(); handleToggleActive(ann); }}
+                    className={cn("flex items-center gap-1 px-2 py-1 rounded text-[11px] font-medium border transition-colors",
+                      ann.active ? "border-red-200 text-red-500 dark:border-red-800/40 hover:bg-red-50 dark:hover:bg-red-950/20" : "border-emerald-200 text-emerald-600 dark:border-emerald-800/40 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/20"
+                    )}
+                  >
+                    {ann.active ? <ToggleRight size={12} /> : <ToggleLeft size={12} />}
+                    {ann.active ? "Deactivate" : "Activate"}
+                  </button>
+                );
+              },
+            },
+          ] as Column<Record<string, unknown>>[]}
+          data={filteredAnnouncements as unknown as Record<string, unknown>[]}
+          actions={[
+            { label: "Edit", icon: <Pencil size={13} />, onClick: (row) => openEdit(row as unknown as Announcement) },
+            { label: "Delete", icon: <Trash2 size={13} />, destructive: true, onClick: (row) => handleDelete(row as unknown as Announcement) },
+          ] as RowAction<Record<string, unknown>>[]}
+          searchable
+          searchPlaceholder="Search announcements…"
+          searchKeys={["title", "body"]}
+          filters={[
+            { key: "type", label: "Type", options: [{ label: "All", value: "" }, ...Object.keys(typeColors).map((t) => ({ label: t.charAt(0).toUpperCase() + t.slice(1), value: t }))] } as FilterConfig,
+            { key: "active", label: "Status", options: [{ label: "All", value: "" }, { label: "Active", value: "true" }, { label: "Inactive", value: "false" }] } as FilterConfig,
+          ]}
+          activeFilters={{ active: activeOnly ? "true" : "" }}
+          onFilterChange={(key, val) => { if (key === "active") setActiveOnly(val === "true"); }}
+          maxHeight="520px"
+          emptyMessage={loading ? "Loading announcements…" : "No announcements yet."}
+        />
       </Card>
 
       <Dialog open={open} onOpenChange={setOpen}>

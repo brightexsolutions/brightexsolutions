@@ -116,8 +116,8 @@
   --primary-foreground: #0b1120;
   --secondary: #162238;
   --secondary-foreground: #e8edf5;
-  --muted: #162238;
-  --muted-foreground: #8b9ab5;
+  --muted: #1a2840;
+  --muted-foreground: #97acc6;
   --accent: #1a2d45;
   --accent-foreground: #e8edf5;
   --destructive: oklch(0.704 0.191 22.216);

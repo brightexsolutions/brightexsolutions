@@ -226,7 +226,7 @@ export function DataTable<T extends Record<string, unknown>>({
       >
         <table className="w-full text-sm">
           <thead className="sticky top-0 z-10">
-            <tr className="border-b border-border bg-muted/40">
+            <tr className="border-b border-border bg-muted/60 dark:bg-muted">
               {columns.map((col) => (
                 <th
                   key={col.key}

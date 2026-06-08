@@ -146,7 +146,7 @@ export function AdminSidebar({ collapsed, onToggle }: SidebarProps) {
         {!collapsed && (
           <div className="min-w-0">
             <p className="text-[13px] font-bold text-sidebar-foreground leading-none truncate">Brightex</p>
-            <p className="text-[10px] text-sidebar-foreground/40 leading-none mt-0.5">Admin Console</p>
+            <p className="text-[10px] text-sidebar-foreground/55 leading-none mt-0.5">Admin Console</p>
           </div>
         )}
       </div>
@@ -183,12 +183,12 @@ export function AdminSidebar({ collapsed, onToggle }: SidebarProps) {
                   onClick={() => toggleGroup(group.label)}
                   className={cn(
                     "w-full flex items-center justify-between px-2 py-1.5 rounded-md transition-colors",
-                    "text-sidebar-foreground/35 hover:text-sidebar-foreground/60",
+                    "text-sidebar-foreground/45 hover:text-sidebar-foreground/70",
                   )}
                 >
                   <span className={cn(
                     "text-[10px] font-semibold uppercase tracking-[0.1em]",
-                    hasActive && "text-sidebar-foreground/55"
+                    hasActive && "text-sidebar-foreground/70"
                   )}>
                     {group.label}
                   </span>
@@ -215,7 +215,7 @@ export function AdminSidebar({ collapsed, onToggle }: SidebarProps) {
                             collapsed ? "justify-center h-9 w-9 mx-auto" : "px-2.5 py-2 h-9",
                             active
                               ? "bg-sidebar-accent text-sidebar-foreground font-semibold"
-                              : "text-sidebar-foreground/55 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground/90"
+                              : "text-sidebar-foreground/65 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground/95"
                           )}
                         >
                           {/* Active indicator bar */}
@@ -261,13 +261,13 @@ export function AdminSidebar({ collapsed, onToggle }: SidebarProps) {
           {!collapsed && (
             <div className="flex-1 min-w-0">
               <p className="text-[12px] font-semibold text-sidebar-foreground truncate leading-none">Godwin Brown</p>
-              <p className="text-[10px] text-sidebar-foreground/40 truncate leading-none mt-0.5">Administrator</p>
+              <p className="text-[10px] text-sidebar-foreground/55 truncate leading-none mt-0.5">Administrator</p>
             </div>
           )}
           {!collapsed && (
             <button
               onClick={handleSignOut}
-              className="w-7 h-7 rounded-md flex items-center justify-center text-sidebar-foreground/35 hover:text-sidebar-foreground hover:bg-sidebar-accent transition-colors shrink-0"
+              className="w-7 h-7 rounded-md flex items-center justify-center text-sidebar-foreground/50 hover:text-sidebar-foreground hover:bg-sidebar-accent transition-colors shrink-0"
               title="Sign out"
             >
               <LogOut size={12} />
@@ -279,7 +279,7 @@ export function AdminSidebar({ collapsed, onToggle }: SidebarProps) {
         <button
           onClick={onToggle}
           className={cn(
-            "w-full flex items-center gap-2 rounded-lg px-2 py-2 text-[12px] text-sidebar-foreground/35 hover:text-sidebar-foreground/70 hover:bg-sidebar-accent/60 transition-colors",
+            "w-full flex items-center gap-2 rounded-lg px-2 py-2 text-[12px] text-sidebar-foreground/50 hover:text-sidebar-foreground/80 hover:bg-sidebar-accent/60 transition-colors",
             collapsed ? "justify-center" : ""
           )}
         >

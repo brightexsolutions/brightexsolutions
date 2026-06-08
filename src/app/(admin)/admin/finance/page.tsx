@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { BarChart2, Download, TrendingUp, TrendingDown, DollarSign, Plus, Pencil, Trash2, Info, FileUp, FileText, ExternalLink, X } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { DataTable, StackedCell, type Column, type RowAction, type FilterConfig } from "@/components/admin/data-table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -14,6 +15,7 @@ import {
   ResponsiveContainer, PieChart, Pie, Cell, Legend,
 } from "recharts";
 import { cn } from "@/lib/utils";
+import { useTheme } from "next-themes";
 
 const tabs = ["Income", "Expenses", "Reports", "Documents"] as const;
 type Tab = (typeof tabs)[number];
@@ -108,6 +110,8 @@ function computeNet(gross: number, whtType: string, customRate: string) {
 }
 
 export default function FinancePage() {
+  const { resolvedTheme } = useTheme();
+  const chartLabelColor = resolvedTheme === "dark" ? "#97acc6" : "#64748b";
   const [activeTab, setActiveTab] = useState<Tab>("Income");
   const [income, setIncome] = useState<IncomeRecord[]>([]);
   const [expenses, setExpenses] = useState<ExpenseRecord[]>([]);
@@ -420,92 +424,123 @@ export default function FinancePage() {
 
       {/* ── Income Tab ── */}
       {activeTab === "Income" && (
-        <Card>
-          <CardHeader className="pb-3 flex flex-row items-center justify-between">
-            <CardTitle className="text-base flex items-center gap-2"><TrendingUp size={16} />Income Records</CardTitle>
-            <button onClick={openCreateIncome} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-sm bg-brand-gold text-brand-navy font-semibold text-xs hover:bg-brand-gold-hover transition-colors">
-              <Plus size={13} />Add Income
-            </button>
-          </CardHeader>
-          <CardContent className="p-0">
-            {loading ? <div className="py-10 text-center text-sm text-muted-foreground">Loading…</div>
-              : income.length === 0 ? <div className="text-center py-12 text-muted-foreground"><TrendingUp size={40} className="mx-auto mb-3 opacity-20" /><p className="text-sm">No income records yet.</p></div>
-              : (
-                <div className="divide-y divide-border">
-                  {income.map((r) => {
-                    const hasWHT = r.withholding_tax && Number(r.withholding_tax) > 0;
-                    return (
-                      <div key={r.id} className="flex items-center gap-4 px-6 py-3.5 group">
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-semibold text-foreground">{r.description || r.source.replace(/_/g, " ")}</p>
-                          <p className="text-xs text-muted-foreground mt-0.5">
-                            {r.category.replace(/_/g, " ")} · {new Date(r.date).toLocaleDateString("en-KE")}
-                            {r.clients?.name ? ` · ${r.clients.name}` : ""}
-                            {hasWHT ? ` · WHT KES ${Number(r.withholding_tax).toLocaleString()} deducted` : ""}
-                          </p>
-                        </div>
-                        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
-                          <button onClick={() => openEditIncome(r)} className="p-1.5 rounded-sm hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"><Pencil size={13} /></button>
-                          <button onClick={() => deleteIncome(r)} className="p-1.5 rounded-sm hover:bg-red-50 dark:hover:bg-red-950/20 text-muted-foreground hover:text-red-500 transition-colors"><Trash2 size={13} /></button>
-                        </div>
-                        <div className="text-right shrink-0">
-                          <span className="text-sm font-semibold text-emerald-600 dark:text-emerald-400">KES {Number(r.amount).toLocaleString()}</span>
-                          {hasWHT && <p className="text-[10px] text-muted-foreground">Gross: KES {Number(r.gross_amount ?? r.amount).toLocaleString()}</p>}
-                        </div>
+        <Card className="overflow-hidden">
+          <DataTable
+            columns={[
+              {
+                key: "description",
+                label: "Income",
+                sortable: true,
+                render: (row) => {
+                  const r = row as unknown as IncomeRecord;
+                  const hasWHT = r.withholding_tax && Number(r.withholding_tax) > 0;
+                  return (
+                    <div className="flex flex-col gap-1 min-w-0">
+                      <StackedCell primary={r.description || r.source.replace(/_/g, " ")} secondary={r.clients?.name ?? undefined} />
+                      <div className="flex items-center gap-1 flex-wrap">
+                        <span className="px-1.5 py-0.5 rounded text-[10px] font-medium border border-border text-muted-foreground capitalize">{r.category.replace(/_/g, " ")}</span>
+                        {hasWHT && <span className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-amber-400/10 text-amber-600 dark:text-amber-400">WHT KES {Number(r.withholding_tax).toLocaleString()}</span>}
                       </div>
-                    );
-                  })}
-                </div>
-              )}
-          </CardContent>
+                    </div>
+                  );
+                },
+              },
+              {
+                key: "amount",
+                label: "Amount (net)",
+                render: (row) => {
+                  const r = row as unknown as IncomeRecord;
+                  const hasWHT = r.withholding_tax && Number(r.withholding_tax) > 0;
+                  return (
+                    <div className="flex flex-col gap-0.5">
+                      <span className="text-sm font-semibold text-emerald-600 dark:text-emerald-400">KES {Number(r.amount).toLocaleString()}</span>
+                      {hasWHT && <span className="text-[10px] text-muted-foreground">Gross: KES {Number(r.gross_amount ?? r.amount).toLocaleString()}</span>}
+                    </div>
+                  );
+                },
+              },
+              {
+                key: "date",
+                label: "Date",
+                sortable: true,
+                render: (row) => <span className="text-sm text-muted-foreground">{new Date(String(row.date)).toLocaleDateString("en-KE")}</span>,
+              },
+            ] as Column<Record<string, unknown>>[]}
+            data={income as unknown as Record<string, unknown>[]}
+            actions={[
+              { label: "Edit", icon: <Pencil size={13} />, onClick: (row) => openEditIncome(row as unknown as IncomeRecord) },
+              { label: "Delete", icon: <Trash2 size={13} />, destructive: true, onClick: (row) => deleteIncome(row as unknown as IncomeRecord) },
+            ] as RowAction<Record<string, unknown>>[]}
+            searchable
+            searchPlaceholder="Search income…"
+            searchKeys={["description", "source"]}
+            toolbar={
+              <button onClick={openCreateIncome} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-sm bg-brand-gold text-brand-navy font-semibold text-xs hover:bg-brand-gold-hover transition-colors">
+                <Plus size={13} />Add Income
+              </button>
+            }
+            maxHeight="480px"
+            emptyMessage={loading ? "Loading income records…" : "No income records yet."}
+          />
         </Card>
       )}
 
       {/* ── Expenses Tab ── */}
       {activeTab === "Expenses" && (
-        <div className="space-y-4">
-          <div className="flex gap-2 flex-wrap">
-            <button onClick={() => setActiveExpenseCategory("all")} className={cn("px-3 py-1.5 rounded-sm text-xs font-medium border transition-colors", activeExpenseCategory === "all" ? "bg-brand-gold/10 border-brand-gold/40 text-brand-navy dark:text-brand-gold" : "border-border text-muted-foreground hover:text-foreground")}>All</button>
-            {expenseCategories.map((cat) => (
-              <button key={cat} onClick={() => setActiveExpenseCategory(cat)} className={cn("px-3 py-1.5 rounded-sm text-xs font-medium border capitalize transition-colors", activeExpenseCategory === cat ? "bg-brand-gold/10 border-brand-gold/40 text-brand-navy dark:text-brand-gold" : "border-border text-muted-foreground hover:text-foreground")}>
-                {cat.replace(/_/g, " ")}
-              </button>
-            ))}
-          </div>
-          <Card>
-            <CardHeader className="pb-3 flex flex-row items-center justify-between">
-              <CardTitle className="text-base flex items-center gap-2"><TrendingDown size={16} />Expense Records</CardTitle>
+        <Card className="overflow-hidden">
+          <DataTable
+            columns={[
+              {
+                key: "description",
+                label: "Expense",
+                sortable: true,
+                render: (row) => {
+                  const r = row as unknown as ExpenseRecord;
+                  return (
+                    <div className="flex flex-col gap-1 min-w-0">
+                      <StackedCell primary={r.description} secondary={r.vendor ?? undefined} />
+                      <div className="flex items-center gap-1 flex-wrap">
+                        <span className="px-1.5 py-0.5 rounded text-[10px] font-medium border border-border text-muted-foreground capitalize">{r.category.replace(/_/g, " ")}</span>
+                        {r.tax_deductible && <span className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-emerald-400/10 text-emerald-600 dark:text-emerald-400">deductible</span>}
+                      </div>
+                    </div>
+                  );
+                },
+              },
+              {
+                key: "amount",
+                label: "Amount",
+                render: (row) => <span className="text-sm font-semibold text-red-600 dark:text-red-400">KES {Number(row.amount).toLocaleString()}</span>,
+              },
+              {
+                key: "date",
+                label: "Date",
+                sortable: true,
+                render: (row) => <span className="text-sm text-muted-foreground">{new Date(String(row.date)).toLocaleDateString("en-KE")}</span>,
+              },
+            ] as Column<Record<string, unknown>>[]}
+            data={filteredExpenses as unknown as Record<string, unknown>[]}
+            actions={[
+              { label: "Edit", icon: <Pencil size={13} />, onClick: (row) => openEditExpense(row as unknown as ExpenseRecord) },
+              { label: "Delete", icon: <Trash2 size={13} />, destructive: true, onClick: (row) => deleteExpense(row as unknown as ExpenseRecord) },
+            ] as RowAction<Record<string, unknown>>[]}
+            searchable
+            searchPlaceholder="Search expenses…"
+            searchKeys={["description", "vendor"]}
+            filters={[
+              { key: "category", label: "Category", options: [{ label: "All", value: "" }, ...expenseCategories.map((c) => ({ label: c.replace(/_/g, " "), value: c }))] } as FilterConfig,
+            ]}
+            activeFilters={{ category: activeExpenseCategory === "all" ? "" : activeExpenseCategory }}
+            onFilterChange={(key, val) => { if (key === "category") setActiveExpenseCategory(val || "all"); }}
+            toolbar={
               <button onClick={openCreateExpense} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-sm bg-brand-gold text-brand-navy font-semibold text-xs hover:bg-brand-gold-hover transition-colors">
                 <Plus size={13} />Add Expense
               </button>
-            </CardHeader>
-            <CardContent className="p-0">
-              {loading ? <div className="py-10 text-center text-sm text-muted-foreground">Loading…</div>
-                : filteredExpenses.length === 0 ? <div className="text-center py-12 text-muted-foreground"><TrendingDown size={40} className="mx-auto mb-3 opacity-20" /><p className="text-sm">No expenses yet.</p></div>
-                : (
-                  <div className="divide-y divide-border">
-                    {filteredExpenses.map((r) => (
-                      <div key={r.id} className="flex items-center gap-4 px-6 py-3.5 group">
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-semibold text-foreground">{r.description}</p>
-                          <p className="text-xs text-muted-foreground mt-0.5">
-                            <span className="capitalize">{r.category.replace(/_/g, " ")}</span>
-                            {r.vendor ? ` · ${r.vendor}` : ""} · {new Date(r.date).toLocaleDateString("en-KE")}
-                            {r.tax_deductible ? " · deductible" : ""}
-                          </p>
-                        </div>
-                        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
-                          <button onClick={() => openEditExpense(r)} className="p-1.5 rounded-sm hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"><Pencil size={13} /></button>
-                          <button onClick={() => deleteExpense(r)} className="p-1.5 rounded-sm hover:bg-red-50 dark:hover:bg-red-950/20 text-muted-foreground hover:text-red-500 transition-colors"><Trash2 size={13} /></button>
-                        </div>
-                        <span className="text-sm font-semibold text-red-600 dark:text-red-400 shrink-0">KES {Number(r.amount).toLocaleString()}</span>
-                      </div>
-                    ))}
-                  </div>
-                )}
-            </CardContent>
-          </Card>
-        </div>
+            }
+            maxHeight="480px"
+            emptyMessage={loading ? "Loading expenses…" : "No expenses yet."}
+          />
+        </Card>
       )}
 
       {/* ── Reports Tab ── */}
@@ -562,8 +597,8 @@ export default function FinancePage() {
                 <ResponsiveContainer width="100%" height={260}>
                   <BarChart data={monthlyData} barCategoryGap="30%" barGap={4}>
                     <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
-                    <XAxis dataKey="month" tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }} axisLine={false} tickLine={false} />
-                    <YAxis tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }} axisLine={false} tickLine={false} tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`} />
+                    <XAxis dataKey="month" tick={{ fontSize: 11, fill: chartLabelColor }} axisLine={false} tickLine={false} />
+                    <YAxis tick={{ fontSize: 11, fill: chartLabelColor }} axisLine={false} tickLine={false} tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`} />
                     <Tooltip
                       contentStyle={{ backgroundColor: "hsl(var(--popover))", border: "1px solid hsl(var(--border))", borderRadius: "4px", fontSize: 12 }}
                       formatter={(val) => [`KES ${Number(val ?? 0).toLocaleString()}`, undefined]}
@@ -613,77 +648,88 @@ export default function FinancePage() {
 
       {/* ── Documents Tab ── */}
       {activeTab === "Documents" && (
-        <div className="space-y-4">
-          <div className="flex items-center justify-between gap-3 flex-wrap">
-            <div className="flex gap-2">
-              {["all", "income", "expense"].map((d) => (
-                <button key={d} onClick={() => setDocDirFilter(d)}
-                  className={cn("px-3 py-1.5 rounded-sm text-xs font-medium border capitalize transition-colors",
-                    docDirFilter === d ? "bg-brand-gold/10 border-brand-gold/40 text-brand-navy dark:text-brand-gold" : "border-border text-muted-foreground hover:text-foreground"
-                  )}>{d === "all" ? "All Documents" : d === "income" ? "Income / eTIMS" : "Expense Receipts"}
-                </button>
-              ))}
-            </div>
-            <button onClick={() => { setDocUploadOpen(true); setDocError(""); setDocFile(null); setDocForm(defaultDocForm); }}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-sm bg-brand-gold text-brand-navy font-semibold text-xs hover:bg-brand-gold-hover transition-colors">
-              <FileUp size={13} />Upload Document
-            </button>
-          </div>
-
-          <Card>
-            <CardContent className="p-0">
-              {docsLoading ? (
-                <div className="py-10 text-center text-sm text-muted-foreground">Loading…</div>
-              ) : docs.length === 0 ? (
-                <div className="text-center py-14 text-muted-foreground">
-                  <FileText size={40} className="mx-auto mb-3 opacity-20" />
-                  <p className="text-sm font-medium">No documents uploaded yet.</p>
-                  <p className="text-xs mt-1">Upload eTIMS invoices, supplier invoices, and receipts here.</p>
-                </div>
-              ) : (
-                <div className="divide-y divide-border">
-                  {docs.map((doc) => {
-                    const typeLabel = DOC_TYPES.find((t) => t.value === doc.doc_type)?.label ?? doc.doc_type;
-                    const isIncome = doc.direction === "income";
-                    return (
-                      <div key={doc.id} className="flex items-center gap-4 px-6 py-3.5 group">
-                        <div className="w-8 h-8 rounded-sm bg-muted flex items-center justify-center shrink-0">
-                          <FileText size={14} className="text-muted-foreground" />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 flex-wrap">
-                            <p className="text-sm font-semibold text-foreground">{doc.party_name}</p>
-                            <span className={cn("text-[10px] font-semibold px-1.5 py-0.5 rounded-full", isIncome ? "bg-emerald-400/10 text-emerald-600 dark:text-emerald-400" : "bg-red-400/10 text-red-600 dark:text-red-400")}>
-                              {isIncome ? "income" : "expense"}
-                            </span>
-                            <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground">{typeLabel}</span>
-                          </div>
-                          <p className="text-xs text-muted-foreground mt-0.5">
-                            {new Date(doc.doc_date).toLocaleDateString("en-KE")}
-                            {doc.invoice_number ? ` · Ref: ${doc.invoice_number}` : ""}
-                            {doc.amount ? ` · KES ${Number(doc.amount).toLocaleString()}` : ""}
-                            {doc.original_filename ? ` · ${doc.original_filename}` : ""}
-                          </p>
-                        </div>
-                        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
-                          {doc.url && (
-                            <a href={doc.url} target="_blank" rel="noopener noreferrer"
-                              className="p-1.5 rounded-sm hover:bg-muted text-muted-foreground hover:text-foreground transition-colors" title="Open document">
-                              <ExternalLink size={13} />
-                            </a>
-                          )}
-                          <button onClick={() => deleteDoc(doc)} className="p-1.5 rounded-sm hover:bg-red-50 dark:hover:bg-red-950/20 text-muted-foreground hover:text-red-500 transition-colors">
-                            <X size={13} />
-                          </button>
+        <Card className="overflow-hidden">
+          <DataTable
+            columns={[
+              {
+                key: "party_name",
+                label: "Document",
+                sortable: true,
+                render: (row) => {
+                  const doc = row as unknown as FinanceDoc;
+                  const typeLabel = DOC_TYPES.find((t) => t.value === doc.doc_type)?.label ?? doc.doc_type;
+                  const isIncome = doc.direction === "income";
+                  return (
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="w-7 h-7 rounded-sm bg-muted flex items-center justify-center shrink-0">
+                        <FileText size={13} className="text-muted-foreground" />
+                      </div>
+                      <div className="flex flex-col gap-1 min-w-0">
+                        <StackedCell primary={doc.party_name} secondary={doc.original_filename ?? undefined} />
+                        <div className="flex items-center gap-1 flex-wrap">
+                          <span className={cn("px-1.5 py-0.5 rounded text-[10px] font-semibold", isIncome ? "bg-emerald-400/10 text-emerald-600 dark:text-emerald-400" : "bg-red-400/10 text-red-600 dark:text-red-400")}>{isIncome ? "income" : "expense"}</span>
+                          <span className="px-1.5 py-0.5 rounded text-[10px] bg-muted text-muted-foreground">{typeLabel}</span>
                         </div>
                       </div>
-                    );
-                  })}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </div>
+                    </div>
+                  );
+                },
+              },
+              {
+                key: "doc_date",
+                label: "Date & Ref",
+                sortable: true,
+                render: (row) => {
+                  const doc = row as unknown as FinanceDoc;
+                  return (
+                    <StackedCell
+                      primary={new Date(doc.doc_date).toLocaleDateString("en-KE")}
+                      secondary={doc.invoice_number ? `Ref: ${doc.invoice_number}` : undefined}
+                    />
+                  );
+                },
+              },
+              {
+                key: "amount",
+                label: "Amount",
+                render: (row) => {
+                  const doc = row as unknown as FinanceDoc;
+                  return doc.amount
+                    ? <span className="text-sm font-semibold text-foreground">KES {Number(doc.amount).toLocaleString()}</span>
+                    : <span className="text-xs text-muted-foreground">—</span>;
+                },
+              },
+            ] as Column<Record<string, unknown>>[]}
+            data={docs as unknown as Record<string, unknown>[]}
+            actions={[
+              {
+                label: "Open",
+                icon: <ExternalLink size={13} />,
+                onClick: (row) => {
+                  const doc = row as unknown as FinanceDoc;
+                  if (doc.url) window.open(doc.url, "_blank", "noopener,noreferrer");
+                },
+              },
+              { label: "Delete", icon: <X size={13} />, destructive: true, onClick: (row) => deleteDoc(row as unknown as FinanceDoc) },
+            ] as RowAction<Record<string, unknown>>[]}
+            searchable
+            searchPlaceholder="Search documents…"
+            searchKeys={["party_name", "invoice_number"]}
+            filters={[
+              { key: "direction", label: "Type", options: [{ label: "All", value: "" }, { label: "Income / eTIMS", value: "income" }, { label: "Expense Receipts", value: "expense" }] } as FilterConfig,
+            ]}
+            activeFilters={{ direction: docDirFilter === "all" ? "" : docDirFilter }}
+            onFilterChange={(key, val) => { if (key === "direction") setDocDirFilter(val || "all"); }}
+            toolbar={
+              <button onClick={() => { setDocUploadOpen(true); setDocError(""); setDocFile(null); setDocForm(defaultDocForm); }}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-sm bg-brand-gold text-brand-navy font-semibold text-xs hover:bg-brand-gold-hover transition-colors">
+                <FileUp size={13} />Upload
+              </button>
+            }
+            maxHeight="480px"
+            emptyMessage={docsLoading ? "Loading documents…" : "No documents uploaded yet."}
+          />
+        </Card>
       )}
 
       {/* ── Upload Document Dialog ── */}
