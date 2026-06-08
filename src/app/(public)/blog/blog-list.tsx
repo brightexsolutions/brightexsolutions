@@ -6,7 +6,7 @@ import { ArrowRight, Clock, Tag, Mail, Loader2 } from "lucide-react";
 import { FadeIn, FadeInStagger, StaggerChild } from "@/components/public/fade-in";
 import type { BlogPost } from "@/lib/blog";
 
-const CATEGORIES = ["All", "Web Development", "AI & Automation", "SEO", "Design", "ERP", "Strategy"];
+const CATEGORIES = ["All", "Web Development", "AI & Automation", "SEO", "Design", "ERP", "Strategy", "Technology"];
 
 // ── Newsletter sub-form ───────────────────────────────────────────────────────
 function NewsletterForm() {
