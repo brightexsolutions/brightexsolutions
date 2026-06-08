@@ -5,7 +5,7 @@ const TEAM_PORTALS: Record<string, string> = {
   finance: "/team/finance",
   marketing: "/team/marketing",
   support: "/team/support",
-  subcontractor: "/work",
+  subcontractor: "/portal",
 };
 
 export async function proxy(request: NextRequest) {
@@ -80,7 +80,7 @@ export async function proxy(request: NextRequest) {
     { prefix: "/team/finance",   role: "finance" },
     { prefix: "/team/marketing", role: "marketing" },
     { prefix: "/team/support",   role: "support" },
-    { prefix: "/work",           role: "subcontractor" },
+    { prefix: "/portal",         role: "subcontractor" },
   ];
 
   for (const route of portalRoutes) {
@@ -106,5 +106,5 @@ export async function proxy(request: NextRequest) {
 
 export const config = {
   // Public routes are NOT in the matcher — zero proxy overhead on visitor traffic
-  matcher: ["/admin/:path*", "/work/:path*", "/team/:path*"],
+  matcher: ["/admin/:path*", "/portal/:path*", "/team/:path*"],
 };
