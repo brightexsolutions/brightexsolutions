@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Fraunces, Plus_Jakarta_Sans } from "next/font/google";
 import { ThemeProvider } from "@/components/theme-provider";
 import { SiteLoader } from "@/components/site-loader";
+import { Analytics } from "@vercel/analytics/next";
 import { SITE_NAME, SITE_URL, GOOGLE_SITE_VERIFICATION } from "@/lib/constants";
 import "./globals.css";
 
@@ -92,6 +93,7 @@ export default function RootLayout({
         >
           <SiteLoader />
           {children}
+          <Analytics />
         </ThemeProvider>
       </body>
     </html>

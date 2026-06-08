@@ -11,10 +11,14 @@ export interface BlogPost {
   category: string;
   readingTime: number;
   author: string;
+  heroImage?: string;
 }
 
 function parseFrontmatter(content: string): Record<string, string | number> {
-  const match = content.match(/^---\n([\s\S]*?)\n---/);
+  // Support YAML frontmatter (---...---) and MDX JSX comment frontmatter ({/* ... */})
+  const yamlMatch = content.match(/^---\n([\s\S]*?)\n---/);
+  const jsxMatch = content.match(/^\{\/\*\n([\s\S]*?)\n\*\/\}/);
+  const match = yamlMatch ?? jsxMatch;
   if (!match) return {};
   const frontmatter: Record<string, string | number> = {};
   for (const line of match[1].split("\n")) {
@@ -43,6 +47,7 @@ export function getAllPosts(): BlogPost[] {
         category: (fm.category as string) || "General",
         readingTime: (fm.readingTime as number) || 5,
         author: (fm.author as string) || "Brightex Solutions",
+        heroImage: (fm.heroImage as string) || undefined,
       };
     })
     .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());

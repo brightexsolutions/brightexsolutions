@@ -19,16 +19,16 @@ const ChatSchema = z.object({
 const FALLBACK_FAQS = [
   { keywords: ["service", "what do you do", "offer", "build"],
     question: "What services does Brightex offer?",
-    answer: "We offer Web Development, UI/UX Design, SEO & Growth, Branding, AI & Automation, ERP Systems, and Technology Consultancy. Visit /services to see the full breakdown." },
+    answer: "We offer Web Development, UI/UX Design, SEO & Growth, Branding, AI & Automation, ERP Systems, and Technology Consultancy. Visit our services page to see the full breakdown." },
   { keywords: ["product", "erp", "software", "school", "hospital"],
     question: "Do you have pre-built software products?",
-    answer: "Yes — we build licensable software for industries like education, healthcare, and hospitality. Visit /products to see what's available." },
+    answer: "Yes — we build licensable software for industries like education, healthcare, and hospitality. Visit our products page to see what's available." },
   { keywords: ["price", "cost", "quote", "how much", "pricing"],
     question: "How much does a project cost?",
-    answer: `Pricing depends on the scope of your project. We work on milestone-based fixed quotes. Get in touch via the contact page and we'll send a detailed proposal within 24 hours.` },
+    answer: "Pricing is tailored to each project's scope and requirements — we don't publish fixed rates. Get in touch via the contact page and we'll send a detailed proposal within 24 hours." },
   { keywords: ["contact", "reach", "talk", "call", "phone", "whatsapp"],
     question: "How do I reach Brightex?",
-    answer: `You can reach us at ${BUSINESS_PHONE} (WhatsApp/phone) or email ${BUSINESS_EMAIL}. You can also book a call at /book.` },
+    answer: `You can reach us at ${BUSINESS_PHONE} (WhatsApp/phone) or email ${BUSINESS_EMAIL}. You can also book a call directly from the website.` },
   { keywords: ["location", "where", "nairobi", "kenya", "africa"],
     question: "Where is Brightex based?",
     answer: "We're based in Nairobi, Kenya, and work with clients across East Africa and globally." },
@@ -37,7 +37,7 @@ const FALLBACK_FAQS = [
     answer: "Timelines vary — a marketing site typically takes 2–4 weeks, a web app 6–12 weeks, and an ERP 8–16 weeks. We'll give you a specific estimate after the discovery call." },
   { keywords: ["book", "schedule", "meeting", "demo", "appointment"],
     question: "How do I book a call?",
-    answer: "You can book a call directly at /book — pick a time that works for you and we'll confirm within a few hours." },
+    answer: "You can book a discovery call directly from our booking page — pick a time that works for you and we'll confirm within a few hours." },
 ];
 
 function keywordMatch(message: string, faqs: Array<{ keywords?: string[]; answer: string }>): string | null {

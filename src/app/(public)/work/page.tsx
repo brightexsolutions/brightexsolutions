@@ -145,12 +145,12 @@ export default async function WorkPage() {
         </div>
       </section>
 
-      {/* ── Software Products ── */}
+      {/* ── Main content: Products + Client Projects (one continuous section) ── */}
       <section
-        id="products"
-        className="py-24"
         style={{ background: "linear-gradient(160deg, #fafaf8 0%, #f4f0ea 55%, #f8f5f1 100%)" }}
       >
+        {/* Products anchor */}
+        <div id="products" className="pt-24 pb-0">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <FadeIn className="mb-16">
             <span className="text-brand-gold text-[10px] font-bold tracking-[0.2em] uppercase block mb-3">
@@ -267,33 +267,39 @@ export default async function WorkPage() {
             </div>
           </FadeIn>
         </div>
-      </section>
+        </div>{/* close id="products" */}
 
-      {/* Section separator */}
-      <div className="bg-brand-navy py-px" />
-
-      {/* ── Client Projects ── */}
-      <section
-        id="projects"
-        className="py-24"
-        style={{ background: "linear-gradient(160deg, #fafaf8 0%, #f4f0ea 55%, #f8f5f1 100%)" }}
-      >
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-          <FadeIn className="mb-14">
-            <span className="text-brand-gold text-[10px] font-bold tracking-[0.2em] uppercase block mb-3">
-              Client Projects
-            </span>
-            <h2 className="font-display text-4xl sm:text-5xl font-bold text-brand-navy mb-4">
-              Projects We&apos;ve Shipped
-            </h2>
-            <p className="text-brand-muted leading-relaxed max-w-xl">
-              Websites, platforms, and digital products built for businesses across Kenya and East Africa.
-            </p>
+        {/* ── Section divider ── */}
+        <div id="projects" className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-14">
+          <FadeIn className="flex items-center gap-5">
+            <div className="h-px flex-1 bg-brand-border" />
+            <div className="flex items-center gap-3 shrink-0">
+              <div className="w-7 h-7 rounded-full bg-brand-gold/12 border border-brand-gold/30 flex items-center justify-center">
+                <span className="text-brand-gold text-[9px] font-black">02</span>
+              </div>
+              <span className="text-[11px] font-bold uppercase tracking-[0.2em] text-brand-navy">
+                Client Projects
+              </span>
+            </div>
+            <div className="h-px flex-1 bg-brand-border" />
           </FadeIn>
+        </div>
 
-          <SectionErrorBoundary fallback={<p className="text-brand-muted py-16 text-center">Projects unavailable right now.</p>}>
-            <ClientProjectsList projects={projects} />
-          </SectionErrorBoundary>
+        {/* ── Client Projects list ── */}
+        <div className="pb-24">
+          <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+            <FadeIn className="mb-14">
+              <h2 className="font-display text-4xl sm:text-5xl font-bold text-brand-navy mb-4">
+                Projects We&apos;ve Shipped
+              </h2>
+              <p className="text-brand-muted leading-relaxed max-w-xl">
+                Websites, platforms, and digital products built for businesses across Kenya and East Africa.
+              </p>
+            </FadeIn>
+            <SectionErrorBoundary fallback={<p className="text-brand-muted py-16 text-center">Projects unavailable right now.</p>}>
+              <ClientProjectsList projects={projects} />
+            </SectionErrorBoundary>
+          </div>
         </div>
       </section>
 
