@@ -2,13 +2,14 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { BookOpen, Clock, CheckCircle2, XCircle, Pencil, Trash2, Loader2, Bell, MessageCircle } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { StatCard } from "@/components/admin/stat-card";
+import { DataTable, StackedCell, StatusDot, type Column, type RowAction } from "@/components/admin/data-table";
 import { cn } from "@/lib/utils";
 import { SITE_NAME } from "@/lib/constants";
 
@@ -24,6 +25,18 @@ const purposeLabels: Record<string, string> = {
   project_review: "Project Review",
   consultation: "Consultation",
   other: "Other",
+};
+
+const STATUS_FILTER = {
+  key: "status",
+  label: "Status",
+  options: [
+    { label: "All", value: "" },
+    { label: "Pending", value: "pending" },
+    { label: "Confirmed", value: "confirmed" },
+    { label: "Completed", value: "completed" },
+    { label: "Cancelled", value: "cancelled" },
+  ],
 };
 
 const filters = ["all", ...Object.keys(statusColors)] as const;
@@ -47,6 +60,7 @@ const defaultEditForm = { meeting_link: "", notes: "", status: "" };
 
 export default function BookingsPage() {
   const [activeFilter, setActiveFilter] = useState<Filter>("all");
+  const [statusFilter, setStatusFilter] = useState("");
   const [editTarget, setEditTarget] = useState<Booking | null>(null);
   const [editForm, setEditForm] = useState(defaultEditForm);
   const [saving, setSaving] = useState(false);
@@ -153,7 +167,10 @@ export default function BookingsPage() {
     }
   }
 
-  const filteredBookings = bookings.filter((b) => activeFilter === "all" || b.status === activeFilter);
+  const filteredBookings = bookings.filter((b) =>
+    (activeFilter === "all" || b.status === activeFilter) &&
+    (!statusFilter || b.status === statusFilter)
+  );
   const now = new Date();
   const weekAhead = new Date();
   weekAhead.setDate(now.getDate() + 7);
@@ -194,154 +211,102 @@ export default function BookingsPage() {
         </Card>
       )}
 
-      <div className="flex gap-1 flex-wrap">
-        {filters.map((filter) => (
-          <button
-            key={filter}
-            onClick={() => setActiveFilter(filter)}
-            className={cn(
-              "px-3 py-1.5 rounded-sm text-xs font-medium border capitalize transition-colors",
-              activeFilter === filter
-                ? "bg-muted text-foreground border-transparent"
-                : "border-border text-muted-foreground hover:text-foreground"
-            )}
-          >
-            {filter}
-          </button>
-        ))}
-      </div>
-
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-base flex items-center gap-2">
-            <BookOpen size={16} />
-            Bookings
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="p-0">
-          {loading && bookings.length === 0 ? (
-            <div className="text-center py-12 text-muted-foreground">
-              <p className="text-sm">Loading bookings…</p>
-            </div>
-          ) : filteredBookings.length === 0 ? (
-            <div className="text-center py-12 text-muted-foreground">
-              <BookOpen size={40} className="mx-auto mb-3 opacity-20" />
-              <p className="text-sm">No bookings yet.</p>
-              <p className="text-xs mt-1">Share <strong>/book</strong> to start receiving meeting requests.</p>
-            </div>
-          ) : (
-            <div className="divide-y divide-border">
-              {filteredBookings.map((booking) => (
-                <div key={booking.id} className="px-6 py-4 flex items-start gap-4 group">
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 flex-wrap mb-1">
-                      <p className="text-sm font-semibold text-foreground">{booking.booker_name}</p>
-                      <span className={`px-2 py-0.5 rounded-sm text-[11px] font-medium border capitalize ${statusColors[booking.status] ?? "bg-muted text-muted-foreground border-border"}`}>
-                        {booking.status}
-                      </span>
-                    </div>
-                    <p className="text-xs text-muted-foreground">
-                      {booking.booker_email}
-                      {booking.booker_phone ? ` · ${booking.booker_phone}` : ""}
-                    </p>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      {purposeLabels[booking.purpose] ?? booking.purpose} ·{" "}
-                      {new Date(booking.scheduled_at).toLocaleString("en-KE", {
-                        dateStyle: "medium", timeStyle: "short", timeZone: "Africa/Nairobi",
-                      })}
-                    </p>
-                    {booking.meeting_link && (
-                      <a href={booking.meeting_link} target="_blank" rel="noreferrer" className="text-xs text-brand-gold mt-1 inline-block">
-                        Open meeting link
-                      </a>
-                    )}
-                    {booking.notes && <p className="text-xs text-muted-foreground mt-1 line-clamp-1">{booking.notes}</p>}
-                  </div>
-                  <div className="flex items-center gap-1 shrink-0 flex-wrap">
-                    {booking.status === "pending" && (
+      <Card className="overflow-hidden">
+        <DataTable
+          columns={[
+            {
+              key: "booker_name",
+              label: "Booker",
+              sortable: true,
+              render: (row) => (
+                <StackedCell
+                  primary={String(row.booker_name)}
+                  secondary={String(row.booker_email ?? "")}
+                />
+              ),
+            },
+            {
+              key: "purpose",
+              label: "Purpose",
+              render: (row) => (
+                <span className="text-sm capitalize">
+                  {purposeLabels[String(row.purpose)] ?? String(row.purpose ?? "—").replace(/_/g, " ")}
+                </span>
+              ),
+            },
+            {
+              key: "scheduled_at",
+              label: "Scheduled",
+              sortable: true,
+              render: (row) => (
+                <span className="text-sm whitespace-nowrap">
+                  {new Date(String(row.scheduled_at)).toLocaleString("en-KE", {
+                    day: "numeric", month: "short", year: "numeric",
+                    hour: "2-digit", minute: "2-digit", timeZone: "Africa/Nairobi",
+                  })}
+                </span>
+              ),
+            },
+            {
+              key: "status",
+              label: "Status",
+              render: (row) => <StatusDot status={String(row.status)} />,
+            },
+            {
+              key: "actions_inline",
+              label: "",
+              className: "w-36",
+              render: (row) => {
+                const b = row as unknown as Booking;
+                return (
+                  <div className="flex items-center gap-1">
+                    {b.status === "pending" && (
                       <button
-                        onClick={() => handleStatusChange(booking, "confirmed")}
-                        disabled={busyIds.has(booking.id)}
-                        className="flex items-center gap-1 px-2 py-1 rounded-sm text-[11px] font-medium bg-emerald-400/10 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-400/20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                        onClick={(e) => { e.stopPropagation(); handleStatusChange(b, "confirmed"); }}
+                        disabled={busyIds.has(b.id)}
+                        className="flex items-center gap-1 px-2 py-1 rounded-md text-[11px] font-medium bg-emerald-400/10 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-400/20 transition-colors disabled:opacity-50"
                       >
-                        {busyIds.has(booking.id) ? <Loader2 size={10} className="animate-spin" /> : null}
-                        Confirm
+                        {busyIds.has(b.id) ? <Loader2 size={10} className="animate-spin" /> : null} Confirm
                       </button>
                     )}
-                    {booking.status === "confirmed" && (
-                      <>
-                        <button
-                          onClick={() => notifyBooking(booking)}
-                          disabled={busyIds.has(booking.id)}
-                          title="Send confirmation email + open WhatsApp"
-                          className="flex items-center gap-1 px-2 py-1 rounded-sm text-[11px] font-medium bg-brand-gold/10 text-brand-navy dark:text-brand-gold border border-brand-gold/30 hover:bg-brand-gold/20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                          {busyIds.has(booking.id) ? <Loader2 size={10} className="animate-spin" /> : <Bell size={10} />}
-                          Notify
-                        </button>
-                        <button
-                          onClick={() => handleStatusChange(booking, "completed")}
-                          disabled={busyIds.has(booking.id)}
-                          className="flex items-center gap-1 px-2 py-1 rounded-sm text-[11px] font-medium bg-muted text-muted-foreground hover:bg-muted/80 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                          {busyIds.has(booking.id) ? <Loader2 size={10} className="animate-spin" /> : null}
-                          Complete
-                        </button>
-                      </>
+                    {b.status === "confirmed" && (
+                      <button
+                        onClick={(e) => { e.stopPropagation(); notifyBooking(b); }}
+                        disabled={busyIds.has(b.id)}
+                        className="flex items-center gap-1 px-2 py-1 rounded-md text-[11px] font-medium bg-brand-gold/10 text-brand-gold border border-brand-gold/20 hover:bg-brand-gold/20 transition-colors disabled:opacity-50"
+                      >
+                        {busyIds.has(b.id) ? <Loader2 size={10} className="animate-spin" /> : <Bell size={10} />} Notify
+                      </button>
                     )}
-                    <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                      {booking.status === "confirmed" && booking.booker_phone && (
-                        <a
-                          href={`https://wa.me/${booking.booker_phone.replace(/\D/g, "")}?text=${encodeURIComponent(`Hi ${booking.booker_name}, just a reminder about your booking with ${SITE_NAME}.`)}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="p-1.5 rounded-sm hover:bg-emerald-50 dark:hover:bg-emerald-950/20 text-muted-foreground hover:text-emerald-600 transition-colors"
-                          title="WhatsApp booker"
-                        >
-                          <MessageCircle size={13} />
-                        </a>
-                      )}
-                      <button onClick={() => openEdit(booking)} disabled={busyIds.has(booking.id)} className="p-1.5 rounded-sm hover:bg-muted text-muted-foreground hover:text-foreground transition-colors disabled:opacity-40" title="Edit">
-                        <Pencil size={13} />
-                      </button>
-                      <button onClick={() => handleDelete(booking)} disabled={busyIds.has(booking.id)} className="p-1.5 rounded-sm hover:bg-red-50 dark:hover:bg-red-950/20 text-muted-foreground hover:text-red-500 transition-colors disabled:opacity-40" title="Delete">
-                        {busyIds.has(booking.id) ? <Loader2 size={13} className="animate-spin" /> : <Trash2 size={13} />}
-                      </button>
-                    </div>
                   </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </CardContent>
+                );
+              },
+            },
+          ] as Column<Record<string, unknown>>[]}
+          data={filteredBookings as unknown as Record<string, unknown>[]}
+          actions={[
+            {
+              label: "Edit",
+              icon: <Pencil size={13} />,
+              onClick: (row) => openEdit(row as unknown as Booking),
+            },
+            {
+              label: "Delete",
+              icon: <Trash2 size={13} />,
+              destructive: true,
+              onClick: (row) => handleDelete(row as unknown as Booking),
+            },
+          ]}
+          searchable
+          searchPlaceholder="Search bookings…"
+          searchKeys={["booker_name", "booker_email", "purpose"]}
+          filters={[STATUS_FILTER]}
+          activeFilters={{ status: statusFilter }}
+          onFilterChange={(_, v) => setStatusFilter(v)}
+          maxHeight="520px"
+          emptyMessage={loading ? "Loading bookings…" : "No bookings yet."}
+        />
       </Card>
-
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm text-muted-foreground font-normal">Booking Status</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex flex-wrap gap-2">
-              {Object.entries(statusColors).map(([status, color]) => (
-                <span key={status} className={`px-2.5 py-1 rounded-sm text-xs font-medium border capitalize ${color}`}>{status}</span>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm text-muted-foreground font-normal">Meeting Purposes</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex flex-wrap gap-2">
-              {Object.values(purposeLabels).map((label) => (
-                <span key={label} className="px-2.5 py-1 rounded-sm text-xs font-medium border border-border bg-muted text-muted-foreground">{label}</span>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      </div>
 
       {/* Edit dialog */}
       <Dialog open={!!editTarget} onOpenChange={(v) => !v && setEditTarget(null)}>

@@ -2,8 +2,9 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { FileText, Plus, Trash2, Send, Eye, X, Pencil, Download, Loader2 } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import { StatCard } from "@/components/admin/stat-card";
+import { DataTable, StackedCell, StatusDot, type Column, type RowAction } from "@/components/admin/data-table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Input } from "@/components/ui/input";
@@ -286,98 +287,107 @@ export default function InvoicesPage() {
       </div>
 
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-        <StatCard title="Total Invoiced" value={`KES ${totalInvoiced.toLocaleString()}`} icon={FileText} />
-        <StatCard title="Pending" value={String(pending)} icon={FileText} iconColor="text-blue-400" iconBg="bg-blue-400/10" />
-        <StatCard title="Overdue" value={String(overdue)} icon={FileText} iconColor="text-red-400" iconBg="bg-red-400/10" />
-        <StatCard title="Paid (30d)" value={`KES ${paidThisMonth.toLocaleString()}`} icon={FileText} iconColor="text-emerald-400" iconBg="bg-emerald-400/10" />
+        <StatCard title="Total Invoiced" value={`KES ${totalInvoiced.toLocaleString()}`} icon={FileText} accent={{ bg: "bg-brand-gold/10", text: "text-brand-gold" }} />
+        <StatCard title="Pending" value={String(pending)} icon={FileText} accent={{ bg: "bg-blue-400/10", text: "text-blue-400" }} />
+        <StatCard title="Overdue" value={String(overdue)} icon={FileText} accent={{ bg: "bg-red-400/10", text: "text-red-400" }} trend={overdue > 0 ? { direction: "down", value: `${overdue} overdue` } : undefined} />
+        <StatCard title="Paid (30d)" value={`KES ${paidThisMonth.toLocaleString()}`} icon={FileText} accent={{ bg: "bg-emerald-400/10", text: "text-emerald-400" }} />
       </div>
 
-      <div className="flex gap-1 flex-wrap">
-        {filterTabs.map((tab) => (
-          <button key={tab} onClick={() => setActiveFilter(tab)}
-            className={cn("px-3 py-1.5 rounded-sm text-xs font-medium border transition-colors",
-              activeFilter === tab ? "bg-muted text-foreground border-transparent" : "border-border text-muted-foreground hover:text-foreground hover:border-brand-gold/40"
-            )}>{tab}</button>
-        ))}
-      </div>
-
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-base flex items-center gap-2"><FileText size={16} />Invoice List</CardTitle>
-        </CardHeader>
-        <CardContent className="p-0">
-          {loading ? (
-            <div className="py-12 text-center text-sm text-muted-foreground">Loading invoices…</div>
-          ) : filtered.length === 0 ? (
-            <div className="text-center py-12 text-muted-foreground">
-              <FileText size={40} className="mx-auto mb-3 opacity-20" />
-              <p className="text-sm">{activeFilter === "All" ? "No invoices yet." : `No ${activeFilter.toLowerCase()} invoices.`}</p>
-              {activeFilter === "All" && (
-                <button onClick={openCreate} className="mt-4 inline-flex items-center gap-2 px-3 py-1.5 rounded-sm border border-border text-xs font-medium hover:border-brand-gold/40 transition-colors">
-                  <Plus size={13} />New Invoice
-                </button>
-              )}
-            </div>
-          ) : (
-            <div className="divide-y divide-border">
-              {filtered.map((inv) => (
-                <div key={inv.id} className="flex items-center gap-4 px-6 py-4 group">
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <p className="text-sm font-semibold text-foreground">
-                        {inv.invoice_number ?? "Draft"} — {inv.clients?.name ?? "No client"}
-                      </p>
-                      <span className={cn("px-2 py-0.5 rounded-sm text-[11px] font-medium capitalize", statusColors[inv.status])}>
-                        {inv.status}
-                      </span>
-                    </div>
-                    <p className="text-xs text-muted-foreground mt-0.5">
-                      KES {Number(inv.total).toLocaleString()}
-                      {inv.due_date ? ` · Due ${new Date(inv.due_date).toLocaleDateString("en-KE")}` : ""}
-                      {inv.projects?.name ? ` · ${inv.projects.name}` : ""}
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-1.5 shrink-0">
+      <Card className="overflow-hidden">
+        <DataTable
+          columns={[
+            {
+              key: "invoice_number",
+              label: "Invoice",
+              sortable: true,
+              render: (row) => {
+                const inv = row as unknown as Invoice;
+                return (
+                  <StackedCell
+                    primary={inv.invoice_number ?? "Draft"}
+                    secondary={inv.clients?.name ?? "No client"}
+                    mono
+                  />
+                );
+              },
+            },
+            {
+              key: "total",
+              label: "Amount",
+              sortable: true,
+              render: (row) => (
+                <span className="font-semibold text-foreground">
+                  KES {Number(row.total).toLocaleString()}
+                </span>
+              ),
+            },
+            {
+              key: "status",
+              label: "Status",
+              render: (row) => <StatusDot status={String(row.status)} />,
+            },
+            {
+              key: "due_date",
+              label: "Due",
+              className: "hidden sm:table-cell",
+              sortable: true,
+              render: (row) => (
+                <span className="text-xs text-muted-foreground whitespace-nowrap">
+                  {row.due_date ? new Date(String(row.due_date)).toLocaleDateString("en-KE", { day: "numeric", month: "short", year: "numeric" }) : "—"}
+                </span>
+              ),
+            },
+            {
+              key: "inline_actions",
+              label: "",
+              className: "w-32",
+              render: (row) => {
+                const inv = row as unknown as Invoice;
+                return (
+                  <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
                     <button
                       onClick={() => openPreview(inv.id)}
-                      className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-sm border border-border text-xs font-medium hover:border-brand-gold/40 text-muted-foreground hover:text-foreground transition-colors"
-                      title="Preview PDF"
+                      className="flex items-center gap-1 px-2 py-1 rounded-md text-[11px] font-medium border border-border text-muted-foreground hover:border-brand-gold/40 hover:text-foreground transition-colors"
                     >
-                      <Eye size={12} />PDF
-                    </button>
-                    <button
-                      onClick={() => openEdit(inv)}
-                      disabled={busyIds.has(inv.id)}
-                      className="p-1.5 rounded-sm border border-border text-muted-foreground hover:text-foreground hover:border-brand-gold/40 transition-colors disabled:opacity-40"
-                      title="Edit"
-                    >
-                      <Pencil size={12} />
+                      <Eye size={11} />PDF
                     </button>
                     {inv.status === "draft" && (
                       <button
                         onClick={() => sendInvoice(inv.id)}
                         disabled={busyIds.has(inv.id)}
-                        className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-sm bg-brand-navy text-white text-xs font-medium hover:bg-brand-navy/90 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
-                        title="Send to client"
+                        className="flex items-center gap-1 px-2 py-1 rounded-md text-[11px] font-medium bg-brand-navy text-white hover:bg-brand-navy/90 transition-colors disabled:opacity-60"
                       >
-                        {busyIds.has(inv.id) ? <Loader2 size={12} className="animate-spin" /> : <Send size={12} />}
-                        {busyIds.has(inv.id) ? "Sending…" : "Send"}
+                        {busyIds.has(inv.id) ? <Loader2 size={10} className="animate-spin" /> : <Send size={10} />}
+                        Send
                       </button>
                     )}
-                    <button
-                      onClick={() => deleteInvoice(inv)}
-                      disabled={busyIds.has(inv.id)}
-                      className="p-1.5 rounded-sm text-muted-foreground hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20 transition-colors disabled:opacity-40"
-                      title="Delete"
-                    >
-                      {busyIds.has(inv.id) ? <Loader2 size={12} className="animate-spin" /> : <Trash2 size={12} />}
-                    </button>
                   </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </CardContent>
+                );
+              },
+            },
+          ] as Column<Record<string, unknown>>[]}
+          data={filtered as unknown as Record<string, unknown>[]}
+          actions={[
+            { label: "Edit", icon: <Pencil size={13} />, onClick: (row) => openEdit(row as unknown as Invoice) },
+            { label: "Preview PDF", icon: <Eye size={13} />, onClick: (row) => openPreview(String(row.id)) },
+            { label: "Delete", icon: <Trash2 size={13} />, destructive: true, onClick: (row) => deleteInvoice(row as unknown as Invoice) },
+          ] as RowAction<Record<string, unknown>>[]}
+          searchable
+          searchPlaceholder="Search invoices…"
+          searchKeys={["invoice_number"]}
+          filters={[{
+            key: "status",
+            label: "Status",
+            options: [
+              { label: "All", value: "" },
+              ...filterTabs.slice(1).map((t) => ({ label: t, value: t.toLowerCase() }))
+            ],
+          }]}
+          activeFilters={{ status: activeFilter === "All" ? "" : activeFilter.toLowerCase() }}
+          onFilterChange={(_, v) => setActiveFilter(v ? v.charAt(0).toUpperCase() + v.slice(1) : "All")}
+          maxHeight="520px"
+          emptyMessage={loading ? "Loading invoices…" : "No invoices yet."}
+        />
       </Card>
 
       {/* PDF Preview Sheet */}

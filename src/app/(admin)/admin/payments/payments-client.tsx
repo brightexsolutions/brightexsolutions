@@ -2,8 +2,9 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { CreditCard, Plus, Pencil, Trash2 } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { StatCard } from "@/components/admin/stat-card";
+import { DataTable, StackedCell, type Column, type RowAction } from "@/components/admin/data-table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -254,78 +255,77 @@ export function PaymentsPageClient() {
         </Card>
       )}
 
-      <div className="flex gap-2 flex-wrap">
-        {methods.map((method) => (
-          <span key={method} className="px-2.5 py-1 rounded-sm text-xs font-medium border border-border bg-muted text-muted-foreground">
-            {methodLabels[method]}
-          </span>
-        ))}
-      </div>
-
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-base flex items-center gap-2">
-            <CreditCard size={16} />
-            Payment Records
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="p-0">
-          {loading && payments.length === 0 ? (
-            <div className="text-center py-12 text-muted-foreground">
-              <p className="text-sm">Loading payments…</p>
-            </div>
-          ) : payments.length === 0 ? (
-            <div className="text-center py-12 text-muted-foreground">
-              <CreditCard size={40} className="mx-auto mb-3 opacity-20" />
-              <p className="text-sm">No payments recorded yet.</p>
-              <p className="text-xs mt-1">Record a payment and link it to an invoice to start tracking.</p>
-              <button
-                onClick={openCreate}
-                className="mt-4 inline-flex items-center gap-2 px-3 py-1.5 rounded-sm border border-border text-xs font-medium hover:border-brand-gold/40 transition-colors"
-              >
-                <Plus size={13} />
-                Record Payment
-              </button>
-            </div>
-          ) : (
-            <div className="divide-y divide-border">
-              {payments.map((payment) => (
-                <div key={payment.id} className="px-6 py-4 flex items-start gap-4 group">
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 flex-wrap mb-1">
-                      <p className="text-sm font-semibold text-foreground">
-                        {payment.invoices?.invoice_number || "Unlinked payment"}
-                      </p>
-                      <span className="px-2 py-0.5 rounded-sm text-[11px] font-medium bg-muted text-muted-foreground uppercase">
-                        {methodLabels[payment.method] ?? payment.method}
-                      </span>
-                    </div>
-                    <p className="text-xs text-muted-foreground">
-                      {payment.invoices?.clients?.name || "No client linked"}
-                      {payment.reference ? ` · Ref: ${payment.reference}` : ""}
-                    </p>
-                    {payment.notes && (
-                      <p className="text-sm text-muted-foreground mt-1 line-clamp-1">{payment.notes}</p>
-                    )}
-                    <p className="text-xs text-muted-foreground mt-1">
-                      KES {Number(payment.amount ?? 0).toLocaleString()} ·{" "}
-                      {new Date(payment.date || payment.created_at).toLocaleDateString("en-KE")}
-                      {" · "}{payment.confirmation_sent ? "Receipt sent" : "Receipt pending"}
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-1 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <button onClick={() => openEdit(payment)} className="p-1.5 rounded-sm hover:bg-muted text-muted-foreground hover:text-foreground transition-colors" title="Edit">
-                      <Pencil size={13} />
-                    </button>
-                    <button onClick={() => handleDelete(payment)} className="p-1.5 rounded-sm hover:bg-red-50 dark:hover:bg-red-950/20 text-muted-foreground hover:text-red-500 transition-colors" title="Delete">
-                      <Trash2 size={13} />
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </CardContent>
+      <Card className="overflow-hidden">
+        <DataTable
+          columns={[
+            {
+              key: "invoice_number",
+              label: "Invoice / Client",
+              sortable: true,
+              render: (row) => {
+                const p = row as Record<string, unknown>;
+                const inv = p.invoices as Record<string, unknown> | null;
+                return (
+                  <StackedCell
+                    primary={String(inv?.invoice_number ?? "Unlinked")}
+                    secondary={(inv as Record<string, unknown>)?.clients ? String(((inv as Record<string, unknown>).clients as Record<string, unknown>)?.name ?? "") : "No client"}
+                    mono
+                  />
+                );
+              },
+            },
+            {
+              key: "amount",
+              label: "Amount",
+              sortable: true,
+              render: (row) => (
+                <span className="font-semibold text-foreground">
+                  KES {Number(row.amount ?? 0).toLocaleString()}
+                </span>
+              ),
+            },
+            {
+              key: "method",
+              label: "Method",
+              render: (row) => (
+                <span className="px-2 py-0.5 rounded-md text-[11px] font-medium bg-muted text-muted-foreground uppercase">
+                  {methodLabels[String(row.method)] ?? String(row.method ?? "—")}
+                </span>
+              ),
+            },
+            {
+              key: "date",
+              label: "Date",
+              sortable: true,
+              className: "hidden sm:table-cell",
+              render: (row) => (
+                <span className="text-xs text-muted-foreground whitespace-nowrap">
+                  {new Date(String(row.date ?? row.created_at)).toLocaleDateString("en-KE", { day: "numeric", month: "short", year: "numeric" })}
+                </span>
+              ),
+            },
+            {
+              key: "confirmation_sent",
+              label: "Receipt",
+              className: "hidden md:table-cell",
+              render: (row) => (
+                <span className={`text-xs font-medium ${row.confirmation_sent ? "text-emerald-500" : "text-amber-500"}`}>
+                  {row.confirmation_sent ? "Sent" : "Pending"}
+                </span>
+              ),
+            },
+          ] as Column<Record<string, unknown>>[]}
+          data={payments as unknown as Record<string, unknown>[]}
+          actions={[
+            { label: "Edit", icon: <Pencil size={13} />, onClick: (row) => openEdit(row as unknown as Payment) },
+            { label: "Delete", icon: <Trash2 size={13} />, destructive: true, onClick: (row) => handleDelete(row as unknown as Payment) },
+          ] as RowAction<Record<string, unknown>>[]}
+          searchable
+          searchPlaceholder="Search payments…"
+          searchKeys={["reference", "method"]}
+          maxHeight="520px"
+          emptyMessage={loading ? "Loading payments…" : "No payments recorded yet."}
+        />
       </Card>
 
       <Dialog open={open} onOpenChange={setOpen}>
