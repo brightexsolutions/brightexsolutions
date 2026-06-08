@@ -219,9 +219,12 @@ export function BrixoWidget() {
                     <div ref={bottomRef} />
                   </div>
 
-                  {/* Quick replies — only when first message is the only one */}
-                  {messages.length === 1 && (
-                    <div className="px-4 pb-2 flex flex-wrap gap-2 flex-shrink-0">
+                  {/* Quick replies — shown after every bot response */}
+                  {messages[messages.length - 1]?.role === "bot" && !loading && (
+                    <div className="px-4 pb-3 flex flex-wrap gap-2 flex-shrink-0 border-t border-brand-border dark:border-white/8 pt-3">
+                      <p className="w-full text-[10px] font-bold uppercase tracking-[0.15em] text-brand-muted mb-1">
+                        Quick options
+                      </p>
                       {QUICK_REPLIES.map((q) => (
                         <button
                           key={q}
