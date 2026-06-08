@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { Fraunces, Plus_Jakarta_Sans } from "next/font/google";
 import { ThemeProvider } from "@/components/theme-provider";
 import { SiteLoader } from "@/components/site-loader";
-import { SITE_NAME, SITE_URL } from "@/lib/constants";
+import { SITE_NAME, SITE_URL, GOOGLE_SITE_VERIFICATION } from "@/lib/constants";
 import "./globals.css";
 
 const fraunces = Fraunces({
@@ -69,8 +69,7 @@ export const metadata: Metadata = {
   alternates: {
     canonical: SITE_URL,
   },
-  // Add your Google Search Console verification token here once you have it:
-  // verification: { google: "YOUR_VERIFICATION_TOKEN" },
+  ...(GOOGLE_SITE_VERIFICATION && { verification: { google: GOOGLE_SITE_VERIFICATION } }),
 };
 
 export default function RootLayout({
