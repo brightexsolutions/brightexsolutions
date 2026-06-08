@@ -1,4 +1,5 @@
-import { ArrowUpRight } from "lucide-react";
+import Link from "next/link";
+import { ArrowUpRight, ArrowRight } from "lucide-react";
 import { FadeIn, FadeInStagger, StaggerChild } from "./fade-in";
 
 interface PortfolioProject {
@@ -148,21 +149,31 @@ function CardBackground({ accent, imageUrl }: { accent: string; imageUrl?: strin
 }
 
 export async function PortfolioSection() {
-  const projects = await getProjects();
+  const all = await getProjects();
+  const projects = all.slice(0, 6);
 
   return (
     <section className="py-24 dark:bg-brand-navy-dark" style={{ background: "linear-gradient(160deg, #fafaf8 0%, #f4f0ea 55%, #f8f5f1 100%)" }}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <FadeIn className="max-w-xl mb-14">
-          <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-brand-gold block mb-3">
-            Our Work
-          </span>
-          <h2 className="font-display text-4xl sm:text-5xl font-bold text-brand-navy dark:text-white mb-3">
-            Projects We&apos;re Proud Of
-          </h2>
-          <p className="text-brand-muted leading-relaxed">
-            From e-commerce platforms to mobile apps — a selection of what we&apos;ve shipped for clients across Kenya and East Africa.
-          </p>
+        <FadeIn className="flex flex-col sm:flex-row sm:items-end justify-between gap-6 mb-14">
+          <div className="max-w-xl">
+            <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-brand-gold block mb-3">
+              Our Work
+            </span>
+            <h2 className="font-display text-4xl sm:text-5xl font-bold text-brand-navy dark:text-white mb-3">
+              Projects We&apos;re Proud Of
+            </h2>
+            <p className="text-brand-muted leading-relaxed">
+              From e-commerce platforms to mobile apps — a selection of what we&apos;ve shipped for clients across Kenya and East Africa.
+            </p>
+          </div>
+          <Link
+            href="/projects"
+            className="inline-flex items-center gap-2 text-sm font-semibold text-brand-navy dark:text-white hover:text-brand-gold dark:hover:text-brand-gold transition-colors shrink-0 group"
+          >
+            View all projects
+            <ArrowRight size={14} className="group-hover:translate-x-0.5 transition-transform" />
+          </Link>
         </FadeIn>
 
         <FadeInStagger className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
@@ -240,6 +251,17 @@ export async function PortfolioSection() {
             );
           })}
         </FadeInStagger>
+
+        {/* Bottom CTA */}
+        <FadeIn className="mt-12 text-center">
+          <Link
+            href="/projects"
+            className="inline-flex items-center gap-2 px-7 py-3.5 rounded-sm border border-brand-navy/20 dark:border-white/15 text-brand-navy dark:text-white text-sm font-semibold hover:border-brand-gold hover:text-brand-gold transition-colors group"
+          >
+            See all our work
+            <ArrowRight size={14} className="group-hover:translate-x-0.5 transition-transform" />
+          </Link>
+        </FadeIn>
       </div>
     </section>
   );
