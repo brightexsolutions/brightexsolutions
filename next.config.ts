@@ -30,6 +30,22 @@ const securityHeaders = [
 
 const nextConfig: NextConfig = {
   pageExtensions: ["js", "jsx", "md", "mdx", "ts", "tsx"],
+  async redirects() {
+    return [
+      {
+        source: "/:path*",
+        has: [{ type: "host", value: "brightexsolutions.vercel.app" }],
+        destination: "https://www.brightexsolutions.co.ke/:path*",
+        permanent: true,
+      },
+      {
+        source: "/:path*",
+        has: [{ type: "host", value: "brightexsolutions.netlify.app" }],
+        destination: "https://www.brightexsolutions.co.ke/:path*",
+        permanent: true,
+      },
+    ];
+  },
   async headers() {
     return [
       {

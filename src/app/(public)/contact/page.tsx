@@ -64,7 +64,7 @@ export default function ContactPage() {
           <div className="mt-auto pt-4">
             <p className="text-white/40 text-xs uppercase tracking-widest font-semibold mb-3">Prefer WhatsApp?</p>
             <a
-              href={whatsappUrl("Hi Godwin, I was on the Brightex website and I'd like to discuss a project.")}
+              href={whatsappUrl("Hi Brightex Solutions Team, I was on your website and I'd like to discuss a project.")}
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-3 px-5 py-3 rounded-sm bg-[#25D366]/10 border border-[#25D366]/30 text-[#25D366] text-sm font-semibold hover:bg-[#25D366]/20 transition-colors"

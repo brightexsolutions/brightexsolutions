@@ -22,8 +22,8 @@ const QUICK_REPLIES = [
 
 function buildWaLink(context?: string) {
   const msg = context
-    ? `Hi Godwin, I was on the Brightex website and I'd like to chat about: ${context}`
-    : "Hi Godwin, I was on the Brightex website and I'd like to chat.";
+    ? `Hi Brightex Solutions Team, I was on your website and I'd like to chat about: ${context}`
+    : "Hi Brightex Solutions Team, I was on your website and I'd like to chat.";
   return whatsappUrl(msg);
 }
 
@@ -77,7 +77,7 @@ export function BrixoWidget() {
           {
             role: "bot",
             content:
-              "I don't have a direct answer for that right now. Switch to WhatsApp to chat with Godwin directly — he'll respond within 2 hours.",
+              "I don't have a direct answer for that right now. Switch to WhatsApp to chat with the Brightex team — we'll respond within 2 hours.",
           },
         ]);
       } else {
@@ -263,7 +263,7 @@ export function BrixoWidget() {
                   </div>
                   <div>
                     <h3 className="font-semibold text-brand-navy dark:text-white mb-1">
-                      Chat directly with Godwin
+                      Chat with Brightex Solutions
                     </h3>
                     <p className="text-brand-muted text-xs mb-1">{BUSINESS_PHONE}</p>
                     <p className="text-brand-muted text-xs">

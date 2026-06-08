@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ArrowRight, Globe, Palette, TrendingUp, Cpu, Database, BarChart3, Lightbulb, CheckCircle2 } from "lucide-react";
+import { ArrowRight, Globe, Palette, TrendingUp, Cpu, Database, BarChart3, Lightbulb, CheckCircle2, Users, Award, Zap } from "lucide-react";
 import { FadeIn, FadeInStagger, StaggerChild } from "@/components/public/fade-in";
 import { CtaSection } from "@/components/public/cta-section";
 import { SectionErrorBoundary } from "@/components/section-error-boundary";
@@ -23,6 +23,7 @@ const services = [
     description:
       "From marketing sites to complex web applications — we build with modern stacks optimised for performance, SEO, and maintainability. Every project ships with full deployment, CI/CD setup, and handover documentation.",
     points: ["Custom websites & web apps", "E-commerce platforms", "API development", "Performance & Core Web Vitals"],
+    featured: false,
   },
   {
     icon: Palette,
@@ -32,6 +33,7 @@ const services = [
     description:
       "User research, wireframing, prototyping, and high-fidelity UI design — grounded in how real people use products. We design for conversion, accessibility, and consistency across every screen size.",
     points: ["UX research & strategy", "Wireframes & prototypes", "UI design systems", "Accessibility audits"],
+    featured: false,
   },
   {
     icon: TrendingUp,
@@ -41,6 +43,7 @@ const services = [
     description:
       "Technical SEO, on-page optimisation, content strategy, and performance tracking. We build the infrastructure for sustainable organic growth that works without ongoing ad spend.",
     points: ["Technical SEO audits", "On-page optimisation", "Content & keyword strategy", "Analytics & tracking setup"],
+    featured: false,
   },
   {
     icon: Lightbulb,
@@ -50,6 +53,7 @@ const services = [
     description:
       "Logo design, colour systems, typography, and complete brand guidelines — giving your business a consistent, professional presence across every digital and print touchpoint.",
     points: ["Logo & mark design", "Full brand guidelines", "Colour & typography systems", "Social media templates"],
+    featured: false,
   },
   {
     icon: Cpu,
@@ -59,6 +63,7 @@ const services = [
     description:
       "AI integrations, chatbots, automated workflows, and data pipelines that eliminate manual work and surface better business intelligence — from simple automation to complex ML-backed systems.",
     points: ["AI chatbot development", "Workflow automation", "Data pipelines", "Custom AI tools & integrations"],
+    featured: true,
   },
   {
     icon: Database,
@@ -68,6 +73,7 @@ const services = [
     description:
       "Custom enterprise resource planning designed around your workflows — not a rigid off-the-shelf product forced into your processes. Built for schools, hospitals, hospitality, NGOs, and more.",
     points: ["Custom ERP development", "Module & workflow design", "Data migration & cleanup", "Training & ongoing support"],
+    featured: false,
   },
   {
     icon: BarChart3,
@@ -77,6 +83,7 @@ const services = [
     description:
       "Technology audits, stack selection, architecture planning, and digital transformation roadmaps. We help businesses at any stage make the right technology decisions and avoid expensive mistakes.",
     points: ["Tech stack assessment", "Architecture planning", "Digital transformation roadmaps", "Vendor & tool evaluation"],
+    featured: false,
   },
 ];
 
@@ -85,6 +92,13 @@ const pillars = [
   "Every project starts with a discovery conversation",
   "We build for the long run, not the demo",
   "Transparent timelines and plain-language updates",
+];
+
+const stats = [
+  { icon: Globe, value: "20+", label: "Projects delivered" },
+  { icon: Users, value: "15+", label: "Happy clients" },
+  { icon: Award, value: "7", label: "Core disciplines" },
+  { icon: Zap, value: "3", label: "Countries served" },
 ];
 
 export default function ServicesPage() {
@@ -108,7 +122,7 @@ export default function ServicesPage() {
                 Real Business Goals
               </h1>
               <p className="text-white/60 text-lg leading-relaxed mb-8">
-                We don't sell packages — we solve problems. Every engagement starts with understanding what you're trying to achieve, then building the right solution for that specific goal.
+                We don&apos;t sell packages — we solve problems. Every engagement starts with understanding what you&apos;re trying to achieve, then building the right solution for that specific goal.
               </p>
               <Link
                 href="/contact"
@@ -133,6 +147,27 @@ export default function ServicesPage() {
         </div>
       </section>
 
+      {/* Stats strip */}
+      <section className="py-0 bg-white dark:bg-brand-navy-light border-b border-brand-border dark:border-white/8">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <FadeInStagger className="grid grid-cols-2 md:grid-cols-4 divide-x divide-brand-border dark:divide-white/8">
+            {stats.map((s) => (
+              <StaggerChild key={s.label}>
+                <div className="flex items-center gap-4 px-6 py-7">
+                  <div className="w-10 h-10 rounded-sm bg-brand-gold/10 flex items-center justify-center shrink-0">
+                    <s.icon size={18} className="text-brand-gold" />
+                  </div>
+                  <div>
+                    <div className="font-display text-2xl font-bold text-brand-navy dark:text-white">{s.value}</div>
+                    <div className="text-xs text-brand-muted mt-0.5">{s.label}</div>
+                  </div>
+                </div>
+              </StaggerChild>
+            ))}
+          </FadeInStagger>
+        </div>
+      </section>
+
       {/* Services grid */}
       <section className="py-24 bg-brand-bg dark:bg-brand-navy-dark">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -150,23 +185,45 @@ export default function ServicesPage() {
             {services.map((s, i) => (
               <StaggerChild key={s.title}>
                 <div className={[
-                  "group relative bg-white dark:bg-brand-navy-light p-0 flex flex-col overflow-hidden transition-colors duration-200 hover:bg-brand-bg dark:hover:bg-brand-navy",
-                  // Last item spans full width if total is odd
+                  "group relative flex flex-col overflow-hidden transition-all duration-200",
+                  s.featured
+                    ? "bg-brand-navy hover:bg-[#1a2e4a]"
+                    : "bg-white dark:bg-brand-navy-light hover:bg-brand-bg dark:hover:bg-brand-navy",
                   i === services.length - 1 && services.length % 2 !== 0 ? "md:col-span-2" : "",
                 ].join(" ")}>
 
-                  {/* Gold top accent on hover */}
-                  <div className="absolute top-0 left-0 right-0 h-0.5 bg-brand-gold opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
+                  {/* Gold top accent */}
+                  <div className={[
+                    "absolute top-0 left-0 right-0 h-0.5 transition-opacity duration-200",
+                    s.featured ? "bg-brand-gold opacity-100" : "bg-brand-gold opacity-0 group-hover:opacity-100",
+                  ].join(" ")} />
+
+                  {s.featured && (
+                    <div className="absolute top-5 right-5">
+                      <span className="px-2.5 py-1 rounded-full bg-brand-gold/15 text-brand-gold text-[10px] font-bold uppercase tracking-widest">
+                        Trending
+                      </span>
+                    </div>
+                  )}
 
                   {/* Header strip */}
-                  <div className="flex items-center gap-4 px-8 pt-8 pb-5 border-b border-brand-border dark:border-white/8">
+                  <div className={[
+                    "flex items-center gap-4 px-8 pt-8 pb-5 border-b",
+                    s.featured ? "border-white/10" : "border-brand-border dark:border-white/8",
+                  ].join(" ")}>
                     <div className="w-10 h-10 rounded-sm bg-brand-gold/10 flex items-center justify-center shrink-0">
                       <s.icon size={18} className="text-brand-gold" />
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-baseline gap-3">
-                        <span className="text-xs text-brand-muted/50 font-mono">{s.num}</span>
-                        <h3 className="font-display text-lg font-bold text-brand-navy dark:text-white truncate">{s.title}</h3>
+                        <span className={[
+                          "text-xs font-mono",
+                          s.featured ? "text-white/30" : "text-brand-muted/50",
+                        ].join(" ")}>{s.num}</span>
+                        <h3 className={[
+                          "font-display text-lg font-bold truncate",
+                          s.featured ? "text-white" : "text-brand-navy dark:text-white",
+                        ].join(" ")}>{s.title}</h3>
                       </div>
                       <p className="text-brand-gold text-xs font-semibold mt-0.5">{s.tagline}</p>
                     </div>
@@ -174,11 +231,17 @@ export default function ServicesPage() {
 
                   {/* Body */}
                   <div className="flex flex-col flex-1 px-8 py-6 gap-5">
-                    <p className="text-brand-muted text-sm leading-relaxed">{s.description}</p>
+                    <p className={[
+                      "text-sm leading-relaxed",
+                      s.featured ? "text-white/60" : "text-brand-muted",
+                    ].join(" ")}>{s.description}</p>
 
                     <ul className="space-y-2">
                       {s.points.map((pt) => (
-                        <li key={pt} className="flex items-start gap-2.5 text-sm text-brand-text dark:text-white/70">
+                        <li key={pt} className={[
+                          "flex items-start gap-2.5 text-sm",
+                          s.featured ? "text-white/70" : "text-brand-text dark:text-white/70",
+                        ].join(" ")}>
                           <span className="w-1.5 h-1.5 rounded-full bg-brand-gold mt-1.5 shrink-0" />
                           {pt}
                         </li>
@@ -187,7 +250,12 @@ export default function ServicesPage() {
 
                     <Link
                       href="/contact"
-                      className="mt-auto inline-flex items-center gap-1.5 text-xs font-semibold text-brand-navy dark:text-white hover:text-brand-gold dark:hover:text-brand-gold transition-colors"
+                      className={[
+                        "mt-auto inline-flex items-center gap-1.5 text-xs font-semibold transition-colors",
+                        s.featured
+                          ? "text-brand-gold hover:text-brand-gold-hover"
+                          : "text-brand-navy dark:text-white hover:text-brand-gold dark:hover:text-brand-gold",
+                      ].join(" ")}
                     >
                       Get a quote <ArrowRight size={12} className="group-hover:translate-x-0.5 transition-transform" />
                     </Link>
@@ -197,6 +265,50 @@ export default function ServicesPage() {
             ))}
           </FadeInStagger>
 
+        </div>
+      </section>
+
+      {/* Trust section */}
+      <section className="py-20 bg-brand-navy">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+            <FadeIn>
+              <span className="text-brand-gold text-xs font-semibold tracking-widest uppercase mb-4 block">
+                Why Brightex
+              </span>
+              <h2 className="font-display text-3xl sm:text-4xl font-bold text-white mb-6">
+                One team. Every discipline.<br />No handoff headaches.
+              </h2>
+              <p className="text-white/55 text-base leading-relaxed mb-8">
+                Most agencies specialise in one area. You end up stitching together multiple vendors — a designer here, a developer there, an SEO consultant elsewhere. With Brightex, strategy, design, development, and growth live under one roof.
+              </p>
+              <Link
+                href="/contact"
+                className="inline-flex items-center gap-2 px-6 py-3 rounded-sm border border-white/20 text-white text-sm font-semibold hover:border-brand-gold hover:text-brand-gold transition-colors"
+              >
+                Tell us about your project <ArrowRight size={14} />
+              </Link>
+            </FadeIn>
+            <FadeIn direction="right">
+              <div className="grid grid-cols-1 gap-4">
+                {[
+                  { title: "Discovery first", body: "Every engagement starts with a conversation about your actual goals — not a proposal we've already written." },
+                  { title: "Built to hand over", body: "You own everything. Code is yours, documented, and deployable by any competent developer." },
+                  { title: "No surprise invoices", body: "Scoped, quoted, and agreed before a line of code is written. Changes go through a formal request process." },
+                ].map((item) => (
+                  <div key={item.title} className="p-6 rounded-sm bg-white/5 border border-white/8">
+                    <div className="flex items-start gap-3">
+                      <div className="w-1.5 h-1.5 rounded-full bg-brand-gold mt-2 shrink-0" />
+                      <div>
+                        <h3 className="font-semibold text-white text-sm mb-1.5">{item.title}</h3>
+                        <p className="text-white/50 text-sm leading-relaxed">{item.body}</p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </FadeIn>
+          </div>
         </div>
       </section>
 
