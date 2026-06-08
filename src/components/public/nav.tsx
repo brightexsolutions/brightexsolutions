@@ -10,7 +10,6 @@ import { Logo } from "@/components/public/logo";
 const links = [
   { label: "Home", href: "/", exact: true },
   { label: "Services", href: "/services", exact: false },
-  { label: "Projects", href: "/projects", exact: false },
   { label: "Products", href: "/products", exact: false },
   { label: "Blog", href: "/blog", exact: false },
   { label: "Contact", href: "/contact", exact: true },
