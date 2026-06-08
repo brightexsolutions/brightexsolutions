@@ -172,92 +172,95 @@ export default function ServicesPage() {
       <section className="py-24 bg-brand-bg dark:bg-brand-navy-dark">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 
-          <FadeIn className="text-center mb-16">
-            <h2 className="font-display text-3xl sm:text-4xl font-bold text-brand-navy dark:text-white">
+          <FadeIn className="max-w-xl mb-14">
+            <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-brand-gold block mb-3">
+              What We Offer
+            </span>
+            <h2 className="font-display text-3xl sm:text-4xl font-bold text-brand-navy dark:text-white mb-3">
               7 disciplines. One cohesive team.
             </h2>
-            <p className="text-brand-muted mt-3 max-w-xl mx-auto">
-              Whether you need one service or all seven working together, we treat every engagement as a long-term partnership.
+            <p className="text-brand-muted leading-relaxed">
+              Whether you need one service or all seven working in concert — we treat every engagement as a long-term partnership.
             </p>
           </FadeIn>
 
-          <FadeInStagger className="grid grid-cols-1 md:grid-cols-2 gap-px bg-brand-border dark:bg-white/10 rounded-sm overflow-hidden border border-brand-border dark:border-white/10">
-            {services.map((s, i) => (
+          <FadeInStagger className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
+            {services.map((s) => (
               <StaggerChild key={s.title}>
                 <div className={[
-                  "group relative flex flex-col overflow-hidden transition-all duration-200",
+                  "group relative flex flex-col h-full rounded-sm overflow-hidden border transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg",
                   s.featured
-                    ? "bg-brand-navy hover:bg-[#1a2e4a]"
-                    : "bg-white dark:bg-brand-navy-light hover:bg-brand-bg dark:hover:bg-brand-navy",
-                  i === services.length - 1 && services.length % 2 !== 0 ? "md:col-span-2" : "",
+                    ? "bg-brand-navy border-brand-navy hover:shadow-brand-navy/20"
+                    : "bg-white dark:bg-brand-navy-light border-brand-border dark:border-white/8 hover:border-brand-gold/30",
                 ].join(" ")}>
 
-                  {/* Gold top accent */}
+                  {/* Gold accent top line */}
                   <div className={[
-                    "absolute top-0 left-0 right-0 h-0.5 transition-opacity duration-200",
-                    s.featured ? "bg-brand-gold opacity-100" : "bg-brand-gold opacity-0 group-hover:opacity-100",
+                    "h-[3px] w-full",
+                    s.featured ? "bg-brand-gold" : "bg-brand-gold/0 group-hover:bg-brand-gold/60 transition-colors duration-200",
                   ].join(" ")} />
 
-                  {s.featured && (
-                    <div className="absolute top-5 right-5">
-                      <span className="px-2.5 py-1 rounded-full bg-brand-gold/15 text-brand-gold text-[10px] font-bold uppercase tracking-widest">
-                        Trending
-                      </span>
-                    </div>
-                  )}
-
-                  {/* Header strip */}
-                  <div className={[
-                    "flex items-center gap-4 px-8 pt-8 pb-5 border-b",
-                    s.featured ? "border-white/10" : "border-brand-border dark:border-white/8",
-                  ].join(" ")}>
-                    <div className="w-10 h-10 rounded-sm bg-brand-gold/10 flex items-center justify-center shrink-0">
-                      <s.icon size={18} className="text-brand-gold" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-baseline gap-3">
+                  {/* Card content */}
+                  <div className="flex flex-col flex-1 p-7">
+                    {/* Icon + num row */}
+                    <div className="flex items-start justify-between mb-5">
+                      <div className={[
+                        "w-11 h-11 rounded-sm flex items-center justify-center shrink-0",
+                        s.featured ? "bg-brand-gold/15" : "bg-brand-gold/8",
+                      ].join(" ")}>
+                        <s.icon size={20} className="text-brand-gold" />
+                      </div>
+                      <div className="flex items-center gap-2">
+                        {s.featured && (
+                          <span className="px-2 py-0.5 rounded-full bg-brand-gold/15 text-brand-gold text-[9px] font-bold uppercase tracking-widest">
+                            Trending
+                          </span>
+                        )}
                         <span className={[
                           "text-xs font-mono",
-                          s.featured ? "text-white/30" : "text-brand-muted/50",
+                          s.featured ? "text-white/25" : "text-brand-muted/40",
                         ].join(" ")}>{s.num}</span>
-                        <h3 className={[
-                          "font-display text-lg font-bold truncate",
-                          s.featured ? "text-white" : "text-brand-navy dark:text-white",
-                        ].join(" ")}>{s.title}</h3>
                       </div>
-                      <p className="text-brand-gold text-xs font-semibold mt-0.5">{s.tagline}</p>
                     </div>
-                  </div>
 
-                  {/* Body */}
-                  <div className="flex flex-col flex-1 px-8 py-6 gap-5">
+                    {/* Title + tagline */}
+                    <h3 className={[
+                      "font-display text-xl font-bold mb-1 leading-snug",
+                      s.featured ? "text-white" : "text-brand-navy dark:text-white",
+                    ].join(" ")}>{s.title}</h3>
+                    <p className="text-brand-gold text-xs font-semibold mb-4">{s.tagline}</p>
+
+                    {/* Description */}
                     <p className={[
-                      "text-sm leading-relaxed",
-                      s.featured ? "text-white/60" : "text-brand-muted",
+                      "text-sm leading-relaxed mb-5",
+                      s.featured ? "text-white/55" : "text-brand-muted",
                     ].join(" ")}>{s.description}</p>
 
-                    <ul className="space-y-2">
+                    {/* Points */}
+                    <ul className="space-y-2 mb-6 flex-1">
                       {s.points.map((pt) => (
                         <li key={pt} className={[
                           "flex items-start gap-2.5 text-sm",
-                          s.featured ? "text-white/70" : "text-brand-text dark:text-white/70",
+                          s.featured ? "text-white/65" : "text-brand-text dark:text-white/65",
                         ].join(" ")}>
-                          <span className="w-1.5 h-1.5 rounded-full bg-brand-gold mt-1.5 shrink-0" />
+                          <span className="w-1 h-1 rounded-full bg-brand-gold mt-2 shrink-0" />
                           {pt}
                         </li>
                       ))}
                     </ul>
 
+                    {/* CTA */}
                     <Link
                       href="/contact"
                       className={[
-                        "mt-auto inline-flex items-center gap-1.5 text-xs font-semibold transition-colors",
+                        "mt-auto inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider transition-colors",
                         s.featured
-                          ? "text-brand-gold hover:text-brand-gold-hover"
+                          ? "text-brand-gold hover:text-white"
                           : "text-brand-navy dark:text-white hover:text-brand-gold dark:hover:text-brand-gold",
                       ].join(" ")}
                     >
-                      Get a quote <ArrowRight size={12} className="group-hover:translate-x-0.5 transition-transform" />
+                      Get a quote
+                      <ArrowRight size={11} className="group-hover:translate-x-0.5 transition-transform" />
                     </Link>
                   </div>
                 </div>

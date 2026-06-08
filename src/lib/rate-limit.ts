@@ -2,7 +2,8 @@ import { RateLimiterMemory, RateLimiterRes } from "rate-limiter-flexible";
 import { NextRequest, NextResponse } from "next/server";
 
 const limiters = {
-  contact:  new RateLimiterMemory({ points: 5,   duration: 60 }),
+  contact:    new RateLimiterMemory({ points: 5,   duration: 60 }),
+  newsletter: new RateLimiterMemory({ points: 3,   duration: 60 }),
   book:     new RateLimiterMemory({ points: 5,   duration: 60 }),
   chat:     new RateLimiterMemory({ points: 30,  duration: 60 }),
   join:     new RateLimiterMemory({ points: 5,   duration: 60 }),

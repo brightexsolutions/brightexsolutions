@@ -269,7 +269,7 @@ export function PublicFooter() {
             className="font-display font-black leading-none tracking-[-0.04em] text-white/[0.028]"
             style={{ fontSize: "clamp(5rem, 16vw, 14rem)" }}
           >
-            brightex
+            Brightex
           </span>
         </div>
       </div>
