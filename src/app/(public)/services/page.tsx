@@ -1,8 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ArrowRight, Globe, Palette, TrendingUp, Cpu, Database, BarChart3, Lightbulb, CheckCircle2, Users, Award, Zap } from "lucide-react";
+import { ArrowRight, Globe, Palette, TrendingUp, Cpu, Database, BarChart3, Lightbulb, CheckCircle2, Users, Award, Zap, type LucideIcon } from "lucide-react";
 import { FadeIn, FadeInStagger, StaggerChild } from "@/components/public/fade-in";
-import { SectionErrorBoundary } from "@/components/section-error-boundary";
 
 export const revalidate = 3600;
 
@@ -100,6 +99,41 @@ const stats = [
   { icon: Zap, value: "3", label: "Countries served" },
 ];
 
+interface Service {
+  icon: LucideIcon;
+  num: string;
+  title: string;
+  tagline: string;
+  description: string;
+  points: string[];
+  featured: boolean;
+}
+
+function ServiceCard({ service: s }: { service: Service }) {
+  return (
+    <div className="group flex flex-col h-full rounded-sm bg-white border border-brand-border hover:border-brand-gold/40 hover:-translate-y-0.5 hover:shadow-md transition-all duration-200 overflow-hidden">
+      <div className="h-[2px] w-0 group-hover:w-full bg-brand-gold transition-all duration-500 ease-out" />
+      <div className="flex flex-col flex-1 p-6">
+        <div className="flex items-start justify-between mb-4">
+          <div className="w-10 h-10 rounded-sm bg-brand-gold/8 flex items-center justify-center shrink-0">
+            <s.icon size={18} className="text-brand-gold" />
+          </div>
+          <span className="text-xs font-mono text-brand-muted/40">{s.num}</span>
+        </div>
+        <h3 className="font-display text-lg font-bold text-brand-navy mb-1 leading-snug">{s.title}</h3>
+        <p className="text-brand-gold text-[11px] font-semibold mb-3">{s.tagline}</p>
+        <p className="text-brand-muted text-xs leading-relaxed mb-5 flex-1 line-clamp-3">{s.description}</p>
+        <Link
+          href="/contact"
+          className="inline-flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-brand-navy hover:text-brand-gold transition-colors group/link"
+        >
+          Get a quote <ArrowRight size={10} className="group-hover/link:translate-x-0.5 transition-transform" />
+        </Link>
+      </div>
+    </div>
+  );
+}
+
 export default function ServicesPage() {
   return (
     <>
@@ -167,106 +201,90 @@ export default function ServicesPage() {
         </div>
       </section>
 
-      {/* Services grid */}
+      {/* Services — asymmetric layout */}
       <section className="py-24 dark:bg-brand-navy-dark" style={{ background: "linear-gradient(155deg, #f4f6f8 0%, #edeae2 55%, #f2efe9 100%)" }}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-1 lg:grid-cols-[1fr_2fr] gap-12 lg:gap-16 items-start">
 
-          <FadeIn className="max-w-xl mb-14">
-            <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-brand-gold block mb-3">
-              What We Offer
-            </span>
-            <h2 className="font-display text-3xl sm:text-4xl font-bold text-brand-navy dark:text-white mb-3">
-              7 disciplines. One cohesive team.
-            </h2>
-            <p className="text-brand-muted leading-relaxed">
-              Whether you need one service or all seven working in concert — we treat every engagement as a long-term partnership.
-            </p>
-          </FadeIn>
+            {/* Left: intro column */}
+            <FadeIn className="lg:sticky lg:top-28">
+              <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-brand-gold block mb-4">
+                What We Offer
+              </span>
+              <h2 className="font-display text-3xl sm:text-4xl lg:text-5xl font-bold text-brand-navy dark:text-white mb-5 leading-tight">
+                7 disciplines.<br />One team.
+              </h2>
+              <p className="text-brand-muted leading-relaxed mb-8 text-sm">
+                Whether you need one service or all seven working together — every engagement starts with your goals, not a pre-written proposal.
+              </p>
+              <Link
+                href="/contact"
+                className="inline-flex items-center gap-2 px-6 py-3 rounded-sm bg-brand-gold text-brand-navy font-semibold text-sm hover:bg-brand-gold-hover transition-colors"
+              >
+                Get a quote <ArrowRight size={14} />
+              </Link>
+            </FadeIn>
 
-          <FadeInStagger className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
-            {services.map((s) => (
-              <StaggerChild key={s.title}>
-                <div className={[
-                  "group relative flex flex-col h-full rounded-sm overflow-hidden border transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg",
-                  s.featured
-                    ? "bg-brand-navy border-brand-navy hover:shadow-brand-navy/20"
-                    : "bg-white dark:bg-brand-navy-light border-brand-border dark:border-white/8 hover:border-brand-gold/30",
-                ].join(" ")}>
+            {/* Right: asymmetric service card grid */}
+            <FadeInStagger className="grid grid-cols-1 sm:grid-cols-6 gap-4">
 
-                  {/* Gold accent top line */}
-                  <div className={[
-                    "h-[3px] w-full",
-                    s.featured ? "bg-brand-gold" : "bg-brand-gold/0 group-hover:bg-brand-gold/60 transition-colors duration-200",
-                  ].join(" ")} />
-
-                  {/* Card content */}
-                  <div className="flex flex-col flex-1 p-7">
-                    {/* Icon + num row */}
-                    <div className="flex items-start justify-between mb-5">
-                      <div className={[
-                        "w-11 h-11 rounded-sm flex items-center justify-center shrink-0",
-                        s.featured ? "bg-brand-gold/15" : "bg-brand-gold/8",
-                      ].join(" ")}>
-                        <s.icon size={20} className="text-brand-gold" />
-                      </div>
-                      <div className="flex items-center gap-2">
-                        {s.featured && (
-                          <span className="px-2 py-0.5 rounded-full bg-brand-gold/15 text-brand-gold text-[9px] font-bold uppercase tracking-widest">
-                            Trending
+              {/* Featured card — spans 4/6 */}
+              {(() => {
+                const s = services.find(x => x.featured)!;
+                return (
+                  <StaggerChild className="sm:col-span-6 lg:col-span-4">
+                    <div className="group relative flex flex-col h-full rounded-sm overflow-hidden bg-brand-navy border border-brand-navy hover:shadow-xl hover:shadow-brand-navy/25 transition-all duration-300 hover:-translate-y-0.5">
+                      <div className="h-[3px] w-full bg-brand-gold" />
+                      <div className="flex flex-col flex-1 p-7">
+                        <div className="flex items-start justify-between mb-5">
+                          <div className="w-11 h-11 rounded-sm bg-brand-gold/15 flex items-center justify-center shrink-0">
+                            <s.icon size={20} className="text-brand-gold" />
+                          </div>
+                          <span className="px-2.5 py-1 rounded-full bg-brand-gold/15 text-brand-gold text-[9px] font-bold uppercase tracking-widest">
+                            In Demand
                           </span>
-                        )}
-                        <span className={[
-                          "text-xs font-mono",
-                          s.featured ? "text-white/25" : "text-brand-muted/40",
-                        ].join(" ")}>{s.num}</span>
+                        </div>
+                        <h3 className="font-display text-2xl font-bold text-white mb-1 leading-snug">{s.title}</h3>
+                        <p className="text-brand-gold text-xs font-semibold mb-4">{s.tagline}</p>
+                        <p className="text-white/55 text-sm leading-relaxed mb-6 flex-1">{s.description}</p>
+                        <div className="flex flex-wrap gap-2 mb-6">
+                          {s.points.map((pt) => (
+                            <span key={pt} className="px-2.5 py-1 rounded-sm bg-white/5 border border-white/10 text-white/60 text-xs">
+                              {pt}
+                            </span>
+                          ))}
+                        </div>
+                        <Link href="/contact" className="inline-flex items-center gap-1.5 text-brand-gold text-xs font-bold uppercase tracking-wider hover:text-white transition-colors group/link">
+                          Get a quote <ArrowRight size={11} className="group-hover/link:translate-x-0.5 transition-transform" />
+                        </Link>
                       </div>
                     </div>
+                  </StaggerChild>
+                );
+              })()}
 
-                    {/* Title + tagline */}
-                    <h3 className={[
-                      "font-display text-xl font-bold mb-1 leading-snug",
-                      s.featured ? "text-white" : "text-brand-navy dark:text-white",
-                    ].join(" ")}>{s.title}</h3>
-                    <p className="text-brand-gold text-xs font-semibold mb-4">{s.tagline}</p>
+              {/* Card beside the featured (1st non-featured) */}
+              {(() => {
+                const s = services.find(x => !x.featured)!;
+                return (
+                  <StaggerChild className="sm:col-span-3 lg:col-span-2">
+                    <ServiceCard service={s} />
+                  </StaggerChild>
+                );
+              })()}
 
-                    {/* Description */}
-                    <p className={[
-                      "text-sm leading-relaxed mb-5",
-                      s.featured ? "text-white/55" : "text-brand-muted",
-                    ].join(" ")}>{s.description}</p>
+              {/* Remaining 5 cards in 3-col, 2-col rows */}
+              {services.filter(x => !x.featured).slice(1).map((s, i) => (
+                <StaggerChild
+                  key={s.title}
+                  className={i < 3 ? "sm:col-span-2 lg:col-span-2" : "sm:col-span-3 lg:col-span-3"}
+                >
+                  <ServiceCard service={s} />
+                </StaggerChild>
+              ))}
 
-                    {/* Points */}
-                    <ul className="space-y-2 mb-6 flex-1">
-                      {s.points.map((pt) => (
-                        <li key={pt} className={[
-                          "flex items-start gap-2.5 text-sm",
-                          s.featured ? "text-white/65" : "text-brand-text dark:text-white/65",
-                        ].join(" ")}>
-                          <span className="w-1 h-1 rounded-full bg-brand-gold mt-2 shrink-0" />
-                          {pt}
-                        </li>
-                      ))}
-                    </ul>
-
-                    {/* CTA */}
-                    <Link
-                      href="/contact"
-                      className={[
-                        "mt-auto inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider transition-colors",
-                        s.featured
-                          ? "text-brand-gold hover:text-white"
-                          : "text-brand-navy dark:text-white hover:text-brand-gold dark:hover:text-brand-gold",
-                      ].join(" ")}
-                    >
-                      Get a quote
-                      <ArrowRight size={11} className="group-hover:translate-x-0.5 transition-transform" />
-                    </Link>
-                  </div>
-                </div>
-              </StaggerChild>
-            ))}
-          </FadeInStagger>
-
+            </FadeInStagger>
+          </div>
         </div>
       </section>
 
