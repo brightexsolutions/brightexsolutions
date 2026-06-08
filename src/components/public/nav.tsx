@@ -16,7 +16,7 @@ const links = [
 ];
 
 // Routes where the top of the page is a full-width dark hero — nav starts transparent with white text
-const DARK_HERO_ROUTES = ["/", "/services", "/products", "/blog", "/book"];
+const DARK_HERO_ROUTES = ["/", "/services", "/products", "/blog"];
 
 export function PublicNav() {
   const [scrolled, setScrolled] = useState(false);
