@@ -11,6 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
+import { useConfirm } from "@/components/admin/confirm-dialog";
 
 const typeColors: Record<string, string> = {
   email: "bg-blue-400/10 text-blue-400",
@@ -45,6 +46,7 @@ type Communication = {
 };
 
 export function CommunicationsPageClient() {
+  const confirm = useConfirm();
   const [open, setOpen] = useState(false);
   const [editTarget, setEditTarget] = useState<Communication | null>(null);
   const [activeFilter, setActiveFilter] = useState("All");
@@ -135,7 +137,7 @@ export function CommunicationsPageClient() {
   }
 
   async function handleDelete(entry: Communication) {
-    if (!confirm(`Delete this communication log? This cannot be undone.`)) return;
+    if (!await confirm({ message: "Delete this communication log? This cannot be undone." })) return;
     await fetch(`/api/admin/communications/${entry.id}`, { method: "DELETE" });
     setCommunications((prev) => prev.filter((c) => c.id !== entry.id));
   }

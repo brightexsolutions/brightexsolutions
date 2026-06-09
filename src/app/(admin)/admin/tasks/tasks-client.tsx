@@ -21,6 +21,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { useConfirm } from "@/components/admin/confirm-dialog";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -196,6 +197,7 @@ function Column({
 // ── Main Component ────────────────────────────────────────────────────────────
 
 export function TasksClient() {
+  const confirm = useConfirm();
   const [tasks, setTasks] = useState<Task[]>([]);
   const [members, setMembers] = useState<Member[]>([]);
   const [projects, setProjects] = useState<Project[]>([]);
@@ -466,7 +468,7 @@ export function TasksClient() {
   }
 
   async function handleDelete(task: Task) {
-    if (!confirm(`Delete "${task.title}"? This cannot be undone.`)) return;
+    if (!await confirm({ message: `Delete "${task.title}"? This cannot be undone.` })) return;
     await fetch(`/api/admin/tasks/${task.id}`, { method: "DELETE" });
     setTasks((prev) => prev.filter((t) => t.id !== task.id));
     setDetailTask(null);

@@ -4,6 +4,7 @@ import { useState, Suspense } from "react";
 import { AdminSidebar } from "@/components/admin/sidebar";
 import { AdminHeader } from "@/components/admin/header";
 import { CommandPalette } from "@/components/admin/command-palette";
+import { ConfirmProvider } from "@/components/admin/confirm-dialog";
 import { usePathname } from "next/navigation";
 
 export function AdminPageSkeleton() {
@@ -59,6 +60,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   }
 
   return (
+    <ConfirmProvider>
     <div className="flex h-screen overflow-hidden bg-background">
       <div className="hidden lg:flex">
         <AdminSidebar collapsed={collapsed} onToggle={() => setCollapsed(!collapsed)} />
@@ -84,5 +86,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
       <CommandPalette />
     </div>
+    </ConfirmProvider>
   );
 }

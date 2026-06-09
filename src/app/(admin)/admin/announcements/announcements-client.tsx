@@ -12,6 +12,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { useConfirm } from "@/components/admin/confirm-dialog";
 
 const typeColors: Record<string, string> = {
   info: "bg-blue-400/10 text-blue-600 dark:text-blue-400 border-blue-200 dark:border-blue-800/40",
@@ -59,6 +60,7 @@ function toLocalDatetimeValue(iso: string | null | undefined): string {
 }
 
 export function AnnouncementsPageClient() {
+  const confirm = useConfirm();
   const [open, setOpen] = useState(false);
   const [editTarget, setEditTarget] = useState<Announcement | null>(null);
   const [activeOnly, setActiveOnly] = useState(false);
@@ -154,7 +156,7 @@ export function AnnouncementsPageClient() {
   }
 
   async function handleDelete(ann: Announcement) {
-    if (!confirm(`Delete "${ann.title}"? This cannot be undone.`)) return;
+    if (!await confirm({ message: `Delete "${ann.title}"? This cannot be undone.` })) return;
     await fetch(`/api/admin/announcements/${ann.id}`, { method: "DELETE" });
     setAnnouncements((prev) => prev.filter((a) => a.id !== ann.id));
   }

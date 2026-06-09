@@ -12,6 +12,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { useConfirm } from "@/components/admin/confirm-dialog";
 
 const tabs = ["All Posts", "Pending Approval", "Approved", "Posted"] as const;
 type Tab = (typeof tabs)[number];
@@ -48,6 +49,7 @@ function toLocalDatetime(iso: string | null | undefined): string {
 }
 
 export default function SocialMediaPage() {
+  const confirm = useConfirm();
   const [activeTab, setActiveTab] = useState<Tab>("All Posts");
   const [posts, setPosts] = useState<SocialPost[]>([]);
   const [loading, setLoading] = useState(true);
@@ -143,7 +145,7 @@ export default function SocialMediaPage() {
   }
 
   async function handleDelete(post: SocialPost) {
-    if (!confirm("Delete this post? This cannot be undone.")) return;
+    if (!await confirm({ message: "Delete this post? This cannot be undone." })) return;
     setBusy(post.id, true);
     try {
       await fetch(`/api/admin/social/${post.id}`, { method: "DELETE" });

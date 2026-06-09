@@ -11,6 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { useConfirm } from "@/components/admin/confirm-dialog";
 
 // ─── Stage definitions ────────────────────────────────────────────────────────
 
@@ -153,6 +154,7 @@ function StageHeader({ stage, count }: { stage: typeof stages[number]; count: nu
 // ─── Main component ───────────────────────────────────────────────────────────
 
 export function SalesPageClient() {
+  const confirm = useConfirm();
   const [deals, setDeals] = useState<Deal[]>([]);
   const [loading, setLoading] = useState(true);
   const [nowMs, setNowMs] = useState<number | null>(null);
@@ -222,7 +224,7 @@ export function SalesPageClient() {
   }
 
   async function handleDelete(deal: Deal) {
-    if (!confirm("Delete this deal? This cannot be undone.")) return;
+    if (!await confirm({ message: "Delete this deal? This cannot be undone." })) return;
     setBusyId(deal.id);
     try {
       await fetch(`/api/admin/sales/${deal.id}`, { method: "DELETE" });

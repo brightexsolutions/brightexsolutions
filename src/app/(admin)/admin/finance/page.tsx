@@ -16,6 +16,7 @@ import {
 } from "recharts";
 import { cn } from "@/lib/utils";
 import { useTheme } from "next-themes";
+import { useConfirm } from "@/components/admin/confirm-dialog";
 
 const tabs = ["Income", "Expenses", "Reports", "Documents"] as const;
 type Tab = (typeof tabs)[number];
@@ -110,6 +111,7 @@ function computeNet(gross: number, whtType: string, customRate: string) {
 }
 
 export default function FinancePage() {
+  const confirm = useConfirm();
   const { resolvedTheme } = useTheme();
   const chartLabelColor = resolvedTheme === "dark" ? "#97acc6" : "#64748b";
   const [activeTab, setActiveTab] = useState<Tab>("Income");
@@ -225,7 +227,7 @@ export default function FinancePage() {
   }
 
   async function deleteIncome(r: IncomeRecord) {
-    if (!confirm("Delete this income record?")) return;
+    if (!await confirm({ message: "Delete this income record? This cannot be undone." })) return;
     await fetch(`/api/admin/finance/income/${r.id}`, { method: "DELETE" });
     setIncome((prev) => prev.filter((i) => i.id !== r.id));
   }
@@ -257,7 +259,7 @@ export default function FinancePage() {
   }
 
   async function deleteExpense(r: ExpenseRecord) {
-    if (!confirm("Delete this expense?")) return;
+    if (!await confirm({ message: "Delete this expense? This cannot be undone." })) return;
     await fetch(`/api/admin/finance/expenses/${r.id}`, { method: "DELETE" });
     setExpenses((prev) => prev.filter((e) => e.id !== r.id));
   }
@@ -290,7 +292,7 @@ export default function FinancePage() {
   }
 
   async function deleteDoc(doc: FinanceDoc) {
-    if (!confirm(`Delete "${doc.original_filename ?? "this document"}"?`)) return;
+    if (!await confirm({ message: `Delete "${doc.original_filename ?? "this document"}"? This cannot be undone.` })) return;
     await fetch(`/api/admin/finance/documents/${doc.id}`, { method: "DELETE" });
     setDocs((prev) => prev.filter((d) => d.id !== doc.id));
   }

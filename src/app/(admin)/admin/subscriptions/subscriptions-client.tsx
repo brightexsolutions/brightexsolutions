@@ -11,6 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
+import { useConfirm } from "@/components/admin/confirm-dialog";
 
 const categories = ["domain", "hosting", "tool", "software", "other"];
 const cycles = ["monthly", "yearly", "one_time"];
@@ -53,6 +54,7 @@ type Subscription = {
 };
 
 export function SubscriptionsPageClient() {
+  const confirm = useConfirm();
   const [open, setOpen] = useState(false);
   const [editTarget, setEditTarget] = useState<Subscription | null>(null);
   const [activeCategory, setActiveCategory] = useState("all");
@@ -143,7 +145,7 @@ export function SubscriptionsPageClient() {
   }
 
   async function handleDelete(sub: Subscription) {
-    if (!confirm(`Delete "${sub.name}"? This cannot be undone.`)) return;
+    if (!await confirm({ message: `Delete "${sub.name}"? This cannot be undone.` })) return;
     await fetch(`/api/admin/subscriptions/${sub.id}`, { method: "DELETE" });
     setSubscriptions((prev) => prev.filter((s) => s.id !== sub.id));
   }

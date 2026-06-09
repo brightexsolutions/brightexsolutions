@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
+import { useConfirm } from "@/components/admin/confirm-dialog";
 
 const tabs = ["FAQ Manager", "Sessions", "Analytics"] as const;
 type Tab = (typeof tabs)[number];
@@ -39,6 +40,7 @@ type Session = {
 };
 
 export default function BrixoChatPage() {
+  const confirm = useConfirm();
   const [activeTab, setActiveTab] = useState<Tab>("FAQ Manager");
   const [faqs, setFaqs] = useState<FAQ[]>([]);
   const [sessions, setSessions] = useState<Session[]>([]);
@@ -91,7 +93,7 @@ export default function BrixoChatPage() {
   }
 
   async function handleDelete(faq: FAQ) {
-    if (!confirm("Delete this FAQ? This cannot be undone.")) return;
+    if (!await confirm({ message: "Delete this FAQ? This cannot be undone." })) return;
     await fetch(`/api/admin/chat/faqs/${faq.id}`, { method: "DELETE" });
     setFaqs((prev) => prev.filter((f) => f.id !== faq.id));
   }

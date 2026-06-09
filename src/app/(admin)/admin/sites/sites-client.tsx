@@ -5,6 +5,7 @@ import { Globe, Plus, CheckCircle2, AlertTriangle, XCircle, RefreshCw, Loader2, 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { StatCard } from "@/components/admin/stat-card";
 import { DataTable, StackedCell, type Column } from "@/components/admin/data-table";
+import { useConfirm } from "@/components/admin/confirm-dialog";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { Input } from "@/components/ui/input";
@@ -50,6 +51,7 @@ type Site = {
 };
 
 export function SiteMonitoringPageClient() {
+  const confirm = useConfirm();
   const [open, setOpen] = useState(false);
   const [editTarget, setEditTarget] = useState<Site | null>(null);
   const [guideOpen, setGuideOpen] = useState(false);
@@ -107,7 +109,7 @@ export function SiteMonitoringPageClient() {
   }
 
   async function handleDelete(site: Site) {
-    if (!confirm(`Remove "${site.name}" from monitoring? This cannot be undone.`)) return;
+    if (!await confirm({ title: "Remove site", message: `Remove "${site.name}" from monitoring? This cannot be undone.`, confirmLabel: "Remove" })) return;
     setBusyIds((prev) => { const next = new Set(prev); next.add(site.id); return next; });
     try {
       await fetch(`/api/admin/sites/${site.id}`, { method: "DELETE" });

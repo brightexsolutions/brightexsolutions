@@ -11,6 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { useConfirm } from "@/components/admin/confirm-dialog";
 
 const tabs = ["Products", "Trials", "Subscriptions"] as const;
 type Tab = (typeof tabs)[number];
@@ -71,6 +72,7 @@ type ProductSubscription = {
 };
 
 export default function AdminProductsPage() {
+  const confirm = useConfirm();
   const [activeTab, setActiveTab] = useState<Tab>("Products");
   const [open, setOpen] = useState(false);
   const [editTarget, setEditTarget] = useState<Product | null>(null);
@@ -139,7 +141,7 @@ export default function AdminProductsPage() {
   }
 
   async function handleDelete(product: Product) {
-    if (!confirm(`Delete "${product.name}"? This cannot be undone.`)) return;
+    if (!await confirm({ message: `Delete "${product.name}"? This cannot be undone.` })) return;
     await fetch(`/api/admin/products/${product.id}`, { method: "DELETE" });
     setProducts((prev) => prev.filter((p) => p.id !== product.id));
   }

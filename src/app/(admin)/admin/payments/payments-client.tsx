@@ -11,6 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
+import { useConfirm } from "@/components/admin/confirm-dialog";
 
 const methods = ["mpesa", "bank", "paypal", "cash"] as const;
 const methodLabels: Record<string, string> = {
@@ -59,6 +60,7 @@ type InvoiceOption = {
 };
 
 export function PaymentsPageClient() {
+  const confirm = useConfirm();
   const [open, setOpen] = useState(false);
   const [editTarget, setEditTarget] = useState<Payment | null>(null);
   const [form, setForm] = useState(defaultForm);
@@ -162,7 +164,7 @@ export function PaymentsPageClient() {
   }
 
   async function handleDelete(payment: Payment) {
-    if (!confirm("Delete this payment record? This cannot be undone.")) return;
+    if (!await confirm({ message: "Delete this payment record? This cannot be undone." })) return;
     await fetch(`/api/admin/payments/${payment.id}`, { method: "DELETE" });
     setPayments((prev) => prev.filter((p) => p.id !== payment.id));
   }
