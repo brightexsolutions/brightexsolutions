@@ -221,10 +221,10 @@ export function DataTable<T extends Record<string, unknown>>({
 
       {/* ── Table ── */}
       <div
-        className={cn("overflow-auto", maxHeight && "overflow-y-auto")}
+        className={cn("overflow-y-auto", maxHeight && "overflow-y-auto")}
         style={maxHeight ? { maxHeight } : undefined}
       >
-        <table className="w-full text-sm">
+        <table className="w-full text-sm table-fixed">
           <thead className="sticky top-0 z-10">
             <tr className="border-b border-border bg-muted/60 dark:bg-muted">
               {columns.map((col) => (
