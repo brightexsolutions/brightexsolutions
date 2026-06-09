@@ -5,8 +5,9 @@ import { usePathname, useRouter } from "next/navigation";
 import { createBrowserClient } from "@supabase/ssr";
 import { useTheme } from "next-themes";
 import {
-  Sun, Moon, Monitor, LogOut, Menu, Bell, ChevronRight, Settings, User,
+  Sun, Moon, Monitor, LogOut, Menu, ChevronRight, Settings,
 } from "lucide-react";
+import { NotificationBell } from "@/components/admin/notification-bell";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem,
   DropdownMenuSeparator, DropdownMenuTrigger,
@@ -113,11 +114,7 @@ export function AdminHeader({ onMenuClick }: AdminHeaderProps) {
       {/* Right actions */}
       <div className="flex items-center gap-1 shrink-0">
         {/* Notifications */}
-        <button className="relative w-8 h-8 rounded-lg flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted transition-colors">
-          <Bell size={15} />
-          {/* Uncomment when you wire up notifications:
-          <span className="absolute top-1 right-1 w-1.5 h-1.5 rounded-full bg-brand-gold" /> */}
-        </button>
+        <NotificationBell />
 
         {/* Theme */}
         <DropdownMenu>
