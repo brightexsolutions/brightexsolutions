@@ -56,8 +56,8 @@ export function ContactForm({ variant = "card" }: ContactFormProps) {
     }
   }
 
-  const field = "w-full px-4 py-3 rounded-sm border border-brand-border dark:border-white/15 bg-brand-bg dark:bg-white/5 text-brand-navy dark:text-white placeholder:text-brand-muted focus:outline-none focus:border-brand-gold focus:ring-1 focus:ring-brand-gold transition-colors text-sm";
-  const label = "block text-[10px] font-bold text-brand-muted dark:text-white/40 uppercase tracking-[0.15em] mb-2";
+  const field = "w-full px-4 py-3 rounded-sm border border-slate-300 dark:border-white/15 bg-white dark:bg-white/5 text-brand-navy dark:text-white placeholder:text-slate-400 focus:outline-none focus:border-brand-gold focus:ring-1 focus:ring-brand-gold transition-colors text-sm";
+  const label = "block text-xs font-semibold text-slate-600 dark:text-white/60 mb-2";
 
   if (submitted) {
     return (
