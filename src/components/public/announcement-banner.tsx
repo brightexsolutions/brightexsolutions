@@ -9,6 +9,7 @@ interface Announcement {
   body: string | null;
   cta_label: string | null;
   cta_url: string | null;
+  display_location?: string[] | null;
 }
 
 interface Props {
@@ -25,6 +26,7 @@ export function AnnouncementBanner({ announcement }: Props) {
   }, [announcement]);
 
   if (!announcement || dismissed) return null;
+  if (announcement.display_location && !announcement.display_location.includes("banner")) return null;
 
   function dismiss() {
     sessionStorage.setItem(`bx_ann_${announcement!.id}`, "1");

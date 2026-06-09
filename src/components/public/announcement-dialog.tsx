@@ -11,6 +11,7 @@ interface Announcement {
   body?: string | null;
   cta_label?: string | null;
   cta_url?: string | null;
+  display_location?: string[] | null;
 }
 
 export function AnnouncementDialog({ announcement }: { announcement: Announcement | null }) {
