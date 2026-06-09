@@ -3,6 +3,7 @@
 import { useState, Suspense } from "react";
 import { AdminSidebar } from "@/components/admin/sidebar";
 import { AdminHeader } from "@/components/admin/header";
+import { CommandPalette } from "@/components/admin/command-palette";
 import { usePathname } from "next/navigation";
 
 export function AdminPageSkeleton() {
@@ -80,6 +81,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           </Suspense>
         </main>
       </div>
+
+      <CommandPalette />
     </div>
   );
 }

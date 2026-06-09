@@ -154,7 +154,10 @@ export function AdminSidebar({ collapsed, onToggle }: SidebarProps) {
       {/* ── Search shortcut ── */}
       {!collapsed && (
         <div className="px-3 pt-3 pb-1 shrink-0">
-          <button className="w-full flex items-center gap-2 px-3 py-2 rounded-lg bg-sidebar-accent/60 hover:bg-sidebar-accent text-sidebar-foreground/50 hover:text-sidebar-foreground/80 transition-colors text-xs">
+          <button
+            onClick={() => window.dispatchEvent(new CustomEvent("open-command-palette"))}
+            className="w-full flex items-center gap-2 px-3 py-2 rounded-lg bg-sidebar-accent/60 hover:bg-sidebar-accent text-sidebar-foreground/50 hover:text-sidebar-foreground/80 transition-colors text-xs"
+          >
             <Search size={12} />
             <span className="flex-1 text-left">Search…</span>
             <kbd className="text-[9px] bg-sidebar-border/50 px-1 py-0.5 rounded font-mono opacity-60">⌘K</kbd>
@@ -163,7 +166,10 @@ export function AdminSidebar({ collapsed, onToggle }: SidebarProps) {
       )}
       {collapsed && (
         <div className="flex justify-center pt-3 pb-1 shrink-0">
-          <button className="w-9 h-8 rounded-lg bg-sidebar-accent/60 hover:bg-sidebar-accent flex items-center justify-center text-sidebar-foreground/50 hover:text-sidebar-foreground/80 transition-colors">
+          <button
+            onClick={() => window.dispatchEvent(new CustomEvent("open-command-palette"))}
+            className="w-9 h-8 rounded-lg bg-sidebar-accent/60 hover:bg-sidebar-accent flex items-center justify-center text-sidebar-foreground/50 hover:text-sidebar-foreground/80 transition-colors"
+          >
             <Search size={13} />
           </button>
         </div>
