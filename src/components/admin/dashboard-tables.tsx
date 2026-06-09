@@ -84,6 +84,9 @@ export function ActivityFeedTable({ rows }: { rows: ActivityRow[] }) {
       data={rows as unknown as Record<string, unknown>[]}
       emptyMessage="No recent activity."
       maxHeight="320px"
+      searchable
+      searchPlaceholder="Search activity…"
+      searchKeys={["description", "meta", "ref", "status"]}
     />
   );
 }
