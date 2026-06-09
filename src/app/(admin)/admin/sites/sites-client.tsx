@@ -32,6 +32,9 @@ const defaultForm = {
   url: "",
   platform: "nextjs",
   hosting: "vercel",
+  integration_level: "passive",
+  health_endpoint: "",
+  health_token: "",
   notes: "",
 };
 
@@ -42,6 +45,8 @@ type Site = {
   platform?: string | null;
   hosting?: string | null;
   integration_level?: string | null;
+  health_endpoint?: string | null;
+  health_token?: string | null;
   status?: "up" | "degraded" | "down" | "unknown" | null;
   last_checked?: string | null;
   response_time_ms?: number | null;
@@ -102,6 +107,9 @@ export function SiteMonitoringPageClient() {
       url: site.url,
       platform: site.platform ?? "nextjs",
       hosting: site.hosting ?? "vercel",
+      integration_level: site.integration_level ?? "passive",
+      health_endpoint: site.health_endpoint ?? "",
+      health_token: site.health_token ?? "",
       notes: site.notes ?? "",
     });
     setError("");
@@ -151,16 +159,22 @@ export function SiteMonitoringPageClient() {
     }
   }
 
-  async function checkAll() {
+  function checkAll() {
+    if (checking) return;
     setChecking(true);
-    try {
-      await fetch("/api/admin/sites/health");
+    // Fire the check in the background — don't block the UI
+    void fetch("/api/admin/sites/health").catch(() => {});
+    // Poll every 3s for up to 60s, refreshing the table as results arrive
+    const startedAt = Date.now();
+    const interval = setInterval(async () => {
       await load();
-    } catch {
-      // ignore
-    } finally {
-      setChecking(false);
-    }
+      if (Date.now() - startedAt > 60_000) {
+        clearInterval(interval);
+        setChecking(false);
+      }
+    }, 3000);
+    // Guarantee spinner stops after 65s even if polling stalls
+    setTimeout(() => { clearInterval(interval); setChecking(false); }, 65_000);
   }
 
   const siteCols: Column<Record<string, unknown>>[] = [
@@ -170,7 +184,11 @@ export function SiteMonitoringPageClient() {
       render: (row) => (
         <StackedCell
           primary={row.name as string}
-          secondary={((row.platform as string) ?? "other").replace(/_/g, " ") + " · " + ((row.hosting as string) || "unspecified")}
+          secondary={
+            ((row.platform as string) ?? "other").replace(/_/g, " ") +
+            " · " + ((row.hosting as string) || "unspecified") +
+            " · " + ((row.integration_level as string) ?? "passive")
+          }
         />
       ),
     },
@@ -630,8 +648,8 @@ function brightex_health_check(WP_REST_Request $req) {
                 <Select value={form.platform} onValueChange={(value) => value && set("platform", value)}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    {["nextjs", "wordpress", "html", "other"].map((platform) => (
-                      <SelectItem key={platform} value={platform}>{platform === "nextjs" ? "Next.js" : platform === "html" ? "HTML/CSS" : platform.charAt(0).toUpperCase() + platform.slice(1)}</SelectItem>
+                    {["nextjs", "wordpress", "html", "other"].map((p) => (
+                      <SelectItem key={p} value={p}>{p === "nextjs" ? "Next.js" : p === "html" ? "HTML/CSS" : p.charAt(0).toUpperCase() + p.slice(1)}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
@@ -641,16 +659,61 @@ function brightex_health_check(WP_REST_Request $req) {
                 <Select value={form.hosting} onValueChange={(value) => value && set("hosting", value)}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    {["vercel", "netlify", "hostinger", "cpanel", "other"].map((hosting) => (
-                      <SelectItem key={hosting} value={hosting}>{hosting.charAt(0).toUpperCase() + hosting.slice(1)}</SelectItem>
+                    {["vercel", "netlify", "hostinger", "cpanel", "other"].map((h) => (
+                      <SelectItem key={h} value={h}>{h.charAt(0).toUpperCase() + h.slice(1)}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               </div>
             </div>
             <div className="space-y-1.5">
+              <Label>Integration Level</Label>
+              <Select value={form.integration_level} onValueChange={(value) => value && set("integration_level", value)}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="passive">Passive — HTTP ping + SSL only</SelectItem>
+                  <SelectItem value="active">Active — health endpoint (Next.js / Node)</SelectItem>
+                  <SelectItem value="wordpress">WordPress — mu-plugin integration</SelectItem>
+                </SelectContent>
+              </Select>
+              <p className="text-[11px] text-muted-foreground">
+                {form.integration_level === "passive" && "Works for any site with no setup required."}
+                {form.integration_level === "active" && "Needs /api/health route + BRIGHTEX_HEALTH_TOKEN env var in the site."}
+                {form.integration_level === "wordpress" && "Needs brightex-health.php in mu-plugins + BRIGHTEX_HEALTH_TOKEN in wp-config.php."}
+              </p>
+            </div>
+            {(form.integration_level === "active" || form.integration_level === "wordpress") && (
+              <>
+                <div className="space-y-1.5">
+                  <Label htmlFor="site-health-endpoint">Health Endpoint URL</Label>
+                  <Input
+                    id="site-health-endpoint"
+                    type="url"
+                    value={form.health_endpoint}
+                    onChange={(e) => set("health_endpoint", e.target.value)}
+                    placeholder={
+                      form.integration_level === "wordpress"
+                        ? "https://example.com/wp-json/brightex/v1/health"
+                        : "https://example.com/api/health"
+                    }
+                  />
+                  <p className="text-[11px] text-muted-foreground">Leave blank to use the default path for this integration level.</p>
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="site-health-token">Health Token</Label>
+                  <Input
+                    id="site-health-token"
+                    value={form.health_token}
+                    onChange={(e) => set("health_token", e.target.value)}
+                    placeholder="BRIGHTEX_HEALTH_TOKEN value from the site's env vars"
+                  />
+                  <p className="text-[11px] text-muted-foreground">The token set as BRIGHTEX_HEALTH_TOKEN on the monitored site.</p>
+                </div>
+              </>
+            )}
+            <div className="space-y-1.5">
               <Label htmlFor="site-notes">Notes</Label>
-              <Textarea id="site-notes" rows={2} value={form.notes} onChange={(e) => set("notes", e.target.value)} />
+              <Textarea id="site-notes" rows={2} value={form.notes} onChange={(e) => set("notes", e.target.value)} placeholder="Optional — client name, login URLs, anything useful." />
             </div>
             {error && <p className="text-sm text-red-500">{error}</p>}
             <div className="flex justify-end gap-3 pt-2">
