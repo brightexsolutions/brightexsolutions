@@ -1,9 +1,10 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { Globe, Plus, CheckCircle2, AlertTriangle, XCircle, RefreshCw, Loader2, Pencil, Trash2, BookOpen, ChevronRight } from "lucide-react";
+import { Globe, Plus, CheckCircle2, AlertTriangle, XCircle, RefreshCw, Loader2, Pencil, Trash2, BookOpen } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { StatCard } from "@/components/admin/stat-card";
+import { DataTable, StackedCell, type Column } from "@/components/admin/data-table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { Input } from "@/components/ui/input";
@@ -160,6 +161,103 @@ export function SiteMonitoringPageClient() {
     }
   }
 
+  const siteCols: Column<Record<string, unknown>>[] = [
+    {
+      key: "name",
+      label: "Site",
+      render: (row) => (
+        <StackedCell
+          primary={row.name as string}
+          secondary={((row.platform as string) ?? "other").replace(/_/g, " ") + " · " + ((row.hosting as string) || "unspecified")}
+        />
+      ),
+    },
+    {
+      key: "url",
+      label: "URL",
+      render: (row) => (
+        <a
+          href={row.url as string}
+          target="_blank"
+          rel="noreferrer"
+          onClick={(e) => e.stopPropagation()}
+          className="text-xs text-muted-foreground hover:text-foreground transition-colors truncate block"
+        >
+          {row.url as string}
+        </a>
+      ),
+    },
+    {
+      key: "status",
+      label: "Status",
+      className: "w-44",
+      render: (row) => {
+        const key = ((row.status as string) ?? "unknown") as keyof typeof statusConfig;
+        const cfg = statusConfig[key] ?? statusConfig.unknown;
+        const StatusIcon = cfg.icon;
+        return (
+          <div className="flex flex-col gap-1">
+            <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-sm text-[11px] font-medium border w-fit ${cfg.bg} ${cfg.color}`}>
+              <StatusIcon size={11} />
+              {cfg.label}
+            </span>
+            {(row.requires_update as boolean) && (
+              <span className="inline-block px-2 py-0.5 rounded-sm text-[11px] font-medium border bg-amber-400/10 text-amber-600 dark:text-amber-400 border-amber-200 dark:border-amber-800/40 w-fit">
+                Update available
+              </span>
+            )}
+          </div>
+        );
+      },
+    },
+    {
+      key: "last_checked",
+      label: "Last Checked",
+      className: "w-44",
+      render: (row) => (
+        <StackedCell
+          primary={row.last_checked ? new Date(row.last_checked as string).toLocaleDateString("en-KE") : "Not checked yet"}
+          secondary={row.response_time_ms ? `${row.response_time_ms as number}ms response` : undefined}
+        />
+      ),
+    },
+    {
+      key: "ssl_expiry",
+      label: "SSL Expiry",
+      className: "w-32",
+      render: (row) => (
+        <span className="text-xs text-muted-foreground">
+          {row.ssl_expiry ? new Date(row.ssl_expiry as string).toLocaleDateString("en-KE") : "—"}
+        </span>
+      ),
+    },
+    {
+      key: "_actions",
+      label: "",
+      className: "w-20",
+      render: (row) => (
+        <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
+          <button
+            onClick={() => openEdit(row as unknown as Site)}
+            disabled={busyIds.has(row.id as string)}
+            className="p-1.5 rounded-sm hover:bg-muted text-muted-foreground hover:text-foreground transition-colors disabled:opacity-40"
+            title="Edit"
+          >
+            <Pencil size={13} />
+          </button>
+          <button
+            onClick={() => handleDelete(row as unknown as Site)}
+            disabled={busyIds.has(row.id as string)}
+            className="p-1.5 rounded-sm hover:bg-red-50 dark:hover:bg-red-950/20 text-muted-foreground hover:text-red-500 transition-colors disabled:opacity-40"
+            title="Remove"
+          >
+            {busyIds.has(row.id as string) ? <Loader2 size={13} className="animate-spin" /> : <Trash2 size={13} />}
+          </button>
+        </div>
+      ),
+    },
+  ];
+
   const sslExpiringSoon = sites.filter((site) => {
     if (currentTimeMs === null || !site.ssl_expiry) return false;
     const diffDays = (new Date(site.ssl_expiry).getTime() - currentTimeMs) / (1000 * 60 * 60 * 24);
@@ -225,73 +323,34 @@ export function SiteMonitoringPageClient() {
         ))}
       </div>
 
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-base flex items-center gap-2"><Globe size={16} />Registered Sites</CardTitle>
-        </CardHeader>
-        <CardContent className="p-0">
-          {loading && sites.length === 0 ? (
-            <div className="text-center py-12 text-muted-foreground">
-              <p className="text-sm">Loading site health…</p>
-            </div>
-          ) : sites.length === 0 ? (
-            <div className="text-center py-12 text-muted-foreground">
-              <Globe size={40} className="mx-auto mb-3 opacity-20" />
-              <p className="text-sm">No sites registered yet.</p>
-              <p className="text-xs mt-1">Add any site URL and monitoring will start on the next check cycle.</p>
-              <button
-                onClick={openCreate}
-                className="mt-4 inline-flex items-center gap-2 px-3 py-1.5 rounded-sm border border-border text-xs font-medium hover:border-brand-gold/40 transition-colors"
-              >
-                <Plus size={13} />
-                Add Site
-              </button>
-            </div>
-          ) : (
-            <div className="divide-y divide-border">
-              {sites.map((site) => {
-                const status = statusConfig[site.status ?? "unknown"] ?? statusConfig.unknown;
-                return (
-                  <div key={site.id} className="px-6 py-4 flex items-start gap-4 group">
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 flex-wrap mb-1">
-                        <p className="text-sm font-semibold text-foreground">{site.name}</p>
-                        <span className={`px-2 py-0.5 rounded-sm text-[11px] font-medium border ${status.bg} ${status.color}`}>
-                          {status.label}
-                        </span>
-                        {site.requires_update && (
-                          <span className="px-2 py-0.5 rounded-sm text-[11px] font-medium border bg-amber-400/10 text-amber-600 dark:text-amber-400 border-amber-200 dark:border-amber-800/40">
-                            Update available
-                          </span>
-                        )}
-                      </div>
-                      <a href={site.url} target="_blank" rel="noreferrer" className="text-xs text-muted-foreground hover:text-foreground transition-colors">
-                        {site.url}
-                      </a>
-                      <p className="text-xs text-muted-foreground mt-1 capitalize">
-                        {(site.platform || "other").replace("_", " ")} · {site.hosting || "Hosting unspecified"}
-                      </p>
-                      <p className="text-xs text-muted-foreground mt-1">
-                        {site.response_time_ms ? `${site.response_time_ms}ms · ` : ""}
-                        {site.last_checked ? `Checked ${new Date(site.last_checked).toLocaleDateString("en-KE")}` : "Not checked yet"}
-                        {site.ssl_expiry ? ` · SSL ${new Date(site.ssl_expiry).toLocaleDateString("en-KE")}` : ""}
-                      </p>
-                      {site.notes && <p className="text-sm text-muted-foreground mt-1 line-clamp-1">{site.notes}</p>}
-                    </div>
-                    <div className="flex items-center gap-1 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <button onClick={() => openEdit(site)} disabled={busyIds.has(site.id)} className="p-1.5 rounded-sm hover:bg-muted text-muted-foreground hover:text-foreground transition-colors disabled:opacity-40" title="Edit">
-                        <Pencil size={13} />
-                      </button>
-                      <button onClick={() => handleDelete(site)} disabled={busyIds.has(site.id)} className="p-1.5 rounded-sm hover:bg-red-50 dark:hover:bg-red-950/20 text-muted-foreground hover:text-red-500 transition-colors disabled:opacity-40" title="Remove">
-                        {busyIds.has(site.id) ? <Loader2 size={13} className="animate-spin" /> : <Trash2 size={13} />}
-                      </button>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </CardContent>
+      <Card className="overflow-hidden">
+        {loading && sites.length === 0 ? (
+          <div className="text-center py-12 text-muted-foreground">
+            <p className="text-sm">Loading site health…</p>
+          </div>
+        ) : sites.length === 0 ? (
+          <CardContent className="py-12 text-center text-muted-foreground">
+            <Globe size={40} className="mx-auto mb-3 opacity-20" />
+            <p className="text-sm">No sites registered yet.</p>
+            <p className="text-xs mt-1">Add any site URL and monitoring will start on the next check cycle.</p>
+            <button
+              onClick={openCreate}
+              className="mt-4 inline-flex items-center gap-2 px-3 py-1.5 rounded-sm border border-border text-xs font-medium hover:border-brand-gold/40 transition-colors"
+            >
+              <Plus size={13} />
+              Add Site
+            </button>
+          </CardContent>
+        ) : (
+          <DataTable
+            columns={siteCols}
+            data={sites as unknown as Record<string, unknown>[]}
+            searchable
+            searchPlaceholder="Search sites…"
+            searchKeys={["name", "url", "platform", "hosting"]}
+            maxHeight="calc(100vh - 440px)"
+          />
+        )}
       </Card>
 
       <Card>
