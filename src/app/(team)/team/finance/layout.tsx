@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import Link from "next/link";
 import { CalendarDays, DollarSign, LogOut } from "lucide-react";
+import { ConfirmProvider } from "@/components/admin/confirm-dialog";
 
 export default function FinanceLayout({ children }: { children: ReactNode }) {
   return (
@@ -37,7 +38,9 @@ export default function FinanceLayout({ children }: { children: ReactNode }) {
         </Link>
       </header>
       <main className="flex-1 overflow-y-auto">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 py-8">{children}</div>
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 py-8">
+          <ConfirmProvider>{children}</ConfirmProvider>
+        </div>
       </main>
     </div>
   );

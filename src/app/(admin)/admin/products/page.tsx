@@ -4,12 +4,14 @@ import { useCallback, useEffect, useState } from "react";
 import { Package, Plus, Pencil, Trash2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { StatCard } from "@/components/admin/stat-card";
+import { DataTable, StackedCell, type Column, type RowAction } from "@/components/admin/data-table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { useConfirm } from "@/components/admin/confirm-dialog";
 
 const tabs = ["Products", "Trials", "Subscriptions"] as const;
 type Tab = (typeof tabs)[number];
@@ -70,6 +72,7 @@ type ProductSubscription = {
 };
 
 export default function AdminProductsPage() {
+  const confirm = useConfirm();
   const [activeTab, setActiveTab] = useState<Tab>("Products");
   const [open, setOpen] = useState(false);
   const [editTarget, setEditTarget] = useState<Product | null>(null);
@@ -138,7 +141,7 @@ export default function AdminProductsPage() {
   }
 
   async function handleDelete(product: Product) {
-    if (!confirm(`Delete "${product.name}"? This cannot be undone.`)) return;
+    if (!await confirm({ message: `Delete "${product.name}"? This cannot be undone.` })) return;
     await fetch(`/api/admin/products/${product.id}`, { method: "DELETE" });
     setProducts((prev) => prev.filter((p) => p.id !== product.id));
   }
@@ -193,6 +196,55 @@ export default function AdminProductsPage() {
   const activeSubscriptions = subscriptions.filter((s) => s.status === "active");
   const productMrr = activeSubscriptions.reduce((sum, s) => sum + Number(s.amount ?? 0), 0);
 
+  type ProductRow = Record<string, unknown>;
+
+  const productCols: Column<ProductRow>[] = [
+    {
+      key: "name",
+      label: "Product",
+      render: (row) => (
+        <StackedCell
+          primary={row.name as string}
+          secondary={`/products/${row.slug as string}`}
+        />
+      ),
+    },
+    {
+      key: "category",
+      label: "Category",
+      className: "hidden sm:table-cell",
+      render: (row) => (
+        <div className="flex items-center gap-1.5 flex-wrap">
+          <span className="px-2 py-0.5 rounded-sm text-[11px] font-medium bg-muted text-muted-foreground uppercase">
+            {row.category as string}
+          </span>
+          <span className={`px-2 py-0.5 rounded-sm text-[11px] font-medium ${row.status === "published" ? "bg-emerald-400/10 text-emerald-500" : "bg-muted text-muted-foreground"}`}>
+            {row.status as string}
+          </span>
+        </div>
+      ),
+    },
+    {
+      key: "pricing",
+      label: "Starting price",
+      className: "hidden md:table-cell",
+      render: (row) => {
+        const tiers = row.pricing_tiers as Array<{ price_monthly: number }> | null | undefined;
+        const firstTier = tiers?.[0];
+        return (
+          <span className="text-sm text-muted-foreground">
+            {firstTier?.price_monthly ? `KES ${Number(firstTier.price_monthly).toLocaleString()}/mo` : "Custom"} · {(row.trial_days as number) ?? 7}d trial
+          </span>
+        );
+      },
+    },
+  ];
+
+  const productActions: RowAction<ProductRow>[] = [
+    { label: "Edit", onClick: (row) => openEdit(row as unknown as Product) },
+    { label: "Delete", onClick: (row) => handleDelete(row as unknown as Product), destructive: true },
+  ];
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -242,72 +294,17 @@ export default function AdminProductsPage() {
       </div>
 
       {activeTab === "Products" && (
-        <div className="space-y-4">
-          <div className="flex gap-1 flex-wrap">
-            <button className="px-3 py-1.5 rounded-sm text-xs font-medium bg-muted text-foreground border-transparent border">All</button>
-            {categories.map((cat) => (
-              <button key={cat} className="px-3 py-1.5 rounded-sm text-xs font-medium border border-border text-muted-foreground hover:text-foreground uppercase text-[10px] tracking-wider transition-colors">
-                {cat}
-              </button>
-            ))}
-          </div>
-          <Card>
-            <CardContent className="p-0">
-              {loading && products.length === 0 ? (
-                <div className="text-center py-12 text-muted-foreground"><p className="text-sm">Loading products…</p></div>
-              ) : products.length === 0 ? (
-                <div className="text-center py-12 text-muted-foreground">
-                  <Package size={40} className="mx-auto mb-3 opacity-20" />
-                  <p className="text-sm">No products yet.</p>
-                  <p className="text-xs mt-1">Create a product to display it on the public /products page.</p>
-                </div>
-              ) : (
-                <div className="divide-y divide-border">
-                  {products.map((product) => {
-                    const firstTier = product.pricing_tiers?.[0];
-                    return (
-                      <div key={product.id} className="px-6 py-4 flex items-start gap-4 group">
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 flex-wrap mb-1">
-                            <p className="text-sm font-semibold text-foreground">{product.name}</p>
-                            <span className="px-2 py-0.5 rounded-sm text-[11px] font-medium bg-muted text-muted-foreground uppercase">
-                              {product.category}
-                            </span>
-                            <span className={`px-2 py-0.5 rounded-sm text-[11px] font-medium ${product.status === "published" ? "bg-emerald-400/10 text-emerald-500" : "bg-muted text-muted-foreground"}`}>
-                              {product.status}
-                            </span>
-                          </div>
-                          <p className="text-xs text-muted-foreground">/products/{product.slug}</p>
-                          <p className="text-sm text-muted-foreground mt-1 line-clamp-1">
-                            {product.tagline || product.description || "No summary yet."}
-                          </p>
-                          {product.target_industries && product.target_industries.length > 0 && (
-                            <div className="flex flex-wrap gap-1 mt-2">
-                              {product.target_industries.map((ind) => (
-                                <span key={ind} className="px-1.5 py-0.5 rounded-sm text-[10px] border border-border text-muted-foreground">{ind}</span>
-                              ))}
-                            </div>
-                          )}
-                          <p className="text-xs text-muted-foreground mt-1">
-                            {firstTier?.price_monthly ? `KES ${Number(firstTier.price_monthly).toLocaleString()}/mo` : "Custom pricing"} · {product.trial_days ?? 7}-day trial
-                          </p>
-                        </div>
-                        <div className="flex items-center gap-1 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
-                          <button onClick={() => openEdit(product)} className="p-1.5 rounded-sm hover:bg-muted text-muted-foreground hover:text-foreground transition-colors" title="Edit">
-                            <Pencil size={13} />
-                          </button>
-                          <button onClick={() => handleDelete(product)} className="p-1.5 rounded-sm hover:bg-red-50 dark:hover:bg-red-950/20 text-muted-foreground hover:text-red-500 transition-colors" title="Delete">
-                            <Trash2 size={13} />
-                          </button>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </div>
+        <Card className="overflow-hidden">
+          <DataTable
+            columns={productCols}
+            data={products as unknown as Record<string, unknown>[]}
+            actions={productActions}
+            searchable
+            searchPlaceholder="Search products…"
+            searchKeys={["name", "slug", "category", "status"]}
+            emptyMessage={loading ? "Loading products…" : "No products yet. Create one to display on the public /products page."}
+          />
+        </Card>
       )}
 
       {activeTab === "Trials" && (

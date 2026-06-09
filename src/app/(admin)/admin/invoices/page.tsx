@@ -13,6 +13,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { useConfirm } from "@/components/admin/confirm-dialog";
 
 const statusColors: Record<string, string> = {
   draft: "bg-slate-400/10 text-slate-400",
@@ -56,6 +57,7 @@ const PAYMENT_METHODS = [
 const defaultForm = { client_id: "", client_name: "", client_company: "", client_email: "", client_phone: "", project_id: "", payment_method: "all", due_date: "", notes: "", items: [defaultItem()] };
 
 export default function InvoicesPage() {
+  const confirm = useConfirm();
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeFilter, setActiveFilter] = useState("All");
@@ -250,7 +252,7 @@ export default function InvoicesPage() {
   }
 
   async function deleteInvoice(inv: Invoice) {
-    if (!confirm(`Delete invoice ${inv.invoice_number ?? "draft"}? This cannot be undone.`)) return;
+    if (!await confirm({ message: `Delete invoice ${inv.invoice_number ?? "draft"}? This cannot be undone.` })) return;
     setBusy(inv.id, true);
     try {
       await fetch(`/api/admin/invoices/${inv.id}`, { method: "DELETE" });

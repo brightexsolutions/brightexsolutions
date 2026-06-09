@@ -12,6 +12,7 @@ import { StatCard } from "@/components/admin/stat-card";
 import { DataTable, StackedCell, StatusDot, type Column, type RowAction } from "@/components/admin/data-table";
 import { cn } from "@/lib/utils";
 import { SITE_NAME } from "@/lib/constants";
+import { useConfirm } from "@/components/admin/confirm-dialog";
 
 const statusColors: Record<string, string> = {
   pending: "bg-amber-400/10 text-amber-600 dark:text-amber-400 border-amber-200 dark:border-amber-800/40",
@@ -59,6 +60,7 @@ type Booking = {
 const defaultEditForm = { meeting_link: "", notes: "", status: "" };
 
 export default function BookingsPage() {
+  const confirm = useConfirm();
   const [activeFilter, setActiveFilter] = useState<Filter>("all");
   const [statusFilter, setStatusFilter] = useState("");
   const [editTarget, setEditTarget] = useState<Booking | null>(null);
@@ -114,7 +116,7 @@ export default function BookingsPage() {
   }
 
   async function handleDelete(booking: Booking) {
-    if (!confirm(`Delete booking from ${booking.booker_name}? This cannot be undone.`)) return;
+    if (!await confirm({ message: `Delete booking from ${booking.booker_name}? This cannot be undone.` })) return;
     setBusy(booking.id, true);
     try {
       await fetch(`/api/admin/bookings/${booking.id}`, { method: "DELETE" });

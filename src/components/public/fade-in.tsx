@@ -44,17 +44,19 @@ export function FadeInStagger({
   children,
   className,
   staggerDelay = 0.1,
+  viewportMargin = "-80px",
 }: {
   children: ReactNode;
   className?: string;
   staggerDelay?: number;
+  viewportMargin?: string;
 }) {
   return (
     <motion.div
       className={className}
       initial="hidden"
       whileInView="visible"
-      viewport={{ once: true, margin: "-80px" }}
+      viewport={{ once: true, margin: viewportMargin }}
       variants={{
         visible: { transition: { staggerChildren: staggerDelay } },
         hidden: {},

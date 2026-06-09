@@ -6,6 +6,7 @@ import {
   Loader2, CheckCircle2, AlertCircle, Clock, X, FileUp, ExternalLink,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useConfirm } from "@/components/admin/confirm-dialog";
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -92,6 +93,7 @@ function fmtDate(d: string) {
 // ── Component ────────────────────────────────────────────────────────────────
 
 export default function FinancePage() {
+  const confirm = useConfirm();
   const [tab, setTab] = useState<Tab>("Overview");
   const [summary, setSummary] = useState<Summary | null>(null);
   const [income, setIncome] = useState<IncomeRecord[]>([]);
@@ -177,7 +179,7 @@ export default function FinancePage() {
   }
 
   async function deleteDoc(doc: FinanceDoc) {
-    if (!confirm(`Delete "${doc.original_filename ?? "this document"}"?`)) return;
+    if (!await confirm({ message: `Delete "${doc.original_filename ?? "this document"}"? This cannot be undone.` })) return;
     await fetch(`/api/admin/finance/documents/${doc.id}`, { method: "DELETE" });
     setDocs(prev => prev.filter(d => d.id !== doc.id));
   }

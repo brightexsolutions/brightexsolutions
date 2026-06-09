@@ -4,12 +4,14 @@ import { useCallback, useEffect, useState } from "react";
 import { MessageSquare, Plus, Pencil, Trash2, ToggleLeft, ToggleRight } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { StatCard } from "@/components/admin/stat-card";
+import { DataTable, StackedCell, type Column, type RowAction } from "@/components/admin/data-table";
 import { cn } from "@/lib/utils";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
+import { useConfirm } from "@/components/admin/confirm-dialog";
 
 const tabs = ["FAQ Manager", "Sessions", "Analytics"] as const;
 type Tab = (typeof tabs)[number];
@@ -38,6 +40,7 @@ type Session = {
 };
 
 export default function BrixoChatPage() {
+  const confirm = useConfirm();
   const [activeTab, setActiveTab] = useState<Tab>("FAQ Manager");
   const [faqs, setFaqs] = useState<FAQ[]>([]);
   const [sessions, setSessions] = useState<Session[]>([]);
@@ -90,7 +93,7 @@ export default function BrixoChatPage() {
   }
 
   async function handleDelete(faq: FAQ) {
-    if (!confirm("Delete this FAQ? This cannot be undone.")) return;
+    if (!await confirm({ message: "Delete this FAQ? This cannot be undone." })) return;
     await fetch(`/api/admin/chat/faqs/${faq.id}`, { method: "DELETE" });
     setFaqs((prev) => prev.filter((f) => f.id !== faq.id));
   }
@@ -146,6 +149,93 @@ export default function BrixoChatPage() {
   const escalatedCount = sessions.filter((s) => s.escalated).length;
   const resolved = sessions.filter((s) => !s.escalated).length;
   const resolutionRate = sessions.length > 0 ? Math.round((resolved / sessions.length) * 100) : 0;
+
+  type FaqRow = Record<string, unknown>;
+
+  const faqCols: Column<FaqRow>[] = [
+    {
+      key: "question",
+      label: "Question",
+      render: (row) => (
+        <StackedCell primary={row.question as string} secondary={row.answer as string} />
+      ),
+    },
+    {
+      key: "category",
+      label: "Category",
+      className: "w-32 hidden sm:table-cell",
+      render: (row) => (
+        <span className="px-2 py-0.5 rounded-sm text-[11px] font-medium bg-muted text-muted-foreground capitalize">
+          {row.category as string}
+        </span>
+      ),
+    },
+    {
+      key: "active",
+      label: "Status",
+      className: "w-24",
+      render: (row) => {
+        const faq = row as unknown as FAQ;
+        return (
+          <button
+            onClick={(e) => { e.stopPropagation(); toggleActive(faq); }}
+            className="flex items-center gap-1.5 text-xs transition-colors"
+            title={faq.active ? "Deactivate" : "Activate"}
+          >
+            {faq.active
+              ? <><ToggleRight size={14} className="text-emerald-500" /><span className="text-emerald-600 dark:text-emerald-400">active</span></>
+              : <><ToggleLeft size={14} className="text-muted-foreground" /><span className="text-muted-foreground">inactive</span></>
+            }
+          </button>
+        );
+      },
+    },
+  ];
+
+  const faqActions: RowAction<FaqRow>[] = [
+    { label: "Edit", onClick: (row) => openEdit(row as unknown as FAQ) },
+    { label: "Delete", onClick: (row) => handleDelete(row as unknown as FAQ), destructive: true },
+  ];
+
+  type SessionRow = Record<string, unknown>;
+
+  const sessionCols: Column<SessionRow>[] = [
+    {
+      key: "visitor_id",
+      label: "Visitor",
+      className: "w-28",
+      render: (row) => (
+        <span className="font-mono text-xs text-muted-foreground">
+          {(row.visitor_id as string | null | undefined)?.slice(0, 8) ?? "anonymous"}
+        </span>
+      ),
+    },
+    {
+      key: "started_at",
+      label: "Session",
+      render: (row) => {
+        const msgs = (row.messages as unknown[] | undefined) ?? [];
+        return (
+          <StackedCell
+            primary={`${msgs.length} message${msgs.length !== 1 ? "s" : ""}`}
+            secondary={new Date(row.started_at as string).toLocaleDateString("en-KE")}
+          />
+        );
+      },
+    },
+    {
+      key: "escalated",
+      label: "Escalated",
+      className: "w-44 hidden sm:table-cell",
+      render: (row) => row.escalated ? (
+        <span className="px-2 py-0.5 rounded-sm text-[11px] font-medium bg-amber-400/10 text-amber-600 dark:text-amber-400">
+          → {(row.escalation_type as string | null | undefined) ?? "WhatsApp"}
+        </span>
+      ) : (
+        <span className="text-xs text-muted-foreground">—</span>
+      ),
+    },
+  ];
 
   return (
     <div className="space-y-6">
@@ -207,62 +297,16 @@ export default function BrixoChatPage() {
             ))}
           </div>
 
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base flex items-center gap-2">
-                <MessageSquare size={16} />
-                FAQ Pairs
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="p-0">
-              {faqLoading ? (
-                <div className="text-center py-12 text-muted-foreground"><p className="text-sm">Loading FAQs…</p></div>
-              ) : filteredFaqs.length === 0 ? (
-                <div className="text-center py-12 text-muted-foreground">
-                  <MessageSquare size={40} className="mx-auto mb-3 opacity-20" />
-                  <p className="text-sm">No FAQ entries yet.</p>
-                  <p className="text-xs mt-1">Add question/answer pairs to power Brixo&apos;s responses.</p>
-                  <button onClick={openCreate} className="mt-4 inline-flex items-center gap-2 px-3 py-1.5 rounded-sm border border-border text-xs font-medium hover:border-brand-gold/40 transition-colors">
-                    <Plus size={13} />Add FAQ
-                  </button>
-                </div>
-              ) : (
-                <div className="divide-y divide-border">
-                  {filteredFaqs.map((faq) => (
-                    <div key={faq.id} className="px-6 py-4 flex items-start gap-4 group">
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 flex-wrap mb-1">
-                          <p className="text-sm font-semibold text-foreground line-clamp-1">{faq.question}</p>
-                          <span className="px-2 py-0.5 rounded-sm text-[11px] font-medium bg-muted text-muted-foreground capitalize">{faq.category}</span>
-                          {!faq.active && (
-                            <span className="px-2 py-0.5 rounded-sm text-[11px] font-medium bg-muted text-muted-foreground">inactive</span>
-                          )}
-                        </div>
-                        <p className="text-xs text-muted-foreground line-clamp-2">{faq.answer}</p>
-                        {faq.keywords && faq.keywords.length > 0 && (
-                          <p className="text-[11px] text-muted-foreground mt-1">Keywords: {faq.keywords.join(", ")}</p>
-                        )}
-                      </div>
-                      <div className="flex items-center gap-1 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <button
-                          onClick={() => toggleActive(faq)}
-                          className="p-1.5 rounded-sm hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
-                          title={faq.active ? "Deactivate" : "Activate"}
-                        >
-                          {faq.active ? <ToggleRight size={14} className="text-emerald-500" /> : <ToggleLeft size={14} />}
-                        </button>
-                        <button onClick={() => openEdit(faq)} className="p-1.5 rounded-sm hover:bg-muted text-muted-foreground hover:text-foreground transition-colors" title="Edit">
-                          <Pencil size={13} />
-                        </button>
-                        <button onClick={() => handleDelete(faq)} className="p-1.5 rounded-sm hover:bg-red-50 dark:hover:bg-red-950/20 text-muted-foreground hover:text-red-500 transition-colors" title="Delete">
-                          <Trash2 size={13} />
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </CardContent>
+          <Card className="overflow-hidden">
+            <DataTable
+              columns={faqCols}
+              data={filteredFaqs as unknown as Record<string, unknown>[]}
+              actions={faqActions}
+              searchable
+              searchPlaceholder="Search FAQs…"
+              searchKeys={["question", "answer", "category"]}
+              emptyMessage={faqLoading ? "Loading FAQs…" : "No FAQ entries yet. Add question/answer pairs to power Brixo's responses."}
+            />
           </Card>
 
           <Card>
@@ -290,40 +334,15 @@ export default function BrixoChatPage() {
       )}
 
       {activeTab === "Sessions" && (
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base flex items-center gap-2">
-              <MessageSquare size={16} />
-              Chat Sessions
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="p-0">
-            {sessions.length === 0 ? (
-              <div className="text-center py-12 text-muted-foreground">
-                <MessageSquare size={40} className="mx-auto mb-3 opacity-20" />
-                <p className="text-sm">No sessions yet.</p>
-                <p className="text-xs mt-1">Visitor chat sessions will appear here once the Brixo widget is live.</p>
-              </div>
-            ) : (
-              <div className="divide-y divide-border">
-                {sessions.map((session) => (
-                  <div key={session.id} className="px-6 py-4">
-                    <div className="flex items-center gap-2 mb-1">
-                      <p className="text-xs text-muted-foreground font-mono">{session.visitor_id?.slice(0, 8) ?? "anonymous"}</p>
-                      {session.escalated && (
-                        <span className="px-2 py-0.5 rounded-sm text-[11px] font-medium bg-amber-400/10 text-amber-600 dark:text-amber-400">
-                          Escalated → {session.escalation_type ?? "WhatsApp"}
-                        </span>
-                      )}
-                    </div>
-                    <p className="text-xs text-muted-foreground">
-                      {session.messages?.length ?? 0} messages · {new Date(session.started_at).toLocaleDateString("en-KE")}
-                    </p>
-                  </div>
-                ))}
-              </div>
-            )}
-          </CardContent>
+        <Card className="overflow-hidden">
+          <DataTable
+            columns={sessionCols}
+            data={sessions as unknown as Record<string, unknown>[]}
+            searchable
+            searchPlaceholder="Search sessions…"
+            searchKeys={["visitor_id", "escalation_type"]}
+            emptyMessage="No sessions yet. Visitor chat sessions will appear here once the Brixo widget is live."
+          />
         </Card>
       )}
 

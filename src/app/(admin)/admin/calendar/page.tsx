@@ -1,8 +1,9 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { Calendar, ChevronLeft, ChevronRight, Clock3, Pencil, Plus, Trash2, X } from "lucide-react";
+import { Calendar, ChevronLeft, ChevronRight, Pencil, Plus, Trash2, X } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { DataTable, StackedCell, type Column } from "@/components/admin/data-table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -524,6 +525,65 @@ export default function CalendarPage() {
   const upcomingCount = events.filter((e) => new Date(e.start_at) >= new Date()).length;
   const bookingCount = events.filter((e) => e.type === "booking").length;
 
+  const eventCols: Column<Record<string, unknown>>[] = [
+    {
+      key: "type",
+      label: "Type",
+      className: "w-32",
+      render: (row) => (
+        <span className="inline-flex items-center gap-1.5">
+          <span className={cn("w-2 h-2 rounded-full shrink-0", typeColor[row.type as string] ?? "bg-muted-foreground")} />
+          <span className="text-xs capitalize">{typeLabel[row.type as string] ?? String(row.type ?? "").replace(/_/g, " ")}</span>
+        </span>
+      ),
+    },
+    {
+      key: "title",
+      label: "Event",
+      render: (row) => (
+        <StackedCell
+          primary={row.title as string}
+          secondary={row.description as string | undefined}
+        />
+      ),
+    },
+    {
+      key: "start_at",
+      label: "Date / Time",
+      className: "w-44",
+      render: (row) => (
+        <span className="text-xs text-muted-foreground whitespace-nowrap">
+          {row.all_day
+            ? "All day · " + new Date(row.start_at as string).toLocaleDateString("en-KE", { day: "numeric", month: "short", timeZone: "Africa/Nairobi" })
+            : new Date(row.start_at as string).toLocaleString("en-KE", { day: "numeric", month: "short", hour: "numeric", minute: "2-digit", timeZone: "Africa/Nairobi" })}
+        </span>
+      ),
+    },
+    {
+      key: "_edit",
+      label: "",
+      className: "w-20",
+      render: (row) => (
+        <div className="flex items-center gap-1">
+          <button
+            onClick={(e) => { e.stopPropagation(); openEdit(row as unknown as CalendarEvent); }}
+            className="p-1 rounded-sm text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+            title="Edit event"
+          >
+            <Pencil size={12} />
+          </button>
+          <button
+            onClick={(e) => { e.stopPropagation(); setDeleteId((row as unknown as CalendarEvent).id); }}
+            className="p-1 rounded-sm text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
+            title="Delete event"
+          >
+            <Trash2 size={12} />
+          </button>
+        </div>
+      ),
+    },
+  ];
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -580,69 +640,17 @@ export default function CalendarPage() {
             </CardTitle>
           </CardHeader>
           <CardContent className="p-0">
-            {loading ? (
+            {loading && events.length === 0 ? (
               <div className="py-12 text-center text-sm text-muted-foreground">Loading events…</div>
-            ) : sortedEvents.length === 0 ? (
-              <div className="text-center py-12 text-muted-foreground">
-                <Calendar size={36} className="mx-auto mb-3 opacity-20" />
-                <p className="text-sm">
-                  {selectedDate ? "No events on this day." : "No events this month."}
-                </p>
-                {selectedDate && (
-                  <button
-                    onClick={() => setSelectedDate(null)}
-                    className="mt-3 text-xs text-brand-gold hover:text-brand-gold/80 transition-colors"
-                  >
-                    View all events
-                  </button>
-                )}
-              </div>
             ) : (
-              <div className="divide-y divide-border">
-                {sortedEvents.map((ev) => (
-                  <div key={ev.id} className="flex items-start gap-3 px-5 py-4 group/row">
-                    <span className={cn("w-2 h-2 rounded-full mt-1.5 shrink-0", typeColor[ev.type] ?? "bg-muted-foreground")} />
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-semibold text-foreground">{ev.title}</p>
-                      <p className="text-xs text-muted-foreground capitalize mt-0.5">
-                        {typeLabel[ev.type] ?? ev.type.replace(/_/g, " ")}
-                      </p>
-                      {ev.description && (
-                        <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{ev.description}</p>
-                      )}
-                    </div>
-                    <div className="flex items-center gap-2 shrink-0 mt-0.5">
-                      <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                        <Clock3 size={11} />
-                        {ev.all_day
-                          ? "All day"
-                          : new Date(ev.start_at).toLocaleString("en-KE", {
-                              day: "numeric", month: "short",
-                              hour: "numeric", minute: "2-digit",
-                              timeZone: "Africa/Nairobi",
-                            })}
-                      </div>
-                      {/* Edit / delete — appear on row hover */}
-                      <div className="flex items-center gap-1 opacity-0 group-hover/row:opacity-100 transition-opacity">
-                        <button
-                          onClick={() => openEdit(ev)}
-                          className="p-1 rounded-sm text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
-                          title="Edit event"
-                        >
-                          <Pencil size={12} />
-                        </button>
-                        <button
-                          onClick={() => setDeleteId(ev.id)}
-                          className="p-1 rounded-sm text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
-                          title="Delete event"
-                        >
-                          <Trash2 size={12} />
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
+              <DataTable
+                columns={eventCols}
+                data={sortedEvents as unknown as Record<string, unknown>[]}
+                emptyMessage={selectedDate ? "No events on this day." : "No events this month."}
+                searchable
+                searchPlaceholder="Search events…"
+                maxHeight="calc(100vh - 400px)"
+              />
             )}
           </CardContent>
         </Card>

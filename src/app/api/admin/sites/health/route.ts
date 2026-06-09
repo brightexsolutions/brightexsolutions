@@ -1,91 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient, createAdminClient } from "@/lib/supabase/server";
 import { rateLimit } from "@/lib/rate-limit";
-
-interface SiteRow {
-  id: string;
-  url: string;
-  platform: string;
-  integration_level?: string;
-  health_endpoint?: string;
-  health_token?: string;
-}
-
-async function checkSite(site: SiteRow): Promise<{
-  status: string;
-  response_time_ms: number;
-  ssl_expiry: string | null;
-  requires_update: boolean;
-  wp_version: string | null;
-}> {
-  const start = Date.now();
-  let status = "unknown";
-  let response_time_ms = 0;
-  let ssl_expiry: string | null = null;
-  let requires_update = false;
-  let wp_version: string | null = null;
-
-  try {
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 10000);
-
-    const res = await fetch(site.url, {
-      method: "HEAD",
-      signal: controller.signal,
-    });
-    clearTimeout(timeout);
-
-    response_time_ms = Date.now() - start;
-    status = res.ok ? "up" : res.status >= 500 ? "down" : "degraded";
-
-    // Check SSL expiry from response headers if available
-    const sslHeader = res.headers.get("x-ssl-expiry");
-    if (sslHeader) ssl_expiry = sslHeader;
-
-    // WordPress passive check
-    if (site.platform === "wordpress") {
-      try {
-        const wpRes = await fetch(`${site.url}/wp-json/`, {
-          headers: { Accept: "application/json" },
-        });
-        if (wpRes.ok) {
-          const wpData = await wpRes.json() as { generator?: string };
-          const match = wpData.generator?.match(/WordPress\s+([\d.]+)/);
-          if (match) wp_version = match[1];
-        }
-      } catch {
-        // WP REST API might be disabled — not a failure
-      }
-    }
-
-    // Active integration check
-    if (site.integration_level === "active" || site.integration_level === "wordpress") {
-      const endpoint = site.health_endpoint ?? `${site.url}/api/health`;
-      try {
-        const healthRes = await fetch(endpoint, {
-          headers: site.health_token ? { "x-brightex-token": site.health_token } : {},
-        });
-        if (healthRes.ok) {
-          const healthData = await healthRes.json() as {
-            status?: string;
-            wp_version?: string;
-            needs_core_update?: boolean;
-          };
-          if (healthData.status === "degraded") status = "degraded";
-          if (healthData.wp_version) wp_version = healthData.wp_version;
-          if (healthData.needs_core_update) requires_update = true;
-        }
-      } catch {
-        // Health endpoint unreachable — passive status stands
-      }
-    }
-  } catch {
-    response_time_ms = Date.now() - start;
-    status = "down";
-  }
-
-  return { status, response_time_ms, ssl_expiry, requires_update, wp_version };
-}
+import { checkSite } from "@/lib/site-health";
 
 export async function GET(request: NextRequest) {
   const limited = await rateLimit(request, "admin");
@@ -105,7 +21,7 @@ export async function GET(request: NextRequest) {
   if (!sites?.length) return NextResponse.json({ data: [] });
 
   const results = await Promise.allSettled(
-    (sites as SiteRow[]).map(async (site) => {
+    sites.map(async (site) => {
       const check = await checkSite(site);
       const now = new Date().toISOString();
 

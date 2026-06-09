@@ -12,7 +12,7 @@ interface CounterProps {
 
 export function Counter({ to, suffix = "", prefix = "", duration = 1.5 }: CounterProps) {
   const ref = useRef<HTMLSpanElement>(null);
-  const isInView = useInView(ref, { once: true, margin: "-60px" });
+  const isInView = useInView(ref, { once: true, margin: "0px" });
   const reduce = useReducedMotion();
   const [value, setValue] = useState(reduce ? to : 0);
 

@@ -25,15 +25,16 @@ const navGroups = [
     ],
   },
   {
-    label: "Clients & Pipeline",
+    label: "Clients & Sales",
     items: [
       { href: "/admin/clients", icon: Users, label: "Clients" },
       { href: "/admin/sales", icon: TrendingUp, label: "Sales Pipeline" },
+      { href: "/admin/bookings", icon: BookOpen, label: "Bookings" },
       { href: "/admin/communications", icon: MessageSquare, label: "Communications" },
     ],
   },
   {
-    label: "Projects & Work",
+    label: "Projects",
     items: [
       { href: "/admin/projects", icon: FolderOpen, label: "Projects" },
       { href: "/admin/tasks", icon: CheckSquare, label: "Tasks", badge: true },
@@ -52,13 +53,11 @@ const navGroups = [
     label: "Products",
     items: [
       { href: "/admin/products", icon: Package, label: "Products" },
-      { href: "/admin/bookings", icon: BookOpen, label: "Bookings" },
     ],
   },
   {
-    label: "Team & Content",
+    label: "Content & Marketing",
     items: [
-      { href: "/admin/team", icon: UserCheck, label: "Team" },
       { href: "/admin/social", icon: BarChart3, label: "Social Media" },
       { href: "/admin/announcements", icon: Megaphone, label: "Announcements" },
       { href: "/admin/portfolio", icon: Globe, label: "Portfolio" },
@@ -66,14 +65,15 @@ const navGroups = [
     ],
   },
   {
-    label: "Infrastructure",
+    label: "Team",
     items: [
-      { href: "/admin/sites", icon: Globe, label: "Site Monitoring" },
+      { href: "/admin/team", icon: UserCheck, label: "Team" },
     ],
   },
   {
-    label: "Settings",
+    label: "System",
     items: [
+      { href: "/admin/sites", icon: Globe, label: "Site Monitoring" },
       { href: "/admin/settings", icon: Settings, label: "Settings" },
       { href: "/admin/logs", icon: ScrollText, label: "Activity Log" },
     ],
@@ -97,7 +97,7 @@ export function AdminSidebar({ collapsed, onToggle }: SidebarProps) {
           : pathname === item.href || pathname.startsWith(item.href + "/")
       );
       // Always open the first two groups + any group with active item
-      init[g.label] = hasActive || g.label === "Overview" || g.label === "Clients & Pipeline" || g.label === "Projects & Work";
+      init[g.label] = hasActive || g.label === "Overview" || g.label === "Clients & Sales" || g.label === "Projects";
     });
     return init;
   });
@@ -146,7 +146,7 @@ export function AdminSidebar({ collapsed, onToggle }: SidebarProps) {
         {!collapsed && (
           <div className="min-w-0">
             <p className="text-[13px] font-bold text-sidebar-foreground leading-none truncate">Brightex</p>
-            <p className="text-[10px] text-sidebar-foreground/40 leading-none mt-0.5">Admin Console</p>
+            <p className="text-[10px] text-sidebar-foreground/55 leading-none mt-0.5">Admin Console</p>
           </div>
         )}
       </div>
@@ -154,7 +154,10 @@ export function AdminSidebar({ collapsed, onToggle }: SidebarProps) {
       {/* ── Search shortcut ── */}
       {!collapsed && (
         <div className="px-3 pt-3 pb-1 shrink-0">
-          <button className="w-full flex items-center gap-2 px-3 py-2 rounded-lg bg-sidebar-accent/60 hover:bg-sidebar-accent text-sidebar-foreground/50 hover:text-sidebar-foreground/80 transition-colors text-xs">
+          <button
+            onClick={() => window.dispatchEvent(new CustomEvent("open-command-palette"))}
+            className="w-full flex items-center gap-2 px-3 py-2 rounded-lg bg-sidebar-accent/60 hover:bg-sidebar-accent text-sidebar-foreground/50 hover:text-sidebar-foreground/80 transition-colors text-xs"
+          >
             <Search size={12} />
             <span className="flex-1 text-left">Search…</span>
             <kbd className="text-[9px] bg-sidebar-border/50 px-1 py-0.5 rounded font-mono opacity-60">⌘K</kbd>
@@ -163,14 +166,17 @@ export function AdminSidebar({ collapsed, onToggle }: SidebarProps) {
       )}
       {collapsed && (
         <div className="flex justify-center pt-3 pb-1 shrink-0">
-          <button className="w-9 h-8 rounded-lg bg-sidebar-accent/60 hover:bg-sidebar-accent flex items-center justify-center text-sidebar-foreground/50 hover:text-sidebar-foreground/80 transition-colors">
+          <button
+            onClick={() => window.dispatchEvent(new CustomEvent("open-command-palette"))}
+            className="w-9 h-8 rounded-lg bg-sidebar-accent/60 hover:bg-sidebar-accent flex items-center justify-center text-sidebar-foreground/50 hover:text-sidebar-foreground/80 transition-colors"
+          >
             <Search size={13} />
           </button>
         </div>
       )}
 
       {/* ── Nav ── */}
-      <nav className="flex-1 overflow-y-auto py-2 px-2 space-y-0.5 scrollbar-thin">
+      <nav className="flex-1 overflow-y-auto py-2 px-2 space-y-0.5 scrollbar-overlay">
         {navGroups.map((group) => {
           const isOpen = openGroups[group.label] ?? false;
           const hasActive = group.items.some((item) => isActive(item.href, "exact" in item ? item.exact : undefined));
@@ -183,12 +189,12 @@ export function AdminSidebar({ collapsed, onToggle }: SidebarProps) {
                   onClick={() => toggleGroup(group.label)}
                   className={cn(
                     "w-full flex items-center justify-between px-2 py-1.5 rounded-md transition-colors",
-                    "text-sidebar-foreground/35 hover:text-sidebar-foreground/60",
+                    "text-sidebar-foreground/45 hover:text-sidebar-foreground/70",
                   )}
                 >
                   <span className={cn(
                     "text-[10px] font-semibold uppercase tracking-[0.1em]",
-                    hasActive && "text-sidebar-foreground/55"
+                    hasActive && "text-sidebar-foreground/70"
                   )}>
                     {group.label}
                   </span>
@@ -215,7 +221,7 @@ export function AdminSidebar({ collapsed, onToggle }: SidebarProps) {
                             collapsed ? "justify-center h-9 w-9 mx-auto" : "px-2.5 py-2 h-9",
                             active
                               ? "bg-sidebar-accent text-sidebar-foreground font-semibold"
-                              : "text-sidebar-foreground/55 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground/90"
+                              : "text-sidebar-foreground/65 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground/95"
                           )}
                         >
                           {/* Active indicator bar */}
@@ -261,13 +267,13 @@ export function AdminSidebar({ collapsed, onToggle }: SidebarProps) {
           {!collapsed && (
             <div className="flex-1 min-w-0">
               <p className="text-[12px] font-semibold text-sidebar-foreground truncate leading-none">Godwin Brown</p>
-              <p className="text-[10px] text-sidebar-foreground/40 truncate leading-none mt-0.5">Administrator</p>
+              <p className="text-[10px] text-sidebar-foreground/55 truncate leading-none mt-0.5">Administrator</p>
             </div>
           )}
           {!collapsed && (
             <button
               onClick={handleSignOut}
-              className="w-7 h-7 rounded-md flex items-center justify-center text-sidebar-foreground/35 hover:text-sidebar-foreground hover:bg-sidebar-accent transition-colors shrink-0"
+              className="w-7 h-7 rounded-md flex items-center justify-center text-sidebar-foreground/50 hover:text-sidebar-foreground hover:bg-sidebar-accent transition-colors shrink-0"
               title="Sign out"
             >
               <LogOut size={12} />
@@ -279,7 +285,7 @@ export function AdminSidebar({ collapsed, onToggle }: SidebarProps) {
         <button
           onClick={onToggle}
           className={cn(
-            "w-full flex items-center gap-2 rounded-lg px-2 py-2 text-[12px] text-sidebar-foreground/35 hover:text-sidebar-foreground/70 hover:bg-sidebar-accent/60 transition-colors",
+            "w-full flex items-center gap-2 rounded-lg px-2 py-2 text-[12px] text-sidebar-foreground/50 hover:text-sidebar-foreground/80 hover:bg-sidebar-accent/60 transition-colors",
             collapsed ? "justify-center" : ""
           )}
         >

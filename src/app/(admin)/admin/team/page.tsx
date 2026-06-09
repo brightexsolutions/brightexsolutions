@@ -12,6 +12,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { TeamInviteModal } from "@/components/admin/team-invite-modal";
 import { cn } from "@/lib/utils";
+import { useConfirm } from "@/components/admin/confirm-dialog";
 
 // ─── Permission definitions ────────────────────────────────────────────────────
 
@@ -93,6 +94,7 @@ type PendingInvite = {
 };
 
 export default function AdminTeamPage() {
+  const confirm = useConfirm();
   const [tab, setTab] = useState<"members" | "invites">("members");
   const [members, setMembers] = useState<TeamMember[]>([]);
   const [invites, setInvites] = useState<PendingInvite[]>([]);
@@ -146,7 +148,7 @@ export default function AdminTeamPage() {
   }
 
   async function revokeInvite(invite: PendingInvite) {
-    if (!confirm(`Revoke the pending invite for ${invite.name} (${invite.email})?`)) return;
+    if (!await confirm({ title: "Revoke invite", message: `Revoke the pending invite for ${invite.name} (${invite.email})?`, confirmLabel: "Revoke", variant: "warning" })) return;
     setRevokingId(invite.id);
     try {
       await fetch(`/api/admin/team/invite?id=${invite.id}`, { method: "DELETE" });
@@ -214,7 +216,7 @@ export default function AdminTeamPage() {
 
   async function removeMember(member: TeamMember) {
     setMenuOpen(null);
-    if (!confirm(`Permanently remove ${member.name} from the team? This cannot be undone.`)) return;
+    if (!await confirm({ message: `Permanently remove ${member.name} from the team? This cannot be undone.` })) return;
     await fetch(`/api/admin/team/${member.id}`, { method: "DELETE" });
     setMembers((prev) => prev.filter((m) => m.id !== member.id));
     if (detailMember?.id === member.id) setDetailMember(null);

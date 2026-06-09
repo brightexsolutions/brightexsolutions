@@ -2,14 +2,16 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { MessageSquare, Plus, Pencil, Trash2, Sparkles, Loader2 } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import { StatCard } from "@/components/admin/stat-card";
+import { DataTable, StackedCell, type Column, type RowAction, type FilterConfig } from "@/components/admin/data-table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
+import { useConfirm } from "@/components/admin/confirm-dialog";
 
 const typeColors: Record<string, string> = {
   email: "bg-blue-400/10 text-blue-400",
@@ -44,6 +46,7 @@ type Communication = {
 };
 
 export function CommunicationsPageClient() {
+  const confirm = useConfirm();
   const [open, setOpen] = useState(false);
   const [editTarget, setEditTarget] = useState<Communication | null>(null);
   const [activeFilter, setActiveFilter] = useState("All");
@@ -134,7 +137,7 @@ export function CommunicationsPageClient() {
   }
 
   async function handleDelete(entry: Communication) {
-    if (!confirm(`Delete this communication log? This cannot be undone.`)) return;
+    if (!await confirm({ message: "Delete this communication log? This cannot be undone." })) return;
     await fetch(`/api/admin/communications/${entry.id}`, { method: "DELETE" });
     setCommunications((prev) => prev.filter((c) => c.id !== entry.id));
   }
@@ -163,60 +166,68 @@ export function CommunicationsPageClient() {
         <StatCard title="Meetings" value={communications.filter((e) => e.type === "meeting").length} icon={MessageSquare} iconColor="text-purple-400" iconBg="bg-purple-400/10" />
       </div>
 
-      <div className="flex gap-1 flex-wrap">
-        {filters.map((filter) => (
-          <button key={filter} onClick={() => setActiveFilter(filter)}
-            className={`px-3 py-1.5 rounded-sm text-xs font-medium border transition-colors ${activeFilter === filter ? "bg-muted text-foreground border-transparent" : "border-border text-muted-foreground hover:text-foreground hover:border-brand-gold/40"}`}
-          >{filter}</button>
-        ))}
-      </div>
-
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-base flex items-center gap-2"><MessageSquare size={16} />Communication Log</CardTitle>
-        </CardHeader>
-        <CardContent className="p-0">
-          {loading && communications.length === 0 ? (
-            <div className="text-center py-12 text-muted-foreground"><p className="text-sm">Loading communication history…</p></div>
-          ) : filteredCommunications.length === 0 ? (
-            <div className="text-center py-12 text-muted-foreground">
-              <MessageSquare size={40} className="mx-auto mb-3 opacity-20" />
-              <p className="text-sm">No communications logged yet.</p>
-              <button onClick={openCreate} className="mt-4 inline-flex items-center gap-2 px-3 py-1.5 rounded-sm border border-border text-xs font-medium hover:border-brand-gold/40 transition-colors">
-                <Plus size={13} />Log Entry
-              </button>
-            </div>
-          ) : (
-            <div className="divide-y divide-border">
-              {filteredCommunications.map((entry) => (
-                <div key={entry.id} className="px-6 py-4 flex items-start justify-between gap-4 group">
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <p className="text-sm font-semibold text-foreground">{entry.subject || "No subject"}</p>
-                      <span className={`px-2 py-0.5 rounded-sm text-[11px] font-medium capitalize ${typeColors[entry.type] ?? "bg-muted text-muted-foreground"}`}>{entry.type}</span>
-                    </div>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      {entry.clients?.company || entry.clients?.name || "No client linked"} · {entry.direction === "out" ? "Outbound" : "Inbound"}
-                    </p>
-                    {entry.body && <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{entry.body}</p>}
+      <Card className="overflow-hidden">
+        <DataTable
+          columns={[
+            {
+              key: "subject",
+              label: "Subject",
+              sortable: true,
+              render: (row) => {
+                const e = row as unknown as Communication;
+                return (
+                  <div className="flex flex-col gap-1 min-w-0">
+                    <StackedCell
+                      primary={e.subject || "No subject"}
+                      secondary={e.body ? e.body.slice(0, 80) + (e.body.length > 80 ? "…" : "") : undefined}
+                    />
+                    <span className={`self-start px-1.5 py-0.5 rounded text-[10px] font-medium capitalize ${typeColors[e.type] ?? "bg-muted text-muted-foreground"}`}>{e.type}</span>
                   </div>
-                  <div className="flex items-center gap-1 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <button onClick={() => openEdit(entry)} className="p-1.5 rounded-sm hover:bg-muted text-muted-foreground hover:text-foreground transition-colors" title="Edit">
-                      <Pencil size={13} />
-                    </button>
-                    <button onClick={() => handleDelete(entry)} className="p-1.5 rounded-sm hover:bg-red-50 dark:hover:bg-red-950/20 text-muted-foreground hover:text-red-500 transition-colors" title="Delete">
-                      <Trash2 size={13} />
-                    </button>
-                  </div>
-                  <div className="text-right shrink-0">
-                    <p className="text-xs text-muted-foreground">{new Date(entry.sent_at).toLocaleDateString("en-KE")}</p>
-                    <p className="text-xs text-muted-foreground mt-1 capitalize">{entry.status || "sent"}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </CardContent>
+                );
+              },
+            },
+            {
+              key: "client",
+              label: "Client",
+              render: (row) => {
+                const e = row as unknown as Communication;
+                return <span className="text-sm text-foreground">{e.clients?.company || e.clients?.name || <span className="text-muted-foreground">No client</span>}</span>;
+              },
+            },
+            {
+              key: "direction",
+              label: "Direction",
+              render: (row) => {
+                const e = row as unknown as Communication;
+                return <span className={`text-xs font-medium capitalize ${e.direction === "out" ? "text-blue-500" : "text-emerald-500"}`}>{e.direction === "out" ? "Outbound" : "Inbound"}</span>;
+              },
+            },
+            {
+              key: "sent_at",
+              label: "Date",
+              sortable: true,
+              render: (row) => {
+                const e = row as unknown as Communication;
+                return <StackedCell primary={new Date(e.sent_at).toLocaleDateString("en-KE")} secondary={e.status ?? "sent"} />;
+              },
+            },
+          ] as Column<Record<string, unknown>>[]}
+          data={filteredCommunications as unknown as Record<string, unknown>[]}
+          actions={[
+            { label: "Edit", icon: <Pencil size={13} />, onClick: (row) => openEdit(row as unknown as Communication) },
+            { label: "Delete", icon: <Trash2 size={13} />, destructive: true, onClick: (row) => handleDelete(row as unknown as Communication) },
+          ] as RowAction<Record<string, unknown>>[]}
+          searchable
+          searchPlaceholder="Search communications…"
+          searchKeys={["subject", "body"]}
+          filters={[
+            { key: "type", label: "Type", options: [{ label: "All", value: "" }, ...Object.keys(typeColors).map((t) => ({ label: t.charAt(0).toUpperCase() + t.slice(1), value: t }))] } as FilterConfig,
+          ]}
+          activeFilters={{ type: activeFilter === "All" ? "" : activeFilter.toLowerCase() }}
+          onFilterChange={(_, val) => setActiveFilter(val ? val.charAt(0).toUpperCase() + val.slice(1) : "All")}
+          maxHeight="520px"
+          emptyMessage={loading ? "Loading communication history…" : "No communications logged yet."}
+        />
       </Card>
 
       <Dialog open={open} onOpenChange={setOpen}>

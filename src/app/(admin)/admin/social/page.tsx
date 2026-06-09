@@ -2,8 +2,9 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { BarChart3, Plus, Pencil, Trash2, CheckCircle2, Clock, Loader2, Eye, Calendar, Hash, FileText, Sparkles } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { StatCard } from "@/components/admin/stat-card";
+import { DataTable, StackedCell, type Column, type RowAction } from "@/components/admin/data-table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { Input } from "@/components/ui/input";
@@ -11,6 +12,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { useConfirm } from "@/components/admin/confirm-dialog";
 
 const tabs = ["All Posts", "Pending Approval", "Approved", "Posted"] as const;
 type Tab = (typeof tabs)[number];
@@ -47,6 +49,7 @@ function toLocalDatetime(iso: string | null | undefined): string {
 }
 
 export default function SocialMediaPage() {
+  const confirm = useConfirm();
   const [activeTab, setActiveTab] = useState<Tab>("All Posts");
   const [posts, setPosts] = useState<SocialPost[]>([]);
   const [loading, setLoading] = useState(true);
@@ -142,7 +145,7 @@ export default function SocialMediaPage() {
   }
 
   async function handleDelete(post: SocialPost) {
-    if (!confirm("Delete this post? This cannot be undone.")) return;
+    if (!await confirm({ message: "Delete this post? This cannot be undone." })) return;
     setBusy(post.id, true);
     try {
       await fetch(`/api/admin/social/${post.id}`, { method: "DELETE" });
@@ -214,6 +217,63 @@ export default function SocialMediaPage() {
     return true;
   });
 
+  type SocialRow = Record<string, unknown>;
+
+  const socialCols: Column<SocialRow>[] = [
+    {
+      key: "status",
+      label: "Status",
+      className: "w-36",
+      render: (row) => (
+        <span className={`px-2 py-0.5 rounded-sm text-[10px] font-medium border capitalize ${statusColors[row.status as string] ?? "bg-muted text-muted-foreground border-border"}`}>
+          {(row.status as string).replace(/_/g, " ")}
+        </span>
+      ),
+    },
+    {
+      key: "caption",
+      label: "Post",
+      render: (row) => {
+        const platforms = (row.platforms as string[] | undefined) ?? [];
+        const date = row.scheduled_at
+          ? new Date(row.scheduled_at as string).toLocaleDateString("en-KE", { day: "2-digit", month: "short" })
+          : null;
+        const secondary = [platforms.join(", "), date, row.notes ? "has notes" : null].filter(Boolean).join(" · ");
+        return <StackedCell primary={row.caption as string} secondary={secondary || undefined} />;
+      },
+    },
+    {
+      key: "_action",
+      label: "",
+      className: "w-32",
+      render: (row) => {
+        const busy = busyIds.has(row.id as string);
+        if (row.status === "draft") return (
+          <button onClick={(e) => { e.stopPropagation(); handleStatusChange(row as unknown as SocialPost, "pending_approval"); }} disabled={busy} className="flex items-center gap-1 px-2 py-1 rounded-sm text-[10px] font-medium border border-amber-200 text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-950/20 transition-colors disabled:opacity-50">
+            {busy && <Loader2 size={10} className="animate-spin" />}Submit
+          </button>
+        );
+        if (row.status === "pending_approval") return (
+          <button onClick={(e) => { e.stopPropagation(); handleStatusChange(row as unknown as SocialPost, "approved"); }} disabled={busy} className="flex items-center gap-1 px-2 py-1 rounded-sm text-[10px] font-medium border border-blue-200 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950/20 transition-colors disabled:opacity-50">
+            {busy && <Loader2 size={10} className="animate-spin" />}Approve
+          </button>
+        );
+        if (row.status === "approved") return (
+          <button onClick={(e) => { e.stopPropagation(); handleStatusChange(row as unknown as SocialPost, "posted"); }} disabled={busy} className="flex items-center gap-1 px-2 py-1 rounded-sm text-[10px] font-medium border border-emerald-200 text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/20 transition-colors disabled:opacity-50">
+            {busy && <Loader2 size={10} className="animate-spin" />}Mark Posted
+          </button>
+        );
+        return null;
+      },
+    },
+  ];
+
+  const socialActions: RowAction<SocialRow>[] = [
+    { label: "View Details", onClick: (row) => setDetailPost(row as unknown as SocialPost) },
+    { label: "Edit", onClick: (row) => openEdit(row as unknown as SocialPost) },
+    { label: "Delete", onClick: (row) => handleDelete(row as unknown as SocialPost), destructive: true },
+  ];
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -242,75 +302,22 @@ export default function SocialMediaPage() {
         ))}
       </div>
 
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-base flex items-center gap-2"><BarChart3 size={16} />{activeTab}</CardTitle>
-        </CardHeader>
-        <CardContent className="p-0">
-          {loading ? (
-            <div className="py-12 text-center text-sm text-muted-foreground">Loading posts…</div>
-          ) : filtered.length === 0 ? (
-            <div className="text-center py-12 text-muted-foreground">
-              <BarChart3 size={40} className="mx-auto mb-3 opacity-20" />
-              <p className="text-sm">No posts{activeTab !== "All Posts" ? ` in ${activeTab.toLowerCase()}` : ""} yet.</p>
-              {activeTab === "All Posts" && (
-                <button onClick={openCreate} className="mt-4 inline-flex items-center gap-2 px-3 py-1.5 rounded-sm border border-border text-xs font-medium hover:border-brand-gold/40 transition-colors">
-                  <Plus size={13} />New Post
-                </button>
-              )}
-            </div>
-          ) : (
-            <div className="divide-y divide-border">
-              {filtered.map((post) => (
-                <div key={post.id} className="px-6 py-3.5 flex items-center gap-4 group hover:bg-muted/20 transition-colors">
-                  {/* Status + platforms */}
-                  <div className="w-28 shrink-0">
-                    <span className={`px-2 py-0.5 rounded-sm text-[10px] font-medium border capitalize ${statusColors[post.status] ?? "bg-muted text-muted-foreground border-border"}`}>
-                      {post.status.replace(/_/g, " ")}
-                    </span>
-                  </div>
-                  {/* Caption preview */}
-                  <button onClick={() => setDetailPost(post)} className="flex-1 min-w-0 text-left">
-                    <p className="text-sm font-medium text-foreground truncate">{post.caption}</p>
-                    <p className="text-xs text-muted-foreground mt-0.5">
-                      {(post.platforms ?? []).join(", ")}
-                      {post.scheduled_at ? ` · ${new Date(post.scheduled_at).toLocaleDateString("en-KE", { day: "2-digit", month: "short" })}` : ""}
-                      {post.notes ? " · has notes" : ""}
-                    </p>
-                  </button>
-                  {/* Actions */}
-                  <div className="flex items-center gap-1 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <button onClick={() => setDetailPost(post)} className="p-1.5 rounded-sm hover:bg-muted text-muted-foreground hover:text-foreground transition-colors" title="View details">
-                      <Eye size={13} />
-                    </button>
-                    {post.status === "draft" && (
-                      <button onClick={() => handleStatusChange(post, "pending_approval")} disabled={busyIds.has(post.id)} className="flex items-center gap-1 px-2 py-1 rounded-sm text-[10px] font-medium border border-amber-200 text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-950/20 transition-colors disabled:opacity-50">
-                        {busyIds.has(post.id) && <Loader2 size={10} className="animate-spin" />}Submit
-                      </button>
-                    )}
-                    {post.status === "pending_approval" && (
-                      <button onClick={() => handleStatusChange(post, "approved")} disabled={busyIds.has(post.id)} className="flex items-center gap-1 px-2 py-1 rounded-sm text-[10px] font-medium border border-blue-200 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950/20 transition-colors disabled:opacity-50">
-                        {busyIds.has(post.id) && <Loader2 size={10} className="animate-spin" />}Approve
-                      </button>
-                    )}
-                    {post.status === "approved" && (
-                      <button onClick={() => handleStatusChange(post, "posted")} disabled={busyIds.has(post.id)} className="flex items-center gap-1 px-2 py-1 rounded-sm text-[10px] font-medium border border-emerald-200 text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/20 transition-colors disabled:opacity-50">
-                        {busyIds.has(post.id) && <Loader2 size={10} className="animate-spin" />}Mark Posted
-                      </button>
-                    )}
-                    <button onClick={() => openEdit(post)} disabled={busyIds.has(post.id)} className="p-1.5 rounded-sm hover:bg-muted text-muted-foreground hover:text-foreground transition-colors disabled:opacity-40" title="Edit">
-                      <Pencil size={13} />
-                    </button>
-                    <button onClick={() => handleDelete(post)} disabled={busyIds.has(post.id)} className="p-1.5 rounded-sm hover:bg-red-50 dark:hover:bg-red-950/20 text-muted-foreground hover:text-red-500 transition-colors disabled:opacity-40" title="Delete">
-                      {busyIds.has(post.id) ? <Loader2 size={13} className="animate-spin" /> : <Trash2 size={13} />}
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
+      {loading ? (
+        <Card><CardContent className="py-12 text-center text-sm text-muted-foreground">Loading posts…</CardContent></Card>
+      ) : (
+        <Card className="overflow-hidden">
+          <DataTable
+            columns={socialCols}
+            data={filtered as unknown as Record<string, unknown>[]}
+            actions={socialActions}
+            onRowClick={(row) => setDetailPost(row as unknown as SocialPost)}
+            searchable
+            searchPlaceholder="Search posts…"
+            searchKeys={["caption", "status"]}
+            emptyMessage={`No posts${activeTab !== "All Posts" ? ` in ${activeTab.toLowerCase()}` : ""} yet.`}
+          />
+        </Card>
+      )}
 
       <div className="flex gap-2 flex-wrap items-center">
         <span className="text-xs text-muted-foreground">Status:</span>

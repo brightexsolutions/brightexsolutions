@@ -1,15 +1,17 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { Rss, Plus, AlertTriangle, Pencil, Trash2, CheckCircle2, Loader2, Building2, Users, Lock } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Rss, Plus, AlertTriangle, Pencil, Trash2, CheckCircle2, Loader2, Building2, Users, Lock, ExternalLink } from "lucide-react";
+import { Card } from "@/components/ui/card";
 import { StatCard } from "@/components/admin/stat-card";
+import { DataTable, StackedCell, type Column, type RowAction, type FilterConfig } from "@/components/admin/data-table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
+import { useConfirm } from "@/components/admin/confirm-dialog";
 
 const categories = ["domain", "hosting", "tool", "software", "other"];
 const cycles = ["monthly", "yearly", "one_time"];
@@ -52,6 +54,7 @@ type Subscription = {
 };
 
 export function SubscriptionsPageClient() {
+  const confirm = useConfirm();
   const [open, setOpen] = useState(false);
   const [editTarget, setEditTarget] = useState<Subscription | null>(null);
   const [activeCategory, setActiveCategory] = useState("all");
@@ -142,7 +145,7 @@ export function SubscriptionsPageClient() {
   }
 
   async function handleDelete(sub: Subscription) {
-    if (!confirm(`Delete "${sub.name}"? This cannot be undone.`)) return;
+    if (!await confirm({ message: `Delete "${sub.name}"? This cannot be undone.` })) return;
     await fetch(`/api/admin/subscriptions/${sub.id}`, { method: "DELETE" });
     setSubscriptions((prev) => prev.filter((s) => s.id !== sub.id));
   }
@@ -179,107 +182,117 @@ export function SubscriptionsPageClient() {
         <StatCard title="Annual Cost" value={`KES ${annualCost.toLocaleString()}`} icon={Rss} />
       </div>
 
-      <div className="space-y-2">
-        <div className="flex gap-1 flex-wrap">
-          <button onClick={() => setActiveOwnership("all")} className={`px-3 py-1.5 rounded-sm text-xs font-medium border transition-colors ${activeOwnership === "all" ? "bg-muted text-foreground border-transparent" : "border-border text-muted-foreground hover:text-foreground"}`}>All ownership</button>
-          {OWNERSHIP_OPTIONS.map((o) => (
-            <button key={o.value} onClick={() => setActiveOwnership(o.value)} className={`px-3 py-1.5 rounded-sm text-xs font-medium border transition-colors ${activeOwnership === o.value ? "bg-muted text-foreground border-transparent" : "border-border text-muted-foreground hover:text-foreground"}`}>{o.label}</button>
-          ))}
-        </div>
-        <div className="flex gap-1 flex-wrap">
-          <button onClick={() => setActiveCategory("all")} className={`px-3 py-1.5 rounded-sm text-xs font-medium border transition-colors ${activeCategory === "all" ? "bg-muted text-foreground border-transparent" : "border-border text-muted-foreground hover:text-foreground"}`}>All categories</button>
-          {categories.map((cat) => (
-            <button key={cat} onClick={() => setActiveCategory(cat)} className={`px-3 py-1.5 rounded-sm text-xs font-medium border capitalize transition-colors ${activeCategory === cat ? "bg-muted text-foreground border-transparent" : "border-border text-muted-foreground hover:text-foreground"}`}>{cat}</button>
-          ))}
-        </div>
-      </div>
-
-      <div className="flex items-start gap-3 p-4 rounded-sm bg-amber-50 border border-amber-200 dark:bg-amber-950/20 dark:border-amber-800/30">
-        <AlertTriangle size={16} className="text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
-        <div>
+      {renewingSoon.length > 0 && (
+        <div className="flex items-start gap-3 p-4 rounded-sm bg-amber-50 border border-amber-200 dark:bg-amber-950/20 dark:border-amber-800/30">
+          <AlertTriangle size={16} className="text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
           <p className="text-sm font-medium text-amber-700 dark:text-amber-300">
-            {renewingSoon.length > 0 ? `${renewingSoon.length} renewals due soon` : "No upcoming renewals"}
-          </p>
-          <p className="text-xs text-muted-foreground mt-0.5">
-            {renewingSoon.length > 0 ? "Review these subscriptions before renewal dates slip past." : "Add subscriptions to track renewal dates and get alerts 14 days before they're due."}
+            {renewingSoon.length} renewal{renewingSoon.length !== 1 ? "s" : ""} due in the next 14 days — review before they slip past.
           </p>
         </div>
-      </div>
+      )}
 
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-base flex items-center gap-2"><Rss size={16} />All Subscriptions</CardTitle>
-        </CardHeader>
-        <CardContent className="p-0">
-          {loading && subscriptions.length === 0 ? (
-            <div className="text-center py-12 text-muted-foreground"><p className="text-sm">Loading subscriptions…</p></div>
-          ) : filteredSubscriptions.length === 0 ? (
-            <div className="text-center py-12 text-muted-foreground">
-              <Rss size={40} className="mx-auto mb-3 opacity-20" />
-              <p className="text-sm">No subscriptions tracked yet.</p>
-              <button onClick={openCreate} className="mt-4 inline-flex items-center gap-2 px-3 py-1.5 rounded-sm border border-border text-xs font-medium hover:border-brand-gold/40 transition-colors">
-                <Plus size={13} />Add Subscription
-              </button>
-            </div>
-          ) : (
-            <div className="divide-y divide-border">
-              {filteredSubscriptions.map((sub) => {
-                const ownerDef = OWNERSHIP_OPTIONS.find((o) => o.value === (sub.ownership ?? "internal"));
-                const isBusy = markingPaidId === sub.id;
-                const canMarkPaid = sub.ownership !== "client_managed";
-                const daysToRenewal = Math.ceil((new Date(sub.next_renewal_date).getTime() - Date.now()) / 86400000);
-                const isOverdue = daysToRenewal < 0;
-                const isDueSoon = daysToRenewal >= 0 && daysToRenewal <= 14;
+      <Card className="overflow-hidden">
+        <DataTable
+          columns={[
+            {
+              key: "name",
+              label: "Subscription",
+              sortable: true,
+              render: (row) => {
+                const s = row as unknown as Subscription;
+                const ownerDef = OWNERSHIP_OPTIONS.find((o) => o.value === (s.ownership ?? "internal"));
                 return (
-                  <div key={sub.id} className="px-6 py-4 flex items-start justify-between gap-4 group">
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <p className="text-sm font-semibold text-foreground">{sub.name}</p>
-                        <span className="px-2 py-0.5 rounded-sm text-[11px] font-medium border capitalize border-border text-muted-foreground">{sub.category}</span>
-                        {ownerDef && (
-                          <span className={`px-2 py-0.5 rounded-sm text-[11px] font-medium ${ownerDef.color}`}>{ownerDef.label}</span>
-                        )}
-                        {isOverdue && <span className="px-2 py-0.5 rounded-sm text-[11px] font-medium bg-red-400/10 text-red-500">Overdue</span>}
-                        {!isOverdue && isDueSoon && <span className="px-2 py-0.5 rounded-sm text-[11px] font-medium bg-amber-400/10 text-amber-500">Due soon</span>}
-                      </div>
-                      <p className="text-xs text-muted-foreground mt-1">
-                        {sub.provider || "No provider"}
-                        {sub.last_paid_date ? ` · Last paid: ${new Date(sub.last_paid_date).toLocaleDateString("en-KE")}` : ""}
-                      </p>
-                      {sub.notes && <p className="text-xs text-muted-foreground mt-1 line-clamp-1">{sub.notes}</p>}
-                    </div>
-                    <div className="flex items-center gap-1 shrink-0">
-                      {canMarkPaid && (
-                        <button
-                          onClick={() => handleMarkPaid(sub)}
-                          disabled={isBusy}
-                          className="flex items-center gap-1 px-2.5 py-1.5 rounded-sm text-xs font-medium border border-emerald-500/40 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/20 transition-colors disabled:opacity-50 opacity-0 group-hover:opacity-100"
-                          title="Mark as paid — advances renewal date and records expense"
-                        >
-                          {isBusy ? <Loader2 size={11} className="animate-spin" /> : <CheckCircle2 size={11} />}
-                          Paid
-                        </button>
-                      )}
-                      <button onClick={() => openEdit(sub)} className="p-1.5 rounded-sm hover:bg-muted text-muted-foreground hover:text-foreground transition-colors opacity-0 group-hover:opacity-100" title="Edit">
-                        <Pencil size={13} />
-                      </button>
-                      <button onClick={() => handleDelete(sub)} className="p-1.5 rounded-sm hover:bg-red-50 dark:hover:bg-red-950/20 text-muted-foreground hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100" title="Delete">
-                        <Trash2 size={13} />
-                      </button>
-                    </div>
-                    <div className="text-right shrink-0">
-                      <p className="text-sm font-semibold text-foreground">{(sub.currency ?? "KES")} {Number(sub.amount ?? 0).toLocaleString()}</p>
-                      <p className="text-xs text-muted-foreground mt-1 capitalize">{sub.billing_cycle.replace("_", " ")}</p>
-                      <p className={`text-xs mt-1 ${isOverdue ? "text-red-500 font-medium" : isDueSoon ? "text-amber-500 font-medium" : "text-muted-foreground"}`}>
-                        {isOverdue ? `${Math.abs(daysToRenewal)}d overdue` : `Renews ${new Date(sub.next_renewal_date).toLocaleDateString("en-KE")}`}
-                      </p>
+                  <div className="flex flex-col gap-1 min-w-0">
+                    <StackedCell primary={s.name} secondary={s.provider ?? undefined} />
+                    <div className="flex items-center gap-1 flex-wrap">
+                      <span className="px-1.5 py-0.5 rounded text-[10px] font-medium border border-border text-muted-foreground capitalize">{s.category}</span>
+                      {ownerDef && <span className={`px-1.5 py-0.5 rounded text-[10px] font-medium ${ownerDef.color}`}>{ownerDef.label}</span>}
                     </div>
                   </div>
                 );
-              })}
-            </div>
-          )}
-        </CardContent>
+              },
+            },
+            {
+              key: "amount",
+              label: "Cost",
+              render: (row) => {
+                const s = row as unknown as Subscription;
+                return (
+                  <StackedCell
+                    primary={`${s.currency ?? "KES"} ${Number(s.amount ?? 0).toLocaleString()}`}
+                    secondary={s.billing_cycle.replace(/_/g, " ")}
+                  />
+                );
+              },
+            },
+            {
+              key: "next_renewal_date",
+              label: "Renewal",
+              sortable: true,
+              render: (row) => {
+                const s = row as unknown as Subscription;
+                const daysToRenewal = Math.ceil((new Date(s.next_renewal_date).getTime() - Date.now()) / 86400000);
+                const isOverdue = daysToRenewal < 0;
+                const isDueSoon = daysToRenewal >= 0 && daysToRenewal <= 14;
+                return (
+                  <div className="flex flex-col gap-0.5">
+                    <span className="text-sm text-foreground">{new Date(s.next_renewal_date).toLocaleDateString("en-KE")}</span>
+                    <span className={`text-xs font-medium ${isOverdue ? "text-red-500" : isDueSoon ? "text-amber-500" : "text-muted-foreground"}`}>
+                      {isOverdue ? `${Math.abs(daysToRenewal)}d overdue` : isDueSoon ? `${daysToRenewal}d to renew` : `${daysToRenewal}d remaining`}
+                    </span>
+                  </div>
+                );
+              },
+            },
+            {
+              key: "actions_inline",
+              label: "",
+              className: "w-32",
+              render: (row) => {
+                const s = row as unknown as Subscription;
+                const isBusy = markingPaidId === s.id;
+                const canMarkPaid = s.ownership !== "client_managed";
+                return (
+                  <div className="flex items-center gap-1.5">
+                    {canMarkPaid && (
+                      <button
+                        onClick={(e) => { e.stopPropagation(); handleMarkPaid(s); }}
+                        disabled={isBusy}
+                        className="flex items-center gap-1 px-2 py-1 rounded text-[11px] font-medium bg-emerald-400/10 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-400/20 transition-colors disabled:opacity-50"
+                      >
+                        {isBusy ? <Loader2 size={10} className="animate-spin" /> : <CheckCircle2 size={10} />} Paid
+                      </button>
+                    )}
+                    {s.login_url && (
+                      <a href={s.login_url} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()} className="p-1 rounded text-muted-foreground hover:text-brand-gold transition-colors">
+                        <ExternalLink size={12} />
+                      </a>
+                    )}
+                  </div>
+                );
+              },
+            },
+          ] as Column<Record<string, unknown>>[]}
+          data={filteredSubscriptions as unknown as Record<string, unknown>[]}
+          actions={[
+            { label: "Edit", icon: <Pencil size={13} />, onClick: (row) => openEdit(row as unknown as Subscription) },
+            { label: "Delete", icon: <Trash2 size={13} />, destructive: true, onClick: (row) => handleDelete(row as unknown as Subscription) },
+          ] as RowAction<Record<string, unknown>>[]}
+          searchable
+          searchPlaceholder="Search subscriptions…"
+          searchKeys={["name", "provider", "category"]}
+          filters={[
+            { key: "category", label: "Category", options: [{ label: "All", value: "" }, ...categories.map((c) => ({ label: c.charAt(0).toUpperCase() + c.slice(1), value: c }))] } as FilterConfig,
+            { key: "ownership", label: "Ownership", options: [{ label: "All", value: "" }, ...OWNERSHIP_OPTIONS.map((o) => ({ label: o.label, value: o.value }))] } as FilterConfig,
+          ]}
+          activeFilters={{ category: activeCategory === "all" ? "" : activeCategory, ownership: activeOwnership === "all" ? "" : activeOwnership }}
+          onFilterChange={(key, val) => {
+            if (key === "category") setActiveCategory(val || "all");
+            if (key === "ownership") setActiveOwnership(val || "all");
+          }}
+          maxHeight="520px"
+          emptyMessage={loading ? "Loading subscriptions…" : "No subscriptions tracked yet."}
+        />
       </Card>
 
       <Dialog open={open} onOpenChange={setOpen}>

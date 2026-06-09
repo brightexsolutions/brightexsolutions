@@ -151,7 +151,7 @@
   <h1>Brightex Solutions<br /><span>Platform Documentation</span></h1>
   <p class="cover-sub">Complete technical reference for the Next.js + Supabase business platform — architecture, modules, deployment, and future roadmap.</p>
   <div class="cover-badges">
-    <span class="badge">Next.js 15 App Router</span>
+    <span class="badge">Next.js 16.2.6 App Router</span>
     <span class="badge">Supabase Postgres</span>
     <span class="badge">11 Admin Modules</span>
     <span class="badge">4 Team Portals</span>
@@ -159,8 +159,8 @@
     <span class="badge">100% Free Tier</span>
   </div>
   <div class="cover-meta">
-    <div class="meta-item"><div class="meta-label">Document Date</div><div class="meta-value">May 2026</div></div>
-    <div class="meta-item"><div class="meta-label">Stack Version</div><div class="meta-value">Next.js 15 / Node 20</div></div>
+    <div class="meta-item"><div class="meta-label">Document Date</div><div class="meta-value">June 2026</div></div>
+    <div class="meta-item"><div class="meta-label">Stack Version</div><div class="meta-value">Next.js 16.2.6 / Node 20</div></div>
     <div class="meta-item"><div class="meta-label">Database</div><div class="meta-value">Supabase (Postgres)</div></div>
     <div class="meta-item"><div class="meta-label">Hosting</div><div class="meta-value">Vercel Hobby → Pro</div></div>
   </div>
@@ -200,7 +200,7 @@
       </div>
     </div>
 
-    <p>The Brightex Solutions platform is a full-stack Next.js 15 (App Router) web application backed by Supabase (Postgres). It replaces a static HTML/CSS marketing site with a complete business management system — including a public marketing site, an admin dashboard, and role-gated portals for team members.</p>
+    <p>The Brightex Solutions platform is a full-stack Next.js 16.2.6 (App Router) web application backed by Supabase (Postgres). It replaces a static HTML/CSS marketing site with a complete business management system — including a public marketing site, an admin dashboard, and role-gated portals for team members.</p>
 
     <div class="card-grid">
       <div class="kpi-card"><div class="kpi-label">Public Pages</div><div class="kpi-value">7</div><div class="kpi-sub">Home, Services, Blog, Contact, Products, Book, Join</div></div>
@@ -210,6 +210,23 @@
       <div class="kpi-card"><div class="kpi-label">Cron Jobs</div><div class="kpi-value">7</div><div class="kpi-sub">DB keepalive, site health, reminders, cleanup</div></div>
       <div class="kpi-card"><div class="kpi-label">Monthly Cost</div><div class="kpi-value">KES 0</div><div class="kpi-sub">Fully on free tiers at current scale</div></div>
     </div>
+
+    <h3>Build Status — June 2026</h3>
+    <table>
+      <tr><th>Milestone</th><th>Scope</th><th>Status</th></tr>
+      <tr><td><strong>M0</strong> — Foundation</td><td>Branch, Next.js scaffold, Supabase schema, brand tokens, health endpoint</td><td><span class="tag tag-green">Complete</span></td></tr>
+      <tr><td><strong>M1</strong> — Public Site</td><td>Home, Services, SEO, ISR, JSON-LD, security headers</td><td><span class="tag tag-green">Complete</span></td></tr>
+      <tr><td><strong>M2</strong> — Contact + Brixo</td><td>Contact form, Brixo chat widget, announcements</td><td><span class="tag tag-green">Complete</span></td></tr>
+      <tr><td><strong>M3</strong> — Blog + Products</td><td>Blog MDX, Products page, trial form, SoftwareApplication JSON-LD</td><td><span class="tag tag-green">Complete</span></td></tr>
+      <tr><td><strong>M4</strong> — Admin Auth + Layout</td><td>Login, middleware, sidebar + header, dark/light mode, team invite, portals</td><td><span class="tag tag-green">Complete</span></td></tr>
+      <tr><td><strong>M5</strong> — Core Business Ops</td><td>Clients, Sales pipeline, Projects, Tasks, Communications</td><td><span class="tag tag-green">Complete</span></td></tr>
+      <tr><td><strong>M6</strong> — Invoices + Finance</td><td>Invoices, Payments, Finance P&amp;L, document preview, CSV/PDF export</td><td><span class="tag tag-green">Complete</span></td></tr>
+      <tr><td><strong>M7</strong> — Social + Team Portals</td><td>Social media module, approval workflow, marketing portal, media uploads</td><td><span class="tag tag-green">Complete</span></td></tr>
+      <tr><td><strong>M8</strong> — Calendar + Bookings</td><td>Unified calendar, subscriptions, public booking page</td><td><span class="tag tag-amber">In Progress</span></td></tr>
+      <tr><td><strong>M9</strong> — Site Monitoring + Products Admin</td><td>Site health cron, system alerts, products admin, chat admin</td><td><span class="tag tag-amber">In Progress</span></td></tr>
+      <tr><td><strong>M10</strong> — Cron + Resilience</td><td>All 7 cron jobs configured, error boundaries, maintenance mode tested</td><td><span class="tag tag-gray">Pending</span></td></tr>
+      <tr><td><strong>M11</strong> — Go Live</td><td>DNS cutover, Lighthouse audit, migration guide</td><td><span class="tag tag-gray">Pending</span></td></tr>
+    </table>
 
     <h3>What the platform covers</h3>
     <ul>
@@ -242,14 +259,14 @@
     <h3>Tech Stack</h3>
     <table>
       <tr><th>Layer</th><th>Technology</th><th>Purpose</th></tr>
-      <tr><td>Framework</td><td>Next.js 15 (App Router)</td><td>Full-stack React, SSR, ISR, API routes</td></tr>
+      <tr><td>Framework</td><td>Next.js 16.2.6 (App Router)</td><td>Full-stack React, SSR, ISR, API routes</td></tr>
       <tr><td>Database</td><td>Supabase (Postgres)</td><td>All data, auth, storage</td></tr>
       <tr><td>Auth</td><td>Supabase Auth</td><td>Admin login, team invite flow, JWT roles</td></tr>
       <tr><td>UI</td><td>shadcn/ui + Tailwind CSS</td><td>Component library + utility styling</td></tr>
       <tr><td>Email</td><td>Nodemailer + Gmail SMTP</td><td>All outbound emails</td></tr>
       <tr><td>PDF</td><td>@react-pdf/renderer</td><td>Invoice and report PDF generation</td></tr>
       <tr><td>Animations</td><td>Framer Motion</td><td>Public site scroll animations</td></tr>
-      <tr><td>Calendar</td><td>FullCalendar (free plugins)</td><td>Admin unified calendar view</td></tr>
+      <tr><td>Calendar</td><td>Custom calendar grid</td><td>Admin unified calendar — custom month grid with day-click event list panel</td></tr>
       <tr><td>Rate Limiting</td><td>rate-limiter-flexible</td><td>In-memory per-IP throttling on all API routes</td></tr>
       <tr><td>Cron</td><td>cron-job.org (external)</td><td>Scheduled jobs — free, unlimited, 1-min minimum</td></tr>
       <tr><td>Hosting</td><td>Vercel Hobby</td><td>Deployment, preview URLs, atomic deploys</td></tr>
@@ -272,8 +289,19 @@
       The <strong>service_role Supabase key</strong> never leaves the server. All data reads/writes happen in API Route Handlers or Server Components. Client Components call <code>/api/*</code> routes — they never touch Supabase directly. Supabase RLS blocks everything from the anon key as a hard second line of defence.
     </div>
 
-    <h3>Proxy / Middleware</h3>
-    <p><code>src/proxy.ts</code> intercepts all <code>/admin/*</code>, <code>/work/*</code>, and <code>/team/*</code> routes. It checks the Supabase session cookie and redirects unauthenticated requests to the appropriate login page. For team routes it also verifies the <code>app_metadata.app_role</code> JWT claim matches the expected role.</p>
+    <h3>Middleware</h3>
+    <p><code>src/middleware.ts</code> intercepts all <code>/admin/*</code>, <code>/work/*</code>, and <code>/team/*</code> routes. It checks the Supabase session cookie and redirects unauthenticated requests to the appropriate login page. For team routes it also verifies the <code>app_metadata.app_role</code> JWT claim matches the expected role.</p>
+
+    <h3>Shared Admin UI Components</h3>
+    <p>All admin pages use a set of shared components defined in <code>src/components/admin/</code>. These enforce a consistent layout and interaction pattern across every module.</p>
+    <table>
+      <tr><th>Component</th><th>File</th><th>Purpose</th></tr>
+      <tr><td><strong>DataTable</strong></td><td><code>data-table.tsx</code></td><td>Universal sortable, searchable, filterable table with <code>maxHeight</code>, <code>scrollbar-overlay</code>, and inline row actions via <code>_action</code> / <code>_edit</code> column keys. <code>StackedCell</code> helper renders two-line cells (primary + secondary). Used on every listing page.</td></tr>
+      <tr><td><strong>CommandPalette</strong></td><td><code>command-palette.tsx</code></td><td>Global search overlay, triggered by <kbd>⌘K</kbd> / <kbd>Ctrl+K</kbd> or sidebar search button. Debounced fetch (280ms) to <code>/api/admin/search</code>. Returns clients, projects, invoices, social posts. Arrow key + Enter navigation.</td></tr>
+      <tr><td><strong>NotificationBell</strong></td><td><code>notification-bell.tsx</code></td><td>Header bell icon. Fetches <code>/api/admin/notifications</code> on mount, every 2 min, and on panel open. Shows System Alerts (dismissible per-alert, "Clear All") and Needs Attention counts (overdue invoices, pending bookings, new contacts, pending approvals). Badge turns red when any alert is critical.</td></tr>
+      <tr><td><strong>AdminHeader</strong></td><td><code>header.tsx</code></td><td>Sticky top bar — breadcrumb, NotificationBell, dark/light theme toggle, user menu (Settings, Sign out).</td></tr>
+      <tr><td><strong>AdminSidebar</strong></td><td><code>sidebar.tsx</code></td><td>Collapsible left nav. Grouped sections (main modules, settings at bottom). Search button fires <code>window.dispatchEvent(new CustomEvent("open-command-palette"))</code>.</td></tr>
+    </table>
   </div>
 
   <!-- S3: Admin Modules -->
@@ -298,7 +326,7 @@
       <tr><td><strong>Team</strong></td><td><code>/admin/team</code></td><td>Invite (portal login) or add external contractors (no login), view tasks, payouts, permissions per member. <strong>Login as member</strong> — admin can generate a one-time session and open any team member's portal in a new tab for quick diagnosis (uses <code>verifyOtp</code> flow, no redirect URL whitelist required).</td></tr>
       <tr><td><strong>Communications</strong></td><td><code>/admin/communications</code></td><td>Log calls, WhatsApp, meetings, emails; outbound email history; filter by client/type</td></tr>
       <tr><td><strong>Social</strong></td><td><code>/admin/social</code></td><td>Content calendar, post drafts with media upload, approval workflow (pending → approved → posted)</td></tr>
-      <tr><td><strong>Calendar</strong></td><td><code>/admin/calendar</code></td><td>FullCalendar unified view — tasks, project milestones, bookings, subscription renewals, social posts</td></tr>
+      <tr><td><strong>Calendar</strong></td><td><code>/admin/calendar</code></td><td>Custom calendar grid — month view with day-click event list, colour-coded by type (tasks, project milestones, bookings, subscription renewals, social posts). DataTable used for event list panel.</td></tr>
       <tr><td><strong>Bookings</strong></td><td><code>/admin/bookings</code></td><td>Incoming booking list, confirm/decline, add meeting link, 24h reminder cron</td></tr>
       <tr><td><strong>Subscriptions</strong></td><td><code>/admin/subscriptions</code></td><td>Business tool/domain renewals, auto-calendar events, 14-day renewal alerts</td></tr>
       <tr><td><strong>Sites</strong></td><td><code>/admin/sites</code></td><td>Register sites (passive/active/WordPress), manual health check, SSL expiry alerts, WP update flags</td></tr>
@@ -903,7 +931,7 @@ GRANT SELECT, INSERT, UPDATE, DELETE ON finance_documents TO service_role;</code
 </div>
 
 <div class="doc-footer">
-  <strong>Brightex Solutions</strong> — Internal System Documentation · Confidential · May 2026 · Not for public distribution
+  <strong>Brightex Solutions</strong> — Internal System Documentation · Confidential · June 2026 · Not for public distribution
 </div>
 
 </body>

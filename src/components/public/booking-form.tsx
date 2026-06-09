@@ -36,8 +36,8 @@ interface BookingFormProps {
   variant?: "card" | "embedded";
 }
 
-const fieldClass = "w-full px-4 py-3 rounded-sm border border-brand-border dark:border-white/15 bg-brand-bg dark:bg-white/5 text-brand-navy dark:text-white placeholder:text-brand-muted focus:outline-none focus:border-brand-gold focus:ring-1 focus:ring-brand-gold transition-colors text-sm";
-const labelClass = "block text-[10px] font-bold text-brand-muted dark:text-white/40 uppercase tracking-[0.15em] mb-2";
+const fieldClass = "w-full px-4 py-3 rounded-sm border border-slate-300 dark:border-white/15 bg-white dark:bg-white/5 text-brand-navy dark:text-white placeholder:text-slate-400 focus:outline-none focus:border-brand-gold focus:ring-1 focus:ring-brand-gold transition-colors text-sm";
+const labelClass = "block text-xs font-semibold text-slate-600 dark:text-white/60 mb-2";
 
 export function BookingForm({ variant = "card" }: BookingFormProps) {
   const [submitted, setSubmitted] = useState(false);
@@ -124,7 +124,7 @@ export function BookingForm({ variant = "card" }: BookingFormProps) {
         </div>
         <div>
           <label className={labelClass}>Call Type <span className="text-brand-gold">*</span></label>
-          <select {...register("purpose")} className={cn(fieldClass, "dark:bg-brand-navy")}>
+          <select {...register("purpose")} className={fieldClass}>
             {purposeOptions.map((o) => (
               <option key={o.value} value={o.value}>{o.label}</option>
             ))}

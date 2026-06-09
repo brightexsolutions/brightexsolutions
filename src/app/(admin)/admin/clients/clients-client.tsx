@@ -6,6 +6,7 @@ import { QuickClientPanel } from "@/components/admin/quick-client-panel";
 import { Card } from "@/components/ui/card";
 import { StatCard } from "@/components/admin/stat-card";
 import { DataTable, StackedCell, type Column, type RowAction } from "@/components/admin/data-table";
+import { useConfirm } from "@/components/admin/confirm-dialog";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -46,6 +47,7 @@ type Client = {
 };
 
 export function ClientsPageClient() {
+  const confirm = useConfirm();
   const [clients, setClients] = useState<Client[]>([]);
   const [loading, setLoading] = useState(true);
   const [classFilter, setClassFilter] = useState("");
@@ -110,7 +112,7 @@ export function ClientsPageClient() {
   }
 
   async function handleDelete(client: Client) {
-    if (!confirm(`Delete ${client.name}? This cannot be undone.`)) return;
+    if (!await confirm({ message: `Delete ${client.name}? This cannot be undone.` })) return;
     setBusyId(client.id);
     try {
       await fetch(`/api/admin/clients/${client.id}`, { method: "DELETE" });

@@ -10,6 +10,7 @@ import {
   Tooltip,
   Legend,
 } from "recharts";
+import { useTheme } from "next-themes";
 
 export interface MonthlyDataPoint {
   month: string;   // e.g. "Jan"
@@ -48,6 +49,8 @@ function CustomTooltip({ active, payload, label }: {
 }
 
 export function RevenueChart({ data }: RevenueChartProps) {
+  const { resolvedTheme } = useTheme();
+  const labelColor = resolvedTheme === "dark" ? "#97acc6" : "#64748b";
   return (
     <ResponsiveContainer width="100%" height={220}>
       <BarChart data={data} barCategoryGap="30%" barGap={3}>
@@ -56,13 +59,13 @@ export function RevenueChart({ data }: RevenueChartProps) {
           dataKey="month"
           axisLine={false}
           tickLine={false}
-          tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }}
+          tick={{ fontSize: 11, fill: labelColor }}
         />
         <YAxis
           axisLine={false}
           tickLine={false}
           tickFormatter={formatKES}
-          tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }}
+          tick={{ fontSize: 11, fill: labelColor }}
           width={42}
         />
         <Tooltip content={<CustomTooltip />} cursor={{ fill: "hsl(var(--muted))", opacity: 0.5 }} />

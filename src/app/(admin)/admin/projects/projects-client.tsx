@@ -17,6 +17,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { useConfirm } from "@/components/admin/confirm-dialog";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -264,6 +265,7 @@ function InvoiceRow({ inv }: { inv: Invoice }) {
 // ─── Main Component ───────────────────────────────────────────────────────────
 
 export function ProjectsPageClient() {
+  const confirm = useConfirm();
   const [projects, setProjects] = useState<Project[]>([]);
   const [clients, setClients] = useState<Client[]>([]);
   const [loading, setLoading] = useState(true);
@@ -372,7 +374,7 @@ export function ProjectsPageClient() {
   }
 
   async function handleDelete(project: Project) {
-    if (!confirm(`Delete "${project.name}"? This cannot be undone.`)) return;
+    if (!await confirm({ message: `Delete "${project.name}"? This cannot be undone.` })) return;
     await fetch(`/api/admin/projects/${project.id}`, { method: "DELETE" });
     setProjects((prev) => prev.filter((p) => p.id !== project.id));
   }
