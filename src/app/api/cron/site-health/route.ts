@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient, createAdminClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/server";
 import { verifyCronSecret } from "@/lib/cron-auth";
+import { checkSite } from "@/lib/site-health";
 
 export async function GET(request: NextRequest) {
   const denied = verifyCronSecret(request);
@@ -10,58 +11,55 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ status: "skipped", reason: "Supabase not configured" });
   }
 
-  // Delegate to the admin health check route by calling it internally
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
-  const res = await fetch(`${siteUrl}/api/admin/sites/health`, {
-    headers: {
-      // Provide a dummy auth token — the health route requires auth
-      // In production, use a service-role call directly instead of fetch
-      cookie: request.headers.get("cookie") ?? "",
-    },
-  });
-
   const supabase = createAdminClient();
-  const { data: sites } = await supabase.from("sites").select("id, url, platform, integration_level, health_endpoint, health_token");
+  const { data: sites } = await supabase
+    .from("sites")
+    .select("id, url, platform, integration_level, health_endpoint, health_token");
 
   if (!sites?.length) {
     return NextResponse.json({ status: "ok", checked: 0, timestamp: new Date().toISOString() });
   }
 
-  // Run health checks directly
   const results = await Promise.allSettled(
     sites.map(async (site) => {
-      const start = Date.now();
-      try {
-        const siteRes = await fetch(site.url, { method: "HEAD", signal: AbortSignal.timeout(10000) });
-        const responseTime = Date.now() - start;
-        const status = siteRes.ok ? "up" : siteRes.status >= 500 ? "down" : "degraded";
+      const check = await checkSite(site);
+      const now = new Date().toISOString();
 
-        await supabase.from("sites").update({
-          status,
-          last_checked: new Date().toISOString(),
-          response_time_ms: responseTime,
-        }).eq("id", site.id);
+      await supabase.from("sites").update({
+        status: check.status,
+        last_checked: now,
+        response_time_ms: check.response_time_ms,
+        ssl_expiry: check.ssl_expiry,
+        requires_update: check.requires_update,
+        wp_version: check.wp_version,
+      }).eq("id", site.id);
 
-        if (status === "down") {
+      if (check.status === "down") {
+        await supabase.from("system_alerts").insert({
+          type: "site_down",
+          severity: "critical",
+          message: `${site.url} is DOWN`,
+          entity_id: site.id,
+          entity_type: "site",
+        });
+      }
+
+      if (check.ssl_expiry) {
+        const daysUntilExpiry = Math.floor(
+          (new Date(check.ssl_expiry).getTime() - Date.now()) / 86400000
+        );
+        if (daysUntilExpiry <= 30) {
           await supabase.from("system_alerts").insert({
-            type: "site_down",
-            severity: "critical",
-            message: `${site.url} is DOWN`,
+            type: "ssl_expiring",
+            severity: daysUntilExpiry <= 7 ? "critical" : "warning",
+            message: `SSL certificate for ${site.url} expires in ${daysUntilExpiry} days`,
             entity_id: site.id,
             entity_type: "site",
           });
         }
-
-        return { id: site.id, status, response_time_ms: responseTime };
-      } catch {
-        await supabase.from("sites").update({
-          status: "down",
-          last_checked: new Date().toISOString(),
-          response_time_ms: Date.now() - start,
-        }).eq("id", site.id);
-
-        return { id: site.id, status: "down" };
       }
+
+      return { id: site.id, status: check.status };
     })
   );
 
