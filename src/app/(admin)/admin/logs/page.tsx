@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import {
   ScrollText, RefreshCw, ChevronLeft, ChevronRight,
-  AlertCircle, Info, CheckCircle2, Clock,
+  AlertCircle, Info, CheckCircle2, Clock, Search, X,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -79,6 +79,7 @@ export default function ActivityLogPage() {
   const [page, setPage] = useState(0);
   const [loading, setLoading] = useState(true);
   const [expanded, setExpanded] = useState<string | null>(null);
+  const [search, setSearch] = useState("");
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -105,6 +106,14 @@ export default function ActivityLogPage() {
   }
 
   const totalPages = Math.ceil(count / PAGE_SIZE);
+
+  const visibleLogs = search.trim()
+    ? logs.filter((l) => {
+        const q = search.trim().toLowerCase();
+        return [l.actor_name, l.action, l.entity_type, l.entity_label, l.notes]
+          .some((v) => v && v.toLowerCase().includes(q));
+      })
+    : logs;
 
   return (
     <div className="space-y-5">
@@ -149,17 +158,41 @@ export default function ActivityLogPage() {
 
       {/* Log table */}
       <div className="rounded-sm border border-border bg-card overflow-hidden">
+        {/* Toolbar */}
+        <div className="flex items-center gap-3 px-4 py-3 border-b border-border">
+          <div className="relative flex-1 max-w-xs">
+            <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
+            <input
+              type="text"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search logs…"
+              className="w-full h-8 pl-8 pr-8 rounded-lg border border-input bg-background text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+            />
+            {search && (
+              <button onClick={() => setSearch("")} className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
+                <X size={12} />
+              </button>
+            )}
+          </div>
+          <span className="text-xs text-muted-foreground shrink-0">
+            {search ? `${visibleLogs.length} of ${logs.length}` : `${count.toLocaleString()} entries`}
+          </span>
+        </div>
+
         {loading && logs.length === 0 ? (
           <div className="py-16 text-center text-muted-foreground text-sm">Loading…</div>
-        ) : logs.length === 0 ? (
+        ) : visibleLogs.length === 0 ? (
           <div className="py-16 text-center">
             <ScrollText size={32} className="mx-auto text-muted-foreground/30 mb-3" />
-            <p className="text-sm text-muted-foreground">No log entries found.</p>
+            <p className="text-sm text-muted-foreground">
+              {search ? `No results for "${search}"` : "No log entries found."}
+            </p>
           </div>
         ) : (
-          <div className="divide-y divide-border">
+          <div className="divide-y divide-border scrollbar-overlay overflow-y-auto" style={{ maxHeight: "calc(100vh - 340px)" }}>
             {/* Table head */}
-            <div className="hidden sm:grid grid-cols-[28px_160px_100px_120px_1fr_180px] gap-3 px-5 py-2.5 bg-muted/40 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+            <div className="hidden sm:grid grid-cols-[28px_160px_100px_120px_1fr_180px] gap-3 px-5 py-2.5 bg-muted/60 sticky top-0 z-10 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
               <span />
               <span>Actor</span>
               <span>Category</span>
@@ -168,7 +201,7 @@ export default function ActivityLogPage() {
               <span>Time</span>
             </div>
 
-            {logs.map((log) => {
+            {visibleLogs.map((log) => {
               const style = getActionStyle(log.action);
               const Icon = style.icon;
               const isExpanded = expanded === log.id;
