@@ -2,6 +2,7 @@ import { PublicNav } from "@/components/public/nav";
 import { PublicFooter } from "@/components/public/footer";
 import { BrixoWidget } from "@/components/public/brixo-widget";
 import { AnnouncementBanner } from "@/components/public/announcement-banner";
+import { AnnouncementDialog } from "@/components/public/announcement-dialog";
 
 async function getActiveAnnouncement() {
   if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
@@ -37,6 +38,7 @@ export default async function PublicLayout({
   return (
     <div className="force-light min-h-screen bg-white text-[#1e2840] flex flex-col">
       <AnnouncementBanner announcement={announcement} />
+      <AnnouncementDialog announcement={announcement} />
       <PublicNav />
       <main className="flex-1">{children}</main>
       <PublicFooter />
