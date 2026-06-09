@@ -103,7 +103,7 @@ export function Hero({ announcement }: { announcement?: HeroAnnouncement }) {
         </FadeIn>
 
         {/* Stats */}
-        <FadeInStagger className="grid grid-cols-2 sm:grid-cols-4 gap-8 border-t border-white/10 pt-12">
+        <FadeInStagger className="grid grid-cols-2 sm:grid-cols-4 gap-8 border-t border-white/10 pt-12" viewportMargin="0px">
           {stats.map((s) => (
             <StaggerChild key={s.label}>
               <div className="text-center">
