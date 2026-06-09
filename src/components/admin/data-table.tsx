@@ -221,7 +221,7 @@ export function DataTable<T extends Record<string, unknown>>({
 
       {/* ── Table ── */}
       <div
-        className={cn("overflow-y-auto", maxHeight && "overflow-y-auto")}
+        className={cn("overflow-y-auto scrollbar-overlay", maxHeight && "overflow-y-auto")}
         style={maxHeight ? { maxHeight } : undefined}
       >
         <table className="w-full text-sm table-fixed">

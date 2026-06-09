@@ -25,15 +25,16 @@ const navGroups = [
     ],
   },
   {
-    label: "Clients & Pipeline",
+    label: "Clients & Sales",
     items: [
       { href: "/admin/clients", icon: Users, label: "Clients" },
       { href: "/admin/sales", icon: TrendingUp, label: "Sales Pipeline" },
+      { href: "/admin/bookings", icon: BookOpen, label: "Bookings" },
       { href: "/admin/communications", icon: MessageSquare, label: "Communications" },
     ],
   },
   {
-    label: "Projects & Work",
+    label: "Projects",
     items: [
       { href: "/admin/projects", icon: FolderOpen, label: "Projects" },
       { href: "/admin/tasks", icon: CheckSquare, label: "Tasks", badge: true },
@@ -52,13 +53,11 @@ const navGroups = [
     label: "Products",
     items: [
       { href: "/admin/products", icon: Package, label: "Products" },
-      { href: "/admin/bookings", icon: BookOpen, label: "Bookings" },
     ],
   },
   {
-    label: "Team & Content",
+    label: "Content & Marketing",
     items: [
-      { href: "/admin/team", icon: UserCheck, label: "Team" },
       { href: "/admin/social", icon: BarChart3, label: "Social Media" },
       { href: "/admin/announcements", icon: Megaphone, label: "Announcements" },
       { href: "/admin/portfolio", icon: Globe, label: "Portfolio" },
@@ -66,14 +65,15 @@ const navGroups = [
     ],
   },
   {
-    label: "Infrastructure",
+    label: "Team",
     items: [
-      { href: "/admin/sites", icon: Globe, label: "Site Monitoring" },
+      { href: "/admin/team", icon: UserCheck, label: "Team" },
     ],
   },
   {
-    label: "Settings",
+    label: "System",
     items: [
+      { href: "/admin/sites", icon: Globe, label: "Site Monitoring" },
       { href: "/admin/settings", icon: Settings, label: "Settings" },
       { href: "/admin/logs", icon: ScrollText, label: "Activity Log" },
     ],
@@ -97,7 +97,7 @@ export function AdminSidebar({ collapsed, onToggle }: SidebarProps) {
           : pathname === item.href || pathname.startsWith(item.href + "/")
       );
       // Always open the first two groups + any group with active item
-      init[g.label] = hasActive || g.label === "Overview" || g.label === "Clients & Pipeline" || g.label === "Projects & Work";
+      init[g.label] = hasActive || g.label === "Overview" || g.label === "Clients & Sales" || g.label === "Projects";
     });
     return init;
   });
@@ -170,7 +170,7 @@ export function AdminSidebar({ collapsed, onToggle }: SidebarProps) {
       )}
 
       {/* ── Nav ── */}
-      <nav className="flex-1 overflow-y-auto py-2 px-2 space-y-0.5 scrollbar-thin">
+      <nav className="flex-1 overflow-y-auto py-2 px-2 space-y-0.5 scrollbar-overlay">
         {navGroups.map((group) => {
           const isOpen = openGroups[group.label] ?? false;
           const hasActive = group.items.some((item) => isActive(item.href, "exact" in item ? item.exact : undefined));
