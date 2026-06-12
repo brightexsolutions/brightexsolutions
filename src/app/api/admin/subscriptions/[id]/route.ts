@@ -46,6 +46,38 @@ export async function PATCH(
     .single();
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+
+  // Sync calendar event when renewal date or billing cycle changes
+  if ("next_renewal_date" in result.data || "billing_cycle" in result.data || "name" in result.data) {
+    const { data: existing } = await supabase
+      .from("calendar_events")
+      .select("id")
+      .eq("entity_type", "subscription")
+      .eq("entity_id", id)
+      .eq("type", "subscription_renewal")
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (existing) {
+      const updates: Record<string, unknown> = {};
+      if (result.data.next_renewal_date) {
+        updates.start_at = new Date(result.data.next_renewal_date).toISOString();
+      }
+      if (result.data.name) {
+        updates.title = `${result.data.name} renewal`;
+      }
+      if (result.data.billing_cycle) {
+        updates.repeat_rule =
+          result.data.billing_cycle === "monthly" ? "monthly" :
+          result.data.billing_cycle === "yearly" ? "yearly" : null;
+      }
+      if (Object.keys(updates).length) {
+        await supabase.from("calendar_events").update(updates).eq("id", existing.id);
+      }
+    }
+  }
+
   return NextResponse.json({ data });
 }
 
@@ -63,5 +95,9 @@ export async function DELETE(
   const { id } = await params;
   const { error } = await supabase.from("subscriptions").update({ deleted_at: new Date().toISOString() }).eq("id", id);
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+
+  // Remove associated calendar events
+  await supabase.from("calendar_events").delete().eq("entity_type", "subscription").eq("entity_id", id);
+
   return NextResponse.json({ ok: true });
 }

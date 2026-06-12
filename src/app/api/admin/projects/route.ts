@@ -59,5 +59,17 @@ export async function POST(request: NextRequest) {
   const { data, error } = await supabase.from("projects").insert(result.data).select().single();
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
+  // Auto-create calendar event for project deadline
+  if (result.data.end_date) {
+    await supabase.from("calendar_events").insert({
+      title: `${result.data.name} — deadline`,
+      type: "project_milestone",
+      start_at: new Date(result.data.end_date).toISOString(),
+      all_day: true,
+      entity_type: "project",
+      entity_id: data.id as string,
+    });
+  }
+
   return NextResponse.json({ data }, { status: 201 });
 }

@@ -35,13 +35,23 @@ export async function GET(request: NextRequest) {
       }).eq("id", site.id);
 
       if (check.status === "down") {
-        await supabase.from("system_alerts").insert({
-          type: "site_down",
-          severity: "critical",
-          message: `${site.url} is DOWN`,
-          entity_id: site.id,
-          entity_type: "site",
-        });
+        // Deduplicate: only create alert if no unacknowledged down alert already exists
+        const { count: downCount } = await supabase
+          .from("system_alerts")
+          .select("*", { count: "exact", head: true })
+          .eq("entity_id", site.id)
+          .eq("type", "site_down")
+          .eq("acknowledged", false);
+
+        if ((downCount ?? 0) === 0) {
+          await supabase.from("system_alerts").insert({
+            type: "site_down",
+            severity: "critical",
+            message: `${site.url} is DOWN`,
+            entity_id: site.id,
+            entity_type: "site",
+          });
+        }
       }
 
       if (check.ssl_expiry) {
@@ -49,13 +59,23 @@ export async function GET(request: NextRequest) {
           (new Date(check.ssl_expiry).getTime() - Date.now()) / 86400000
         );
         if (daysUntilExpiry <= 30) {
-          await supabase.from("system_alerts").insert({
-            type: "ssl_expiring",
-            severity: daysUntilExpiry <= 7 ? "critical" : "warning",
-            message: `SSL certificate for ${site.url} expires in ${daysUntilExpiry} days`,
-            entity_id: site.id,
-            entity_type: "site",
-          });
+          // Deduplicate: only create alert if no unacknowledged SSL alert already exists
+          const { count: sslCount } = await supabase
+            .from("system_alerts")
+            .select("*", { count: "exact", head: true })
+            .eq("entity_id", site.id)
+            .eq("type", "ssl_expiring")
+            .eq("acknowledged", false);
+
+          if ((sslCount ?? 0) === 0) {
+            await supabase.from("system_alerts").insert({
+              type: "ssl_expiring",
+              severity: daysUntilExpiry <= 7 ? "critical" : "warning",
+              message: `SSL certificate for ${site.url} expires in ${daysUntilExpiry} days`,
+              entity_id: site.id,
+              entity_type: "site",
+            });
+          }
         }
       }
 

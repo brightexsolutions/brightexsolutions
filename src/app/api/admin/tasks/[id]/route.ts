@@ -86,6 +86,45 @@ export async function PATCH(
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
+  // ── Calendar sync ────────────────────────────────────────────────────────────
+  const dueDateChanged = "due_date" in result.data;
+  if (dueDateChanged) {
+    const newDue = result.data.due_date ?? null;
+    if (newDue) {
+      // Upsert: update existing event or insert if none
+      const { data: existing } = await supabase
+        .from("calendar_events")
+        .select("id")
+        .eq("entity_type", "task")
+        .eq("entity_id", id)
+        .eq("type", "task_deadline")
+        .maybeSingle();
+
+      if (existing) {
+        await supabase
+          .from("calendar_events")
+          .update({ start_at: new Date(newDue).toISOString(), title: task.title })
+          .eq("id", existing.id);
+      } else {
+        await supabase.from("calendar_events").insert({
+          title: task.title,
+          type: "task_deadline",
+          start_at: new Date(newDue).toISOString(),
+          all_day: true,
+          entity_type: "task",
+          entity_id: id,
+        });
+      }
+    } else {
+      // due_date cleared — remove the event
+      await supabase
+        .from("calendar_events")
+        .delete()
+        .eq("entity_type", "task")
+        .eq("entity_id", id);
+    }
+  }
+
   // ── Automation ──────────────────────────────────────────────────────────────
 
   if (newStatus === "done" && prevStatus !== "done") {
@@ -207,6 +246,9 @@ export async function DELETE(
 
   const { error } = await supabase.from("tasks").delete().eq("id", id);
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+
+  // Remove associated calendar events
+  await supabase.from("calendar_events").delete().eq("entity_type", "task").eq("entity_id", id);
 
   return NextResponse.json({ success: true });
 }
