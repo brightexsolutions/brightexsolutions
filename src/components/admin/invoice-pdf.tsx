@@ -221,7 +221,7 @@ export function InvoicePDFDocument({ invoice, paymentSettings }: { invoice: Invo
                 <Text style={[s.totalValue, { color: GREEN, fontFamily: "Helvetica-Bold" }]}>{fmt(paidAmount)}</Text>
               </View>
               <View style={[s.grandRow, { backgroundColor: AMBER }]}>
-                <Text style={s.grandLabel}>Balance Due</Text>
+                <Text style={[s.grandLabel, { color: "#ffffff" }]}>Balance Due</Text>
                 <Text style={s.grandValue}>{fmt(balance)}</Text>
               </View>
             </>
