@@ -152,7 +152,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 
   const { id } = await params;
 
-  const [{ data: invoice, error }, { data: settingsRows }] = await Promise.all([
+  const [{ data: invoice, error }, { data: settingsRows }, { data: payments }] = await Promise.all([
     supabase.from("invoices").select("*, clients(id, name, email), projects(id, name)").eq("id", id).single(),
     supabase.from("settings").select("key, value").in("key", [
       "invoice_mpesa_number", "invoice_mpesa_name",
@@ -162,6 +162,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       "invoice_bank_account_number", "invoice_bank_branch",
       "invoice_footer_note",
     ]),
+    supabase.from("payments").select("amount").eq("invoice_id", id).is("deleted_at", null),
   ]);
 
   if (error || !invoice) return NextResponse.json({ error: "Invoice not found" }, { status: 404 });
@@ -211,11 +212,13 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       emailSignoff(),
   });
 
+  const paidAmount = (payments ?? []).reduce((s, p: { amount: number }) => s + Number(p.amount), 0);
+
   // Generate PDF attachment
   let pdfBuffer: Buffer | undefined;
   try {
     pdfBuffer = await generateInvoicePdf(
-      invoice as Record<string, unknown>,
+      { ...invoice, paid_amount: paidAmount } as Record<string, unknown>,
       ps as InvoicePaymentSettings
     );
   } catch { /* attach silently fails — email still sends */ }

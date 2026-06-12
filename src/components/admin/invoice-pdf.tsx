@@ -56,14 +56,19 @@ const s = StyleSheet.create({
   accentBar: { height: 4, backgroundColor: GOLD, marginBottom: 28, borderRadius: 2 },
 });
 
+const GREEN  = "#10b981";
+const AMBER  = "#f59e0b";
+
 type LineItem = { description: string; qty: number; unit_price: number; total?: number };
 type InvoiceData = {
   invoice_number?: string | null;
   created_at: string;
   due_date?: string | null;
+  status?: string | null;
   total: number;
   subtotal?: number | null;
   tax?: number | null;
+  paid_amount?: number | null;
   notes?: string | null;
   items: LineItem[];
   payment_method?: string | null;
@@ -91,10 +96,32 @@ export function InvoicePDFDocument({ invoice, paymentSettings }: { invoice: Invo
   const subtotal = invoice.subtotal ?? items.reduce((s, it) => s + it.qty * it.unit_price, 0);
   const tax = invoice.tax ?? 0;
   const total = invoice.total;
+  const paidAmount = invoice.paid_amount ?? 0;
+  const balance = Math.max(0, total - paidAmount);
+  const isFullyPaid = paidAmount >= total && total > 0;
+  const isPartial = paidAmount > 0 && paidAmount < total;
 
   return (
     <Document title={`Invoice ${invoice.invoice_number ?? "Draft"}`} author="Brightex Solutions">
       <Page size="A4" style={s.page}>
+        {/* Payment status watermark stamp */}
+        {(isFullyPaid || isPartial) && (
+          <View style={{
+            position: "absolute", top: 220, right: 30,
+            borderWidth: 3, borderColor: isFullyPaid ? GREEN : AMBER,
+            borderRadius: 4, paddingHorizontal: 14, paddingVertical: 6,
+            transform: "rotate(20deg)", opacity: 0.25,
+          }}>
+            <Text style={{
+              fontSize: 22, fontFamily: "Helvetica-Bold",
+              color: isFullyPaid ? GREEN : AMBER,
+              letterSpacing: 2, textTransform: "uppercase",
+            }}>
+              {isFullyPaid ? "PAID IN FULL" : "PARTIAL PAYMENT"}
+            </Text>
+          </View>
+        )}
+
         {/* Top accent bar */}
         <View style={s.accentBar} />
 
@@ -123,8 +150,14 @@ export function InvoicePDFDocument({ invoice, paymentSettings }: { invoice: Invo
             <Text style={s.metaValue}>{invoice.due_date ? new Date(invoice.due_date).toLocaleDateString("en-KE", { day: "2-digit", month: "long", year: "numeric" }) : "On receipt"}</Text>
           </View>
           <View style={s.metaBlock}>
-            <Text style={s.metaLabel}>Amount Due</Text>
-            <Text style={[s.metaValue, { fontFamily: "Helvetica-Bold", color: NAVY, fontSize: 13 }]}>{fmt(total)}</Text>
+            <Text style={s.metaLabel}>{isFullyPaid ? "Amount Paid" : isPartial ? "Balance Due" : "Amount Due"}</Text>
+            <Text style={[s.metaValue, {
+              fontFamily: "Helvetica-Bold",
+              color: isFullyPaid ? GREEN : isPartial ? AMBER : NAVY,
+              fontSize: 13,
+            }]}>
+              {isFullyPaid ? fmt(total) : isPartial ? fmt(balance) : fmt(total)}
+            </Text>
           </View>
         </View>
 
@@ -175,10 +208,30 @@ export function InvoicePDFDocument({ invoice, paymentSettings }: { invoice: Invo
               <Text style={s.totalValue}>{fmt(tax)}</Text>
             </View>
           )}
+          {/* Invoice total row */}
           <View style={s.grandRow}>
-            <Text style={s.grandLabel}>Total Due</Text>
+            <Text style={s.grandLabel}>{isFullyPaid ? "Invoice Total" : "Total Due"}</Text>
             <Text style={s.grandValue}>{fmt(total)}</Text>
           </View>
+          {/* Payment summary rows */}
+          {isPartial && (
+            <>
+              <View style={[s.totalRow, { marginTop: 6 }]}>
+                <Text style={[s.totalLabel, { color: GREEN, fontFamily: "Helvetica-Bold" }]}>Amount Paid</Text>
+                <Text style={[s.totalValue, { color: GREEN, fontFamily: "Helvetica-Bold" }]}>{fmt(paidAmount)}</Text>
+              </View>
+              <View style={[s.grandRow, { backgroundColor: AMBER }]}>
+                <Text style={s.grandLabel}>Balance Due</Text>
+                <Text style={s.grandValue}>{fmt(balance)}</Text>
+              </View>
+            </>
+          )}
+          {isFullyPaid && (
+            <View style={[s.grandRow, { backgroundColor: GREEN, marginTop: 6 }]}>
+              <Text style={s.grandLabel}>Paid in Full</Text>
+              <Text style={s.grandValue}>{fmt(total)}</Text>
+            </View>
+          )}
         </View>
 
         {/* Notes */}
