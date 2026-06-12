@@ -84,11 +84,26 @@ const defaults = {
 
 type SettingsForm = typeof defaults;
 
+// Keys that belong to each section — used for per-section dirty tracking
+const SECTION_KEYS: Record<Section, (keyof SettingsForm)[]> = {
+  business:     ["business_name", "tagline", "address"],
+  contact:      ["email", "phone", "whatsapp", "booking_url"],
+  brand:        ["logo_dark_url", "logo_light_url", "logo_dark_placements", "logo_light_placements"],
+  invoice:      ["invoice_mpesa_number", "invoice_mpesa_name", "invoice_till_number", "invoice_till_name",
+                 "invoice_paypal_email", "invoice_bank_name", "invoice_bank_account_name",
+                 "invoice_bank_account_number", "invoice_bank_branch", "invoice_footer_note"],
+  social:       ["instagram", "facebook", "linkedin", "youtube", "tiktok"],
+  integrations: ["google_tag"],
+  ai:           ["ai_enabled", "ai_provider", "ai_model"],
+};
+
 export default function SettingsPage() {
   const [active, setActive] = useState<Section>("business");
   const [form, setForm] = useState<SettingsForm>(defaults);
+  const [savedForm, setSavedForm] = useState<SettingsForm>(defaults);
+  const [loaded, setLoaded] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [savedSection, setSavedSection] = useState<Section | null>(null);
+  const [saveError, setSaveError] = useState("");
   const [loadError, setLoadError] = useState("");
   const [uploading, setUploading] = useState({ dark: false, light: false });
 
@@ -108,7 +123,10 @@ export default function SettingsPage() {
         }
 
         if (activeRequest) {
-          setForm((current) => ({ ...current, ...(json.data ?? {}) }));
+          const merged = { ...defaults, ...(json.data ?? {}) } as SettingsForm;
+          setForm(merged);
+          setSavedForm(merged);
+          setLoaded(true);
           setLoadError("");
         }
       } catch {
@@ -125,9 +143,14 @@ export default function SettingsPage() {
     };
   }, []);
 
+  function isSectionDirty(section: Section): boolean {
+    if (!loaded) return false;
+    return SECTION_KEYS[section].some((k) => form[k] !== savedForm[k]);
+  }
+
   function update(key: keyof SettingsForm, value: string) {
     setForm((f) => ({ ...f, [key]: value }));
-    setSavedSection(null);
+    setSaveError("");
   }
 
   async function handleLogoUpload(variant: "dark" | "light", file: File) {
@@ -160,13 +183,19 @@ export default function SettingsPage() {
   async function handleSave(e: React.FormEvent) {
     e.preventDefault();
     setSaving(true);
+    setSaveError("");
     try {
-      await fetch("/api/admin/settings", {
+      const res = await fetch("/api/admin/settings", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(form),
       });
-      setSavedSection(active);
+      if (!res.ok) {
+        const json = await res.json().catch(() => ({}));
+        setSaveError(json.error ?? "Save failed. Please try again.");
+        return;
+      }
+      setSavedForm(form);
     } finally {
       setSaving(false);
     }
@@ -613,17 +642,22 @@ export default function SettingsPage() {
           {/* Save bar */}
           <div className="mt-4 flex items-center justify-between p-4 rounded-sm border border-border bg-card">
             <div className="flex items-center gap-2 text-sm">
-              {savedSection === active ? (
+              {saveError ? (
                 <>
-                  <CheckCircle2 size={15} className="text-emerald-500" />
-                  <span className="text-emerald-600 dark:text-emerald-400 font-medium">Changes saved</span>
+                  <AlertCircle size={15} className="text-red-500" />
+                  <span className="text-red-600 dark:text-red-400 font-medium">{saveError}</span>
                 </>
-              ) : (
+              ) : isSectionDirty(active) ? (
                 <>
                   <AlertCircle size={15} className="text-amber-500" />
                   <span className="text-muted-foreground">Unsaved changes in this section</span>
                 </>
-              )}
+              ) : loaded ? (
+                <>
+                  <CheckCircle2 size={15} className="text-emerald-500" />
+                  <span className="text-emerald-600 dark:text-emerald-400 font-medium">All changes saved</span>
+                </>
+              ) : null}
             </div>
             <button
               type="submit"

@@ -33,6 +33,10 @@ const SettingsSchema = z.object({
   invoice_bank_account_number: z.string().max(50).trim().optional(),
   invoice_bank_branch: z.string().max(100).trim().optional(),
   invoice_footer_note: z.string().max(500).trim().optional(),
+  // AI settings
+  ai_enabled:  z.string().max(10).trim().optional(),
+  ai_provider: z.string().max(20).trim().optional(),
+  ai_model:    z.string().max(100).trim().optional(),
 });
 
 export async function GET(request: NextRequest) {

@@ -46,7 +46,7 @@ const FALLBACK_FAQS = [
   { keywords: ["location", "where", "nairobi", "kenya", "africa"],
     question: "Where is Brightex based?",
     answer: "We're based in Nairobi, Kenya, and work with clients across East Africa and globally." },
-  { keywords: ["timeline", "how long", "duration", "how quickly"],
+  { keywords: ["timeline", "how long", "duration", "how quickly", "time", "weeks", "typical project", "turnaround", "delivery", "deadline", "how fast"],
     question: "How long does a project take?",
     answer: "Timelines vary — a marketing site typically takes 2–4 weeks, a web app 6–12 weeks, and an ERP 8–16 weeks. We'll give you a specific estimate after the discovery call." },
   { keywords: ["book", "schedule", "meeting", "demo", "appointment"],
