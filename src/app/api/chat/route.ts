@@ -3,6 +3,7 @@ import { z } from "zod";
 import { rateLimit } from "@/lib/rate-limit";
 import { BUSINESS_PHONE, BUSINESS_EMAIL } from "@/lib/constants";
 import { logger } from "@/lib/logger";
+import type { AIProvider } from "@/types";
 
 const MessageSchema = z.object({
   role: z.enum(["user", "assistant"]),
@@ -14,6 +15,19 @@ const ChatSchema = z.object({
   visitorId: z.string().max(64).optional(),
   history:   z.array(MessageSchema).max(10).optional(), // last N messages for AI context
 });
+
+// Greeting keywords — answered instantly without AI or DB
+const GREETING_KEYWORDS = [
+  "hello", "hi", "hey", "hiya", "howdy",
+  "good morning", "good afternoon", "good evening", "good day",
+  "jambo", "habari", "niaje", "sasa", "mambo", "vipi", "salama",
+  "sup", "what's up", "whats up",
+];
+
+function isGreeting(message: string): boolean {
+  const lower = message.toLowerCase().trim();
+  return GREETING_KEYWORDS.some((g) => lower === g || lower.startsWith(g + " ") || lower.startsWith(g + "!") || lower.startsWith(g + ","));
+}
 
 // Hardcoded fallback FAQs — used when DB is not connected
 const FALLBACK_FAQS = [
@@ -61,6 +75,15 @@ export async function POST(request: NextRequest) {
 
   const { message, history = [] } = result.data;
 
+  // ── 0. Greeting fast path — no AI or DB needed ────────────────────────────
+  if (isGreeting(message) && history.length === 0) {
+    return NextResponse.json({
+      answer: "Hi there! 👋 I'm Brixo, the Brightex assistant. How can I help you today?",
+      escalate: false,
+      source: "greeting",
+    });
+  }
+
   // ── 1. Try DB FAQs (keyword match) ───────────────────────────────────────
   let answer: string | null = null;
   let dbFaqs: Array<{ question?: string; answer: string; keywords?: string[] }> = [];
@@ -87,11 +110,13 @@ export async function POST(request: NextRequest) {
 
   if (answer) return NextResponse.json({ answer, escalate: false, source: "faq" });
 
-  // ── 2. AI fallback (Claude Haiku) ─────────────────────────────────────────
-  if (process.env.ANTHROPIC_API_KEY) {
+  // ── 2. AI fallback — respects admin provider setting ─────────────────────
+  const hasAnthropic = !!process.env.ANTHROPIC_API_KEY;
+  const hasGemini    = !!process.env.GEMINI_API_KEY;
+
+  if (hasAnthropic || hasGemini) {
     const aiLimited = await rateLimit(request, "ai_chat");
     if (aiLimited) {
-      // Rate limited on AI — fall back gracefully instead of 429
       return NextResponse.json({
         answer: null,
         escalate: true,
@@ -100,8 +125,31 @@ export async function POST(request: NextRequest) {
     }
 
     try {
-      const { callAI, brixoSystemPrompt, AI_MODELS } = await import("@/lib/ai");
+      const { callAI, brixoSystemPrompt, isAIAvailable, AI_MODELS } = await import("@/lib/ai");
       const faqs = dbFaqs.length ? dbFaqs : FALLBACK_FAQS;
+
+      // Read admin-configured provider from DB; fall back to whichever key exists
+      let provider: AIProvider = hasAnthropic ? "anthropic" : "gemini";
+      let model: string = hasAnthropic ? AI_MODELS.haiku : AI_MODELS.gemini_flash;
+
+      try {
+        const { createAdminClient } = await import("@/lib/supabase/server");
+        const supabase = createAdminClient();
+        const { data: rows } = await supabase
+          .from("settings")
+          .select("key, value")
+          .in("key", ["ai_provider", "ai_model", "ai_enabled"]);
+        const s: Record<string, string> = Object.fromEntries(
+          (rows ?? []).map((r: { key: string; value: string }) => [r.key, r.value])
+        );
+        if (s.ai_enabled === "false") throw new Error("AI disabled");
+        if (s.ai_provider && isAIAvailable(s.ai_provider as AIProvider)) {
+          provider = s.ai_provider as AIProvider;
+          model    = s.ai_model ?? model;
+        }
+      } catch {
+        // Use key-based defaults — settings read is best-effort
+      }
 
       const messages = [
         ...history,
@@ -111,8 +159,9 @@ export async function POST(request: NextRequest) {
       const aiAnswer = await callAI({
         messages,
         system:    brixoSystemPrompt(faqs),
-        model:     AI_MODELS.haiku,
+        model,
         maxTokens: 350,
+        provider,
       });
 
       return NextResponse.json({ answer: aiAnswer, escalate: false, source: "ai" });

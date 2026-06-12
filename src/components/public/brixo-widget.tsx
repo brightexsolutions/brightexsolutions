@@ -12,7 +12,8 @@ import {
 } from "@/lib/constants";
 
 type Mode = "bot" | "whatsapp";
-type Message = { role: "user" | "bot"; content: string };
+type MessageSource = "greeting" | "faq" | "ai" | "system";
+type Message = { role: "user" | "bot"; content: string; source?: MessageSource };
 
 const QUICK_REPLIES = [
   "Our Services",
@@ -56,6 +57,7 @@ export function BrixoWidget() {
     {
       role: "bot",
       content: "Hi 👋 I'm Brixo, the Brightex assistant. What can I help you with today?",
+      source: "system",
     },
   ]);
   const [input, setInput] = useState("");
@@ -101,12 +103,13 @@ export function BrixoWidget() {
             role: "bot",
             content:
               "I don't have a direct answer for that right now. Switch to WhatsApp to chat with the Brightex team — we'll respond within 2 hours.",
+            source: "system",
           },
         ]);
       } else {
         setMessages((prev) => [
           ...prev,
-          { role: "bot", content: data.answer },
+          { role: "bot", content: data.answer, source: (data.source ?? "faq") as MessageSource },
         ]);
         if (isBookingResponse(data.answer)) setShowBookCTA(true);
       }
@@ -201,7 +204,7 @@ export function BrixoWidget() {
                     {messages.map((msg, i) => (
                       <div
                         key={i}
-                        className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}
+                        className={`flex flex-col ${msg.role === "user" ? "items-end" : "items-start"}`}
                       >
                         <div
                           className={`max-w-[80%] px-3.5 py-2.5 rounded-sm text-sm leading-relaxed ${
@@ -212,6 +215,11 @@ export function BrixoWidget() {
                         >
                           {msg.role === "bot" ? renderBotMessage(msg.content) : msg.content}
                         </div>
+                        {msg.role === "bot" && msg.source === "ai" && (
+                          <span className="text-[10px] text-brand-muted mt-0.5 ml-0.5 flex items-center gap-1">
+                            ✨ <span>AI response</span>
+                          </span>
+                        )}
                       </div>
                     ))}
 
