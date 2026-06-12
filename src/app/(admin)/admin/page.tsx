@@ -38,16 +38,6 @@ function buildMonthlyData(
   return points;
 }
 
-const DEMO_CHART: MonthlyDataPoint[] = [
-  { month: "Jan", income: 85000,  expenses: 32000 },
-  { month: "Feb", income: 120000, expenses: 41000 },
-  { month: "Mar", income: 95000,  expenses: 28000 },
-  { month: "Apr", income: 140000, expenses: 52000 },
-  { month: "May", income: 110000, expenses: 38000 },
-  { month: "Jun", income: 175000, expenses: 60000 },
-  { month: "Jul", income: 155000, expenses: 45000 },
-  { month: "Aug", income: 200000, expenses: 70000 },
-];
 
 // ─── Data fetch ────────────────────────────────────────────────────────────────
 
@@ -109,10 +99,7 @@ export default async function AdminDashboardPage() {
   const hasCritical = data?.alerts.some((a: { severity: string }) => a.severity === "critical");
   const hasWarnings = data?.alerts.some((a: { severity: string }) => a.severity === "warning");
 
-  const chartData: MonthlyDataPoint[] =
-    hasData && data.chartData.some((p) => p.income > 0 || p.expenses > 0)
-      ? data.chartData
-      : DEMO_CHART;
+  const chartData: MonthlyDataPoint[] = data?.chartData ?? [];
 
   // Build unified activity rows from contacts + bookings + invoices
   const activityRows: ActivityRow[] = [];
@@ -149,16 +136,6 @@ export default async function AdminDashboardPage() {
         date: inv.created_at,
       });
     });
-  } else {
-    // Demo rows
-    const demoRows: ActivityRow[] = [
-      { id: "1", ref: "INV-00076", description: "Web Design Project", meta: "Acme Ltd", amount: "KES 85,000", status: "completed", date: new Date().toISOString() },
-      { id: "2", ref: "BOOK-0075", description: "Discovery Call", meta: "intro_call", amount: undefined, status: "confirmed", date: new Date(Date.now() - 86400000).toISOString() },
-      { id: "3", ref: "CON-00074", description: "New enquiry", meta: "jane@example.com", amount: undefined, status: "new", date: new Date(Date.now() - 172800000).toISOString() },
-      { id: "4", ref: "INV-00073", description: "ERP Development", meta: "School System", amount: "KES 320,000", status: "sent", date: new Date(Date.now() - 259200000).toISOString() },
-      { id: "5", ref: "CON-00072", description: "SEO enquiry", meta: "mike@business.co.ke", amount: undefined, status: "new", date: new Date(Date.now() - 345600000).toISOString() },
-    ];
-    activityRows.push(...demoRows);
   }
 
 
@@ -308,10 +285,7 @@ export default async function AdminDashboardPage() {
               <p className="text-xs text-muted-foreground mt-0.5">Latest contacts, bookings, and invoices</p>
             </div>
             <div className="flex items-center gap-3">
-              {!hasData && (
-                <span className="text-xs text-muted-foreground bg-muted px-2 py-1 rounded-md">Demo data</span>
-              )}
-              <Link href="/admin/clients" className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1 transition-colors">
+<Link href="/admin/clients" className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1 transition-colors">
                 View all <ArrowUpRight size={12} />
               </Link>
             </div>

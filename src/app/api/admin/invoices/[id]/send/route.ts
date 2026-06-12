@@ -1,22 +1,23 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient, createAdminClient } from "@/lib/supabase/server";
 import { forbidTeamMember } from "@/lib/role-guard";
-import { transporter } from "@/lib/mail";
+import { transporter, SENDERS } from "@/lib/mail";
 import { rateLimit } from "@/lib/rate-limit";
 import {
   SITE_NAME,
   BUSINESS_PHONE,
-  BUSINESS_EMAIL,
   whatsappUrl,
 } from "@/lib/constants";
 import {
   emailTemplate,
   emailParagraph,
+  emailInfoCard,
+  emailReferenceBox,
   emailAlert,
-  emailSectionLabel,
   emailDivider,
   emailSignoff,
 } from "@/lib/email-templates";
+import { generateInvoicePdf, type InvoicePaymentSettings } from "@/lib/invoice-pdf-helper";
 
 function fmtKES(n: number) {
   return `KES ${n.toLocaleString("en-KE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
@@ -173,13 +174,24 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   const client = invoice.clients as { name: string; email: string };
   const items = invoice.items as Array<{ description: string; qty: number; unit_price: number; total?: number }>;
 
+  const firstName = client.name.split(" ")[0];
+  const dueLabel = invoice.due_date
+    ? new Date(invoice.due_date).toLocaleDateString("en-KE", { day: "2-digit", month: "long", year: "numeric" })
+    : "On receipt";
+
   const html = emailTemplate({
     title: `Invoice ${invoice.invoice_number ?? ""}`,
     subtitle: invoice.invoice_number ?? undefined,
-    preheader: `${SITE_NAME} invoice for ${fmtKES(Number(invoice.total))} — due ${invoice.due_date ? new Date(invoice.due_date).toLocaleDateString("en-KE") : "on receipt"}`,
+    preheader: `${SITE_NAME} invoice for ${fmtKES(Number(invoice.total))} — due ${dueLabel}`,
+    heroLabel: `Invoice · ${invoice.invoice_number ?? ""}`,
+    heroTitle: `Here's your invoice,\n${firstName}.`,
     body:
-      emailParagraph(`Dear <strong>${client.name}</strong>,`) +
       emailParagraph("Please find your invoice details below. Kindly process payment by the due date shown.") +
+      emailInfoCard("📄", "Invoice Number", invoice.invoice_number ?? "—") +
+      emailInfoCard("💰", "Amount Due", fmtKES(Number(invoice.total))) +
+      emailInfoCard("📅", "Due Date", dueLabel) +
+      (invoice.projects?.name ? emailInfoCard("📁", "Project", invoice.projects.name) : "") +
+      emailReferenceBox(invoice.invoice_number ?? "—", "Invoice Reference") +
       buildItemsTable(items) +
       buildTotalsBlock(
         Number(invoice.subtotal ?? items.reduce((s, i) => s + i.qty * i.unit_price, 0)),
@@ -199,12 +211,26 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       emailSignoff(),
   });
 
+  // Generate PDF attachment
+  let pdfBuffer: Buffer | undefined;
+  try {
+    pdfBuffer = await generateInvoicePdf(
+      invoice as Record<string, unknown>,
+      ps as InvoicePaymentSettings
+    );
+  } catch { /* attach silently fails — email still sends */ }
+
+  const filename = `invoice-${invoice.invoice_number ?? invoice.id}.pdf`;
+
   try {
     await transporter.sendMail({
-      from: `"${SITE_NAME}" <${process.env.SMTP_USER}>`,
+      from: SENDERS.payments,
       to: client.email,
       subject: `Invoice ${invoice.invoice_number} from ${SITE_NAME}`,
       html,
+      attachments: pdfBuffer
+        ? [{ filename, content: pdfBuffer, contentType: "application/pdf" }]
+        : undefined,
     });
   } catch {
     return NextResponse.json({ error: "Failed to send email" }, { status: 500 });

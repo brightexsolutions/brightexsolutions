@@ -36,7 +36,7 @@ interface BookingFormProps {
   variant?: "card" | "embedded";
 }
 
-const fieldClass = "w-full px-4 py-3 rounded-sm border border-slate-300 dark:border-white/15 bg-white dark:bg-white/5 text-brand-navy dark:text-white placeholder:text-slate-400 focus:outline-none focus:border-brand-gold focus:ring-1 focus:ring-brand-gold transition-colors text-sm";
+const fieldClass = "w-full px-4 py-3 rounded-sm ring-1 ring-inset ring-slate-300 dark:ring-white/15 bg-white dark:bg-white/5 text-brand-navy dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-gold transition-colors text-sm";
 const labelClass = "block text-xs font-semibold text-slate-600 dark:text-white/60 mb-2";
 
 export function BookingForm({ variant = "card" }: BookingFormProps) {

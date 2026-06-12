@@ -23,12 +23,14 @@ export async function GET(request: NextRequest) {
     supabase
       .from("invoices")
       .select("id", { count: "exact", head: true })
-      .eq("status", "overdue"),
+      .eq("status", "overdue")
+      .is("deleted_at", null),
 
     supabase
       .from("bookings")
       .select("id", { count: "exact", head: true })
-      .eq("status", "pending"),
+      .eq("status", "pending")
+      .is("deleted_at", null),
 
     supabase
       .from("contacts")
@@ -38,7 +40,8 @@ export async function GET(request: NextRequest) {
     supabase
       .from("social_posts")
       .select("id", { count: "exact", head: true })
-      .eq("status", "pending_approval"),
+      .eq("status", "pending_approval")
+      .is("deleted_at", null),
   ]);
 
   // Sort alerts: critical → warning → info
