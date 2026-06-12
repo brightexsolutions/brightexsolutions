@@ -122,10 +122,21 @@ async function callGemini({
   }
 
   // Multi-turn: convert to Gemini history format
-  const history = messages.slice(0, -1).map((m) => ({
+  // Gemini requires history to start with 'user' — trim any leading model turns
+  // (e.g. the greeting fast-path reply that opens every conversation)
+  const rawHistory = messages.slice(0, -1).map((m) => ({
     role: m.role === "assistant" ? "model" : "user",
     parts: [{ text: m.content }],
   }));
+  const firstUserIdx = rawHistory.findIndex((m) => m.role === "user");
+
+  // No user turns in history at all — fall back to single-shot
+  if (firstUserIdx === -1) {
+    const result = await genModel.generateContent(messages[messages.length - 1].content);
+    return result.response.text().trim();
+  }
+
+  const history = firstUserIdx > 0 ? rawHistory.slice(firstUserIdx) : rawHistory;
   const chat = genModel.startChat({ history });
   const lastMessage = messages[messages.length - 1].content;
   const result = await chat.sendMessage(lastMessage);
