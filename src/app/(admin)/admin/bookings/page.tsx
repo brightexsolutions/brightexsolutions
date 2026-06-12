@@ -1,9 +1,10 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { BookOpen, Clock, CheckCircle2, XCircle, Pencil, Trash2, Loader2, Bell, MessageCircle } from "lucide-react";
+import { BookOpen, Clock, CheckCircle2, XCircle, Pencil, Trash2, Loader2, Bell, Mail, MessageCircle, ChevronDown } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -126,16 +127,25 @@ export default function BookingsPage() {
     }
   }
 
-  async function notifyBooking(booking: Booking) {
+  async function notifyBooking(booking: Booking, channel: "email" | "whatsapp") {
     setBusy(booking.id, true);
     try {
-      const res = await fetch(`/api/admin/bookings/${booking.id}/notify`, { method: "POST" });
+      const res = await fetch(`/api/admin/bookings/${booking.id}/notify`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ channel }),
+      });
       const json = await res.json().catch(() => ({}));
-      if (json.whatsapp_link) {
-        window.open(json.whatsapp_link, "_blank", "noopener,noreferrer");
+
+      if (channel === "whatsapp") {
+        if (json.whatsapp_link) window.open(json.whatsapp_link, "_blank", "noopener,noreferrer");
+        return;
       }
-      if (!json.emailSent) {
-        alert("Email could not be sent — WhatsApp opened so you can notify manually.");
+
+      // Email channel
+      if (!json.emailSent && json.whatsapp_link) {
+        const fallback = window.confirm("Email could not be sent. Open WhatsApp to notify manually?");
+        if (fallback) window.open(json.whatsapp_link, "_blank", "noopener,noreferrer");
       }
     } finally {
       setBusy(booking.id, false);
@@ -272,13 +282,27 @@ export default function BookingsPage() {
                       </button>
                     )}
                     {b.status === "confirmed" && (
-                      <button
-                        onClick={(e) => { e.stopPropagation(); notifyBooking(b); }}
-                        disabled={busyIds.has(b.id)}
-                        className="flex items-center gap-1 px-2 py-1 rounded-md text-[11px] font-medium bg-brand-gold/10 text-brand-gold border border-brand-gold/20 hover:bg-brand-gold/20 transition-colors disabled:opacity-50"
-                      >
-                        {busyIds.has(b.id) ? <Loader2 size={10} className="animate-spin" /> : <Bell size={10} />} Notify
-                      </button>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger
+                          onClick={(e) => e.stopPropagation()}
+                          disabled={busyIds.has(b.id)}
+                          className="flex items-center gap-1 px-2 py-1 rounded-md text-[11px] font-medium bg-brand-gold/10 text-brand-gold border border-brand-gold/20 hover:bg-brand-gold/20 transition-colors disabled:opacity-50"
+                        >
+                          {busyIds.has(b.id) ? <Loader2 size={10} className="animate-spin" /> : <Bell size={10} />}
+                          Notify
+                          <ChevronDown size={9} />
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="min-w-[160px]" onClick={(e) => e.stopPropagation()}>
+                          <DropdownMenuItem onSelect={() => notifyBooking(b, "email")} className="gap-2 cursor-pointer">
+                            <Mail size={13} className="text-muted-foreground" />
+                            Email confirmation
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onSelect={() => notifyBooking(b, "whatsapp")} className="gap-2 cursor-pointer">
+                            <MessageCircle size={13} className="text-muted-foreground" />
+                            WhatsApp message
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     )}
                   </div>
                 );

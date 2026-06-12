@@ -39,6 +39,8 @@ export async function POST(
   if (!user) return NextResponse.json({ error: "Unauthorised" }, { status: 401 });
 
   const { id } = await params;
+  const body = await request.json().catch(() => ({}));
+  const channel: "email" | "whatsapp" = body.channel === "whatsapp" ? "whatsapp" : "email";
 
   const { data: booking, error } = await supabase
     .from("bookings")
@@ -47,7 +49,6 @@ export async function POST(
     .single();
 
   if (error || !booking) return NextResponse.json({ error: "Booking not found" }, { status: 404 });
-  if (!booking.booker_email) return NextResponse.json({ error: "Booker has no email address" }, { status: 422 });
 
   const scheduledDate = new Date(booking.scheduled_at);
   const formattedDate = scheduledDate.toLocaleDateString("en-KE", {
@@ -57,6 +58,37 @@ export async function POST(
     hour: "2-digit", minute: "2-digit", timeZone: "Africa/Nairobi", timeZoneName: "short",
   });
   const purposeLabel = purposeLabels[booking.purpose] ?? "Meeting";
+
+  // ── WhatsApp link (always built; returned for whatsapp channel) ─────────────
+  const waMessage = `Hi ${booking.booker_name}, your ${purposeLabel} with ${SITE_NAME} on ${formattedDate} at ${formattedTime} has been confirmed.${booking.meeting_link ? ` Join here: ${booking.meeting_link}` : ""} Looking forward to speaking with you!`;
+  const waLink = booking.booker_phone
+    ? `https://wa.me/${booking.booker_phone.replace(/\D/g, "")}?text=${encodeURIComponent(waMessage)}`
+    : `https://wa.me/${BUSINESS_WHATSAPP}?text=${encodeURIComponent(waMessage)}`;
+
+  // ── WhatsApp channel ────────────────────────────────────────────────────────
+  if (channel === "whatsapp") {
+    const { data: matchedClient } = await supabase
+      .from("clients")
+      .select("id")
+      .eq("email", booking.booker_email)
+      .maybeSingle();
+
+    await supabase.from("communications").insert({
+      client_id: matchedClient?.id ?? null,
+      type: "whatsapp",
+      subject: `WhatsApp booking confirmation — ${purposeLabel} on ${formattedDate}`,
+      body: waMessage,
+      direction: "out",
+      status: "sent",
+    });
+
+    return NextResponse.json({ whatsapp_link: waLink, whatsapp_message: waMessage });
+  }
+
+  // ── Email channel ───────────────────────────────────────────────────────────
+  if (!booking.booker_email) {
+    return NextResponse.json({ error: "Booker has no email address" }, { status: 422 });
+  }
 
   const html = emailTemplate({
     title: "Booking Confirmed",
@@ -102,14 +134,8 @@ export async function POST(
     });
     emailSent = true;
   } catch {
-    // Still return WhatsApp link so admin can notify manually
+    // Email failed — caller can fall back to WhatsApp
   }
-
-  // Build pre-filled WhatsApp message for admin to send if email fails
-  const waMessage = `Hi ${booking.booker_name}, your ${purposeLabel} with ${SITE_NAME} on ${formattedDate} at ${formattedTime} has been confirmed.${booking.meeting_link ? ` Join here: ${booking.meeting_link}` : ""} Looking forward to speaking with you!`;
-  const waLink = booking.booker_phone
-    ? `https://wa.me/${booking.booker_phone.replace(/\D/g, "")}?text=${encodeURIComponent(waMessage)}`
-    : `https://wa.me/${BUSINESS_WHATSAPP}?text=${encodeURIComponent(waMessage)}`;
 
   if (emailSent) {
     await supabase.from("bookings").update({ reminder_sent: true }).eq("id", id);
@@ -132,6 +158,7 @@ export async function POST(
 
   return NextResponse.json({
     emailSent,
+    // Always return the whatsapp link as a fallback the caller can offer
     whatsapp_link: waLink,
     whatsapp_message: waMessage,
   });
