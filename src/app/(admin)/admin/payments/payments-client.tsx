@@ -39,6 +39,7 @@ type Payment = {
   method: string;
   reference?: string | null;
   confirmation_sent?: boolean | null;
+  confirmation_sent_at?: string | null;
   date?: string | null;
   notes?: string | null;
   created_at: string;
@@ -181,7 +182,10 @@ export function PaymentsPageClient() {
         setLoadError(json.error ?? "Failed to send receipt");
         return;
       }
-      setPayments((prev) => prev.map((p) => p.id === payment.id ? { ...p, confirmation_sent: true } : p));
+      const sentAt: string = json.confirmation_sent_at ?? new Date().toISOString();
+      setPayments((prev) => prev.map((p) => p.id === payment.id ? { ...p, confirmation_sent: true, confirmation_sent_at: sentAt } : p));
+      // Keep view sheet in sync if it's open for this payment
+      setViewReceiptPayment((prev) => prev?.id === payment.id ? { ...prev, confirmation_sent: true, confirmation_sent_at: sentAt } : prev);
     } finally {
       setBusyReceiptIds((prev) => { const next = new Set(prev); next.delete(payment.id); return next; });
     }
@@ -329,11 +333,21 @@ export function PaymentsPageClient() {
               key: "confirmation_sent",
               label: "Receipt",
               className: "hidden md:table-cell",
-              render: (row) => (
-                <span className={`text-xs font-medium ${row.confirmation_sent ? "text-emerald-500" : "text-amber-500"}`}>
-                  {row.confirmation_sent ? "Sent" : "Pending"}
-                </span>
-              ),
+              render: (row) => {
+                const p = row as unknown as Payment;
+                if (p.confirmation_sent && p.confirmation_sent_at) {
+                  return (
+                    <span className="text-xs text-emerald-500 font-medium whitespace-nowrap">
+                      Sent {new Date(p.confirmation_sent_at).toLocaleDateString("en-KE", { day: "numeric", month: "short" })}
+                    </span>
+                  );
+                }
+                return (
+                  <span className={`text-xs font-medium ${p.confirmation_sent ? "text-emerald-500" : "text-amber-500"}`}>
+                    {p.confirmation_sent ? "Sent" : "Pending"}
+                  </span>
+                );
+              },
             },
             {
               key: "actions_inline",
@@ -444,7 +458,11 @@ export function PaymentsPageClient() {
                 <div className="flex justify-between items-center px-4 py-3">
                   <span className="text-muted-foreground">Receipt Status</span>
                   <span className={`text-xs font-semibold ${viewReceiptPayment.confirmation_sent ? "text-emerald-500" : "text-amber-500"}`}>
-                    {viewReceiptPayment.confirmation_sent ? "Sent to client" : "Not yet sent"}
+                    {viewReceiptPayment.confirmation_sent
+                      ? viewReceiptPayment.confirmation_sent_at
+                        ? `Sent ${new Date(viewReceiptPayment.confirmation_sent_at).toLocaleDateString("en-KE", { day: "numeric", month: "short", year: "numeric" })} at ${new Date(viewReceiptPayment.confirmation_sent_at).toLocaleTimeString("en-KE", { hour: "2-digit", minute: "2-digit" })}`
+                        : "Sent to client"
+                      : "Not yet sent"}
                   </span>
                 </div>
               </div>

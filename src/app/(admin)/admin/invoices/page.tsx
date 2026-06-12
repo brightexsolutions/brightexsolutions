@@ -34,6 +34,7 @@ type Invoice = {
   subtotal?: number | null;
   tax?: number | null;
   due_date?: string | null;
+  sent_at?: string | null;
   notes?: string | null;
   items: LineItem[];
   project_id?: string | null;
@@ -244,8 +245,12 @@ export default function InvoicesPage() {
   async function sendInvoice(id: string) {
     setBusy(id, true);
     try {
-      await fetch(`/api/admin/invoices/${id}/send`, { method: "POST" });
-      setInvoices((prev) => prev.map((inv) => inv.id === id ? { ...inv, status: "sent" } : inv));
+      const res = await fetch(`/api/admin/invoices/${id}/send`, { method: "POST" });
+      const json = await res.json().catch(() => ({}));
+      if (res.ok) {
+        const sentAt: string = json.sent_at ?? new Date().toISOString();
+        setInvoices((prev) => prev.map((inv) => inv.id === id ? { ...inv, status: "sent", sent_at: sentAt } : inv));
+      }
     } finally {
       setBusy(id, false);
     }
@@ -326,7 +331,19 @@ export default function InvoicesPage() {
             {
               key: "status",
               label: "Status",
-              render: (row) => <StatusDot status={String(row.status)} />,
+              render: (row) => {
+                const inv = row as unknown as Invoice;
+                return (
+                  <div className="flex flex-col gap-0.5">
+                    <StatusDot status={inv.status} />
+                    {inv.sent_at && (
+                      <span className="text-[10px] text-muted-foreground whitespace-nowrap">
+                        Sent {new Date(inv.sent_at).toLocaleDateString("en-KE", { day: "numeric", month: "short", year: "2-digit" })}
+                      </span>
+                    )}
+                  </div>
+                );
+              },
             },
             {
               key: "due_date",

@@ -168,7 +168,7 @@ export async function POST(request: NextRequest) {
   }
 
   if (receiptSent) {
-    await supabase.from("payments").update({ confirmation_sent: true }).eq("id", payment.id);
+    await supabase.from("payments").update({ confirmation_sent: true, confirmation_sent_at: new Date().toISOString() }).eq("id", payment.id);
 
     // Log to communications
     const { data: linkedInvoice } = await supabase
@@ -202,10 +202,12 @@ export async function POST(request: NextRequest) {
     ].filter(Boolean).join(" · ") || undefined,
   });
 
+  const sentAt = receiptSent ? new Date().toISOString() : (payment.confirmation_sent_at ?? null);
   return NextResponse.json({
     data: {
       ...payment,
       confirmation_sent: receiptSent || payment.confirmation_sent,
+      confirmation_sent_at: sentAt,
     },
   }, { status: 201 });
 }

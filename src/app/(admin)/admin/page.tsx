@@ -56,7 +56,7 @@ async function getDashboardData() {
     const [
       projectsRes, clientsRes, invoicesRes,
       mrrRes, alertsRes, contactsRes, bookingsRes,
-      incomeRes, expenseRes,
+      incomeRes, expenseRes, paymentsRes,
     ] = await Promise.all([
       supabase.from("projects").select("id, status", { count: "exact" }).in("status", ["discovery", "design", "development", "review"]),
       supabase.from("clients").select("id", { count: "exact" }).eq("classification", "active"),
@@ -65,13 +65,23 @@ async function getDashboardData() {
       supabase.from("system_alerts").select("id, type, severity, message, created_at").eq("acknowledged", false).order("created_at", { ascending: false }).limit(5),
       supabase.from("contacts").select("id, name, contact, message, created_at, status").order("created_at", { ascending: false }).limit(6),
       supabase.from("bookings").select("id, booker_name, booker_email, purpose, scheduled_at, status").order("scheduled_at", { ascending: true }).gte("scheduled_at", new Date().toISOString()).limit(5),
-      supabase.from("income_records").select("amount, date").gte("date", eightMonthsAgo.toISOString().slice(0, 10)),
-      supabase.from("expenses").select("amount, date").gte("date", eightMonthsAgo.toISOString().slice(0, 10)),
+      supabase.from("income_records").select("amount, date").gte("date", eightMonthsAgo.toISOString().slice(0, 10)).is("deleted_at", null),
+      supabase.from("expenses").select("amount, date").gte("date", eightMonthsAgo.toISOString().slice(0, 10)).is("deleted_at", null),
+      // Fallback: direct payments query so chart data is never empty even if income_records backfill hasn't run
+      supabase.from("payments").select("amount, date, created_at").gte("created_at", eightMonthsAgo.toISOString()).is("deleted_at", null),
     ]);
 
     const mrr = (mrrRes.data ?? []).reduce((s: number, r: { amount: number }) => s + Number(r.amount), 0);
     const overdueCount = (invoicesRes.data ?? []).filter((i: { status: string }) => i.status === "overdue").length;
     const openCount = (invoicesRes.data ?? []).filter((i: { status: string }) => i.status !== "paid").length;
+
+    // Use income_records when populated; fall back to raw payments if income_records is empty
+    const incomeSource = (incomeRes.data ?? []).length > 0
+      ? (incomeRes.data ?? []) as Array<{ amount: number; date: string }>
+      : ((paymentsRes as { data: Array<{ amount: number; date?: string | null; created_at: string }> | null }).data ?? []).map((p) => ({
+          amount: p.amount,
+          date: p.date ?? p.created_at.slice(0, 10),
+        }));
 
     return {
       projects: projectsRes.count ?? 0,
@@ -83,7 +93,7 @@ async function getDashboardData() {
       contacts: contactsRes.data ?? [],
       bookings: bookingsRes.data ?? [],
       invoices: invoicesRes.data ?? [],
-      chartData: buildMonthlyData(incomeRes.data ?? [], expenseRes.data ?? []),
+      chartData: buildMonthlyData(incomeSource, expenseRes.data ?? []),
     };
   } catch {
     return null;

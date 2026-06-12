@@ -236,8 +236,9 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     return NextResponse.json({ error: "Failed to send email" }, { status: 500 });
   }
 
-  // Mark as sent and log communication
-  await supabase.from("invoices").update({ status: "sent" }).eq("id", id);
+  // Mark as sent (preserve paid/overdue status if already past draft) and log communication
+  const now = new Date().toISOString();
+  await supabase.from("invoices").update({ status: "sent", sent_at: now }).eq("id", id);
   await supabase.from("communications").insert({
     client_id: invoice.client_id,
     type: "email",
@@ -246,5 +247,5 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     status: "sent",
   });
 
-  return NextResponse.json({ success: true });
+  return NextResponse.json({ success: true, sent_at: now });
 }
