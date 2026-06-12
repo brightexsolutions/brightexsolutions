@@ -15,6 +15,7 @@
  *   suggest_tasks       → Return a task list for a project brief
  *   write_caption       → Write social media captions for given platforms
  *   summarize           → Summarise a block of text / comms thread
+ *   analyze_logs        → Analyse error logs / system alerts, summarise issues, suggest fixes
  */
 
 import { NextRequest, NextResponse } from "next/server";
@@ -89,6 +90,13 @@ const AISchema = z.discriminatedUnion("intent", [
     intent: z.literal("summarize"),
     text:   z.string().max(4000).trim(),
     focus:  z.string().max(200).trim().optional(),
+  }),
+  z.object({
+    intent:     z.literal("analyze_logs"),
+    // Raw log paste (optional — if omitted, recent system_alerts are fetched from DB)
+    logs:       z.string().max(8000).trim().optional(),
+    // Number of recent system_alerts to include when no logs are pasted
+    alertLimit: z.number().min(1).max(100).default(50),
   }),
 ]);
 
@@ -289,6 +297,30 @@ ${payload.text}
 
 Write a clear, structured summary in 3–6 bullet points.`,
       };
+
+    case "analyze_logs":
+      return {
+        maxTokens: 1200,
+        userPrompt: `You are a senior full-stack engineer reviewing error logs and system alerts for Brightex Solutions — a Next.js + Supabase web application.
+
+Analyse the following logs/alerts and return your findings as JSON in this exact shape:
+{
+  "summary": "<1–2 sentence overview of what is happening>",
+  "issues": [
+    {
+      "severity": "critical|warning|info",
+      "title": "<short issue title>",
+      "description": "<what is happening and why>",
+      "suggestedFix": "<concrete actionable fix — file paths, code snippets, or config changes if relevant>",
+      "affectedArea": "<route, module, or service name>"
+    }
+  ],
+  "overallHealth": "healthy|degraded|critical",
+  "topPriority": "<the single most important thing to fix first>"
+}
+
+${payload.logs ? `LOGS / ALERTS:\n${payload.logs}` : "No raw logs provided — analyse the system_alerts data above."}`,
+      };
   }
 }
 
@@ -342,7 +374,28 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: reason }, { status: 503 });
   }
 
-  const { userPrompt, maxTokens } = buildPrompt(payload);
+  // ── analyze_logs: augment prompt with recent system_alerts if no raw log pasted
+  let { userPrompt, maxTokens } = buildPrompt(payload);
+
+  if (payload.intent === "analyze_logs" && !payload.logs) {
+    const { data: alerts } = await adminSupabase
+      .from("system_alerts")
+      .select("type, severity, message, entity_type, acknowledged, created_at")
+      .order("created_at", { ascending: false })
+      .limit(payload.alertLimit);
+
+    const alertText = (alerts ?? []).length > 0
+      ? (alerts ?? []).map((a: { type: string; severity: string; message: string; entity_type: string | null; acknowledged: boolean; created_at: string }) =>
+          `[${a.created_at}] ${a.severity.toUpperCase()} ${a.type}${a.entity_type ? ` (${a.entity_type})` : ""}: ${a.message}${a.acknowledged ? " [acknowledged]" : " [unresolved]"}`
+        ).join("\n")
+      : "No system_alerts found in the database.";
+
+    // Re-build the prompt now that we have the alert data
+    userPrompt = userPrompt.replace(
+      "No raw logs provided — analyse the system_alerts data above.",
+      `SYSTEM ALERTS (last ${(alerts ?? []).length}):\n${alertText}`
+    );
+  }
 
   try {
     const text = await callAI({
@@ -353,7 +406,7 @@ export async function POST(request: NextRequest) {
       provider:  aiProvider,
     });
 
-    const jsonIntents = ["classify_lead", "suggest_tasks"] as string[];
+    const jsonIntents = ["classify_lead", "suggest_tasks", "analyze_logs"] as string[];
     if (jsonIntents.includes(payload.intent)) {
       try {
         const clean = text.replace(/^```(?:json)?\n?/i, "").replace(/\n?```$/i, "").trim();
