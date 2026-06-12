@@ -192,6 +192,20 @@ const DOCUMENTS = [
     description: "Attached to invoice emails and available for direct download.",
     src: "/api/admin/preview/invoice-pdf",
   },
+  {
+    id: "receipt-pdf",
+    label: "Payment Receipt PDF",
+    tag: "Finance",
+    description: "Issued to clients after payment is confirmed. Shows amount, method, reference, and settlement status.",
+    src: "/api/admin/preview/receipt-pdf",
+  },
+  {
+    id: "proposal-pdf",
+    label: "Client Proposal PDF",
+    tag: "Sales",
+    description: "Sent to prospects before a project begins. Covers scope, pricing, payment terms, and next steps.",
+    src: "/api/admin/preview/proposal-pdf",
+  },
 ];
 
 const TEMPLATES = [
