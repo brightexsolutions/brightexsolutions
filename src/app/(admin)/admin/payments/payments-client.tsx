@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { CreditCard, Plus, Pencil, Trash2 } from "lucide-react";
+import { CreditCard, Plus, Pencil, Trash2, Send, Loader2 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { StatCard } from "@/components/admin/stat-card";
 import { DataTable, StackedCell, type Column, type RowAction } from "@/components/admin/data-table";
@@ -70,6 +70,7 @@ export function PaymentsPageClient() {
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState("");
   const [invoiceOptions, setInvoiceOptions] = useState<InvoiceOption[]>([]);
+  const [busyReceiptIds, setBusyReceiptIds] = useState<Set<string>>(new Set());
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -169,6 +170,21 @@ export function PaymentsPageClient() {
     setPayments((prev) => prev.filter((p) => p.id !== payment.id));
   }
 
+  async function sendReceipt(payment: Payment) {
+    setBusyReceiptIds((prev) => { const next = new Set(prev); next.add(payment.id); return next; });
+    try {
+      const res = await fetch(`/api/admin/payments/${payment.id}/receipt`, { method: "POST" });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setLoadError(json.error ?? "Failed to send receipt");
+        return;
+      }
+      setPayments((prev) => prev.map((p) => p.id === payment.id ? { ...p, confirmation_sent: true } : p));
+    } finally {
+      setBusyReceiptIds((prev) => { const next = new Set(prev); next.delete(payment.id); return next; });
+    }
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError("");
@@ -202,7 +218,8 @@ export function PaymentsPageClient() {
       if (editTarget) {
         setPayments((prev) => prev.map((p) => p.id === editTarget.id ? { ...p, ...data.data } : p));
       } else {
-        setPayments((prev) => [data.data, ...prev]);
+        // data.data includes invoices → clients join from the POST response
+        setPayments((prev) => [data.data as Payment, ...prev]);
       }
       setOpen(false);
     } catch {
@@ -315,6 +332,26 @@ export function PaymentsPageClient() {
                   {row.confirmation_sent ? "Sent" : "Pending"}
                 </span>
               ),
+            },
+            {
+              key: "actions_inline",
+              label: "",
+              className: "w-28",
+              render: (row) => {
+                const p = row as unknown as Payment;
+                if (p.confirmation_sent) return null;
+                const busy = busyReceiptIds.has(p.id);
+                return (
+                  <button
+                    onClick={(e) => { e.stopPropagation(); sendReceipt(p); }}
+                    disabled={busy}
+                    className="flex items-center gap-1 px-2 py-1 rounded-md text-[11px] font-medium bg-emerald-400/10 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-400/20 transition-colors disabled:opacity-50"
+                  >
+                    {busy ? <Loader2 size={10} className="animate-spin" /> : <Send size={10} />}
+                    Send Receipt
+                  </button>
+                );
+              },
             },
           ] as Column<Record<string, unknown>>[]}
           data={payments as unknown as Record<string, unknown>[]}

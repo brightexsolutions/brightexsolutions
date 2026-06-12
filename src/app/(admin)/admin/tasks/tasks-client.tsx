@@ -236,8 +236,11 @@ export function TasksClient() {
         fetch("/api/admin/projects"),
       ]);
       const [tasksJson, membersJson, projectsJson] = await Promise.all([
-        tasksRes.json(), membersRes.json(), projectsRes.json(),
+        tasksRes.json().catch(() => ({})),
+        membersRes.json().catch(() => ({})),
+        projectsRes.json().catch(() => ({})),
       ]);
+      if (!tasksRes.ok) console.error("[tasks] load failed:", tasksJson.error);
       setTasks(tasksJson.data ?? []);
       setMembers(membersJson.data ?? []);
       setProjects(projectsJson.data ?? []);

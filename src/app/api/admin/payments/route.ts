@@ -62,7 +62,7 @@ export async function POST(request: NextRequest) {
   const { data: payment, error } = await supabase
     .from("payments")
     .insert({ ...paymentData, confirmation_sent: false })
-    .select()
+    .select("*, invoices(id, invoice_number, total, client_id, clients(name, email))")
     .single();
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
