@@ -9,19 +9,12 @@ import { createAdminClient } from "@/lib/supabase/server";
 import { StatCard } from "@/components/admin/stat-card";
 import { ActivityFeedTable, BookingsFeedTable, type ActivityRow, type BookingRow } from "@/components/admin/dashboard-tables";
 import { RevenueChart, type MonthlyDataPoint } from "@/components/admin/revenue-chart";
+import { DashboardGreeting } from "@/components/admin/dashboard-greeting";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 export const metadata: Metadata = { title: "Dashboard | Admin" };
 export const revalidate = 60;
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
-
-function greeting() {
-  const h = new Date().getHours();
-  if (h < 12) return "Good morning";
-  if (h < 17) return "Good afternoon";
-  return "Good evening";
-}
 
 function buildMonthlyData(
   incomeRows: Array<{ amount: number; date: string }>,
@@ -173,14 +166,7 @@ export default async function AdminDashboardPage() {
     <div className="space-y-7 pb-6">
 
       {/* ── Greeting ── */}
-      <div>
-        <h1 className="text-2xl font-display font-bold text-foreground">
-          {greeting()}, Godwin
-        </h1>
-        <p className="text-sm text-muted-foreground mt-1">
-          Stay on top of your projects, track revenue, and monitor client activity.
-        </p>
-      </div>
+      <DashboardGreeting name="Godwin" />
 
       {/* ── System health strip ── */}
       <div className={`flex items-center gap-3 px-4 py-3 rounded-xl border text-sm ${
