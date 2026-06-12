@@ -353,14 +353,14 @@ export default function InvoicesPage() {
                     >
                       <Eye size={11} />PDF
                     </button>
-                    {inv.status === "draft" && (
+                    {inv.status !== "cancelled" && (
                       <button
                         onClick={() => sendInvoice(inv.id)}
                         disabled={busyIds.has(inv.id)}
                         className="flex items-center gap-1 px-2 py-1 rounded-md text-[11px] font-medium bg-brand-navy text-white hover:bg-brand-navy/90 transition-colors disabled:opacity-60"
                       >
                         {busyIds.has(inv.id) ? <Loader2 size={10} className="animate-spin" /> : <Send size={10} />}
-                        Send
+                        {inv.status === "draft" ? "Send" : "Resend"}
                       </button>
                     )}
                   </div>

@@ -35,12 +35,7 @@ export async function GET(request: NextRequest) {
 
   let q = supabase
     .from("tasks")
-    .select(`
-      *,
-      team_members(id, name, role),
-      projects(id, name, status, client_comms_enabled, auto_complete_on_tasks, comm_trigger,
-        clients(id, name, email))
-    `)
+    .select("*, team_members(id, name, role), projects(id, name, status, clients(id, name, email))")
     .is("deleted_at", null)
     .order("board_order", { ascending: true })
     .order("created_at", { ascending: false });

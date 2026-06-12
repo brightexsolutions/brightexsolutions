@@ -76,14 +76,23 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (invoice) {
+      // The new payment is already in the DB at this point — sum without double-counting
       const totalPaid = (invoice.payments as Array<{ amount: number }>)
-        .reduce((sum, p) => sum + Number(p.amount), 0) + Number(paymentData.amount);
+        .reduce((sum, p) => sum + Number(p.amount), 0);
 
       if (totalPaid >= Number(invoice.total)) {
         await supabase.from("invoices").update({ status: "paid" }).eq("id", paymentData.invoice_id);
+      } else if (totalPaid > 0) {
+        // At least partially paid — move to sent so the balance is visible
+        const { data: currentInvoice } = await supabase
+          .from("invoices").select("status").eq("id", paymentData.invoice_id!).single();
+        if (currentInvoice?.status === "draft") {
+          await supabase.from("invoices").update({ status: "sent" }).eq("id", paymentData.invoice_id);
+        }
       }
 
       // Auto-create income record so Finance module stays in sync
+      // Note: income_records has no added_by column — omit it
       await supabase.from("income_records").insert({
         source: "invoice_payment",
         description: `Payment for invoice ${invoice.invoice_number ?? paymentData.invoice_id}`,
@@ -94,7 +103,6 @@ export async function POST(request: NextRequest) {
         date: paymentData.date ?? new Date().toISOString().split("T")[0],
         category: "service_revenue",
         tax_applicable: true,
-        added_by: user.id,
       });
 
       // Log payment to communications regardless of whether a receipt email was sent

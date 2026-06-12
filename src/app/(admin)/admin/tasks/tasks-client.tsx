@@ -13,7 +13,7 @@ import { CSS } from "@dnd-kit/utilities";
 import {
   Plus, X, Pencil, Trash2, User, FolderOpen, Calendar, Flag,
   CheckCircle2, BarChart3, Clock, AlertTriangle, CheckSquare,
-  Link2, Link2Off, RefreshCw, Sparkles, Loader2,
+  Link2Off, RefreshCw, Sparkles, Loader2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -84,7 +84,11 @@ function TaskCard({ task, onClick, isDragOverlay }: { task: Task; onClick: () =>
     opacity: isDragging ? 0.4 : 1,
   };
 
-  const isOverdue = task.due_date && task.status !== "done" && new Date(task.due_date) < new Date();
+  const daysRemaining = task.due_date && task.status !== "done"
+    ? Math.ceil((new Date(task.due_date).getTime() - Date.now()) / 86400000)
+    : null;
+  const isOverdue = daysRemaining !== null && daysRemaining < 0;
+  const isDueSoon = daysRemaining !== null && daysRemaining >= 0 && daysRemaining <= 2;
 
   return (
     <div
@@ -96,9 +100,18 @@ function TaskCard({ task, onClick, isDragOverlay }: { task: Task; onClick: () =>
       className={cn(
         "bg-card border border-border rounded-sm p-3 cursor-grab active:cursor-grabbing select-none",
         "hover:border-brand-gold/40 hover:shadow-sm transition-all group",
+        isOverdue && "border-red-500/30 dark:border-red-500/20",
         isDragOverlay && "shadow-xl rotate-1 border-brand-gold/50 cursor-grabbing",
       )}
     >
+      {/* Overdue banner */}
+      {isOverdue && (
+        <div className="flex items-center gap-1 mb-1.5 -mx-3 -mt-3 px-3 pt-1.5 pb-1.5 bg-red-500/10 border-b border-red-500/20 rounded-t-sm">
+          <AlertTriangle size={10} className="text-red-500 shrink-0" />
+          <span className="text-[10px] font-semibold text-red-500">Overdue · {Math.abs(daysRemaining!)}d past due</span>
+        </div>
+      )}
+
       {/* Project badge */}
       {task.projects && (
         <div className="flex items-center gap-1 mb-1.5">
@@ -119,11 +132,26 @@ function TaskCard({ task, onClick, isDragOverlay }: { task: Task; onClick: () =>
           {task.priority}
         </span>
 
-        {task.due_date && (
-          <span className={cn("flex items-center gap-1 text-[10px]", isOverdue ? "text-red-500" : "text-muted-foreground")}>
+        {task.due_date && task.status !== "done" && daysRemaining !== null && (
+          <span className={cn(
+            "flex items-center gap-1 text-[10px] font-medium",
+            isOverdue ? "text-red-500" : isDueSoon ? "text-amber-500" : "text-muted-foreground"
+          )}>
+            <Clock size={10} />
+            {isOverdue
+              ? `${Math.abs(daysRemaining)}d overdue`
+              : daysRemaining === 0
+                ? "Due today"
+                : daysRemaining === 1
+                  ? "Due tomorrow"
+                  : `${daysRemaining}d left`}
+          </span>
+        )}
+
+        {task.due_date && task.status === "done" && (
+          <span className="flex items-center gap-1 text-[10px] text-muted-foreground">
             <Calendar size={10} />
             {new Date(task.due_date).toLocaleDateString("en-KE", { day: "numeric", month: "short" })}
-            {isOverdue && " ⚠"}
           </span>
         )}
 

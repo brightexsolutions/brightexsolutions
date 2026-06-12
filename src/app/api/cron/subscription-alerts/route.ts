@@ -27,13 +27,13 @@ export async function GET(request: NextRequest) {
   const [{ data: renewingSoon }, { data: overdue }] = await Promise.all([
     supabase
       .from("subscriptions")
-      .select("id, name, next_renewal_date, amount, currency, owner_name, owner_email")
+      .select("id, name, next_renewal_date, amount, currency, ownership, clients(id, name, email)")
       .eq("active", true)
       .lte("next_renewal_date", in14days)
       .gte("next_renewal_date", today),
     supabase
       .from("subscriptions")
-      .select("id, name, next_renewal_date, owner_name, owner_email")
+      .select("id, name, next_renewal_date, ownership, clients(id, name, email)")
       .eq("active", true)
       .lt("next_renewal_date", today),
   ]);
@@ -62,9 +62,10 @@ export async function GET(request: NextRequest) {
       });
       alertsCreated++;
 
-      const greeting = sub.owner_name ? `Hi ${sub.owner_name},` : "Hi,";
+      const linkedClient = (sub as unknown as { clients?: { name?: string | null; email?: string | null } | null }).clients;
+      const greeting = linkedClient?.name ? `Hi ${linkedClient.name.split(" ")[0]},` : "Hi,";
       const recipients = [BUSINESS_EMAIL];
-      if (sub.owner_email) recipients.push(sub.owner_email);
+      if (linkedClient?.email) recipients.push(linkedClient.email);
 
       await transporter.sendMail({
         from: `${SITE_NAME} <${process.env.SMTP_USER}>`,
@@ -111,9 +112,10 @@ export async function GET(request: NextRequest) {
       });
       alertsCreated++;
 
-      const greeting = sub.owner_name ? `Hi ${sub.owner_name},` : "Hi,";
+      const linkedClient = (sub as unknown as { clients?: { name?: string | null; email?: string | null } | null }).clients;
+      const greeting = linkedClient?.name ? `Hi ${linkedClient.name.split(" ")[0]},` : "Hi,";
       const recipients = [BUSINESS_EMAIL];
-      if (sub.owner_email) recipients.push(sub.owner_email);
+      if (linkedClient?.email) recipients.push(linkedClient.email);
 
       await transporter.sendMail({
         from: `${SITE_NAME} <${process.env.SMTP_USER}>`,
