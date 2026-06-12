@@ -50,6 +50,14 @@ async function getDashboardData() {
 
   try {
     const supabase = createAdminClient();
+    const now = new Date();
+    const thisMonthStart = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-01`;
+    const nextMonthStart = now.getMonth() === 11
+      ? `${now.getFullYear() + 1}-01-01`
+      : `${now.getFullYear()}-${String(now.getMonth() + 2).padStart(2, "0")}-01`;
+    const prevMonthStartDate = now.getMonth() === 0
+      ? `${now.getFullYear() - 1}-12-01`
+      : `${now.getFullYear()}-${String(now.getMonth()).padStart(2, "0")}-01`;
     const eightMonthsAgo = new Date();
     eightMonthsAgo.setMonth(eightMonthsAgo.getMonth() - 8);
 
@@ -61,10 +69,11 @@ async function getDashboardData() {
       supabase.from("projects").select("id, status", { count: "exact" }).in("status", ["discovery", "design", "development", "review"]),
       supabase.from("clients").select("id", { count: "exact" }).eq("classification", "active"),
       supabase.from("invoices").select("id, invoice_number, total, status, created_at").in("status", ["sent", "partial", "overdue", "paid"]).order("created_at", { ascending: false }).limit(8),
-      // Revenue this month: sum payments recorded in current calendar month
+      // Revenue this month: filter by payment date field, not created_at
       supabase.from("payments")
         .select("amount")
-        .gte("created_at", new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString())
+        .gte("date", thisMonthStart)
+        .lt("date", nextMonthStart)
         .is("deleted_at", null),
       supabase.from("system_alerts").select("id, type, severity, message, created_at").eq("acknowledged", false).order("created_at", { ascending: false }).limit(5),
       supabase.from("contacts").select("id, name, contact, message, created_at, status").order("created_at", { ascending: false }).limit(6),
@@ -76,14 +85,12 @@ async function getDashboardData() {
     ]);
 
     const mrr = (mrrRes.data ?? []).reduce((s: number, r: { amount: number }) => s + Number(r.amount), 0);
-    // Previous month revenue for trend calculation
-    const prevMonthStart = new Date(new Date().getFullYear(), new Date().getMonth() - 1, 1);
-    const prevMonthEnd = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
+    // Previous month revenue for trend calculation — also by payment date
     const { data: prevPayments } = await supabase
       .from("payments")
       .select("amount")
-      .gte("created_at", prevMonthStart.toISOString())
-      .lt("created_at", prevMonthEnd.toISOString())
+      .gte("date", prevMonthStartDate)
+      .lt("date", thisMonthStart)
       .is("deleted_at", null);
     const prevMonthRevenue = (prevPayments ?? []).reduce((s: number, r: { amount: number }) => s + Number(r.amount), 0);
     const overdueCount = (invoicesRes.data ?? []).filter((i: { status: string }) => i.status === "overdue").length;
