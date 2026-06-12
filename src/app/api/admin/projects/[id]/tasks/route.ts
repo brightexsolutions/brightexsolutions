@@ -36,7 +36,9 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     .from("tasks")
     .select("*, team_members(id, name, role)")
     .eq("project_id", id)
-    .order("due_date", { ascending: true, nullsFirst: false });
+    .is("deleted_at", null)
+    .order("board_order", { ascending: true })
+    .order("created_at", { ascending: false });
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   return NextResponse.json({ data: data ?? [] });
@@ -71,6 +73,8 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       due_date: result.data.due_date,
       assigned_to: result.data.assigned_to ?? null,
       status: "todo",
+      category: "general",
+      board_order: 0,
     })
     .select("*, team_members(id, name, role)")
     .single();
@@ -142,5 +146,7 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
   const { id } = await params;
   const { error } = await supabase.from("tasks").delete().eq("id", taskId).eq("project_id", id);
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+
+  await supabase.from("calendar_events").delete().eq("entity_type", "task").eq("entity_id", taskId);
   return NextResponse.json({ success: true });
 }
