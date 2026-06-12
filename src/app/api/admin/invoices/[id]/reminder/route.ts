@@ -1,18 +1,19 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient, createAdminClient } from "@/lib/supabase/server";
 import { forbidTeamMember } from "@/lib/role-guard";
-import { transporter } from "@/lib/mail";
+import { transporter, SENDERS } from "@/lib/mail";
 import { rateLimit } from "@/lib/rate-limit";
-import { SITE_NAME, BUSINESS_PHONE, BUSINESS_EMAIL, whatsappUrl } from "@/lib/constants";
+import { SITE_NAME, BUSINESS_PHONE, whatsappUrl } from "@/lib/constants";
 import {
   emailTemplate,
-  emailRow,
-  emailInfoTable,
+  emailInfoCard,
+  emailReferenceBox,
   emailAlert,
   emailParagraph,
   emailDivider,
   emailSignoff,
 } from "@/lib/email-templates";
+import { generateInvoicePdf, type InvoicePaymentSettings } from "@/lib/invoice-pdf-helper";
 
 type PaymentSettings = Record<string, string>;
 
@@ -101,24 +102,26 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     ? Math.floor((Date.now() - new Date(invoice.due_date).getTime()) / 86400000)
     : 0;
 
+  const firstName = client.name.split(" ")[0];
+  const dueDateLabel = invoice.due_date
+    ? new Date(invoice.due_date).toLocaleDateString("en-KE", { day: "2-digit", month: "long", year: "numeric" })
+    : "—";
   const overdueText = daysOverdue > 0
-    ? `Invoice ${invoice.invoice_number} is <strong>${daysOverdue} day${daysOverdue !== 1 ? "s" : ""} overdue</strong>`
-    : `Invoice ${invoice.invoice_number} is due`;
+    ? `Invoice ${invoice.invoice_number} is <strong>${daysOverdue} day${daysOverdue !== 1 ? "s" : ""} overdue</strong>. Please process payment as soon as possible.`
+    : `Invoice ${invoice.invoice_number} is due. Please process payment by the due date.`;
 
   const html = emailTemplate({
     title: "Payment Reminder",
     subtitle: invoice.invoice_number ?? undefined,
     preheader: `Reminder: Invoice ${invoice.invoice_number} requires your attention`,
+    heroLabel: `Payment Reminder · ${invoice.invoice_number ?? ""}`,
+    heroTitle: `A gentle reminder,\n${firstName}.`,
     body:
-      emailParagraph(`Dear <strong>${client.name}</strong>,`) +
       emailAlert(overdueText, daysOverdue > 0 ? "warning" : "info") +
-      emailInfoTable(
-        emailRow("Invoice", invoice.invoice_number ?? "—") +
-        emailRow("Amount Due", `KES ${Number(invoice.total).toLocaleString("en-KE", { minimumFractionDigits: 2 })}`) +
-        (invoice.due_date
-          ? emailRow("Due Date", new Date(invoice.due_date).toLocaleDateString("en-KE", { day: "2-digit", month: "long", year: "numeric" }))
-          : "")
-      ) +
+      emailInfoCard("📄", "Invoice Number", invoice.invoice_number ?? "—") +
+      emailInfoCard("💰", "Amount Due", `KES ${Number(invoice.total).toLocaleString("en-KE", { minimumFractionDigits: 2 })}`) +
+      emailInfoCard("📅", "Due Date", dueDateLabel) +
+      emailReferenceBox(invoice.invoice_number ?? "—", "Invoice Reference") +
       buildPaymentDetailsBlock(ps) +
       emailDivider() +
       emailParagraph(
@@ -127,12 +130,26 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       emailSignoff(),
   });
 
+  // Generate PDF attachment
+  let pdfBuffer: Buffer | undefined;
+  try {
+    pdfBuffer = await generateInvoicePdf(
+      invoice as Record<string, unknown>,
+      ps as InvoicePaymentSettings
+    );
+  } catch { /* silent — email still sends without attachment */ }
+
+  const filename = `invoice-${invoice.invoice_number ?? invoice.id}.pdf`;
+
   try {
     await transporter.sendMail({
-      from: `${SITE_NAME} <${process.env.SMTP_USER}>`,
+      from: SENDERS.payments,
       to: client.email,
       subject: `Payment Reminder: Invoice ${invoice.invoice_number}`,
       html,
+      attachments: pdfBuffer
+        ? [{ filename, content: pdfBuffer, contentType: "application/pdf" }]
+        : undefined,
     });
   } catch {
     return NextResponse.json({ error: "Failed to send email" }, { status: 500 });

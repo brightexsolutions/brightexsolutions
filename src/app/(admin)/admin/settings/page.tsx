@@ -1,11 +1,12 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import {
   Phone, Mail, MapPin, ExternalLink, Save,
   Hash, BarChart2, Building2, FileText,
   CheckCircle2, AlertCircle, ChevronRight, Image, Upload, X, Loader2,
-  Bot,
+  Bot, MailOpen,
 } from "lucide-react";
 import { CLAUDE_MODEL_OPTIONS, GEMINI_MODEL_OPTIONS, AI_MODELS } from "@/lib/ai-models";
 import type { AIProvider } from "@/types";
@@ -246,6 +247,20 @@ export default function SettingsPage() {
               <ChevronRight size={14} className={cn("shrink-0 transition-colors", active === s.id ? "text-brand-gold" : "text-muted-foreground/40 group-hover:text-muted-foreground")} />
             </button>
           ))}
+          {/* Email Templates — separate page link */}
+          <Link
+            href="/admin/settings/email-preview"
+            className="w-full flex items-center gap-4 px-5 py-4 text-left transition-colors group border-t border-border hover:bg-muted border-l-2 border-l-transparent"
+          >
+            <div className="w-9 h-9 rounded-sm flex items-center justify-center shrink-0 bg-muted text-muted-foreground group-hover:bg-brand-gold/10 group-hover:text-brand-gold transition-colors">
+              <MailOpen size={16} />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-semibold text-foreground/70">Email Templates</p>
+              <p className="text-xs text-muted-foreground truncate">Preview outbound email designs</p>
+            </div>
+            <ExternalLink size={12} className="shrink-0 text-muted-foreground/40 group-hover:text-muted-foreground transition-colors" />
+          </Link>
         </div>
 
         {/* ── Right content pane ── */}

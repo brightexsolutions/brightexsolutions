@@ -7,13 +7,14 @@ import { logAction } from "@/lib/audit";
 import { SITE_NAME, BUSINESS_PHONE, whatsappUrl } from "@/lib/constants";
 import {
   emailTemplate,
-  emailRow,
-  emailInfoTable,
+  emailInfoCard,
+  emailReferenceBox,
   emailAlert,
   emailParagraph,
   emailDivider,
   emailSignoff,
 } from "@/lib/email-templates";
+import { SENDERS } from "@/lib/mail";
 
 const PaymentSchema = z.object({
   invoice_id: z.string().uuid().optional(),
@@ -118,26 +119,27 @@ export async function POST(request: NextRequest) {
 
       const client = fullInvoice?.clients as { name: string; email: string } | undefined;
       if (client?.email) {
+        const firstName = client.name.split(" ")[0];
         const receiptDate = paymentData.date
           ? new Date(paymentData.date).toLocaleDateString("en-KE", { day: "2-digit", month: "long", year: "numeric" })
           : new Date().toLocaleDateString("en-KE", { day: "2-digit", month: "long", year: "numeric" });
+        const methodLabel = paymentData.method.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
         const html = emailTemplate({
           title: "Payment Received",
           subtitle: fullInvoice?.invoice_number ?? undefined,
           preheader: `Payment of KES ${Number(paymentData.amount).toLocaleString()} confirmed`,
+          heroLabel: "Payment Confirmation",
+          heroTitle: `Payment received,\n${firstName}.`,
           body:
-            emailParagraph(`Dear <strong>${client.name}</strong>,`) +
             emailAlert(
-              `Payment of <strong>KES ${Number(paymentData.amount).toLocaleString("en-KE", { minimumFractionDigits: 2 })}</strong> received — thank you!`,
+              `We've received your payment of <strong>KES ${Number(paymentData.amount).toLocaleString("en-KE", { minimumFractionDigits: 2 })}</strong>. Thank you!`,
               "success"
             ) +
-            emailInfoTable(
-              emailRow("Invoice", fullInvoice?.invoice_number ?? "—") +
-              emailRow("Amount Paid", `KES ${Number(paymentData.amount).toLocaleString("en-KE", { minimumFractionDigits: 2 })}`) +
-              emailRow("Method", paymentData.method.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())) +
-              (paymentData.reference ? emailRow("Reference", paymentData.reference) : "") +
-              emailRow("Date", receiptDate)
-            ) +
+            emailInfoCard("✅", "Amount Paid", `KES ${Number(paymentData.amount).toLocaleString("en-KE", { minimumFractionDigits: 2 })}`) +
+            emailInfoCard("💳", "Payment Method", methodLabel) +
+            emailInfoCard("📅", "Date", receiptDate) +
+            (paymentData.reference ? emailInfoCard("🔖", "Reference", paymentData.reference) : "") +
+            emailReferenceBox(fullInvoice?.invoice_number ?? "—", "Invoice Reference") +
             emailDivider() +
             emailParagraph(
               `For any queries, reply to this email or reach us on WhatsApp: <a href="${whatsappUrl()}" style="color:#f9a825;font-weight:600">${BUSINESS_PHONE}</a>`
@@ -146,7 +148,7 @@ export async function POST(request: NextRequest) {
         });
 
         await transporter.sendMail({
-          "from": `${SITE_NAME} <${process.env.SMTP_USER}>`,
+          from: SENDERS.payments,
           to: client.email,
           subject: `Payment Confirmation — ${fullInvoice?.invoice_number}`,
           html,
