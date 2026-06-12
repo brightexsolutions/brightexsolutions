@@ -7,7 +7,7 @@ import {
   CheckCircle2, AlertCircle, ChevronRight, Image, Upload, X, Loader2,
   Bot,
 } from "lucide-react";
-import { CLAUDE_MODEL_OPTIONS, GEMINI_MODEL_OPTIONS, AI_MODELS } from "@/lib/ai";
+import { CLAUDE_MODEL_OPTIONS, GEMINI_MODEL_OPTIONS, AI_MODELS } from "@/lib/ai-models";
 import type { AIProvider } from "@/types";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";

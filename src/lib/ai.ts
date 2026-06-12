@@ -18,32 +18,12 @@ import Anthropic from "@anthropic-ai/sdk";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import type { AIProvider } from "@/types";
 
-// ─── Model catalogues ─────────────────────────────────────────────────────────
-
-export const AI_MODELS = {
-  // Anthropic
-  haiku:  "claude-haiku-4-5-20251001",
-  sonnet: "claude-sonnet-4-6",
-  opus:   "claude-opus-4-8",
-  // Gemini (free-tier first)
-  gemini_flash:    "gemini-2.0-flash",
-  gemini_flash_15: "gemini-1.5-flash",
-  gemini_pro_15:   "gemini-1.5-pro",
-} as const;
-
-export type AIModel = (typeof AI_MODELS)[keyof typeof AI_MODELS];
-
-export const CLAUDE_MODEL_OPTIONS = [
-  { value: AI_MODELS.haiku,  label: "Claude Haiku 4.5  (fast · cheapest)" },
-  { value: AI_MODELS.sonnet, label: "Claude Sonnet 4.6 (balanced)" },
-  { value: AI_MODELS.opus,   label: "Claude Opus 4.8   (most capable)" },
-] as const;
-
-export const GEMINI_MODEL_OPTIONS = [
-  { value: AI_MODELS.gemini_flash,    label: "Gemini 2.0 Flash  (free · fast)" },
-  { value: AI_MODELS.gemini_flash_15, label: "Gemini 1.5 Flash  (free · fast)" },
-  { value: AI_MODELS.gemini_pro_15,   label: "Gemini 1.5 Pro    (free · limited RPM)" },
-] as const;
+// Model catalogues live in ai-models.ts (no SDK imports — safe for Client Components).
+// Import them here for internal use and re-export so API routes can still
+// import everything from "@/lib/ai".
+import { AI_MODELS } from "@/lib/ai-models";
+export { AI_MODELS, CLAUDE_MODEL_OPTIONS, GEMINI_MODEL_OPTIONS } from "@/lib/ai-models";
+export type { AIModel } from "@/lib/ai-models";
 
 // ─── Client singletons ────────────────────────────────────────────────────────
 
