@@ -39,6 +39,7 @@ export function SiteLoader() {
               width={220}
               height={56}
               priority
+              unoptimized
               className="h-14 w-auto"
             />
           </motion.div>
