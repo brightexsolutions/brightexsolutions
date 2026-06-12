@@ -32,7 +32,7 @@ function PreviewCard({
   label,
   tag,
   children,
-  defaultOpen = true,
+  defaultOpen = false,
 }: {
   id: string;
   label: string;
@@ -85,7 +85,7 @@ function SectionGroup({
   description: string;
   children: React.ReactNode;
 }) {
-  const [open, setOpen] = useState(true);
+  const [open, setOpen] = useState(false);
   return (
     <div className="space-y-3">
       <button
