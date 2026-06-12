@@ -8,29 +8,29 @@ const LIGHT = "#f8fafc";
 const BORDER = "#e2e8f0";
 
 const s = StyleSheet.create({
-  page: { fontFamily: "Helvetica", fontSize: 10, color: "#1e293b", backgroundColor: "#ffffff", paddingHorizontal: 48, paddingVertical: 48 },
+  page: { fontFamily: "Helvetica", fontSize: 10, color: "#1e293b", backgroundColor: "#ffffff", paddingHorizontal: 48, paddingTop: 36, paddingBottom: 36 },
   // Header
-  header: { flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 36 },
+  header: { flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 20 },
   brandBlock: { flexDirection: "column" },
   brandName: { fontFamily: "Helvetica-Bold", fontSize: 18, color: NAVY, letterSpacing: 0.5 },
   brandTag: { fontSize: 9, color: GRAY, marginTop: 2 },
   invoiceLabel: { fontFamily: "Helvetica-Bold", fontSize: 24, color: NAVY, textAlign: "right" },
   invoiceNumber: { fontSize: 10, color: GRAY, textAlign: "right", marginTop: 4 },
   // Meta strip
-  metaStrip: { flexDirection: "row", justifyContent: "space-between", marginBottom: 28, paddingBottom: 20, borderBottomWidth: 1, borderBottomColor: BORDER },
-  metaBlock: { flexDirection: "column", gap: 4 },
+  metaStrip: { flexDirection: "row", justifyContent: "space-between", marginBottom: 18, paddingBottom: 14, borderBottomWidth: 1, borderBottomColor: BORDER },
+  metaBlock: { flexDirection: "column", gap: 3 },
   metaLabel: { fontSize: 8, color: GRAY, fontFamily: "Helvetica-Bold", textTransform: "uppercase", letterSpacing: 0.8, marginBottom: 2 },
   metaValue: { fontSize: 10, color: NAVY },
   // Bill-to
-  billTo: { marginBottom: 28 },
-  sectionLabel: { fontSize: 8, color: GRAY, fontFamily: "Helvetica-Bold", textTransform: "uppercase", letterSpacing: 0.8, marginBottom: 6 },
+  billTo: { marginBottom: 18 },
+  sectionLabel: { fontSize: 8, color: GRAY, fontFamily: "Helvetica-Bold", textTransform: "uppercase", letterSpacing: 0.8, marginBottom: 5 },
   clientName: { fontFamily: "Helvetica-Bold", fontSize: 12, color: NAVY, marginBottom: 2 },
   clientDetail: { fontSize: 10, color: GRAY, marginBottom: 1 },
   // Table
-  table: { marginBottom: 24 },
+  table: { marginBottom: 16 },
   tableHead: { flexDirection: "row", backgroundColor: NAVY, paddingHorizontal: 12, paddingVertical: 8, borderRadius: 2 },
   tableHeadText: { fontFamily: "Helvetica-Bold", fontSize: 9, color: "#ffffff", textTransform: "uppercase", letterSpacing: 0.6 },
-  tableRow: { flexDirection: "row", paddingHorizontal: 12, paddingVertical: 9, borderBottomWidth: 1, borderBottomColor: BORDER },
+  tableRow: { flexDirection: "row", paddingHorizontal: 12, paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: BORDER },
   tableRowAlt: { backgroundColor: LIGHT },
   colDesc: { flex: 1 },
   colQty: { width: 40, textAlign: "center" },
@@ -38,7 +38,7 @@ const s = StyleSheet.create({
   colTotal: { width: 80, textAlign: "right" },
   cellText: { fontSize: 10, color: "#334155" },
   // Totals
-  totalsBlock: { alignItems: "flex-end", marginBottom: 28 },
+  totalsBlock: { alignItems: "flex-end", marginBottom: 18 },
   totalRow: { flexDirection: "row", justifyContent: "flex-end", gap: 0, marginBottom: 4 },
   totalLabel: { fontSize: 10, color: GRAY, width: 100, textAlign: "right", marginRight: 16 },
   totalValue: { fontSize: 10, color: "#1e293b", width: 90, textAlign: "right" },
@@ -46,14 +46,14 @@ const s = StyleSheet.create({
   grandLabel: { fontSize: 11, fontFamily: "Helvetica-Bold", color: GOLD, width: 100, textAlign: "right", marginRight: 16 },
   grandValue: { fontSize: 11, fontFamily: "Helvetica-Bold", color: "#ffffff", width: 90, textAlign: "right" },
   // Notes
-  notesBox: { backgroundColor: LIGHT, borderLeftWidth: 3, borderLeftColor: GOLD, padding: 12, marginBottom: 28, borderRadius: 2 },
+  notesBox: { backgroundColor: LIGHT, borderLeftWidth: 3, borderLeftColor: GOLD, padding: 10, marginBottom: 18, borderRadius: 2 },
   notesLabel: { fontSize: 8, fontFamily: "Helvetica-Bold", color: GRAY, textTransform: "uppercase", letterSpacing: 0.8, marginBottom: 4 },
   notesText: { fontSize: 10, color: "#334155", lineHeight: 1.5 },
   // Footer
-  footer: { borderTopWidth: 1, borderTopColor: BORDER, paddingTop: 16, flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
+  footer: { borderTopWidth: 1, borderTopColor: BORDER, paddingTop: 14, flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
   footerBrand: { fontSize: 9, fontFamily: "Helvetica-Bold", color: NAVY },
   footerContact: { fontSize: 9, color: GRAY },
-  accentBar: { height: 4, backgroundColor: GOLD, marginBottom: 48, borderRadius: 2 },
+  accentBar: { height: 4, backgroundColor: GOLD, marginBottom: 28, borderRadius: 2 },
 });
 
 type LineItem = { description: string; qty: number; unit_price: number; total?: number };
@@ -199,12 +199,12 @@ export function InvoicePDFDocument({ invoice, paymentSettings }: { invoice: Invo
           const hasBank = show("bank") && paymentSettings.invoice_bank_name;
           if (!hasMpesa && !hasTill && !hasPaypal && !hasBank) return null;
           return (
-            <View style={{ marginBottom: 28, borderWidth: 1, borderColor: BORDER, borderRadius: 2 }}>
-              <View style={{ backgroundColor: "#ffffff", paddingHorizontal: 12, paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: BORDER, flexDirection: "row", alignItems: "center", gap: 6 }}>
+            <View style={{ marginBottom: 18, borderWidth: 1, borderColor: BORDER, borderRadius: 2 }}>
+              <View style={{ backgroundColor: "#ffffff", paddingHorizontal: 12, paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: BORDER, flexDirection: "row", alignItems: "center", gap: 6 }}>
                 <Text style={{ fontSize: 11, color: GOLD }}>■</Text>
                 <Text style={{ fontFamily: "Helvetica-Bold", fontSize: 9, color: NAVY, textTransform: "uppercase", letterSpacing: 0.8 }}>Payment Details</Text>
               </View>
-              <View style={{ padding: 12, gap: 10 }}>
+              <View style={{ padding: 10, gap: 8 }}>
                 {hasMpesa && (
                   <View>
                     <Text style={{ fontFamily: "Helvetica-Bold", fontSize: 9, color: GRAY, textTransform: "uppercase", letterSpacing: 0.6, marginBottom: 3 }}>M-Pesa Send Money</Text>
