@@ -23,7 +23,7 @@ const SAMPLE_INVOICE = {
   total: 85000,
   subtotal: 85000,
   tax: 0,
-  payment_method: "all",
+  payment_method: "mpesa_send_money",
   notes: null,
   items: [
     { description: "Website Design & Development", qty: 1, unit_price: 70000 },
