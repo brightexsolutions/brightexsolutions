@@ -20,9 +20,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { rateLimit } from "@/lib/rate-limit";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, createAdminClient } from "@/lib/supabase/server";
 import { logger } from "@/lib/logger";
-import { callAI, ADMIN_SYSTEM_PROMPT, AI_MODELS } from "@/lib/ai";
+import { callAI, ADMIN_SYSTEM_PROMPT, AI_MODELS, isAIAvailable } from "@/lib/ai";
+import type { AIProvider } from "@/types";
 
 const AISchema = z.discriminatedUnion("intent", [
   z.object({
@@ -314,16 +315,31 @@ export async function POST(request: NextRequest) {
 
   const payload = result.data;
 
-  // If AI is not configured, return a default template if one exists
-  if (!process.env.ANTHROPIC_API_KEY) {
+  // ── Read AI settings from DB ──────────────────────────────────────────────
+  const adminSupabase = createAdminClient();
+  const { data: settingsRows } = await adminSupabase
+    .from("settings")
+    .select("key, value")
+    .in("key", ["ai_enabled", "ai_provider", "ai_model"]);
+
+  const settingsMap: Record<string, string> = Object.fromEntries(
+    (settingsRows ?? []).map((r: { key: string; value: string }) => [r.key, r.value])
+  );
+
+  const aiEnabled = settingsMap.ai_enabled !== "false"; // default on
+  const aiProvider: AIProvider = (settingsMap.ai_provider as AIProvider) ?? "anthropic";
+  const aiModel: string = settingsMap.ai_model ?? AI_MODELS.haiku;
+
+  // If AI is disabled by admin or provider not configured, use template fallback
+  if (!aiEnabled || !isAIAvailable(aiProvider)) {
     const fallback = defaultTemplate(payload);
     if (fallback) {
       return NextResponse.json({ result: fallback, intent: payload.intent, source: "template" });
     }
-    return NextResponse.json(
-      { error: "AI is not configured. Add ANTHROPIC_API_KEY to your environment variables." },
-      { status: 503 }
-    );
+    const reason = !aiEnabled
+      ? "AI is disabled. Enable it in Admin → Settings → AI."
+      : `${aiProvider === "gemini" ? "GEMINI_API_KEY" : "ANTHROPIC_API_KEY"} is not configured.`;
+    return NextResponse.json({ error: reason }, { status: 503 });
   }
 
   const { userPrompt, maxTokens } = buildPrompt(payload);
@@ -332,8 +348,9 @@ export async function POST(request: NextRequest) {
     const text = await callAI({
       messages:  [{ role: "user", content: userPrompt }],
       system:    ADMIN_SYSTEM_PROMPT,
-      model:     AI_MODELS.haiku,
+      model:     aiModel,
       maxTokens,
+      provider:  aiProvider,
     });
 
     const jsonIntents = ["classify_lead", "suggest_tasks"] as string[];

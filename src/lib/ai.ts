@@ -1,69 +1,182 @@
 /**
- * Anthropic AI integration for Brightex.
+ * Unified AI integration for Brightex.
  *
- * Model strategy (cost-first):
- *   - Brixo public chat  → claude-haiku-4-5-20251001  (~$0.001 per conversation)
- *   - Admin quick tasks  → claude-haiku-4-5-20251001  (~$0.003 per task)
- *   - Admin deep tasks   → claude-sonnet-4-6           (opt-in, ~$0.02 per task)
+ * Supports two providers, selectable per-call or via admin settings:
+ *   anthropic  → Claude (Haiku / Sonnet / Opus)
+ *   gemini     → Google Gemini (free-tier: 2.0 Flash, 1.5 Flash, 1.5 Pro)
  *
- * All models are server-side only — ANTHROPIC_API_KEY never reaches the browser.
+ * All keys are server-side only — ANTHROPIC_API_KEY and GEMINI_API_KEY
+ * never reach the browser.
+ *
+ * Default fallback order when AI is unavailable:
+ *   1. Try configured provider
+ *   2. Try other provider if configured
+ *   3. Return built-in template (in calling route)
  */
 
 import Anthropic from "@anthropic-ai/sdk";
+import { GoogleGenerativeAI } from "@google/generative-ai";
+import type { AIProvider } from "@/types";
 
-// Lazy singleton — only instantiated when a route actually uses AI
-let _client: Anthropic | null = null;
-
-export function getAIClient(): Anthropic {
-  if (!_client) {
-    if (!process.env.ANTHROPIC_API_KEY) {
-      throw new Error("ANTHROPIC_API_KEY is not set");
-    }
-    _client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
-  }
-  return _client;
-}
+// ─── Model catalogues ─────────────────────────────────────────────────────────
 
 export const AI_MODELS = {
+  // Anthropic
   haiku:  "claude-haiku-4-5-20251001",
   sonnet: "claude-sonnet-4-6",
   opus:   "claude-opus-4-8",
+  // Gemini (free-tier first)
+  gemini_flash:    "gemini-2.0-flash",
+  gemini_flash_15: "gemini-1.5-flash",
+  gemini_pro_15:   "gemini-1.5-pro",
 } as const;
 
 export type AIModel = (typeof AI_MODELS)[keyof typeof AI_MODELS];
+
+export const CLAUDE_MODEL_OPTIONS = [
+  { value: AI_MODELS.haiku,  label: "Claude Haiku 4.5  (fast · cheapest)" },
+  { value: AI_MODELS.sonnet, label: "Claude Sonnet 4.6 (balanced)" },
+  { value: AI_MODELS.opus,   label: "Claude Opus 4.8   (most capable)" },
+] as const;
+
+export const GEMINI_MODEL_OPTIONS = [
+  { value: AI_MODELS.gemini_flash,    label: "Gemini 2.0 Flash  (free · fast)" },
+  { value: AI_MODELS.gemini_flash_15, label: "Gemini 1.5 Flash  (free · fast)" },
+  { value: AI_MODELS.gemini_pro_15,   label: "Gemini 1.5 Pro    (free · limited RPM)" },
+] as const;
+
+// ─── Client singletons ────────────────────────────────────────────────────────
+
+let _anthropic: Anthropic | null = null;
+let _gemini: GoogleGenerativeAI | null = null;
+
+export function getAnthropicClient(): Anthropic {
+  if (!_anthropic) {
+    if (!process.env.ANTHROPIC_API_KEY) throw new Error("ANTHROPIC_API_KEY is not set");
+    _anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+  }
+  return _anthropic;
+}
+
+export function getGeminiClient(): GoogleGenerativeAI {
+  if (!_gemini) {
+    if (!process.env.GEMINI_API_KEY) throw new Error("GEMINI_API_KEY is not set");
+    _gemini = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+  }
+  return _gemini;
+}
+
+// Legacy alias — existing callers that used getAIClient() keep working
+export const getAIClient = getAnthropicClient;
+
+// ─── Availability checks ──────────────────────────────────────────────────────
+
+export function isAnthropicConfigured(): boolean {
+  return !!process.env.ANTHROPIC_API_KEY;
+}
+
+export function isGeminiConfigured(): boolean {
+  return !!process.env.GEMINI_API_KEY;
+}
+
+export function isAIAvailable(provider?: AIProvider): boolean {
+  if (!provider) return isAnthropicConfigured() || isGeminiConfigured();
+  return provider === "anthropic" ? isAnthropicConfigured() : isGeminiConfigured();
+}
+
+// ─── Chat message type ────────────────────────────────────────────────────────
 
 export interface ChatMessage {
   role: "user" | "assistant";
   content: string;
 }
 
-// ─── Shared call helper ───────────────────────────────────────────────────────
+// ─── Core call helpers ────────────────────────────────────────────────────────
 
-export async function callAI({
+async function callClaude({
   messages,
   system,
-  model = AI_MODELS.haiku,
-  maxTokens = 400,
+  model,
+  maxTokens,
 }: {
   messages: ChatMessage[];
   system: string;
-  model?: AIModel;
-  maxTokens?: number;
+  model: string;
+  maxTokens: number;
 }): Promise<string> {
-  const client = getAIClient();
+  const client = getAnthropicClient();
   const res = await client.messages.create({
     model,
     max_tokens: maxTokens,
     system,
     messages,
   });
-
   const block = res.content[0];
-  if (block.type !== "text") throw new Error("Unexpected AI response type");
+  if (block.type !== "text") throw new Error("Unexpected Anthropic response type");
   return block.text.trim();
 }
 
-// ─── Brixo system prompt ─────────────────────────────────────────────────────
+async function callGemini({
+  messages,
+  system,
+  model,
+  maxTokens,
+}: {
+  messages: ChatMessage[];
+  system: string;
+  model: string;
+  maxTokens: number;
+}): Promise<string> {
+  const client = getGeminiClient();
+  const genModel = client.getGenerativeModel({
+    model,
+    systemInstruction: system,
+    generationConfig: { maxOutputTokens: maxTokens },
+  });
+
+  // Gemini uses alternating user/model roles; collapse to a single user prompt
+  // when there's only one message (typical for admin intents)
+  if (messages.length === 1) {
+    const result = await genModel.generateContent(messages[0].content);
+    return result.response.text().trim();
+  }
+
+  // Multi-turn: convert to Gemini history format
+  const history = messages.slice(0, -1).map((m) => ({
+    role: m.role === "assistant" ? "model" : "user",
+    parts: [{ text: m.content }],
+  }));
+  const chat = genModel.startChat({ history });
+  const lastMessage = messages[messages.length - 1].content;
+  const result = await chat.sendMessage(lastMessage);
+  return result.response.text().trim();
+}
+
+// ─── Unified callAI ───────────────────────────────────────────────────────────
+
+export async function callAI({
+  messages,
+  system,
+  model = AI_MODELS.haiku,
+  maxTokens = 400,
+  provider,
+}: {
+  messages: ChatMessage[];
+  system: string;
+  model?: string;
+  maxTokens?: number;
+  provider?: AIProvider;
+}): Promise<string> {
+  const resolvedProvider: AIProvider = provider ?? "anthropic";
+
+  if (resolvedProvider === "gemini") {
+    return callGemini({ messages, system, model, maxTokens });
+  }
+
+  return callClaude({ messages, system, model, maxTokens });
+}
+
+// ─── Brixo public chat system prompt ─────────────────────────────────────────
 
 export function brixoSystemPrompt(faqs: Array<{ question?: string; answer: string; keywords?: string[] }>): string {
   const faqSection = faqs.length
@@ -99,7 +212,7 @@ STRICT RULES — follow without exception:
 10. If you genuinely cannot answer a Brightex-related question, suggest WhatsApp or the contact page.`;
 }
 
-// ─── Admin system prompt ─────────────────────────────────────────────────────
+// ─── Admin system prompt ──────────────────────────────────────────────────────
 
 export const ADMIN_SYSTEM_PROMPT = `You are an AI assistant built into the Brightex Solutions admin dashboard. You help Godwin (the business owner) with internal operational tasks.
 

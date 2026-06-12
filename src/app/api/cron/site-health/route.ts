@@ -52,6 +52,14 @@ export async function GET(request: NextRequest) {
             entity_type: "site",
           });
         }
+      } else {
+        // Site is up — auto-acknowledge any outstanding site_down alerts for this site
+        await supabase
+          .from("system_alerts")
+          .update({ acknowledged: true })
+          .eq("entity_id", site.id)
+          .eq("type", "site_down")
+          .eq("acknowledged", false);
       }
 
       if (check.ssl_expiry) {
