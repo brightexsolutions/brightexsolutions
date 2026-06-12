@@ -29,44 +29,44 @@ function fmtDate(d: string) {
 }
 
 const s = StyleSheet.create({
-  page:         { fontFamily: "Helvetica", fontSize: 10, color: "#1e293b", backgroundColor: "#ffffff", paddingHorizontal: 48, paddingVertical: 48 },
-  accentBar:    { height: 4, backgroundColor: GREEN, marginBottom: 48, borderRadius: 2 },
-  header:       { flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 24 },
+  page:         { fontFamily: "Helvetica", fontSize: 10, color: "#1e293b", backgroundColor: "#ffffff", paddingHorizontal: 48, paddingTop: 36, paddingBottom: 36 },
+  accentBar:    { height: 4, backgroundColor: GREEN, marginBottom: 28, borderRadius: 2 },
+  header:       { flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 14 },
   brandName:    { fontFamily: "Helvetica-Bold", fontSize: 18, color: NAVY, letterSpacing: 0.5 },
   brandTag:     { fontSize: 9, color: GRAY, marginTop: 2 },
   docLabel:     { fontFamily: "Helvetica-Bold", fontSize: 24, color: NAVY, textAlign: "right" },
   docRef:       { fontSize: 10, color: GRAY, textAlign: "right", marginTop: 4 },
   // Status
-  statusBadge:  { flexDirection: "row", alignItems: "center", gap: 6, backgroundColor: GREEN_BG, borderRadius: 4, paddingHorizontal: 12, paddingVertical: 8, marginBottom: 28, alignSelf: "flex-start" },
+  statusBadge:  { flexDirection: "row", alignItems: "center", gap: 6, backgroundColor: GREEN_BG, borderRadius: 4, paddingHorizontal: 12, paddingVertical: 7, marginBottom: 16, alignSelf: "flex-start" },
   statusText:   { fontFamily: "Helvetica-Bold", fontSize: 11, color: GREEN },
   // Client
-  clientBox:    { marginBottom: 24, paddingBottom: 20, borderBottomWidth: 1, borderBottomColor: BORDER },
-  secLabel:     { fontSize: 8, fontFamily: "Helvetica-Bold", color: GRAY, textTransform: "uppercase", letterSpacing: 0.8, marginBottom: 6 },
+  clientBox:    { marginBottom: 14, paddingBottom: 12, borderBottomWidth: 1, borderBottomColor: BORDER },
+  secLabel:     { fontSize: 8, fontFamily: "Helvetica-Bold", color: GRAY, textTransform: "uppercase", letterSpacing: 0.8, marginBottom: 5 },
   clientName:   { fontFamily: "Helvetica-Bold", fontSize: 12, color: NAVY, marginBottom: 2 },
   clientDetail: { fontSize: 10, color: GRAY, marginBottom: 1 },
   // Summary table
-  summaryTable: { marginBottom: 24, borderWidth: 1, borderColor: BORDER, borderRadius: 2 },
-  summaryRow:   { flexDirection: "row", alignItems: "center", paddingHorizontal: 14, paddingVertical: 11, borderBottomWidth: 1, borderBottomColor: BORDER },
+  summaryTable: { marginBottom: 14, borderWidth: 1, borderColor: BORDER, borderRadius: 2 },
+  summaryRow:   { flexDirection: "row", alignItems: "center", paddingHorizontal: 14, paddingVertical: 9, borderBottomWidth: 1, borderBottomColor: BORDER },
   summaryLast:  { borderBottomWidth: 0 },
   summaryKey:   { fontSize: 9, fontFamily: "Helvetica-Bold", color: GRAY, textTransform: "uppercase", letterSpacing: 0.6, width: 140 },
   summaryVal:   { fontSize: 10, color: NAVY, flex: 1 },
   amountVal:    { fontFamily: "Helvetica-Bold", fontSize: 14, color: GREEN },
   refVal:       { fontFamily: "Helvetica-Bold", fontSize: 11, color: NAVY },
   // Settlement
-  settlBox:     { marginBottom: 24, borderWidth: 1, borderColor: BORDER, borderRadius: 2 },
-  settlHead:    { backgroundColor: NAVY, paddingHorizontal: 14, paddingVertical: 9, borderRadius: 2 },
+  settlBox:     { marginBottom: 14, borderWidth: 1, borderColor: BORDER, borderRadius: 2 },
+  settlHead:    { backgroundColor: NAVY, paddingHorizontal: 14, paddingVertical: 8, borderRadius: 2 },
   settlHeadTxt: { fontFamily: "Helvetica-Bold", fontSize: 9, color: "#ffffff", textTransform: "uppercase", letterSpacing: 0.8 },
-  settlRow:     { flexDirection: "row", justifyContent: "space-between", alignItems: "center", paddingHorizontal: 14, paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: BORDER },
+  settlRow:     { flexDirection: "row", justifyContent: "space-between", alignItems: "center", paddingHorizontal: 14, paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: BORDER },
   settlRowLast: { borderBottomWidth: 0 },
   settlRowGreen:{ backgroundColor: GREEN_BG },
   settlKey:     { fontSize: 10, color: GRAY },
   settlVal:     { fontSize: 10, color: NAVY, fontFamily: "Helvetica-Bold" },
   settlValGreen:{ color: GREEN },
   // Thank you
-  thankBox:     { backgroundColor: LIGHT, borderLeftWidth: 3, borderLeftColor: GREEN, padding: 14, marginBottom: 32, borderRadius: 2 },
-  thankText:    { fontSize: 10, color: "#334155", lineHeight: 1.7 },
+  thankBox:     { backgroundColor: LIGHT, borderLeftWidth: 3, borderLeftColor: GREEN, padding: 10, marginBottom: 20, borderRadius: 2 },
+  thankText:    { fontSize: 10, color: "#334155", lineHeight: 1.6 },
   // Footer
-  footer:       { borderTopWidth: 1, borderTopColor: BORDER, paddingTop: 16, flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
+  footer:       { borderTopWidth: 1, borderTopColor: BORDER, paddingTop: 14, flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
   footerBrand:  { fontSize: 9, fontFamily: "Helvetica-Bold", color: NAVY },
   footerContact:{ fontSize: 9, color: GRAY },
 });
