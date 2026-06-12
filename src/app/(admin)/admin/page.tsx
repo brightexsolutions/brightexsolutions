@@ -60,7 +60,7 @@ async function getDashboardData() {
     ] = await Promise.all([
       supabase.from("projects").select("id, status", { count: "exact" }).in("status", ["discovery", "design", "development", "review"]),
       supabase.from("clients").select("id", { count: "exact" }).eq("classification", "active"),
-      supabase.from("invoices").select("id, invoice_number, total, status, created_at").in("status", ["sent", "overdue", "paid"]).order("created_at", { ascending: false }).limit(8),
+      supabase.from("invoices").select("id, invoice_number, total, status, created_at").in("status", ["sent", "partial", "overdue", "paid"]).order("created_at", { ascending: false }).limit(8),
       // Revenue this month: sum payments recorded in current calendar month
       supabase.from("payments")
         .select("amount")

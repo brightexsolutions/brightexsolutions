@@ -21,6 +21,7 @@ const STATUS_STYLES: Record<string, string> = {
   in_progress: "bg-blue-400",
   development: "bg-blue-400",
   review:      "bg-purple-400",
+  partial:     "bg-amber-500",
   overdue:     "bg-red-500",
   cancelled:   "bg-red-400",
   lost:        "bg-red-400",
@@ -35,6 +36,7 @@ const STATUS_STYLES: Record<string, string> = {
 
 const STATUS_LABELS: Record<string, string> = {
   in_progress: "In Progress",
+  partial:     "Partial Payment",
   new:         "New",
   won:         "Won",
   lost:        "Lost",

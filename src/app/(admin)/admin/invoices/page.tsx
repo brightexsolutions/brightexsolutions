@@ -18,12 +18,13 @@ import { useConfirm } from "@/components/admin/confirm-dialog";
 const statusColors: Record<string, string> = {
   draft: "bg-slate-400/10 text-slate-400",
   sent: "bg-blue-400/10 text-blue-400",
+  partial: "bg-amber-400/10 text-amber-500",
   paid: "bg-emerald-400/10 text-emerald-400",
   overdue: "bg-red-400/10 text-red-400",
   cancelled: "bg-muted text-muted-foreground",
 };
 
-const filterTabs = ["All", "Draft", "Sent", "Paid", "Overdue"];
+const filterTabs = ["All", "Draft", "Sent", "Partial", "Paid", "Overdue"];
 
 type LineItem = { description: string; qty: number; unit_price: number };
 type Invoice = {
@@ -272,7 +273,7 @@ export default function InvoicesPage() {
   );
 
   const totalInvoiced = invoices.reduce((s, inv) => s + Number(inv.total), 0);
-  const pending = invoices.filter((i) => i.status === "sent").length;
+  const pending = invoices.filter((i) => i.status === "sent" || i.status === "partial").length;
   const overdue = invoices.filter((i) => i.status === "overdue").length;
   const paidThisMonth = invoices
     .filter((i) => i.status === "paid" && new Date(i.created_at) > new Date(Date.now() - 30 * 86400000))

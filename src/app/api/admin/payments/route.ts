@@ -83,11 +83,11 @@ export async function POST(request: NextRequest) {
       if (totalPaid >= Number(invoice.total)) {
         await supabase.from("invoices").update({ status: "paid" }).eq("id", paymentData.invoice_id);
       } else if (totalPaid > 0) {
-        // At least partially paid — move to sent so the balance is visible
+        // Partial payment — mark as 'partial' so the balance is clearly visible
         const { data: currentInvoice } = await supabase
           .from("invoices").select("status").eq("id", paymentData.invoice_id!).single();
-        if (currentInvoice?.status === "draft") {
-          await supabase.from("invoices").update({ status: "sent" }).eq("id", paymentData.invoice_id);
+        if (currentInvoice?.status === "draft" || currentInvoice?.status === "sent") {
+          await supabase.from("invoices").update({ status: "partial" }).eq("id", paymentData.invoice_id);
         }
       }
 
