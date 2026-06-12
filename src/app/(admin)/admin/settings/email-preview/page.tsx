@@ -12,6 +12,7 @@ import {
   emailButton,
 } from "@/lib/email-templates";
 import { SITE_NAME, BUSINESS_PHONE, BUSINESS_EMAIL, BUSINESS_WEBSITE } from "@/lib/constants";
+import { EmailPreviewContent } from "./_content";
 
 export const metadata: Metadata = { title: "Email Templates & Documents | Admin Settings" };
 
@@ -22,7 +23,7 @@ const SAMPLE_INVOICE_NUMBER = "INV-00042";
 const SAMPLE_AMOUNT = "KES 85,000.00";
 const SAMPLE_DUE = "30 June 2026";
 
-// ─── Template generators (mirrors the real API route bodies) ──────────────────
+// ─── Template generators ──────────────────────────────────────────────────────
 
 function invoiceEmail() {
   return emailTemplate({
@@ -181,7 +182,7 @@ function autoReplyEmail() {
   });
 }
 
-// ─── Document templates (PDFs) ───────────────────────────────────────────────
+// ─── Data ─────────────────────────────────────────────────────────────────────
 
 const DOCUMENTS = [
   {
@@ -193,128 +194,17 @@ const DOCUMENTS = [
   },
 ];
 
-// ─── Templates list ───────────────────────────────────────────────────────────
-
 const TEMPLATES = [
-  { id: "invoice",     label: "Invoice",              tag: "Finance",  html: invoiceEmail() },
-  { id: "reminder",    label: "Payment Reminder",     tag: "Finance",  html: reminderEmail() },
-  { id: "receipt",     label: "Payment Receipt",      tag: "Finance",  html: receiptEmail() },
-  { id: "contact",     label: "Contact Notification", tag: "Enquiries", html: contactEmail() },
-  { id: "booking",     label: "Booking Confirmation", tag: "Bookings", html: bookingEmail() },
-  { id: "auto-reply",  label: "Contact Auto-Reply",   tag: "Enquiries", html: autoReplyEmail() },
+  { id: "invoice",    label: "Invoice",              tag: "Finance",   html: invoiceEmail() },
+  { id: "reminder",   label: "Payment Reminder",     tag: "Finance",   html: reminderEmail() },
+  { id: "receipt",    label: "Payment Receipt",      tag: "Finance",   html: receiptEmail() },
+  { id: "contact",    label: "Contact Notification", tag: "Enquiries", html: contactEmail() },
+  { id: "booking",    label: "Booking Confirmation", tag: "Bookings",  html: bookingEmail() },
+  { id: "auto-reply", label: "Contact Auto-Reply",   tag: "Enquiries", html: autoReplyEmail() },
 ];
-
-const TAG_COLORS: Record<string, string> = {
-  Finance:   "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400",
-  Enquiries: "bg-blue-500/10 text-blue-600 dark:text-blue-400",
-  Bookings:  "bg-purple-500/10 text-purple-600 dark:text-purple-400",
-};
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function EmailPreviewPage() {
-  return (
-    <div className="space-y-8 pb-10">
-      <div>
-        <h1 className="text-xl font-semibold text-foreground">Email Templates &amp; Documents</h1>
-        <p className="text-sm text-muted-foreground mt-1">
-          Live previews of every outbound email and PDF document Brightex sends to clients.
-          Sample data is used throughout.
-        </p>
-      </div>
-
-      {/* ── PDF Documents ── */}
-      <div className="space-y-4">
-        <div>
-          <h2 className="text-base font-semibold text-foreground">Documents</h2>
-          <p className="text-xs text-muted-foreground mt-0.5">PDF files attached to emails or downloaded directly from the admin.</p>
-        </div>
-
-        {DOCUMENTS.map((d) => (
-          <section key={d.id} className="space-y-3">
-            <div className="flex items-center gap-3">
-              <h3 className="text-sm font-semibold text-foreground">{d.label}</h3>
-              <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${TAG_COLORS[d.tag] ?? ""}`}>
-                {d.tag}
-              </span>
-              <span className="text-xs text-muted-foreground">{d.description}</span>
-            </div>
-
-            <div className="border border-border rounded-xl overflow-hidden bg-muted/30">
-              <div className="flex items-center gap-1.5 px-4 py-2.5 border-b border-border bg-muted/50">
-                <span className="w-2.5 h-2.5 rounded-full bg-red-400" />
-                <span className="w-2.5 h-2.5 rounded-full bg-amber-400" />
-                <span className="w-2.5 h-2.5 rounded-full bg-emerald-400" />
-                <span className="ml-3 text-xs text-muted-foreground font-mono">Document preview — {d.label}</span>
-              </div>
-              <iframe
-                src={d.src}
-                title={d.label}
-                className="w-full border-0"
-                style={{ height: "860px" }}
-              />
-            </div>
-          </section>
-        ))}
-      </div>
-
-      {/* ── Email Templates ── */}
-      <div className="space-y-4">
-        <div>
-          <h2 className="text-base font-semibold text-foreground">Email Templates</h2>
-          <p className="text-xs text-muted-foreground mt-0.5">HTML emails sent directly to clients for invoices, bookings, enquiries, and more.</p>
-        </div>
-
-      {TEMPLATES.map((t) => (
-        <section key={t.id} className="space-y-3">
-          <div className="flex items-center gap-3">
-            <h2 className="text-sm font-semibold text-foreground">{t.label}</h2>
-            <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${TAG_COLORS[t.tag] ?? ""}`}>
-              {t.tag}
-            </span>
-          </div>
-
-          {/* Mobile preview wrapper */}
-          <div className="border border-border rounded-xl overflow-hidden bg-muted/30">
-            <div className="flex items-center gap-1.5 px-4 py-2.5 border-b border-border bg-muted/50">
-              <span className="w-2.5 h-2.5 rounded-full bg-red-400" />
-              <span className="w-2.5 h-2.5 rounded-full bg-amber-400" />
-              <span className="w-2.5 h-2.5 rounded-full bg-emerald-400" />
-              <span className="ml-3 text-xs text-muted-foreground font-mono">Email preview — {t.label}</span>
-            </div>
-            <iframe
-              srcDoc={t.html}
-              title={t.label}
-              className="w-full border-0"
-              style={{ height: "640px" }}
-              sandbox="allow-same-origin"
-            />
-          </div>
-
-          {/* Mobile size preview */}
-          <details className="group">
-            <summary className="text-xs text-muted-foreground cursor-pointer hover:text-foreground select-none">
-              📱 Mobile preview (375px)
-            </summary>
-            <div className="mt-2 border border-border rounded-xl overflow-hidden bg-muted/30 mx-auto" style={{ maxWidth: 375 }}>
-              <div className="flex items-center gap-1.5 px-3 py-2 border-b border-border bg-muted/50">
-                <span className="w-2 h-2 rounded-full bg-red-400" />
-                <span className="w-2 h-2 rounded-full bg-amber-400" />
-                <span className="w-2 h-2 rounded-full bg-emerald-400" />
-                <span className="ml-2 text-xs text-muted-foreground font-mono truncate">Mobile · 375px</span>
-              </div>
-              <iframe
-                srcDoc={t.html}
-                title={`${t.label} mobile`}
-                className="w-full border-0"
-                style={{ height: "640px" }}
-                sandbox="allow-same-origin"
-              />
-            </div>
-          </details>
-        </section>
-      ))}
-      </div>
-    </div>
-  );
+  return <EmailPreviewContent documents={DOCUMENTS} templates={TEMPLATES} />;
 }
