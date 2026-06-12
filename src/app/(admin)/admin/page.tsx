@@ -109,10 +109,7 @@ export default async function AdminDashboardPage() {
   const hasCritical = data?.alerts.some((a: { severity: string }) => a.severity === "critical");
   const hasWarnings = data?.alerts.some((a: { severity: string }) => a.severity === "warning");
 
-  const chartData: MonthlyDataPoint[] =
-    hasData && data.chartData.some((p) => p.income > 0 || p.expenses > 0)
-      ? data.chartData
-      : DEMO_CHART;
+  const chartData: MonthlyDataPoint[] = hasData ? data.chartData : DEMO_CHART;
 
   // Build unified activity rows from contacts + bookings + invoices
   const activityRows: ActivityRow[] = [];
