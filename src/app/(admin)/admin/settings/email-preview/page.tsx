@@ -13,7 +13,7 @@ import {
 } from "@/lib/email-templates";
 import { SITE_NAME, BUSINESS_PHONE, BUSINESS_EMAIL, BUSINESS_WEBSITE } from "@/lib/constants";
 
-export const metadata: Metadata = { title: "Email Preview | Admin Settings" };
+export const metadata: Metadata = { title: "Email Templates & Documents | Admin Settings" };
 
 // ─── Sample data ──────────────────────────────────────────────────────────────
 
@@ -181,6 +181,18 @@ function autoReplyEmail() {
   });
 }
 
+// ─── Document templates (PDFs) ───────────────────────────────────────────────
+
+const DOCUMENTS = [
+  {
+    id: "invoice-pdf",
+    label: "Invoice PDF",
+    tag: "Finance",
+    description: "Attached to invoice emails and available for direct download.",
+    src: "/api/admin/preview/invoice-pdf",
+  },
+];
+
 // ─── Templates list ───────────────────────────────────────────────────────────
 
 const TEMPLATES = [
@@ -202,14 +214,56 @@ const TAG_COLORS: Record<string, string> = {
 
 export default function EmailPreviewPage() {
   return (
-    <div className="space-y-6 pb-10">
+    <div className="space-y-8 pb-10">
       <div>
-        <h1 className="text-xl font-semibold text-foreground">Email Template Preview</h1>
+        <h1 className="text-xl font-semibold text-foreground">Email Templates &amp; Documents</h1>
         <p className="text-sm text-muted-foreground mt-1">
-          Live preview of every outbound email Brightex sends to clients.
-          Sample data is used — switch between templates using the tabs below.
+          Live previews of every outbound email and PDF document Brightex sends to clients.
+          Sample data is used throughout.
         </p>
       </div>
+
+      {/* ── PDF Documents ── */}
+      <div className="space-y-4">
+        <div>
+          <h2 className="text-base font-semibold text-foreground">Documents</h2>
+          <p className="text-xs text-muted-foreground mt-0.5">PDF files attached to emails or downloaded directly from the admin.</p>
+        </div>
+
+        {DOCUMENTS.map((d) => (
+          <section key={d.id} className="space-y-3">
+            <div className="flex items-center gap-3">
+              <h3 className="text-sm font-semibold text-foreground">{d.label}</h3>
+              <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${TAG_COLORS[d.tag] ?? ""}`}>
+                {d.tag}
+              </span>
+              <span className="text-xs text-muted-foreground">{d.description}</span>
+            </div>
+
+            <div className="border border-border rounded-xl overflow-hidden bg-muted/30">
+              <div className="flex items-center gap-1.5 px-4 py-2.5 border-b border-border bg-muted/50">
+                <span className="w-2.5 h-2.5 rounded-full bg-red-400" />
+                <span className="w-2.5 h-2.5 rounded-full bg-amber-400" />
+                <span className="w-2.5 h-2.5 rounded-full bg-emerald-400" />
+                <span className="ml-3 text-xs text-muted-foreground font-mono">Document preview — {d.label}</span>
+              </div>
+              <iframe
+                src={d.src}
+                title={d.label}
+                className="w-full border-0"
+                style={{ height: "860px" }}
+              />
+            </div>
+          </section>
+        ))}
+      </div>
+
+      {/* ── Email Templates ── */}
+      <div className="space-y-4">
+        <div>
+          <h2 className="text-base font-semibold text-foreground">Email Templates</h2>
+          <p className="text-xs text-muted-foreground mt-0.5">HTML emails sent directly to clients for invoices, bookings, enquiries, and more.</p>
+        </div>
 
       {TEMPLATES.map((t) => (
         <section key={t.id} className="space-y-3">
@@ -260,6 +314,7 @@ export default function EmailPreviewPage() {
           </details>
         </section>
       ))}
+      </div>
     </div>
   );
 }
