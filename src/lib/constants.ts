@@ -62,6 +62,33 @@ export function whatsappUrl(message?: string): string {
 export const WHATSAPP_DEFAULT_MESSAGE =
   "Hi Brightex Team, I was on the Brightex website and I'd like to chat.";
 
+// ─── Supabase Storage image helper ──────────────────────────────────────────
+
+/**
+ * Build a Supabase Storage URL for an image.
+ *
+ * With no params → raw /object/public/ URL (browser caches, no transform).
+ * With params   → /render/image/public/ URL (Supabase resizes; Vercel does nothing).
+ *
+ * Always pair <Image> using this with the `unoptimized` prop so Vercel's
+ * Image Optimization quota is never consumed by storage images.
+ */
+export function storageUrl(
+  path: string,
+  params?: { width?: number; height?: number; quality?: number; resize?: "cover" | "contain" | "fill" }
+): string {
+  const base = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
+  if (!params) {
+    return `${base}/storage/v1/object/public/${path}`;
+  }
+  const qs = new URLSearchParams();
+  if (params.width)   qs.set("width",   String(params.width));
+  if (params.height)  qs.set("height",  String(params.height));
+  if (params.quality) qs.set("quality", String(params.quality));
+  if (params.resize)  qs.set("resize",  params.resize);
+  return `${base}/storage/v1/render/image/public/${path}?${qs.toString()}`;
+}
+
 /** Invoice number prefix */
 export const INVOICE_PREFIX = "BXS";
 

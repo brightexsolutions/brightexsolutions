@@ -66,6 +66,56 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     return acc;
   }, {});
 
+  // ── Calendar sync ────────────────────────────────────────────────────────────
+
+  // 1. Sync deadline event when end_date changes
+  if ("end_date" in result.data) {
+    const newEnd = result.data.end_date ?? null;
+    const { data: existingDeadline } = await supabase
+      .from("calendar_events")
+      .select("id")
+      .eq("entity_type", "project")
+      .eq("entity_id", id)
+      .eq("type", "project_milestone")
+      .ilike("title", "% — deadline")
+      .maybeSingle();
+
+    if (newEnd) {
+      if (existingDeadline) {
+        await supabase.from("calendar_events").update({ start_at: new Date(newEnd).toISOString() }).eq("id", existingDeadline.id);
+      } else {
+        await supabase.from("calendar_events").insert({
+          title: `${data.name} — deadline`,
+          type: "project_milestone",
+          start_at: new Date(newEnd).toISOString(),
+          all_day: true,
+          entity_type: "project",
+          entity_id: id,
+        });
+      }
+    } else if (existingDeadline) {
+      await supabase.from("calendar_events").delete().eq("id", existingDeadline.id);
+    }
+  }
+
+  // 2. Insert a one-time milestone event when project goes live or completes
+  const prevStatus = before?.status as string | undefined;
+  const newStatus = result.data.status;
+  const milestoneStatuses = ["live", "completed"] as const;
+  if (newStatus && milestoneStatuses.includes(newStatus as "live" | "completed") && prevStatus !== newStatus) {
+    const label = newStatus === "live" ? "goes live" : "completed";
+    await supabase.from("calendar_events").insert({
+      title: `${data.name} — ${label}`,
+      type: "project_milestone",
+      start_at: new Date().toISOString(),
+      all_day: true,
+      entity_type: "project",
+      entity_id: id,
+    });
+  }
+
+  // ── /Calendar sync ───────────────────────────────────────────────────────────
+
   await logAction({
     actor_id: user.id,
     actor_name: user.email ?? user.id,

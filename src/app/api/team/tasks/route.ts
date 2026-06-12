@@ -122,6 +122,18 @@ export async function POST(request: NextRequest) {
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
+  // Auto-create calendar event for due_date (visible to team member via /api/team/calendar)
+  if (result.data.due_date) {
+    await supabase.from("calendar_events").insert({
+      title: task.title,
+      type: "task_deadline",
+      start_at: new Date(result.data.due_date).toISOString(),
+      all_day: true,
+      entity_type: "task",
+      entity_id: task.id as string,
+    });
+  }
+
   await logAction({
     actor_id: user.id,
     actor_name: user.email ?? user.id,

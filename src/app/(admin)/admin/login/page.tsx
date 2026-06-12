@@ -48,6 +48,7 @@ export default function AdminLoginPage() {
             width={160}
             height={40}
             className="h-10 w-auto"
+            unoptimized
             onError={(e) => {
               (e.currentTarget as HTMLImageElement).style.display = "none";
             }}

@@ -34,6 +34,12 @@ export async function PATCH(
     .single();
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+
+  // Remove calendar event when booking is cancelled
+  if (result.data.status === "cancelled") {
+    await supabase.from("calendar_events").delete().eq("entity_type", "booking").eq("entity_id", id);
+  }
+
   return NextResponse.json({ data });
 }
 
@@ -51,5 +57,9 @@ export async function DELETE(
   const { id } = await params;
   const { error } = await supabase.from("bookings").update({ deleted_at: new Date().toISOString() }).eq("id", id);
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+
+  // Cascade remove calendar event
+  await supabase.from("calendar_events").delete().eq("entity_type", "booking").eq("entity_id", id);
+
   return NextResponse.json({ ok: true });
 }

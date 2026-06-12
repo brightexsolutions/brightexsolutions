@@ -5,7 +5,10 @@ import {
   Phone, Mail, MapPin, ExternalLink, Save,
   Hash, BarChart2, Building2, FileText,
   CheckCircle2, AlertCircle, ChevronRight, Image, Upload, X, Loader2,
+  Bot,
 } from "lucide-react";
+import { CLAUDE_MODEL_OPTIONS, GEMINI_MODEL_OPTIONS, AI_MODELS } from "@/lib/ai-models";
+import type { AIProvider } from "@/types";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
@@ -17,6 +20,7 @@ const sections = [
   { id: "invoice", label: "Invoice & Payments", icon: FileText, description: "Payment methods, bank details" },
   { id: "social", label: "Social Media", icon: Hash, description: "Platform handles" },
   { id: "integrations", label: "Integrations", icon: BarChart2, description: "Analytics, cron" },
+  { id: "ai", label: "AI", icon: Bot, description: "Provider, model, on/off toggle" },
 ] as const;
 type Section = (typeof sections)[number]["id"];
 
@@ -72,6 +76,10 @@ const defaults = {
   invoice_bank_account_number: "",
   invoice_bank_branch: "",
   invoice_footer_note: "",
+  // AI settings
+  ai_enabled:  "true",
+  ai_provider: "anthropic" as AIProvider,
+  ai_model:    AI_MODELS.haiku,
 };
 
 type SettingsForm = typeof defaults;
@@ -464,6 +472,137 @@ export default function SettingsPage() {
                     </div>
                     <div className="mt-2 p-3 rounded-sm bg-muted font-mono text-xs text-muted-foreground border border-border">
                       Set <code className="text-foreground">CRON_SECRET</code> in Vercel → Project → Settings → Environment Variables
+                    </div>
+                  </div>
+                </>
+              )}
+
+              {/* ── AI ── */}
+              {active === "ai" && (
+                <>
+                  {/* Enable / disable toggle */}
+                  <div className="px-6 py-5 flex items-center justify-between border-b border-border">
+                    <div>
+                      <p className="text-sm font-medium text-foreground">Enable AI features</p>
+                      <p className="text-xs text-muted-foreground mt-0.5">
+                        Powers email drafts, lead scoring, task suggestions, and social captions.
+                        Disable to use built-in templates only.
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => update("ai_enabled", form.ai_enabled === "true" ? "false" : "true")}
+                      className={cn(
+                        "relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                        form.ai_enabled === "true" ? "bg-brand-gold" : "bg-muted-foreground/30"
+                      )}
+                    >
+                      <span
+                        className={cn(
+                          "pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-lg ring-0 transition duration-200 ease-in-out",
+                          form.ai_enabled === "true" ? "translate-x-5" : "translate-x-0"
+                        )}
+                      />
+                    </button>
+                  </div>
+
+                  {/* Provider selector */}
+                  <SettingRow
+                    label="AI Provider"
+                    hint="Choose your AI backend. Claude requires ANTHROPIC_API_KEY; Gemini requires GEMINI_API_KEY (both in Vercel env vars)."
+                  >
+                    <div className="grid grid-cols-2 gap-2">
+                      {(["anthropic", "gemini"] as AIProvider[]).map((p) => (
+                        <button
+                          key={p}
+                          type="button"
+                          onClick={() => {
+                            update("ai_provider", p);
+                            update(
+                              "ai_model",
+                              p === "gemini" ? GEMINI_MODEL_OPTIONS[0].value : CLAUDE_MODEL_OPTIONS[0].value
+                            );
+                          }}
+                          className={cn(
+                            "flex flex-col items-start gap-1 rounded-sm border px-4 py-3 text-left text-sm transition-colors",
+                            form.ai_provider === p
+                              ? "border-brand-gold bg-brand-gold/5 text-foreground"
+                              : "border-border text-muted-foreground hover:border-brand-gold/50"
+                          )}
+                        >
+                          <span className="font-semibold capitalize">{p === "anthropic" ? "Claude" : "Gemini"}</span>
+                          <span className="text-[11px] text-muted-foreground">
+                            {p === "anthropic" ? "Anthropic · paid" : "Google · free tier"}
+                          </span>
+                        </button>
+                      ))}
+                    </div>
+                  </SettingRow>
+
+                  {/* Model selector */}
+                  <SettingRow
+                    label="Model"
+                    hint={
+                      form.ai_provider === "gemini"
+                        ? "All Gemini models shown are on the free tier (no billing required). Flash 2.0 is recommended."
+                        : "Haiku is fastest and cheapest for routine tasks. Use Sonnet or Opus for complex reasoning."
+                    }
+                  >
+                    <div className="space-y-2">
+                      {(form.ai_provider === "gemini" ? GEMINI_MODEL_OPTIONS : CLAUDE_MODEL_OPTIONS).map((opt) => (
+                        <label
+                          key={opt.value}
+                          className={cn(
+                            "flex cursor-pointer items-center gap-3 rounded-sm border px-4 py-3 transition-colors",
+                            form.ai_model === opt.value
+                              ? "border-brand-gold bg-brand-gold/5"
+                              : "border-border hover:border-brand-gold/50"
+                          )}
+                        >
+                          <input
+                            type="radio"
+                            name="ai_model"
+                            value={opt.value}
+                            checked={form.ai_model === opt.value}
+                            onChange={() => update("ai_model", opt.value)}
+                            className="accent-brand-gold"
+                          />
+                          <span className="text-sm text-foreground">{opt.label}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </SettingRow>
+
+                  {/* API key instructions */}
+                  <div className="px-6 py-5">
+                    <div className="flex items-start justify-between mb-2">
+                      <div>
+                        <Label className="text-sm font-medium text-foreground">
+                          {form.ai_provider === "gemini" ? "Gemini API Key" : "Anthropic API Key"}
+                        </Label>
+                        <p className="text-xs text-muted-foreground mt-0.5">
+                          {form.ai_provider === "gemini"
+                            ? "Get a free key at aistudio.google.com → Get API key. No billing required for free tier."
+                            : "Get your key at console.anthropic.com. Haiku costs ~$0.003 per admin AI call."}
+                        </p>
+                      </div>
+                      <span className="text-[11px] px-2 py-0.5 rounded-full bg-amber-400/10 text-amber-600 dark:text-amber-400 font-medium border border-amber-200 dark:border-amber-800/40">Env only</span>
+                    </div>
+                    <div className="mt-2 p-3 rounded-sm bg-muted font-mono text-xs text-muted-foreground border border-border">
+                      Set{" "}
+                      <code className="text-foreground">
+                        {form.ai_provider === "gemini" ? "GEMINI_API_KEY" : "ANTHROPIC_API_KEY"}
+                      </code>{" "}
+                      in Vercel → Project → Settings → Environment Variables
+                    </div>
+                  </div>
+
+                  {/* Fallback note */}
+                  <div className="px-6 pb-5">
+                    <div className="rounded-sm bg-muted/50 border border-border p-4 text-xs text-muted-foreground leading-relaxed">
+                      <strong className="text-foreground">Fallback behaviour:</strong> If AI is disabled or the API key is missing,
+                      email drafts automatically use built-in templates. Lead scoring and task suggestions show a notice instead.
+                      The Brixo public chat widget always uses AI when configured.
                     </div>
                   </div>
                 </>

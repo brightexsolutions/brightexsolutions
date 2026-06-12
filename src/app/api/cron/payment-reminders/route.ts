@@ -114,6 +114,24 @@ export async function GET(request: NextRequest) {
     );
 
     try {
+      // Create system alert only if none already exists for this invoice
+      const { count: existingCount } = await supabase
+        .from("system_alerts")
+        .select("*", { count: "exact", head: true })
+        .eq("entity_id", invoice.id)
+        .eq("type", "invoice_overdue")
+        .eq("acknowledged", false);
+
+      if ((existingCount ?? 0) === 0) {
+        await supabase.from("system_alerts").insert({
+          type: "invoice_overdue",
+          severity: daysOverdue >= 14 ? "critical" : "warning",
+          message: `Invoice ${invoice.invoice_number} for ${client.name} is ${daysOverdue} day${daysOverdue !== 1 ? "s" : ""} overdue — KES ${Number(invoice.total).toLocaleString("en-KE")}`,
+          entity_id: invoice.id,
+          entity_type: "invoice",
+        });
+      }
+
       await transporter.sendMail({
         from: `${SITE_NAME} <${process.env.SMTP_USER}>`,
         to: client.email,

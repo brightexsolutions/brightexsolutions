@@ -37,6 +37,39 @@ export async function PATCH(
     .single();
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+
+  // Sync calendar event when scheduled_at changes
+  if ("scheduled_at" in result.data) {
+    const newScheduled = result.data.scheduled_at ?? null;
+    const { data: existing } = await supabase
+      .from("calendar_events")
+      .select("id")
+      .eq("entity_type", "social_post")
+      .eq("entity_id", id)
+      .eq("type", "social_post")
+      .maybeSingle();
+
+    if (newScheduled) {
+      const caption = (data.caption as string | null) ?? "";
+      const title = `Post: ${((data.platforms as string[]) ?? []).join(", ")} — ${caption.slice(0, 60)}${caption.length > 60 ? "…" : ""}`;
+      if (existing) {
+        await supabase.from("calendar_events").update({ start_at: new Date(newScheduled).toISOString(), title }).eq("id", existing.id);
+      } else {
+        await supabase.from("calendar_events").insert({
+          title,
+          type: "social_post",
+          start_at: new Date(newScheduled).toISOString(),
+          all_day: false,
+          entity_type: "social_post",
+          entity_id: id,
+        });
+      }
+    } else if (existing) {
+      // scheduled_at cleared — remove the event
+      await supabase.from("calendar_events").delete().eq("id", existing.id);
+    }
+  }
+
   return NextResponse.json({ data });
 }
 
@@ -54,5 +87,9 @@ export async function DELETE(
   const { id } = await params;
   const { error } = await supabase.from("social_posts").update({ deleted_at: new Date().toISOString() }).eq("id", id);
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+
+  // Remove associated calendar event
+  await supabase.from("calendar_events").delete().eq("entity_type", "social_post").eq("entity_id", id);
+
   return NextResponse.json({ ok: true });
 }

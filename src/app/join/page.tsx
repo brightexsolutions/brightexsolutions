@@ -157,7 +157,7 @@ function JoinContent() {
         <div className="w-full max-w-md">
           <div className="flex justify-center mb-10">
             <Image src="/assets/brightex-logo-light.png" alt="Brightex Solutions" width={160} height={40} className="h-10 w-auto"
-              onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />
+              unoptimized onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />
           </div>
           <div className="bg-brand-navy-light rounded-sm border border-white/10 p-8 text-center">
             <div className="w-14 h-14 rounded-full bg-amber-400/10 flex items-center justify-center mx-auto mb-5">

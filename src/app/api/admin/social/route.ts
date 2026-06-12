@@ -57,5 +57,19 @@ export async function POST(request: NextRequest) {
     .single();
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+
+  // Auto-create calendar event for scheduled date
+  if (result.data.scheduled_at) {
+    const platformList = result.data.platforms.join(", ");
+    await supabase.from("calendar_events").insert({
+      title: `Post: ${platformList} — ${(result.data.caption ?? "").slice(0, 60)}${(result.data.caption?.length ?? 0) > 60 ? "…" : ""}`,
+      type: "social_post",
+      start_at: new Date(result.data.scheduled_at).toISOString(),
+      all_day: false,
+      entity_type: "social_post",
+      entity_id: data.id as string,
+    });
+  }
+
   return NextResponse.json({ data }, { status: 201 });
 }
