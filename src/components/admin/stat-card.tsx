@@ -55,7 +55,7 @@ export function StatCard({
   const card = (
     <div
       className={cn(
-        "rounded-xl border p-5 flex flex-col gap-4 transition-all duration-200 select-none h-full",
+        "rounded-xl border p-4 sm:p-5 flex flex-col gap-3 sm:gap-4 transition-all duration-200 select-none h-full",
         featured
           ? "bg-brand-navy dark:bg-[#1a3a62] border-transparent text-white shadow-[0_8px_32px_-8px_rgba(21,34,56,0.40)] dark:shadow-[0_8px_32px_-8px_rgba(26,58,98,0.50)]"
           : "bg-card border-border hover:border-brand-gold/30 hover:shadow-md",
@@ -65,15 +65,15 @@ export function StatCard({
     >
       {/* Row 1: title + icon */}
       <div className="flex items-start justify-between gap-2">
-        <p className={cn("text-[11px] font-bold uppercase tracking-[0.12em]", featured ? "text-white/50" : "text-muted-foreground")}>
+        <p className={cn("text-[10px] sm:text-[11px] font-bold uppercase tracking-[0.12em]", featured ? "text-white/50" : "text-muted-foreground")}>
           {title}
         </p>
         {Icon && (
           <div className={cn(
-            "w-8 h-8 rounded-lg flex items-center justify-center shrink-0",
+            "w-7 h-7 sm:w-8 sm:h-8 rounded-lg flex items-center justify-center shrink-0",
             featured ? "bg-white/12" : (resolvedAccent?.bg ?? "bg-brand-gold/10")
           )}>
-            <Icon size={15} className={featured ? "text-white/80" : (resolvedAccent?.text ?? "text-brand-gold")} />
+            <Icon size={13} className={featured ? "text-white/80" : (resolvedAccent?.text ?? "text-brand-gold")} />
           </div>
         )}
       </div>
@@ -81,7 +81,7 @@ export function StatCard({
       {/* Row 2: value */}
       <p className={cn(
         "font-display font-bold leading-none tracking-tight",
-        featured ? "text-white text-[2rem]" : "text-foreground text-[1.85rem]"
+        featured ? "text-white text-[1.45rem] sm:text-[2rem]" : "text-foreground text-[1.35rem] sm:text-[1.85rem]"
       )}>
         {value}
       </p>
