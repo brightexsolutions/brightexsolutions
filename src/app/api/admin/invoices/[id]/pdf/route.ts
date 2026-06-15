@@ -29,20 +29,26 @@ export async function GET(
   const { id } = await params;
   const supabase = createAdminClient();
 
-  const [{ data: invoice, error }, { data: settingsRows }] = await Promise.all([
+  const [{ data: invoice, error }, { data: settingsRows }, { data: payments }] = await Promise.all([
     supabase.from("invoices").select("*, clients(id, name, company, email, phone)").eq("id", id).single(),
     supabase.from("settings").select("key, value").in("key", PAYMENT_SETTING_KEYS as string[]),
+    supabase.from("payments").select("amount").eq("invoice_id", id).is("deleted_at", null),
   ]);
 
   if (error || !invoice) {
     return NextResponse.json({ error: "Invoice not found" }, { status: 404 });
   }
 
+  const paidAmount = (payments ?? []).reduce((s, p: { amount: number }) => s + Number(p.amount), 0);
+
   const paymentSettings: InvoicePaymentSettings = Object.fromEntries(
     (settingsRows ?? []).map((r: { key: string; value: string }) => [r.key, r.value])
   ) as InvoicePaymentSettings;
 
-  const element = createElement(InvoicePDFDocument, { invoice, paymentSettings }) as ReactElement<DocumentProps, string | JSXElementConstructor<unknown>>;
+  const element = createElement(InvoicePDFDocument, {
+    invoice: { ...invoice, paid_amount: paidAmount },
+    paymentSettings,
+  }) as ReactElement<DocumentProps, string | JSXElementConstructor<unknown>>;
   const buffer = await renderToBuffer(element);
 
   const dateStr = new Date(invoice.created_at).toISOString().slice(0, 10);

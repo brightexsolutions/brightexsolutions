@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback, useRef } from "react";
 import {
   FolderOpen, Plus, Pencil, Trash2, Eye, Upload, FileText,
   Trash, CheckCircle2, RefreshCw, ChevronRight, TrendingUp,
+  Link2, Copy, ExternalLink,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { StatCard } from "@/components/admin/stat-card";
@@ -82,6 +83,8 @@ type Project = {
   auto_complete_on_tasks?: boolean | null;
   client_comms_enabled?: boolean | null;
   comm_trigger?: string | null;
+  portal_enabled?: boolean | null;
+  portal_token?: string | null;
   clients?: { id: string; name?: string | null; company?: string | null; email?: string | null } | null;
 };
 
@@ -291,6 +294,9 @@ export function ProjectsPageClient() {
   const [rateForm, setRateForm] = useState(defaultRateForm);
   const [rateSaving, setRateSaving] = useState(false);
   const [rateError, setRateError] = useState("");
+
+  // Portal
+  const [portalCopied, setPortalCopied] = useState(false);
 
   // Task management
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -944,6 +950,105 @@ export function ProjectsPageClient() {
                       </div>
                     )}
                   </div>
+                </div>
+
+                {/* ── Client Portal ──────────────────────────────────────────── */}
+                <div className="px-6 py-5 border-b border-border">
+                  <div className="flex items-center gap-2 mb-3">
+                    <Link2 size={13} className="text-muted-foreground" />
+                    <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Client Portal</p>
+                  </div>
+
+                  <label className="flex items-start gap-3 cursor-pointer mb-4">
+                    <input
+                      type="checkbox"
+                      checked={!!viewProject.portal_enabled}
+                      onChange={async (e) => {
+                        const v = e.target.checked;
+                        await fetch(`/api/admin/projects/${viewProject.id}`, {
+                          method: "PATCH",
+                          headers: { "Content-Type": "application/json" },
+                          body: JSON.stringify({ portal_enabled: v }),
+                        });
+                        setViewProject((p) => p ? { ...p, portal_enabled: v } : p);
+                        setProjects((prev) => prev.map((p) => p.id === viewProject.id ? { ...p, portal_enabled: v } : p));
+                      }}
+                      className="mt-0.5 accent-brand-gold"
+                    />
+                    <div>
+                      <p className="text-sm font-medium text-foreground">Activate client portal link</p>
+                      <p className="text-xs text-muted-foreground">
+                        When enabled, the client can visit a page showing project progress, tasks, and communications.
+                        Include the link in your next update email or share it directly.
+                      </p>
+                    </div>
+                  </label>
+
+                  {viewProject.portal_token && (
+                    <div className="space-y-2">
+                      {/* Link preview */}
+                      <div className={cn(
+                        "flex items-center gap-2 px-3 py-2 rounded-sm border text-xs font-mono truncate",
+                        viewProject.portal_enabled
+                          ? "border-brand-gold/30 bg-brand-gold/5 text-foreground"
+                          : "border-border bg-muted/40 text-muted-foreground"
+                      )}>
+                        <ExternalLink size={11} className="shrink-0 text-muted-foreground" />
+                        <span className="truncate">
+                          {typeof window !== "undefined" ? window.location.origin : ""}/updates/{viewProject.portal_token}
+                        </span>
+                      </div>
+
+                      {viewProject.portal_enabled && (
+                        <div className="flex gap-2">
+                          {/* Copy link */}
+                          <button
+                            onClick={async () => {
+                              const url = `${window.location.origin}/updates/${viewProject.portal_token}`;
+                              await navigator.clipboard.writeText(url);
+                              setPortalCopied(true);
+                              setTimeout(() => setPortalCopied(false), 2000);
+                            }}
+                            className="flex-1 flex items-center justify-center gap-1.5 py-1.5 text-xs rounded-sm border border-border hover:border-brand-gold/40 hover:text-foreground text-muted-foreground transition-colors"
+                          >
+                            <Copy size={11} />
+                            {portalCopied ? "Copied!" : "Copy link"}
+                          </button>
+
+                          {/* Share via WhatsApp */}
+                          <button
+                            onClick={() => {
+                              const url = `${window.location.origin}/updates/${viewProject.portal_token}`;
+                              const msg = encodeURIComponent(
+                                `Hi${viewProject.clients?.name ? ` ${viewProject.clients.name.split(" ")[0]}` : ""},\n\nHere is your project updates link for *${viewProject.name}*:\n${url}\n\nYou can track progress, tasks, and all communications from this page.`
+                              );
+                              window.open(`https://wa.me/?text=${msg}`, "_blank");
+                            }}
+                            className="flex-1 flex items-center justify-center gap-1.5 py-1.5 text-xs rounded-sm bg-emerald-500/10 text-emerald-600 border border-emerald-500/20 hover:bg-emerald-500/20 transition-colors font-medium"
+                          >
+                            💬 Share via WhatsApp
+                          </button>
+
+                          {/* Open in new tab */}
+                          <a
+                            href={`/updates/${viewProject.portal_token}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="px-3 flex items-center justify-center rounded-sm border border-border hover:border-brand-gold/40 text-muted-foreground hover:text-foreground transition-colors"
+                            title="Preview portal"
+                          >
+                            <ExternalLink size={12} />
+                          </a>
+                        </div>
+                      )}
+
+                      {!viewProject.portal_enabled && (
+                        <p className="text-xs text-muted-foreground/60 italic">
+                          Enable the portal above to activate this link and share it with your client.
+                        </p>
+                      )}
+                    </div>
+                  )}
                 </div>
 
                 {/* Retainer details */}

@@ -1,11 +1,12 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { CreditCard, Plus, Pencil, Trash2, Send, Loader2 } from "lucide-react";
+import { CreditCard, Plus, Pencil, Trash2, Send, Loader2, Eye, X } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { StatCard } from "@/components/admin/stat-card";
 import { DataTable, StackedCell, type Column, type RowAction } from "@/components/admin/data-table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -38,6 +39,7 @@ type Payment = {
   method: string;
   reference?: string | null;
   confirmation_sent?: boolean | null;
+  confirmation_sent_at?: string | null;
   date?: string | null;
   notes?: string | null;
   created_at: string;
@@ -71,6 +73,7 @@ export function PaymentsPageClient() {
   const [loadError, setLoadError] = useState("");
   const [invoiceOptions, setInvoiceOptions] = useState<InvoiceOption[]>([]);
   const [busyReceiptIds, setBusyReceiptIds] = useState<Set<string>>(new Set());
+  const [viewReceiptPayment, setViewReceiptPayment] = useState<Payment | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -179,7 +182,10 @@ export function PaymentsPageClient() {
         setLoadError(json.error ?? "Failed to send receipt");
         return;
       }
-      setPayments((prev) => prev.map((p) => p.id === payment.id ? { ...p, confirmation_sent: true } : p));
+      const sentAt: string = json.confirmation_sent_at ?? new Date().toISOString();
+      setPayments((prev) => prev.map((p) => p.id === payment.id ? { ...p, confirmation_sent: true, confirmation_sent_at: sentAt } : p));
+      // Keep view sheet in sync if it's open for this payment
+      setViewReceiptPayment((prev) => prev?.id === payment.id ? { ...prev, confirmation_sent: true, confirmation_sent_at: sentAt } : prev);
     } finally {
       setBusyReceiptIds((prev) => { const next = new Set(prev); next.delete(payment.id); return next; });
     }
@@ -327,29 +333,52 @@ export function PaymentsPageClient() {
               key: "confirmation_sent",
               label: "Receipt",
               className: "hidden md:table-cell",
-              render: (row) => (
-                <span className={`text-xs font-medium ${row.confirmation_sent ? "text-emerald-500" : "text-amber-500"}`}>
-                  {row.confirmation_sent ? "Sent" : "Pending"}
-                </span>
-              ),
+              render: (row) => {
+                const p = row as unknown as Payment;
+                if (p.confirmation_sent && p.confirmation_sent_at) {
+                  return (
+                    <span className="text-xs text-emerald-500 font-medium whitespace-nowrap">
+                      Sent {new Date(p.confirmation_sent_at).toLocaleDateString("en-KE", { day: "numeric", month: "short" })}
+                    </span>
+                  );
+                }
+                return (
+                  <span className={`text-xs font-medium ${p.confirmation_sent ? "text-emerald-500" : "text-amber-500"}`}>
+                    {p.confirmation_sent ? "Sent" : "Pending"}
+                  </span>
+                );
+              },
             },
             {
               key: "actions_inline",
               label: "",
-              className: "w-28",
+              className: "w-44",
               render: (row) => {
                 const p = row as unknown as Payment;
-                if (p.confirmation_sent) return null;
                 const busy = busyReceiptIds.has(p.id);
+                const hasClient = !!(p.invoices?.clients?.email);
                 return (
-                  <button
-                    onClick={(e) => { e.stopPropagation(); sendReceipt(p); }}
-                    disabled={busy}
-                    className="flex items-center gap-1 px-2 py-1 rounded-md text-[11px] font-medium bg-emerald-400/10 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-400/20 transition-colors disabled:opacity-50"
-                  >
-                    {busy ? <Loader2 size={10} className="animate-spin" /> : <Send size={10} />}
-                    Send Receipt
-                  </button>
+                  <div className="flex items-center gap-1.5">
+                    <button
+                      onClick={(e) => { e.stopPropagation(); setViewReceiptPayment(p); }}
+                      className="flex items-center gap-1 px-2 py-1 rounded-md text-[11px] font-medium bg-muted text-muted-foreground hover:bg-muted/80 transition-colors"
+                      title="View receipt"
+                    >
+                      <Eye size={10} />
+                      View
+                    </button>
+                    {hasClient && (
+                      <button
+                        onClick={(e) => { e.stopPropagation(); sendReceipt(p); }}
+                        disabled={busy}
+                        className="flex items-center gap-1 px-2 py-1 rounded-md text-[11px] font-medium bg-emerald-400/10 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-400/20 transition-colors disabled:opacity-50"
+                        title={p.confirmation_sent ? "Resend receipt" : "Send receipt"}
+                      >
+                        {busy ? <Loader2 size={10} className="animate-spin" /> : <Send size={10} />}
+                        {p.confirmation_sent ? "Resend" : "Send"}
+                      </button>
+                    )}
+                  </div>
                 );
               },
             },
@@ -366,6 +395,112 @@ export function PaymentsPageClient() {
           emptyMessage={loading ? "Loading payments…" : "No payments recorded yet."}
         />
       </Card>
+
+      {/* View Receipt Sheet */}
+      <Sheet open={!!viewReceiptPayment} onOpenChange={(v) => { if (!v) setViewReceiptPayment(null); }}>
+        <SheetContent side="right" className="w-full sm:max-w-md">
+          <SheetHeader className="pb-4 border-b border-border">
+            <SheetTitle className="font-display text-lg">Payment Receipt</SheetTitle>
+            {viewReceiptPayment && (
+              <p className="text-xs text-muted-foreground">
+                {viewReceiptPayment.invoices?.invoice_number ?? "Unlinked payment"} · {new Date(viewReceiptPayment.date ?? viewReceiptPayment.created_at).toLocaleDateString("en-KE", { day: "numeric", month: "long", year: "numeric" })}
+              </p>
+            )}
+          </SheetHeader>
+          {viewReceiptPayment && (
+            <div className="pt-5 space-y-5">
+              {/* Amount hero */}
+              <div className="rounded-lg bg-emerald-400/10 border border-emerald-400/20 px-5 py-4 text-center">
+                <p className="text-xs text-muted-foreground mb-1 uppercase tracking-wider">Amount Received</p>
+                <p className="font-display text-3xl font-bold text-emerald-600 dark:text-emerald-400">
+                  KES {Number(viewReceiptPayment.amount).toLocaleString("en-KE", { minimumFractionDigits: 2 })}
+                </p>
+              </div>
+
+              {/* Details grid */}
+              <div className="rounded-lg border border-border divide-y divide-border text-sm">
+                <div className="flex justify-between items-center px-4 py-3">
+                  <span className="text-muted-foreground">Method</span>
+                  <span className="font-medium capitalize">
+                    {methodLabels[viewReceiptPayment.method] ?? viewReceiptPayment.method}
+                  </span>
+                </div>
+                <div className="flex justify-between items-center px-4 py-3">
+                  <span className="text-muted-foreground">Date</span>
+                  <span className="font-medium">
+                    {new Date(viewReceiptPayment.date ?? viewReceiptPayment.created_at).toLocaleDateString("en-KE", { day: "2-digit", month: "long", year: "numeric" })}
+                  </span>
+                </div>
+                {viewReceiptPayment.reference && (
+                  <div className="flex justify-between items-center px-4 py-3">
+                    <span className="text-muted-foreground">Reference</span>
+                    <span className="font-mono font-medium text-xs">{viewReceiptPayment.reference}</span>
+                  </div>
+                )}
+                {viewReceiptPayment.invoices?.invoice_number && (
+                  <div className="flex justify-between items-center px-4 py-3">
+                    <span className="text-muted-foreground">Invoice</span>
+                    <span className="font-mono font-medium text-xs">{viewReceiptPayment.invoices.invoice_number}</span>
+                  </div>
+                )}
+                {viewReceiptPayment.invoices?.clients?.name && (
+                  <div className="flex justify-between items-center px-4 py-3">
+                    <span className="text-muted-foreground">Client</span>
+                    <span className="font-medium">{viewReceiptPayment.invoices.clients.name}</span>
+                  </div>
+                )}
+                {viewReceiptPayment.invoices?.clients?.email && (
+                  <div className="flex justify-between items-center px-4 py-3">
+                    <span className="text-muted-foreground">Client Email</span>
+                    <span className="font-medium text-xs">{viewReceiptPayment.invoices.clients.email}</span>
+                  </div>
+                )}
+                <div className="flex justify-between items-center px-4 py-3">
+                  <span className="text-muted-foreground">Receipt Status</span>
+                  <span className={`text-xs font-semibold ${viewReceiptPayment.confirmation_sent ? "text-emerald-500" : "text-amber-500"}`}>
+                    {viewReceiptPayment.confirmation_sent
+                      ? viewReceiptPayment.confirmation_sent_at
+                        ? `Sent ${new Date(viewReceiptPayment.confirmation_sent_at).toLocaleDateString("en-KE", { day: "numeric", month: "short", year: "numeric" })} at ${new Date(viewReceiptPayment.confirmation_sent_at).toLocaleTimeString("en-KE", { hour: "2-digit", minute: "2-digit" })}`
+                        : "Sent to client"
+                      : "Not yet sent"}
+                  </span>
+                </div>
+              </div>
+
+              {viewReceiptPayment.notes && (
+                <div className="rounded-lg bg-muted/40 px-4 py-3 text-sm">
+                  <p className="text-xs text-muted-foreground mb-1 font-medium">Notes</p>
+                  <p className="text-foreground">{viewReceiptPayment.notes}</p>
+                </div>
+              )}
+
+              {/* Actions */}
+              <div className="flex gap-3 pt-2">
+                <Button variant="outline" className="flex-1" onClick={() => setViewReceiptPayment(null)}>
+                  Close
+                </Button>
+                {viewReceiptPayment.invoices?.clients?.email && (
+                  <Button
+                    className="flex-1 bg-brand-gold text-brand-navy hover:bg-brand-gold-hover"
+                    disabled={busyReceiptIds.has(viewReceiptPayment.id)}
+                    onClick={() => {
+                      sendReceipt(viewReceiptPayment);
+                      setViewReceiptPayment(null);
+                    }}
+                  >
+                    {busyReceiptIds.has(viewReceiptPayment.id) ? (
+                      <Loader2 size={13} className="animate-spin mr-1" />
+                    ) : (
+                      <Send size={13} className="mr-1" />
+                    )}
+                    {viewReceiptPayment.confirmation_sent ? "Resend Receipt" : "Send Receipt"}
+                  </Button>
+                )}
+              </div>
+            </div>
+          )}
+        </SheetContent>
+      </Sheet>
 
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="max-w-md">

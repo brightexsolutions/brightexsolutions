@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { Rss, Plus, AlertTriangle, Pencil, Trash2, CheckCircle2, Loader2, Building2, Users, Lock, ExternalLink } from "lucide-react";
+import { Rss, Plus, AlertTriangle, Pencil, Trash2, CheckCircle2, Loader2, Building2, Users, Lock, ExternalLink, Bell, Mail, MessageSquare } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { StatCard } from "@/components/admin/stat-card";
 import { DataTable, StackedCell, type Column, type RowAction, type FilterConfig } from "@/components/admin/data-table";
@@ -11,6 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useConfirm } from "@/components/admin/confirm-dialog";
 
 const categories = ["domain", "hosting", "tool", "software", "other"];
@@ -22,11 +23,14 @@ const OWNERSHIP_OPTIONS = [
   { value: "client_managed", label: "Client Managed", description: "Client pays themselves — we only track it", icon: Lock, color: "bg-muted text-muted-foreground" },
 ] as const;
 
+type Client = { id: string; name: string; email?: string | null; phone?: string | null };
+
 const defaultForm = {
   name: "",
   provider: "",
   category: "domain",
   ownership: "internal" as "internal" | "on_behalf" | "client_managed",
+  client_id: "",
   amount: "",
   currency: "KES",
   billing_cycle: "yearly",
@@ -41,6 +45,8 @@ type Subscription = {
   provider?: string | null;
   category: string;
   ownership?: "internal" | "on_behalf" | "client_managed" | null;
+  client_id?: string | null;
+  clients?: Client | null;
   amount?: number | null;
   currency?: string | null;
   billing_cycle: string;
@@ -62,9 +68,12 @@ export function SubscriptionsPageClient() {
   const [form, setForm] = useState(defaultForm);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  const [loadError, setLoadError] = useState("");
   const [subscriptions, setSubscriptions] = useState<Subscription[]>([]);
+  const [clients, setClients] = useState<Client[]>([]);
   const [loading, setLoading] = useState(true);
   const [markingPaidId, setMarkingPaidId] = useState<string | null>(null);
+  const [busyNotifyIds, setBusyNotifyIds] = useState<Set<string>>(new Set());
 
   function set(field: string, value: string) {
     setForm((current) => ({ ...current, [field]: value }));
@@ -72,9 +81,14 @@ export function SubscriptionsPageClient() {
 
   const load = useCallback(async () => {
     setLoading(true);
-    const res = await fetch("/api/admin/subscriptions");
-    const json = await res.json().catch(() => ({}));
-    if (res.ok) setSubscriptions(json.data ?? []);
+    const [subsRes, clientsRes] = await Promise.all([
+      fetch("/api/admin/subscriptions"),
+      fetch("/api/admin/clients?minimal=1"),
+    ]);
+    const subsJson = await subsRes.json().catch(() => ({}));
+    const clientsJson = await clientsRes.json().catch(() => ({}));
+    if (subsRes.ok) setSubscriptions(subsJson.data ?? []);
+    if (clientsRes.ok) setClients(clientsJson.data ?? []);
     setLoading(false);
   }, []);
 
@@ -94,6 +108,7 @@ export function SubscriptionsPageClient() {
       provider: sub.provider ?? "",
       category: sub.category,
       ownership: sub.ownership ?? "internal",
+      client_id: sub.client_id ?? "",
       amount: sub.amount != null ? String(sub.amount) : "",
       currency: sub.currency ?? "KES",
       billing_cycle: sub.billing_cycle,
@@ -118,17 +133,39 @@ export function SubscriptionsPageClient() {
     }
   }
 
+  async function handleNotify(sub: Subscription, channel: "email" | "whatsapp") {
+    setBusyNotifyIds((prev) => { const n = new Set(prev); n.add(sub.id); return n; });
+    try {
+      const res = await fetch(`/api/admin/subscriptions/${sub.id}/notify`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ channel }),
+      });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) { setLoadError(json.error ?? "Failed to send notification"); return; }
+      if (channel === "whatsapp" && json.wa_link) {
+        window.open(json.wa_link, "_blank", "noopener,noreferrer");
+      }
+    } finally {
+      setBusyNotifyIds((prev) => { const n = new Set(prev); n.delete(sub.id); return n; });
+    }
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError("");
     setSaving(true);
     try {
-      const payload = {
+      const payload: Record<string, unknown> = {
         ...form,
         amount: form.amount ? Number(form.amount) : undefined,
         login_url: form.login_url || undefined,
         notes: form.notes || undefined,
+        client_id: form.client_id || undefined,
       };
+      // Only send client_id for non-internal ownership
+      if (form.ownership === "internal") delete payload.client_id;
+
       const url = editTarget ? `/api/admin/subscriptions/${editTarget.id}` : "/api/admin/subscriptions";
       const method = editTarget ? "PATCH" : "POST";
       const res = await fetch(url, { method, headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
@@ -163,6 +200,8 @@ export function SubscriptionsPageClient() {
   const monthlyCost = subscriptions.filter((s) => s.billing_cycle === "monthly").reduce((sum, s) => sum + Number(s.amount ?? 0), 0);
   const annualCost = subscriptions.filter((s) => s.billing_cycle === "yearly").reduce((sum, s) => sum + Number(s.amount ?? 0), 0);
 
+  const needsClientSelector = form.ownership === "on_behalf" || form.ownership === "client_managed";
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -174,6 +213,13 @@ export function SubscriptionsPageClient() {
           <Plus size={15} />Add Subscription
         </button>
       </div>
+
+      {loadError && (
+        <div className="flex items-center gap-2 px-4 py-2 rounded-sm bg-red-50 border border-red-200 dark:bg-red-950/20 dark:border-red-800/30 text-sm text-red-600 dark:text-red-400">
+          {loadError}
+          <button onClick={() => setLoadError("")} className="ml-auto text-xs underline">Dismiss</button>
+        </div>
+      )}
 
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
         <StatCard title="Active" value={subscriptions.length} icon={Rss} iconColor="text-emerald-400" iconBg="bg-emerald-400/10" />
@@ -207,6 +253,11 @@ export function SubscriptionsPageClient() {
                     <div className="flex items-center gap-1 flex-wrap">
                       <span className="px-1.5 py-0.5 rounded text-[10px] font-medium border border-border text-muted-foreground capitalize">{s.category}</span>
                       {ownerDef && <span className={`px-1.5 py-0.5 rounded text-[10px] font-medium ${ownerDef.color}`}>{ownerDef.label}</span>}
+                      {s.clients && (
+                        <span className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-sky-400/10 text-sky-600 dark:text-sky-400">
+                          {s.clients.name}
+                        </span>
+                      )}
                     </div>
                   </div>
                 );
@@ -247,11 +298,13 @@ export function SubscriptionsPageClient() {
             {
               key: "actions_inline",
               label: "",
-              className: "w-32",
+              className: "w-40",
               render: (row) => {
                 const s = row as unknown as Subscription;
                 const isBusy = markingPaidId === s.id;
+                const isNotifyBusy = busyNotifyIds.has(s.id);
                 const canMarkPaid = s.ownership !== "client_managed";
+                const hasClient = !!s.clients;
                 return (
                   <div className="flex items-center gap-1.5">
                     {canMarkPaid && (
@@ -262,6 +315,27 @@ export function SubscriptionsPageClient() {
                       >
                         {isBusy ? <Loader2 size={10} className="animate-spin" /> : <CheckCircle2 size={10} />} Paid
                       </button>
+                    )}
+                    {hasClient && (
+                      <DropdownMenu>
+                        <DropdownMenuTrigger
+                          onClick={(e) => e.stopPropagation()}
+                          disabled={isNotifyBusy}
+                          className="flex items-center gap-1 px-2 py-1 rounded text-[11px] font-medium bg-sky-400/10 text-sky-600 dark:text-sky-400 hover:bg-sky-400/20 transition-colors disabled:opacity-50"
+                        >
+                          {isNotifyBusy ? <Loader2 size={10} className="animate-spin" /> : <Bell size={10} />} Notify
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
+                          <DropdownMenuItem onClick={() => handleNotify(s, "email")} disabled={!s.clients?.email}>
+                            <Mail size={13} className="mr-2" />
+                            {s.clients?.email ? `Email ${s.clients.name}` : "No email on file"}
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handleNotify(s, "whatsapp")} disabled={!s.clients?.phone}>
+                            <MessageSquare size={13} className="mr-2" />
+                            {s.clients?.phone ? `WhatsApp ${s.clients.name}` : "No phone on file"}
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     )}
                     {s.login_url && (
                       <a href={s.login_url} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()} className="p-1 rounded text-muted-foreground hover:text-brand-gold transition-colors">
@@ -343,6 +417,26 @@ export function SubscriptionsPageClient() {
                 </SelectContent>
               </Select>
             </div>
+            {needsClientSelector && (
+              <div className="space-y-1.5">
+                <Label>Linked Client</Label>
+                <Select value={form.client_id} onValueChange={(v) => set("client_id", v ?? "")}>
+                  <SelectTrigger><SelectValue placeholder="Select client…" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">None</SelectItem>
+                    {clients.map((c) => (
+                      <SelectItem key={c.id} value={c.id}>
+                        <div className="flex flex-col">
+                          <span>{c.name}</span>
+                          {c.email && <span className="text-[11px] text-muted-foreground">{c.email}</span>}
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-[11px] text-muted-foreground">Link a client so renewal reminders are automatically sent to their email.</p>
+              </div>
+            )}
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1.5">
                 <Label htmlFor="sub-amount">Amount (KES)</Label>

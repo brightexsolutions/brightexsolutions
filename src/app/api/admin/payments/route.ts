@@ -76,14 +76,23 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (invoice) {
+      // The new payment is already in the DB at this point — sum without double-counting
       const totalPaid = (invoice.payments as Array<{ amount: number }>)
-        .reduce((sum, p) => sum + Number(p.amount), 0) + Number(paymentData.amount);
+        .reduce((sum, p) => sum + Number(p.amount), 0);
 
       if (totalPaid >= Number(invoice.total)) {
         await supabase.from("invoices").update({ status: "paid" }).eq("id", paymentData.invoice_id);
+      } else if (totalPaid > 0) {
+        // Partial payment — mark as 'partial' so the balance is clearly visible
+        const { data: currentInvoice } = await supabase
+          .from("invoices").select("status").eq("id", paymentData.invoice_id!).single();
+        if (currentInvoice?.status === "draft" || currentInvoice?.status === "sent") {
+          await supabase.from("invoices").update({ status: "partial" }).eq("id", paymentData.invoice_id);
+        }
       }
 
       // Auto-create income record so Finance module stays in sync
+      // Note: income_records has no added_by column — omit it
       await supabase.from("income_records").insert({
         source: "invoice_payment",
         description: `Payment for invoice ${invoice.invoice_number ?? paymentData.invoice_id}`,
@@ -94,7 +103,6 @@ export async function POST(request: NextRequest) {
         date: paymentData.date ?? new Date().toISOString().split("T")[0],
         category: "service_revenue",
         tax_applicable: true,
-        added_by: user.id,
       });
 
       // Log payment to communications regardless of whether a receipt email was sent
@@ -160,7 +168,7 @@ export async function POST(request: NextRequest) {
   }
 
   if (receiptSent) {
-    await supabase.from("payments").update({ confirmation_sent: true }).eq("id", payment.id);
+    await supabase.from("payments").update({ confirmation_sent: true, confirmation_sent_at: new Date().toISOString() }).eq("id", payment.id);
 
     // Log to communications
     const { data: linkedInvoice } = await supabase
@@ -194,10 +202,12 @@ export async function POST(request: NextRequest) {
     ].filter(Boolean).join(" · ") || undefined,
   });
 
+  const sentAt = receiptSent ? new Date().toISOString() : (payment.confirmation_sent_at ?? null);
   return NextResponse.json({
     data: {
       ...payment,
       confirmation_sent: receiptSent || payment.confirmation_sent,
+      confirmation_sent_at: sentAt,
     },
   }, { status: 201 });
 }

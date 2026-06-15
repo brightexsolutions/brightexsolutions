@@ -50,28 +50,59 @@ async function getDashboardData() {
 
   try {
     const supabase = createAdminClient();
+    const now = new Date();
+    const thisMonthStart = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-01`;
+    const nextMonthStart = now.getMonth() === 11
+      ? `${now.getFullYear() + 1}-01-01`
+      : `${now.getFullYear()}-${String(now.getMonth() + 2).padStart(2, "0")}-01`;
+    const prevMonthStartDate = now.getMonth() === 0
+      ? `${now.getFullYear() - 1}-12-01`
+      : `${now.getFullYear()}-${String(now.getMonth()).padStart(2, "0")}-01`;
     const eightMonthsAgo = new Date();
     eightMonthsAgo.setMonth(eightMonthsAgo.getMonth() - 8);
 
     const [
       projectsRes, clientsRes, invoicesRes,
       mrrRes, alertsRes, contactsRes, bookingsRes,
-      incomeRes, expenseRes,
+      incomeRes, expenseRes, paymentsRes,
     ] = await Promise.all([
       supabase.from("projects").select("id, status", { count: "exact" }).in("status", ["discovery", "design", "development", "review"]),
       supabase.from("clients").select("id", { count: "exact" }).eq("classification", "active"),
-      supabase.from("invoices").select("id, invoice_number, total, status, created_at").in("status", ["sent", "overdue", "paid"]).order("created_at", { ascending: false }).limit(8),
-      supabase.from("product_subscriptions").select("amount").eq("status", "active"),
+      supabase.from("invoices").select("id, invoice_number, total, status, created_at").in("status", ["sent", "partial", "overdue", "paid"]).order("created_at", { ascending: false }).limit(8),
+      // Revenue this month: filter by payment date field, not created_at
+      supabase.from("payments")
+        .select("amount")
+        .gte("date", thisMonthStart)
+        .lt("date", nextMonthStart)
+        .is("deleted_at", null),
       supabase.from("system_alerts").select("id, type, severity, message, created_at").eq("acknowledged", false).order("created_at", { ascending: false }).limit(5),
       supabase.from("contacts").select("id, name, contact, message, created_at, status").order("created_at", { ascending: false }).limit(6),
       supabase.from("bookings").select("id, booker_name, booker_email, purpose, scheduled_at, status").order("scheduled_at", { ascending: true }).gte("scheduled_at", new Date().toISOString()).limit(5),
-      supabase.from("income_records").select("amount, date").gte("date", eightMonthsAgo.toISOString().slice(0, 10)),
-      supabase.from("expenses").select("amount, date").gte("date", eightMonthsAgo.toISOString().slice(0, 10)),
+      supabase.from("income_records").select("amount, date").gte("date", eightMonthsAgo.toISOString().slice(0, 10)).is("deleted_at", null),
+      supabase.from("expenses").select("amount, date").gte("date", eightMonthsAgo.toISOString().slice(0, 10)).is("deleted_at", null),
+      // Fallback: direct payments query so chart data is never empty even if income_records backfill hasn't run
+      supabase.from("payments").select("amount, date, created_at").gte("created_at", eightMonthsAgo.toISOString()).is("deleted_at", null),
     ]);
 
     const mrr = (mrrRes.data ?? []).reduce((s: number, r: { amount: number }) => s + Number(r.amount), 0);
+    // Previous month revenue for trend calculation — also by payment date
+    const { data: prevPayments } = await supabase
+      .from("payments")
+      .select("amount")
+      .gte("date", prevMonthStartDate)
+      .lt("date", thisMonthStart)
+      .is("deleted_at", null);
+    const prevMonthRevenue = (prevPayments ?? []).reduce((s: number, r: { amount: number }) => s + Number(r.amount), 0);
     const overdueCount = (invoicesRes.data ?? []).filter((i: { status: string }) => i.status === "overdue").length;
     const openCount = (invoicesRes.data ?? []).filter((i: { status: string }) => i.status !== "paid").length;
+
+    // Use income_records when populated; fall back to raw payments if income_records is empty
+    const incomeSource = (incomeRes.data ?? []).length > 0
+      ? (incomeRes.data ?? []) as Array<{ amount: number; date: string }>
+      : ((paymentsRes as { data: Array<{ amount: number; date?: string | null; created_at: string }> | null }).data ?? []).map((p) => ({
+          amount: p.amount,
+          date: p.date ?? p.created_at.slice(0, 10),
+        }));
 
     return {
       projects: projectsRes.count ?? 0,
@@ -79,11 +110,12 @@ async function getDashboardData() {
       openInvoices: openCount,
       overdueInvoices: overdueCount,
       mrr,
+      prevMonthRevenue,
       alerts: alertsRes.data ?? [],
       contacts: contactsRes.data ?? [],
       bookings: bookingsRes.data ?? [],
       invoices: invoicesRes.data ?? [],
-      chartData: buildMonthlyData(incomeRes.data ?? [], expenseRes.data ?? []),
+      chartData: buildMonthlyData(incomeSource, expenseRes.data ?? []),
     };
   } catch {
     return null;
@@ -185,9 +217,19 @@ export default async function AdminDashboardPage() {
       <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
         <StatCard
           featured
-          title="Monthly Recurring Revenue"
+          title="Revenue This Month"
           value={hasData ? `KES ${data.mrr.toLocaleString()}` : "KES 0"}
-          trend={{ direction: "up", value: "+12%", label: "vs last month" }}
+          trend={hasData ? (() => {
+            const prev = data.prevMonthRevenue ?? 0;
+            if (prev === 0 && data.mrr === 0) return { direction: "flat" as const, value: "No data yet" };
+            if (prev === 0) return { direction: "up" as const, value: "New revenue", label: "vs last month" };
+            const pct = Math.round(((data.mrr - prev) / prev) * 100);
+            return {
+              direction: (pct >= 0 ? "up" : "down") as "up" | "down",
+              value: `${pct >= 0 ? "+" : ""}${pct}%`,
+              label: "vs last month",
+            };
+          })() : { direction: "flat" as const, value: "—" }}
           icon={DollarSign}
           href="/admin/finance"
         />

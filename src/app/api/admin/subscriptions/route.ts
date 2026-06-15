@@ -33,7 +33,7 @@ export async function GET(request: NextRequest) {
 
   let query = supabase
     .from("subscriptions")
-    .select("*")
+    .select("*, clients(id, name, email, phone)")
     .is("deleted_at", null)
     .eq("active", true)
     .order("next_renewal_date");
@@ -58,7 +58,7 @@ export async function POST(request: NextRequest) {
   const result = SubscriptionSchema.safeParse(body);
   if (!result.success) return NextResponse.json({ error: "Invalid input", details: result.error.flatten() }, { status: 400 });
 
-  const { data: sub, error } = await supabase.from("subscriptions").insert(result.data).select().single();
+  const { data: sub, error } = await supabase.from("subscriptions").insert(result.data).select("*, clients(id, name, email, phone)").single();
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
   // Auto-create a repeating calendar event for the renewal date

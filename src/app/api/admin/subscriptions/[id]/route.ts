@@ -42,7 +42,7 @@ export async function PATCH(
     .from("subscriptions")
     .update(result.data)
     .eq("id", id)
-    .select()
+    .select("*, clients(id, name, email, phone)")
     .single();
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });

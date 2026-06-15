@@ -34,13 +34,7 @@ export async function PATCH(
   // Fetch current task state for automation logic
   const { data: current } = await supabase
     .from("tasks")
-    .select(`
-      *,
-      projects(
-        id, name, status, auto_complete_on_tasks, client_comms_enabled, comm_trigger,
-        clients(id, name, email)
-      )
-    `)
+    .select("*, projects(id, name, status, auto_complete_on_tasks, client_comms_enabled, comm_trigger, clients(id, name, email))")
     .eq("id", id)
     .maybeSingle();
 
@@ -76,12 +70,7 @@ export async function PATCH(
     .from("tasks")
     .update(updates)
     .eq("id", id)
-    .select(`
-      *,
-      team_members(id, name, role),
-      projects(id, name, status, auto_complete_on_tasks, client_comms_enabled, comm_trigger,
-        clients(id, name, email))
-    `)
+    .select("*, team_members(id, name, role), projects(id, name, status, auto_complete_on_tasks, client_comms_enabled, comm_trigger, clients(id, name, email))")
     .single();
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });

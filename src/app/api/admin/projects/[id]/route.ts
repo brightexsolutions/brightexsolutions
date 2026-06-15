@@ -19,6 +19,7 @@ const UpdateProjectSchema = z.object({
   auto_complete_on_tasks: z.boolean().optional(),
   client_comms_enabled: z.boolean().optional(),
   comm_trigger: z.enum(["on_approval", "on_completion"]).optional(),
+  portal_enabled: z.boolean().optional(),
 });
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {

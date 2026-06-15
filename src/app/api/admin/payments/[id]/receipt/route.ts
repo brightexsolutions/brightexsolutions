@@ -81,7 +81,7 @@ export async function POST(
     return NextResponse.json({ error: "Failed to send receipt email" }, { status: 500 });
   }
 
-  await supabase.from("payments").update({ confirmation_sent: true }).eq("id", id);
+  await supabase.from("payments").update({ confirmation_sent: true, confirmation_sent_at: new Date().toISOString() }).eq("id", id);
 
   if (invoice?.client_id) {
     await supabase.from("communications").insert({
@@ -93,5 +93,5 @@ export async function POST(
     });
   }
 
-  return NextResponse.json({ sent: true });
+  return NextResponse.json({ sent: true, confirmation_sent_at: new Date().toISOString() });
 }

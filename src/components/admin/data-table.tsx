@@ -21,6 +21,7 @@ const STATUS_STYLES: Record<string, string> = {
   in_progress: "bg-blue-400",
   development: "bg-blue-400",
   review:      "bg-purple-400",
+  partial:     "bg-amber-500",
   overdue:     "bg-red-500",
   cancelled:   "bg-red-400",
   lost:        "bg-red-400",
@@ -35,6 +36,7 @@ const STATUS_STYLES: Record<string, string> = {
 
 const STATUS_LABELS: Record<string, string> = {
   in_progress: "In Progress",
+  partial:     "Partial Payment",
   new:         "New",
   won:         "Won",
   lost:        "Lost",
@@ -167,9 +169,9 @@ export function DataTable<T extends Record<string, unknown>>({
     <div className={cn("flex flex-col", className)}>
       {/* ── Toolbar ── */}
       {hasToolbar && (
-        <div className="flex flex-wrap items-center gap-2 px-4 py-3 border-b border-border">
+        <div className="flex flex-wrap items-center gap-2 px-3 sm:px-4 py-3 border-b border-border">
           {searchable && (
-            <div className="relative flex-1 min-w-[180px] max-w-xs">
+            <div className="relative flex-1 min-w-[140px] max-w-xs">
               <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
               <input
                 type="text"
@@ -221,17 +223,17 @@ export function DataTable<T extends Record<string, unknown>>({
 
       {/* ── Table ── */}
       <div
-        className={cn("overflow-y-auto scrollbar-overlay", maxHeight && "overflow-y-auto")}
+        className={cn("overflow-x-auto overflow-y-auto scrollbar-overlay")}
         style={maxHeight ? { maxHeight } : undefined}
       >
-        <table className="w-full text-sm table-fixed">
+        <table className="w-full min-w-[480px] text-sm table-fixed">
           <thead className="sticky top-0 z-10">
             <tr className="border-b border-border bg-muted/60 dark:bg-muted">
               {columns.map((col) => (
                 <th
                   key={col.key}
                   className={cn(
-                    "px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-[0.06em] text-muted-foreground whitespace-nowrap",
+                    "px-3 sm:px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-[0.06em] text-muted-foreground whitespace-nowrap",
                     col.sortable && "cursor-pointer select-none hover:text-foreground transition-colors",
                     col.className
                   )}
@@ -249,7 +251,7 @@ export function DataTable<T extends Record<string, unknown>>({
                   </span>
                 </th>
               ))}
-              {actions && <th className="w-12 px-4 py-2.5" />}
+              {actions && <th className="w-10 px-3 sm:px-4 py-2.5" />}
             </tr>
           </thead>
           <tbody>
@@ -273,7 +275,7 @@ export function DataTable<T extends Record<string, unknown>>({
                   )}
                 >
                   {columns.map((col) => (
-                    <td key={col.key} className={cn("px-4 py-3 align-middle", col.className)}>
+                    <td key={col.key} className={cn("px-3 sm:px-4 py-2.5 sm:py-3 align-middle", col.className)}>
                       {col.render ? col.render(row) : (
                         <span className="text-sm text-foreground">
                           {String(row[col.key] ?? "—")}
@@ -282,7 +284,7 @@ export function DataTable<T extends Record<string, unknown>>({
                     </td>
                   ))}
                   {actions && (
-                    <td className="px-4 py-3 align-middle" onClick={(e) => e.stopPropagation()}>
+                    <td className="px-3 sm:px-4 py-2.5 sm:py-3 align-middle" onClick={(e) => e.stopPropagation()}>
                       <DropdownMenu>
                         <DropdownMenuTrigger className="w-7 h-7 rounded-md flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted transition-colors">
                           <MoreHorizontal size={14} />

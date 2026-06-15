@@ -89,8 +89,11 @@ export function AdminHeader({ onMenuClick }: AdminHeaderProps) {
         </button>
       )}
 
-      {/* Breadcrumb */}
-      <nav className="flex items-center gap-1 min-w-0 flex-1">
+      {/* Page title — mobile only (breadcrumb hidden on mobile) */}
+      <span className="sm:hidden font-semibold text-foreground text-sm flex-1 truncate">{pageTitle}</span>
+
+      {/* Breadcrumb — desktop only */}
+      <nav className="hidden sm:flex items-center gap-1 min-w-0 flex-1">
         {breadcrumbs.map((crumb, i) => (
           <div key={crumb.href} className="flex items-center gap-1 min-w-0">
             {i > 0 && <ChevronRight size={13} className="text-muted-foreground/40 shrink-0" />}
@@ -107,9 +110,6 @@ export function AdminHeader({ onMenuClick }: AdminHeaderProps) {
           </div>
         ))}
       </nav>
-
-      {/* Page title on mobile */}
-      <span className="sm:hidden font-semibold text-foreground text-sm truncate">{pageTitle}</span>
 
       {/* Right actions */}
       <div className="flex items-center gap-1 shrink-0">

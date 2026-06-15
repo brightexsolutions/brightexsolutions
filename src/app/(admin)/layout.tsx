@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, Suspense } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { AdminSidebar } from "@/components/admin/sidebar";
 import { AdminHeader } from "@/components/admin/header";
 import { CommandPalette } from "@/components/admin/command-palette";
@@ -55,6 +55,11 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const pathname = usePathname();
 
+  // Auto-close mobile sidebar whenever the user navigates to a new page
+  useEffect(() => {
+    setMobileSidebarOpen(false);
+  }, [pathname]);
+
   if (pathname === "/admin/login") {
     return <>{children}</>;
   }
@@ -77,7 +82,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
       <div className="flex flex-col flex-1 overflow-hidden">
         <AdminHeader onMenuClick={() => setMobileSidebarOpen(!mobileSidebarOpen)} />
-        <main className="flex-1 overflow-y-auto p-6">
+        <main className="flex-1 overflow-y-auto p-4 sm:p-6">
           <Suspense fallback={<AdminPageSkeleton />}>
             {children}
           </Suspense>

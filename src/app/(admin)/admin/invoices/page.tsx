@@ -18,12 +18,13 @@ import { useConfirm } from "@/components/admin/confirm-dialog";
 const statusColors: Record<string, string> = {
   draft: "bg-slate-400/10 text-slate-400",
   sent: "bg-blue-400/10 text-blue-400",
+  partial: "bg-amber-400/10 text-amber-500",
   paid: "bg-emerald-400/10 text-emerald-400",
   overdue: "bg-red-400/10 text-red-400",
   cancelled: "bg-muted text-muted-foreground",
 };
 
-const filterTabs = ["All", "Draft", "Sent", "Paid", "Overdue"];
+const filterTabs = ["All", "Draft", "Sent", "Partial", "Paid", "Overdue"];
 
 type LineItem = { description: string; qty: number; unit_price: number };
 type Invoice = {
@@ -34,6 +35,7 @@ type Invoice = {
   subtotal?: number | null;
   tax?: number | null;
   due_date?: string | null;
+  sent_at?: string | null;
   notes?: string | null;
   items: LineItem[];
   project_id?: string | null;
@@ -244,8 +246,12 @@ export default function InvoicesPage() {
   async function sendInvoice(id: string) {
     setBusy(id, true);
     try {
-      await fetch(`/api/admin/invoices/${id}/send`, { method: "POST" });
-      setInvoices((prev) => prev.map((inv) => inv.id === id ? { ...inv, status: "sent" } : inv));
+      const res = await fetch(`/api/admin/invoices/${id}/send`, { method: "POST" });
+      const json = await res.json().catch(() => ({}));
+      if (res.ok) {
+        const sentAt: string = json.sent_at ?? new Date().toISOString();
+        setInvoices((prev) => prev.map((inv) => inv.id === id ? { ...inv, status: "sent", sent_at: sentAt } : inv));
+      }
     } finally {
       setBusy(id, false);
     }
@@ -267,7 +273,7 @@ export default function InvoicesPage() {
   );
 
   const totalInvoiced = invoices.reduce((s, inv) => s + Number(inv.total), 0);
-  const pending = invoices.filter((i) => i.status === "sent").length;
+  const pending = invoices.filter((i) => i.status === "sent" || i.status === "partial").length;
   const overdue = invoices.filter((i) => i.status === "overdue").length;
   const paidThisMonth = invoices
     .filter((i) => i.status === "paid" && new Date(i.created_at) > new Date(Date.now() - 30 * 86400000))
@@ -326,7 +332,19 @@ export default function InvoicesPage() {
             {
               key: "status",
               label: "Status",
-              render: (row) => <StatusDot status={String(row.status)} />,
+              render: (row) => {
+                const inv = row as unknown as Invoice;
+                return (
+                  <div className="flex flex-col gap-0.5">
+                    <StatusDot status={inv.status} />
+                    {inv.sent_at && (
+                      <span className="text-[10px] text-muted-foreground whitespace-nowrap">
+                        Sent {new Date(inv.sent_at).toLocaleDateString("en-KE", { day: "numeric", month: "short", year: "2-digit" })}
+                      </span>
+                    )}
+                  </div>
+                );
+              },
             },
             {
               key: "due_date",
@@ -353,14 +371,14 @@ export default function InvoicesPage() {
                     >
                       <Eye size={11} />PDF
                     </button>
-                    {inv.status === "draft" && (
+                    {inv.status !== "cancelled" && (
                       <button
                         onClick={() => sendInvoice(inv.id)}
                         disabled={busyIds.has(inv.id)}
                         className="flex items-center gap-1 px-2 py-1 rounded-md text-[11px] font-medium bg-brand-navy text-white hover:bg-brand-navy/90 transition-colors disabled:opacity-60"
                       >
                         {busyIds.has(inv.id) ? <Loader2 size={10} className="animate-spin" /> : <Send size={10} />}
-                        Send
+                        {inv.status === "draft" ? "Send" : "Resend"}
                       </button>
                     )}
                   </div>
