@@ -11,7 +11,7 @@ export async function GET(request: NextRequest) {
 
   const supabase = createAdminClient();
 
-  const [alertsRes, overdueRes, bookingsRes, contactsRes, approvalsRes] = await Promise.all([
+  const [alertsRes, overdueRes, bookingsRes, contactsRes, approvalsRes, intakesRes] = await Promise.all([
     supabase
       .from("system_alerts")
       .select("id, type, severity, message, entity_type, entity_id, created_at")
@@ -42,6 +42,11 @@ export async function GET(request: NextRequest) {
       .select("id", { count: "exact", head: true })
       .eq("status", "pending_approval")
       .is("deleted_at", null),
+
+    supabase
+      .from("client_intakes")
+      .select("id", { count: "exact", head: true })
+      .eq("status", "new"),
   ]);
 
   // Sort alerts: critical → warning → info
@@ -53,10 +58,11 @@ export async function GET(request: NextRequest) {
   );
 
   const counts = {
-    overdue_invoices:  overdueRes.count  ?? 0,
-    pending_bookings:  bookingsRes.count ?? 0,
-    new_contacts:      contactsRes.count ?? 0,
+    overdue_invoices:  overdueRes.count   ?? 0,
+    pending_bookings:  bookingsRes.count  ?? 0,
+    new_contacts:      contactsRes.count  ?? 0,
     pending_approvals: approvalsRes.count ?? 0,
+    new_intakes:       intakesRes.count   ?? 0,
   };
 
   const actionTotal = Object.values(counts).reduce((sum, v) => sum + v, 0);

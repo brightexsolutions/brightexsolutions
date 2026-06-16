@@ -8,6 +8,7 @@ import {
   Sun, Moon, Monitor, LogOut, Menu, ChevronRight, Settings,
 } from "lucide-react";
 import { NotificationBell } from "@/components/admin/notification-bell";
+import { PushNotificationsToggle } from "@/components/admin/push-notifications-toggle";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem,
   DropdownMenuSeparator, DropdownMenuTrigger,
@@ -113,6 +114,9 @@ export function AdminHeader({ onMenuClick }: AdminHeaderProps) {
 
       {/* Right actions */}
       <div className="flex items-center gap-1 shrink-0">
+        {/* Browser push toggle */}
+        <PushNotificationsToggle />
+
         {/* Notifications */}
         <NotificationBell />
 

@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   Bell, X, CheckCircle2, AlertTriangle, XCircle, FileText,
-  Calendar, MessageSquare, BarChart3, ArrowRight, CheckCheck,
+  Calendar, MessageSquare, BarChart3, ArrowRight, CheckCheck, ClipboardList,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -27,6 +27,7 @@ interface NotificationData {
     pending_bookings: number;
     new_contacts: number;
     pending_approvals: number;
+    new_intakes: number;
   };
 }
 
@@ -83,6 +84,15 @@ const ACTION_ITEMS = [
     href: "/admin/social",
     color: "text-purple-500",
     bg: "bg-purple-500/10",
+  },
+  {
+    key: "new_intakes" as const,
+    singular: "new intake submission",
+    plural:   "new intake submissions",
+    icon: ClipboardList,
+    href: "/admin/clients",
+    color: "text-[#f9a825]",
+    bg: "bg-amber-500/10",
   },
 ] as const;
 
