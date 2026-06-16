@@ -737,7 +737,11 @@ export function IntakeWizard({
         </div>
         <div className="flex-1 flex items-center justify-center px-4 py-16">
           <div className="bg-white rounded-2xl shadow-sm border border-slate-200/60 p-8 sm:p-12 text-center max-w-md w-full">
-            <div className="w-16 h-16 rounded-full bg-emerald-100 flex items-center justify-center text-3xl mx-auto mb-6">✓</div>
+            <div className="w-16 h-16 rounded-full bg-emerald-100 flex items-center justify-center mx-auto mb-6">
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#10b981" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="20 6 9 17 4 12" />
+              </svg>
+            </div>
             <h2 className="text-2xl font-bold text-slate-800 mb-3">We got your requirements!</h2>
             <p className="text-slate-500 text-sm leading-relaxed mb-6">
               Thank you, {firstName}. We&apos;ll review your submission and reach out to schedule a discovery call to go through the details together.
