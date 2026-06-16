@@ -33,12 +33,12 @@ BEGIN
       SELECT coalesce(
         jsonb_agg(
           jsonb_build_object(
-            'name',        t.tablename,
+            'name',        t.relname,
             'live_rows',   coalesce(t.n_live_tup, 0),
             'dead_rows',   coalesce(t.n_dead_tup, 0),
-            'data_size',   coalesce(pg_relation_size(quote_ident(t.schemaname)||'.'||quote_ident(t.tablename)), 0),
-            'index_size',  coalesce(pg_indexes_size(quote_ident(t.schemaname)||'.'||quote_ident(t.tablename)), 0),
-            'total_size',  coalesce(pg_total_relation_size(quote_ident(t.schemaname)||'.'||quote_ident(t.tablename)), 0),
+            'data_size',   coalesce(pg_relation_size(quote_ident(t.schemaname)||'.'||quote_ident(t.relname)), 0),
+            'index_size',  coalesce(pg_indexes_size(quote_ident(t.schemaname)||'.'||quote_ident(t.relname)), 0),
+            'total_size',  coalesce(pg_total_relation_size(quote_ident(t.schemaname)||'.'||quote_ident(t.relname)), 0),
             'last_vacuum',   t.last_autovacuum,
             'last_analyze',  t.last_autoanalyze,
             'seq_scans',   coalesce(t.seq_scan, 0),
@@ -47,7 +47,7 @@ BEGIN
             'updates',     coalesce(t.n_tup_upd, 0),
             'deletes',     coalesce(t.n_tup_del, 0)
           )
-          ORDER BY pg_total_relation_size(quote_ident(t.schemaname)||'.'||quote_ident(t.tablename)) DESC NULLS LAST
+          ORDER BY pg_total_relation_size(quote_ident(t.schemaname)||'.'||quote_ident(t.relname)) DESC NULLS LAST
         ),
         '[]'::jsonb
       )
