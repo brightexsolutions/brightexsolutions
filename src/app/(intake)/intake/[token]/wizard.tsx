@@ -57,8 +57,8 @@ const TIMELINE_OPTIONS = [
 ];
 
 const BUDGET_OPTIONS = [
-  "Under KES 30,000",
-  "KES 30,000 – 100,000",
+  "Under KES 50,000",
+  "KES 50,000 – 150,000",
   "KES 100,000 – 300,000",
   "KES 300,000 – 1,000,000",
   "Over KES 1,000,000",
