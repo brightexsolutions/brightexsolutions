@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { SITE_NAME, BUSINESS_WHATSAPP } from "@/lib/constants";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -630,6 +630,13 @@ export function IntakeWizard({
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState("");
+  const [scrolled, setScrolled] = useState(false);
+
+  useEffect(() => {
+    function onScroll() { setScrolled(window.scrollY > 60); }
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
 
   function update(patch: Partial<IntakeState>) {
     setState((prev) => ({ ...prev, ...patch }));
@@ -713,10 +720,46 @@ export function IntakeWizard({
 
   const progressPct = ((step - 1) / (TOTAL_STEPS - 1)) * 100;
 
+  // Nav buttons — shared between card (desktop) and fixed bar (mobile)
+  const navButtons = (
+    <div className="flex gap-3">
+      {step > 1 && (
+        <button
+          type="button"
+          onClick={() => setStep((s) => s - 1)}
+          className="flex-1 py-3 rounded-xl border border-slate-200 text-sm font-medium text-slate-600 hover:border-slate-300 hover:bg-slate-50 transition-all"
+        >
+          ← Back
+        </button>
+      )}
+      {step < TOTAL_STEPS ? (
+        <button
+          type="button"
+          onClick={() => setStep((s) => s + 1)}
+          disabled={!canAdvance()}
+          className="flex-1 py-3 rounded-xl text-sm font-semibold transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+          style={canAdvance() ? { background: GOLD, color: NAVY } : { background: "#e2e8f0", color: "#94a3b8" }}
+        >
+          Continue →
+        </button>
+      ) : (
+        <button
+          type="button"
+          onClick={handleSubmit}
+          disabled={submitting || !canAdvance()}
+          className="flex-1 py-3 rounded-xl text-sm font-semibold transition-all disabled:opacity-40"
+          style={{ background: NAVY, color: "#ffffff" }}
+        >
+          {submitting ? "Submitting…" : "Submit Requirements →"}
+        </button>
+      )}
+    </div>
+  );
+
   return (
     <div className="min-h-screen flex flex-col" style={{ background: "#f1f5f9" }}>
 
-      {/* ── Header ── */}
+      {/* ── Full header (visible when not scrolled) ── */}
       <div style={{ background: NAVY }} className="shrink-0">
         {/* Gold accent line */}
         <div style={{ height: 3, background: GOLD }} />
@@ -753,8 +796,34 @@ export function IntakeWizard({
         </div>
       </div>
 
-      {/* Content */}
-      <div className="flex-1 px-4 py-6">
+      {/* ── Sticky mini header (appears on scroll) ── */}
+      <div
+        className={cn(
+          "fixed top-0 left-0 right-0 z-50 transition-all duration-300",
+          scrolled ? "translate-y-0 opacity-100" : "-translate-y-full opacity-0 pointer-events-none"
+        )}
+        style={{ background: NAVY, borderBottom: `2px solid ${GOLD}` }}
+      >
+        <div className="max-w-lg mx-auto px-4 h-12 flex items-center justify-between gap-3">
+          <div className="flex items-center gap-2.5 min-w-0">
+            <div className="w-6 h-6 rounded-md flex items-center justify-center text-xs font-extrabold shrink-0" style={{ background: GOLD, color: NAVY }}>B</div>
+            <span className="text-white font-semibold text-sm truncate">Tell us about your project</span>
+          </div>
+          <span
+            className="shrink-0 text-[10px] font-bold px-2 py-0.5 rounded-full"
+            style={{ background: "rgba(249,168,37,0.15)", color: GOLD }}
+          >
+            {step}/{TOTAL_STEPS}
+          </span>
+        </div>
+        {/* Mini progress bar */}
+        <div style={{ height: 2, background: "rgba(255,255,255,0.08)" }}>
+          <div style={{ width: `${progressPct}%`, height: "100%", background: GOLD, transition: "width 0.4s ease" }} />
+        </div>
+      </div>
+
+      {/* Content — extra bottom padding on mobile so fixed nav doesn't overlap */}
+      <div className="flex-1 px-4 py-6 pb-28 sm:pb-6">
         <div className="max-w-lg mx-auto">
           <div className="bg-white rounded-2xl shadow-sm border border-slate-200/60 p-6 sm:p-8">
 
@@ -775,41 +844,25 @@ export function IntakeWizard({
               </div>
             )}
 
-            {/* Navigation */}
-            <div className="flex gap-3 mt-8">
-              {step > 1 && (
-                <button
-                  type="button"
-                  onClick={() => setStep((s) => s - 1)}
-                  className="flex-1 py-3 rounded-xl border border-slate-200 text-sm font-medium text-slate-600 hover:border-slate-300 hover:bg-slate-50 transition-all"
-                >
-                  ← Back
-                </button>
-              )}
-              {step < TOTAL_STEPS ? (
-                <button
-                  type="button"
-                  onClick={() => setStep((s) => s + 1)}
-                  disabled={!canAdvance()}
-                  className="flex-1 py-3 rounded-xl text-sm font-semibold transition-all disabled:opacity-40 disabled:cursor-not-allowed"
-                  style={canAdvance() ? { background: GOLD, color: NAVY } : { background: "#e2e8f0", color: "#94a3b8" }}
-                >
-                  Continue →
-                </button>
-              ) : (
-                <button
-                  type="button"
-                  onClick={handleSubmit}
-                  disabled={submitting || !canAdvance()}
-                  className="flex-1 py-3 rounded-xl text-sm font-semibold transition-all disabled:opacity-40"
-                  style={{ background: NAVY, color: "#ffffff" }}
-                >
-                  {submitting ? "Submitting…" : "Submit Requirements →"}
-                </button>
-              )}
+            {/* Navigation — visible on desktop; hidden on mobile (fixed bar used instead) */}
+            <div className="hidden sm:block mt-8">
+              {navButtons}
             </div>
           </div>
         </div>
+      </div>
+
+      {/* ── Fixed bottom nav bar — mobile only ── */}
+      <div
+        className="sm:hidden fixed bottom-0 left-0 right-0 z-40 px-4 py-3"
+        style={{
+          background: "rgba(255,255,255,0.95)",
+          backdropFilter: "blur(12px)",
+          borderTop: "1px solid #e2e8f0",
+          boxShadow: "0 -4px 16px rgba(0,0,0,0.06)",
+        }}
+      >
+        {navButtons}
       </div>
     </div>
   );

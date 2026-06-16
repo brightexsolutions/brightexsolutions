@@ -5,6 +5,7 @@ import {
   X, Mail, Phone, MessageSquare, Send, AlertCircle,
   FileText, TrendingUp, Clock, CheckCircle2, Loader2,
   ExternalLink, ClipboardList, Copy, ClipboardCheck, Eye,
+  RefreshCw, CheckCircle,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
@@ -29,6 +30,7 @@ type Invoice = {
   total: number;
   status: string;
   due_date?: string;
+  sent_at?: string | null;
 };
 
 type Deal = {
@@ -90,6 +92,8 @@ export function QuickClientPanel({
   const [intakeLinkCopied, setIntakeLinkCopied] = useState(false);
   const [markingIntakeId, setMarkingIntakeId] = useState<string | null>(null);
   const [selectedIntake, setSelectedIntake] = useState<IntakeDetail | null>(null);
+  const [sendingInvoiceId, setSendingInvoiceId] = useState<string | null>(null);
+  const [sentInvoiceIds, setSentInvoiceIds] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     if (!clientId) { setDetail(null); return; }
@@ -170,6 +174,24 @@ export function QuickClientPanel({
       setSelectedIntake((prev) => prev && prev.id === intakeId ? { ...prev, status: "reviewed" } : prev);
     } finally {
       setMarkingIntakeId(null);
+    }
+  }
+
+  async function sendInvoice(invoiceId: string) {
+    setSendingInvoiceId(invoiceId);
+    try {
+      const res = await fetch(`/api/admin/invoices/${invoiceId}/send`, { method: "POST" });
+      if (res.ok) {
+        setSentInvoiceIds((prev) => new Set(prev).add(invoiceId));
+        setDetail((prev) => prev ? {
+          ...prev,
+          invoices: prev.invoices.map((inv) =>
+            inv.id === invoiceId ? { ...inv, status: inv.status === "draft" ? "sent" : inv.status, sent_at: new Date().toISOString() } : inv
+          ),
+        } : prev);
+      }
+    } finally {
+      setSendingInvoiceId(null);
     }
   }
 
@@ -355,25 +377,92 @@ export function QuickClientPanel({
                 </section>
               )}
 
-              {/* Invoices */}
+              {/* Documents (Invoices) */}
               {(detail?.invoices ?? []).length > 0 && (
                 <section className="px-5 py-4">
-                  <h3 className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest mb-3">Invoices</h3>
+                  <div className="flex items-center justify-between mb-3">
+                    <h3 className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest flex items-center gap-1.5">
+                      <FileText size={11} />Documents
+                    </h3>
+                    <a
+                      href={`/admin/invoices?client_id=${client.id}`}
+                      className="text-[10px] text-muted-foreground hover:text-brand-gold transition-colors"
+                    >
+                      View all
+                    </a>
+                  </div>
                   <div className="space-y-2">
-                    {(detail?.invoices ?? []).slice(0, 4).map((inv) => (
-                      <div key={inv.id} className="flex items-center justify-between gap-2">
-                        <div className="flex items-center gap-2 min-w-0">
-                          <FileText size={12} className="text-muted-foreground shrink-0" />
-                          <span className="text-xs text-foreground truncate">{inv.invoice_number}</span>
+                    {(detail?.invoices ?? []).slice(0, 5).map((inv) => {
+                      const isSent   = inv.status !== "draft";
+                      const justSent = sentInvoiceIds.has(inv.id);
+                      const isSending = sendingInvoiceId === inv.id;
+                      return (
+                        <div key={inv.id} className="rounded-sm border border-border bg-muted/10 px-3 py-2.5">
+                          <div className="flex items-start justify-between gap-2">
+                            <div className="flex items-center gap-2 min-w-0">
+                              <FileText size={12} className={cn("shrink-0", isSent ? "text-brand-gold" : "text-muted-foreground")} />
+                              <div className="min-w-0">
+                                <p className="text-xs font-medium text-foreground truncate">{inv.invoice_number}</p>
+                                <p className="text-[10px] text-muted-foreground">
+                                  KES {Number(inv.total).toLocaleString()}
+                                  {inv.due_date && ` · Due ${new Date(inv.due_date).toLocaleDateString("en-KE", { day: "numeric", month: "short" })}`}
+                                </p>
+                              </div>
+                            </div>
+                            <div className="flex flex-col items-end gap-1 shrink-0">
+                              <span className={cn(
+                                "text-[10px] font-semibold capitalize",
+                                invoiceStatusColour[inv.status] ?? "text-muted-foreground"
+                              )}>
+                                {inv.status}
+                              </span>
+                              {/* Send / Resend button */}
+                              {inv.status !== "paid" && client.email && (
+                                <button
+                                  onClick={() => sendInvoice(inv.id)}
+                                  disabled={isSending}
+                                  className={cn(
+                                    "flex items-center gap-1 text-[10px] font-medium transition-colors disabled:opacity-50",
+                                    justSent
+                                      ? "text-emerald-600"
+                                      : isSent
+                                        ? "text-muted-foreground hover:text-brand-gold"
+                                        : "text-primary hover:text-primary/80"
+                                  )}
+                                >
+                                  {isSending ? (
+                                    <Loader2 size={10} className="animate-spin" />
+                                  ) : justSent ? (
+                                    <CheckCircle size={10} />
+                                  ) : isSent ? (
+                                    <RefreshCw size={10} />
+                                  ) : (
+                                    <Send size={10} />
+                                  )}
+                                  {isSending ? "Sending…" : justSent ? "Sent!" : isSent ? "Resend" : "Send"}
+                                </button>
+                              )}
+                              {!client.email && inv.status !== "paid" && (
+                                <span className="text-[10px] text-muted-foreground/50">No email</span>
+                              )}
+                            </div>
+                          </div>
+                          {/* Sent indicator */}
+                          {isSent && inv.sent_at && (
+                            <p className="text-[10px] text-muted-foreground mt-1 flex items-center gap-1">
+                              <CheckCircle2 size={9} className="text-emerald-500" />
+                              Sent {new Date(inv.sent_at).toLocaleDateString("en-KE", { day: "numeric", month: "short", year: "numeric" })}
+                            </p>
+                          )}
+                          {!isSent && (
+                            <p className="text-[10px] text-amber-500 mt-1 flex items-center gap-1">
+                              <AlertCircle size={9} />
+                              Not sent yet
+                            </p>
+                          )}
                         </div>
-                        <div className="flex items-center gap-2 shrink-0">
-                          <span className="text-xs text-muted-foreground">KES {Number(inv.total).toLocaleString()}</span>
-                          <span className={cn("text-[10px] font-semibold capitalize", invoiceStatusColour[inv.status] ?? "text-muted-foreground")}>
-                            {inv.status}
-                          </span>
-                        </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 </section>
               )}
