@@ -80,10 +80,11 @@ export interface Column<T extends Record<string, unknown>> {
 }
 
 export interface RowAction<T extends Record<string, unknown>> {
-  label: string;
-  icon?: React.ReactNode;
+  label: string | ((row: T) => string);
+  icon?: React.ReactNode | ((row: T) => React.ReactNode);
   onClick: (row: T) => void;
   destructive?: boolean;
+  hidden?: (row: T) => boolean;
 }
 
 export interface FilterOption {
@@ -290,14 +291,17 @@ export function DataTable<T extends Record<string, unknown>>({
                           <MoreHorizontal size={14} />
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" className="w-44">
-                          {actions.map((action, ai) => (
+                          {actions.filter((a) => !a.hidden?.(row)).map((action, ai) => (
                             <DropdownMenuItem
                               key={ai}
                               onClick={() => action.onClick(row)}
                               className={cn(action.destructive && "text-destructive focus:text-destructive")}
                             >
-                              {action.icon && <span className="mr-2 flex items-center">{action.icon}</span>}
-                              {action.label}
+                              {(() => {
+                                const icon = typeof action.icon === "function" ? action.icon(row) : action.icon;
+                                return icon ? <span className="mr-2 flex items-center">{icon}</span> : null;
+                              })()}
+                              {typeof action.label === "function" ? action.label(row) : action.label}
                             </DropdownMenuItem>
                           ))}
                         </DropdownMenuContent>
