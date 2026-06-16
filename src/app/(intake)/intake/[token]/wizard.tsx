@@ -23,6 +23,7 @@ interface IntakeState {
   // Step 5
   submitter_name: string;
   submitter_email: string;
+  submitter_company: string;
 }
 
 const EMPTY: IntakeState = {
@@ -30,7 +31,7 @@ const EMPTY: IntakeState = {
   project_title: "", description: "", problem_statement: "",
   specifics: {},
   timeline: "", budget_range: "", additional_notes: "",
-  submitter_name: "", submitter_email: "",
+  submitter_name: "", submitter_email: "", submitter_company: "",
 };
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -513,11 +514,13 @@ function Step4({ state, update }: { state: IntakeState; update: (p: Partial<Inta
   );
 }
 
-function Step5({ state, update, clientName, clientEmail }: {
+function Step5({ state, update, clientName, clientEmail, clientCompany, isGeneric }: {
   state: IntakeState;
   update: (p: Partial<IntakeState>) => void;
   clientName: string;
   clientEmail: string;
+  clientCompany: string;
+  isGeneric: boolean;
 }) {
   const serviceLabel = SERVICE_TYPES.find((s) => s.value === state.service_type)?.label ?? state.service_type;
 
@@ -525,7 +528,7 @@ function Step5({ state, update, clientName, clientEmail }: {
     <div className="space-y-5">
       <div>
         <h2 className="text-xl font-bold text-slate-800">Almost done — confirm your details</h2>
-        <p className="text-sm text-slate-500 mt-1">We&apos;ll use this to follow up with you.</p>
+        <p className="text-sm text-slate-500 mt-1">We&apos;ll use this to follow up with you.{!isGeneric && " Your details are pre-filled — update them if needed."}</p>
       </div>
 
       {/* Summary */}
@@ -562,16 +565,37 @@ function Step5({ state, update, clientName, clientEmail }: {
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div className="space-y-1.5">
           <label className="text-sm font-semibold text-slate-700">Your name <span className="text-red-400">*</span></label>
-          <input type="text" value={state.submitter_name || clientName}
+          <input
+            type="text"
+            value={state.submitter_name !== "" ? state.submitter_name : clientName}
             onChange={(e) => update({ submitter_name: e.target.value })}
-            className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-[#f9a825]/40 focus:border-[#f9a825]" />
+            placeholder="Full name"
+            className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white text-sm text-slate-700 placeholder:text-slate-300 focus:outline-none focus:ring-2 focus:ring-[#f9a825]/40 focus:border-[#f9a825]"
+          />
         </div>
         <div className="space-y-1.5">
           <label className="text-sm font-semibold text-slate-700">Your email <span className="text-red-400">*</span></label>
-          <input type="email" value={state.submitter_email || clientEmail}
+          <input
+            type="email"
+            value={state.submitter_email !== "" ? state.submitter_email : clientEmail}
             onChange={(e) => update({ submitter_email: e.target.value })}
-            className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-[#f9a825]/40 focus:border-[#f9a825]" />
+            placeholder="you@example.com"
+            className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white text-sm text-slate-700 placeholder:text-slate-300 focus:outline-none focus:ring-2 focus:ring-[#f9a825]/40 focus:border-[#f9a825]"
+          />
         </div>
+      </div>
+
+      <div className="space-y-1.5">
+        <label className="text-sm font-semibold text-slate-700">
+          Company / Business <span className="text-slate-400 font-normal">(optional)</span>
+        </label>
+        <input
+          type="text"
+          value={state.submitter_company !== "" ? state.submitter_company : clientCompany}
+          onChange={(e) => update({ submitter_company: e.target.value })}
+          placeholder="Your business or organisation name"
+          className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white text-sm text-slate-700 placeholder:text-slate-300 focus:outline-none focus:ring-2 focus:ring-[#f9a825]/40 focus:border-[#f9a825]"
+        />
       </div>
     </div>
   );
@@ -584,17 +608,24 @@ const TOTAL_STEPS = 5;
 const STEP_LABELS = ["Service type", "Your idea", "Details", "Timeline & Budget", "Confirm"];
 
 export function IntakeWizard({
-  token, clientName, clientEmail,
+  token = "",
+  clientName = "",
+  clientEmail = "",
+  clientCompany = "",
+  isGeneric = false,
 }: {
-  token: string;
-  clientName: string;
-  clientEmail: string;
+  token?: string;
+  clientName?: string;
+  clientEmail?: string;
+  clientCompany?: string;
+  isGeneric?: boolean;
 }) {
   const [step, setStep] = useState(1);
   const [state, setState] = useState<IntakeState>({
     ...EMPTY,
     submitter_name: clientName,
     submitter_email: clientEmail,
+    submitter_company: clientCompany,
   });
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
@@ -604,10 +635,13 @@ export function IntakeWizard({
     setState((prev) => ({ ...prev, ...patch }));
   }
 
+  const resolvedName  = state.submitter_name  || clientName;
+  const resolvedEmail = state.submitter_email || clientEmail;
+
   function canAdvance(): boolean {
     if (step === 1) return !!state.service_type;
     if (step === 2) return !!state.description.trim();
-    if (step === 5) return !!(state.submitter_name || clientName) && !!(state.submitter_email || clientEmail);
+    if (step === 5) return !!resolvedName && !!resolvedEmail;
     return true;
   }
 
@@ -615,14 +649,17 @@ export function IntakeWizard({
     setSubmitting(true);
     setError("");
     try {
-      const res = await fetch(`/api/intake/${token}`, {
+      const url  = token ? `/api/intake/${token}` : "/api/intake";
+      const body = {
+        ...state,
+        submitter_name:    resolvedName,
+        submitter_email:   resolvedEmail,
+        submitter_company: state.submitter_company || clientCompany,
+      };
+      const res = await fetch(url, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          ...state,
-          submitter_name: state.submitter_name || clientName,
-          submitter_email: state.submitter_email || clientEmail,
-        }),
+        body: JSON.stringify(body),
       });
       if (!res.ok) {
         const j = await res.json().catch(() => ({}));
@@ -640,12 +677,14 @@ export function IntakeWizard({
   // ── Thank you screen ───────────────────────────────────────────────────────
 
   if (submitted) {
+    const firstName = resolvedName.split(" ")[0] || "there";
     return (
       <div className="min-h-screen flex flex-col" style={{ background: "#f1f5f9" }}>
-        <div style={{ background: NAVY }} className="px-4 py-4">
+        {/* Header */}
+        <div style={{ background: NAVY }} className="px-4 pt-5 pb-6 shrink-0">
           <div className="max-w-lg mx-auto flex items-center gap-3">
-            <div className="w-8 h-8 rounded-sm flex items-center justify-center text-sm font-bold" style={{ background: GOLD, color: NAVY }}>B</div>
-            <p className="text-white font-semibold text-sm">{SITE_NAME}</p>
+            <div className="w-9 h-9 rounded-lg flex items-center justify-center text-base font-extrabold shrink-0 shadow-sm" style={{ background: GOLD, color: NAVY }}>B</div>
+            <p className="text-white font-semibold text-sm tracking-wide">{SITE_NAME}</p>
           </div>
         </div>
         <div className="flex-1 flex items-center justify-center px-4 py-16">
@@ -653,7 +692,7 @@ export function IntakeWizard({
             <div className="w-16 h-16 rounded-full bg-emerald-100 flex items-center justify-center text-3xl mx-auto mb-6">✓</div>
             <h2 className="text-2xl font-bold text-slate-800 mb-3">We got your requirements!</h2>
             <p className="text-slate-500 text-sm leading-relaxed mb-6">
-              Thank you, {clientName.split(" ")[0]}. Godwin will review your submission and reach out to schedule a discovery call to go through the details together.
+              Thank you, {firstName}. We&apos;ll review your submission and reach out to schedule a discovery call to go through the details together.
             </p>
             <a
               href={`https://wa.me/${BUSINESS_WHATSAPP}`}
@@ -676,37 +715,40 @@ export function IntakeWizard({
 
   return (
     <div className="min-h-screen flex flex-col" style={{ background: "#f1f5f9" }}>
-      {/* Top bar */}
-      <div style={{ background: NAVY }} className="px-4 py-4 shrink-0">
-        <div className="max-w-lg mx-auto flex items-center gap-3">
-          <div className="w-8 h-8 rounded-sm flex items-center justify-center text-sm font-bold shrink-0" style={{ background: GOLD, color: NAVY }}>B</div>
-          <div>
-            <p className="text-white font-semibold text-sm">{SITE_NAME}</p>
-            <p className="text-white/50 text-[11px]">Project Requirements Form</p>
-          </div>
-        </div>
-      </div>
 
-      {/* Progress */}
-      <div style={{ background: NAVY }} className="px-4 pb-5 shrink-0">
-        <div className="max-w-lg mx-auto">
-          {/* Step labels */}
+      {/* ── Header ── */}
+      <div style={{ background: NAVY }} className="shrink-0">
+        {/* Gold accent line */}
+        <div style={{ height: 3, background: GOLD }} />
+
+        {/* Brand + title */}
+        <div className="px-4 pt-6 pb-4 max-w-lg mx-auto">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-9 h-9 rounded-lg flex items-center justify-center text-base font-extrabold shrink-0 shadow-sm" style={{ background: GOLD, color: NAVY }}>B</div>
+            <p className="text-white font-semibold text-sm tracking-wide">{SITE_NAME}</p>
+          </div>
+          <h1 className="text-white text-xl font-bold leading-snug">Tell us about your project</h1>
+          <p className="text-white/50 text-xs mt-1 leading-relaxed">
+            Answer a few quick questions — no tech knowledge needed. We&apos;ll do the rest.
+          </p>
+        </div>
+
+        {/* Progress */}
+        <div className="px-4 pb-5 max-w-lg mx-auto">
           <div className="flex justify-between mb-2">
             {STEP_LABELS.map((label, i) => (
               <span key={label} className={cn(
-                "text-[10px] font-medium hidden sm:block",
-                i + 1 === step ? "text-[#f9a825]" : i + 1 < step ? "text-white/60" : "text-white/25"
+                "text-[10px] font-semibold hidden sm:block",
+                i + 1 === step ? "text-[#f9a825]" : i + 1 < step ? "text-white/50" : "text-white/20"
               )}>{label}</span>
             ))}
           </div>
-          {/* Progress bar */}
-          <div className="h-1.5 bg-white/10 rounded-full overflow-hidden">
-            <div className="h-full rounded-full transition-all duration-500"
-              style={{ width: `${progressPct}%`, background: GOLD }} />
+          <div className="h-1.5 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.1)" }}>
+            <div className="h-full rounded-full transition-all duration-500" style={{ width: `${progressPct}%`, background: GOLD }} />
           </div>
-          <div className="flex justify-between mt-1">
-            <span className="text-white/50 text-[11px]">Step {step} of {TOTAL_STEPS}</span>
-            <span className="text-white/50 text-[11px]">{STEP_LABELS[step - 1]}</span>
+          <div className="flex justify-between mt-1.5">
+            <span className="text-white/40 text-[11px]">Step {step} of {TOTAL_STEPS}</span>
+            <span style={{ color: GOLD }} className="text-[11px] font-medium">{STEP_LABELS[step - 1]}</span>
           </div>
         </div>
       </div>
@@ -725,7 +767,7 @@ export function IntakeWizard({
             {step === 3 && state.service_type === "consultancy"  && <Step3Consultancy state={state} update={update} />}
             {step === 3 && state.service_type === "other"        && <Step3Other state={state} update={update} />}
             {step === 4 && <Step4 state={state} update={update} />}
-            {step === 5 && <Step5 state={state} update={update} clientName={clientName} clientEmail={clientEmail} />}
+            {step === 5 && <Step5 state={state} update={update} clientName={clientName} clientEmail={clientEmail} clientCompany={clientCompany} isGeneric={isGeneric} />}
 
             {error && (
               <div className="mt-4 px-4 py-3 rounded-xl bg-red-50 border border-red-200 text-sm text-red-600">
