@@ -823,7 +823,7 @@ export function IntakeWizard({
       </div>
 
       {/* Content — extra bottom padding on mobile so fixed nav doesn't overlap */}
-      <div className="flex-1 px-4 py-6 pb-28 sm:pb-6">
+      <div className="flex-1 px-4 py-6 pb-36 sm:pb-6">
         <div className="max-w-lg mx-auto">
           <div className="bg-white rounded-2xl shadow-sm border border-slate-200/60 p-6 sm:p-8">
 
@@ -854,12 +854,14 @@ export function IntakeWizard({
 
       {/* ── Fixed bottom nav bar — mobile only ── */}
       <div
-        className="sm:hidden fixed bottom-0 left-0 right-0 z-40 px-4 py-3"
+        className="sm:hidden fixed bottom-0 left-0 right-0 z-40 px-4 pt-3"
         style={{
-          background: "rgba(255,255,255,0.95)",
+          background: "rgba(255,255,255,0.97)",
+          WebkitBackdropFilter: "blur(12px)",
           backdropFilter: "blur(12px)",
           borderTop: "1px solid #e2e8f0",
           boxShadow: "0 -4px 16px rgba(0,0,0,0.06)",
+          paddingBottom: "max(12px, env(safe-area-inset-bottom))",
         }}
       >
         {navButtons}
