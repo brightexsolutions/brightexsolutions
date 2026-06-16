@@ -652,7 +652,26 @@ export function IntakeWizard({
     return true;
   }
 
+  function validateBeforeSubmit(): string {
+    const name  = resolvedName.trim();
+    const email = resolvedEmail.trim();
+    const desc  = state.description.trim();
+
+    if (!name || name.length < 2)
+      return "Please enter your full name (at least 2 characters).";
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))
+      return "Please enter a valid email address.";
+    if (!desc || desc.length < 10)
+      return `Your project description is too short — please add a bit more detail (${desc.length}/10 characters minimum).`;
+    if (!state.service_type)
+      return "Please go back and select a service type.";
+    return "";
+  }
+
   async function handleSubmit() {
+    const validationError = validateBeforeSubmit();
+    if (validationError) { setError(validationError); return; }
+
     setSubmitting(true);
     setError("");
     try {
@@ -670,7 +689,29 @@ export function IntakeWizard({
       });
       if (!res.ok) {
         const j = await res.json().catch(() => ({}));
-        setError(j.error ?? "Submission failed. Please try again.");
+        // Try to surface a field-level error from the Zod details object
+        const fieldErrors: string[] = [];
+        if (j.details?.fieldErrors) {
+          const FIELD_LABELS: Record<string, string> = {
+            description:      "Project description",
+            submitter_name:   "Your name",
+            submitter_email:  "Your email",
+            service_type:     "Service type",
+            timeline:         "Timeline",
+            budget_range:     "Budget",
+          };
+          for (const [field, msgs] of Object.entries(j.details.fieldErrors as Record<string, string[]>)) {
+            const label = FIELD_LABELS[field] ?? field;
+            fieldErrors.push(`${label}: ${(msgs as string[])[0]?.toLowerCase()}`);
+          }
+        }
+        if (fieldErrors.length > 0) {
+          setError(`Please fix the following:\n• ${fieldErrors.join("\n• ")}`);
+        } else {
+          setError(j.error === "Invalid input"
+            ? "Some required fields are missing or too short. Please review your answers and try again."
+            : (j.error ?? "Submission failed. Please try again."));
+        }
         return;
       }
       setSubmitted(true);
@@ -839,7 +880,7 @@ export function IntakeWizard({
             {step === 5 && <Step5 state={state} update={update} clientName={clientName} clientEmail={clientEmail} clientCompany={clientCompany} isGeneric={isGeneric} />}
 
             {error && (
-              <div className="mt-4 px-4 py-3 rounded-xl bg-red-50 border border-red-200 text-sm text-red-600">
+              <div className="mt-4 px-4 py-3 rounded-xl bg-red-50 border border-red-200 text-sm text-red-700 whitespace-pre-line leading-relaxed">
                 {error}
               </div>
             )}
