@@ -49,12 +49,21 @@ export const metadata: Metadata = {
     title: SITE_NAME,
     description:
       "Nairobi-based digital agency building premium digital experiences that drive growth.",
+    images: [
+      {
+        url: `${SITE_URL}/opengraph-image`,
+        width: 1200,
+        height: 630,
+        alt: "Brightex Solutions — Digital Agency Nairobi",
+      },
+    ],
   },
   twitter: {
     card: "summary_large_image",
     title: SITE_NAME,
     description:
       "Nairobi-based digital agency building premium digital experiences that drive growth.",
+    images: [`${SITE_URL}/opengraph-image`],
   },
   robots: {
     index: true,
