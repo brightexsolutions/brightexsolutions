@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { createAdminClient } from "@/lib/supabase/server";
 import { rateLimit } from "@/lib/rate-limit";
+import { sendNewClientIntakeAck, sendExistingClientIntakeAck } from "@/lib/intake-mail";
+import { sendAdminPush } from "@/lib/push";
 
 const PostSchema = z.object({
   service_type: z.enum(["website", "mobile", "erp", "design", "consultancy", "other"]),
@@ -41,6 +43,7 @@ export async function POST(request: NextRequest) {
 
   // Find or create the client by email
   let clientId: string | null = null;
+  let isNewClient = false;
 
   const { data: existing } = await supabase
     .from("clients")
@@ -52,6 +55,7 @@ export async function POST(request: NextRequest) {
   if (existing) {
     clientId = existing.id;
   } else {
+    isNewClient = true;
     const { data: created, error: createErr } = await supabase
       .from("clients")
       .insert({
@@ -90,6 +94,23 @@ export async function POST(request: NextRequest) {
     console.error("[intake/POST generic]", error);
     return NextResponse.json({ error: "Submission failed" }, { status: 500 });
   }
+
+  // Fire-and-forget: ack email + admin push notification
+  const ackFn = isNewClient ? sendNewClientIntakeAck : sendExistingClientIntakeAck;
+  ackFn({
+    to: data.submitter_email,
+    name: data.submitter_name,
+    serviceType: data.service_type,
+    projectTitle: data.project_title,
+    description: data.description,
+  }).catch((err) => console.error("[intake/POST generic] ack email:", err));
+
+  sendAdminPush({
+    title: "New intake submission",
+    body: `${data.submitter_name} submitted a ${data.service_type} requirement${data.project_title ? `: ${data.project_title}` : ""}${isNewClient ? " (new client)" : ""}`,
+    url: "/admin/clients",
+    tag: "new-intake",
+  }).catch((err) => console.error("[intake/POST generic] push:", err));
 
   return NextResponse.json({ success: true }, { status: 201 });
 }

@@ -4,11 +4,12 @@ import { useState, useEffect } from "react";
 import {
   X, Mail, Phone, MessageSquare, Send, AlertCircle,
   FileText, TrendingUp, Clock, CheckCircle2, Loader2,
-  ExternalLink, ClipboardList, Copy, ClipboardCheck,
+  ExternalLink, ClipboardList, Copy, ClipboardCheck, Eye,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { whatsappUrl } from "@/lib/constants";
+import { IntakeDetailSheet, type IntakeDetail } from "@/components/admin/intake-detail-sheet";
 
 type Client = {
   id: string;
@@ -46,16 +47,7 @@ type Comm = {
   sent_at: string;
 };
 
-type Intake = {
-  id: string;
-  service_type: string;
-  project_title?: string | null;
-  description: string;
-  status: string;
-  submitted_at: string;
-  budget_range?: string | null;
-  timeline?: string | null;
-};
+type Intake = IntakeDetail;
 
 type ClientDetail = {
   client: Client;
@@ -97,6 +89,7 @@ export function QuickClientPanel({
   const [sent, setSent] = useState(false);
   const [intakeLinkCopied, setIntakeLinkCopied] = useState(false);
   const [markingIntakeId, setMarkingIntakeId] = useState<string | null>(null);
+  const [selectedIntake, setSelectedIntake] = useState<IntakeDetail | null>(null);
 
   useEffect(() => {
     if (!clientId) { setDetail(null); return; }
@@ -174,6 +167,7 @@ export function QuickClientPanel({
         ...prev,
         intakes: prev.intakes.map((i) => i.id === intakeId ? { ...i, status: "reviewed" } : i),
       } : prev);
+      setSelectedIntake((prev) => prev && prev.id === intakeId ? { ...prev, status: "reviewed" } : prev);
     } finally {
       setMarkingIntakeId(null);
     }
@@ -191,6 +185,7 @@ export function QuickClientPanel({
   };
 
   return (
+    <>
     <Sheet open={!!clientId} onOpenChange={(v) => !v && onClose()}>
       <SheetContent className="w-full sm:max-w-md flex flex-col overflow-hidden p-0" side="right">
         {loading ? (
@@ -440,18 +435,27 @@ export function QuickClientPanel({
                           </span>
                         </div>
                         <p className="text-[11px] text-muted-foreground line-clamp-2">{intake.description}</p>
-                        {intake.status === "new" && (
+                        <div className="flex items-center gap-3 pt-0.5">
                           <button
-                            onClick={() => markIntakeReviewed(intake.id)}
-                            disabled={markingIntakeId === intake.id}
-                            className="flex items-center gap-1 text-[10px] text-emerald-600 hover:text-emerald-700 transition-colors disabled:opacity-50"
+                            onClick={() => setSelectedIntake(intake)}
+                            className="flex items-center gap-1 text-[10px] text-primary hover:text-primary/80 transition-colors font-medium"
                           >
-                            {markingIntakeId === intake.id
-                              ? <Loader2 size={10} className="animate-spin" />
-                              : <CheckCircle2 size={10} />}
-                            Mark reviewed
+                            <Eye size={10} />
+                            View details
                           </button>
-                        )}
+                          {intake.status === "new" && (
+                            <button
+                              onClick={() => markIntakeReviewed(intake.id)}
+                              disabled={markingIntakeId === intake.id}
+                              className="flex items-center gap-1 text-[10px] text-emerald-600 hover:text-emerald-700 transition-colors disabled:opacity-50"
+                            >
+                              {markingIntakeId === intake.id
+                                ? <Loader2 size={10} className="animate-spin" />
+                                : <CheckCircle2 size={10} />}
+                              Mark reviewed
+                            </button>
+                          )}
+                        </div>
                       </div>
                     ))}
                   </div>
@@ -470,5 +474,13 @@ export function QuickClientPanel({
         )}
       </SheetContent>
     </Sheet>
+
+    <IntakeDetailSheet
+      intake={selectedIntake}
+      onClose={() => setSelectedIntake(null)}
+      onMarkReviewed={async (id) => { await markIntakeReviewed(id); }}
+      marking={!!markingIntakeId}
+    />
+    </>
   );
 }

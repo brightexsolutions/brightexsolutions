@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { createAdminClient } from "@/lib/supabase/server";
 import { rateLimit } from "@/lib/rate-limit";
+import { sendExistingClientIntakeAck } from "@/lib/intake-mail";
+import { sendAdminPush } from "@/lib/push";
 
 const PostSchema = z.object({
   service_type: z.enum(["website", "mobile", "erp", "design", "consultancy", "other"]),
@@ -104,6 +106,24 @@ export async function POST(
     console.error("[intake/POST]", error);
     return NextResponse.json({ error: "Submission failed" }, { status: 500 });
   }
+
+  // Fire-and-forget: ack email + admin push notification
+  if (data.submitter_email) {
+    sendExistingClientIntakeAck({
+      to: data.submitter_email,
+      name: data.submitter_name,
+      serviceType: data.service_type,
+      projectTitle: data.project_title,
+      description: data.description,
+    }).catch((err) => console.error("[intake/POST] ack email:", err));
+  }
+
+  sendAdminPush({
+    title: "New intake submission",
+    body: `${data.submitter_name} submitted a ${data.service_type} requirement${data.project_title ? `: ${data.project_title}` : ""}`,
+    url: "/admin/clients",
+    tag: "new-intake",
+  }).catch((err) => console.error("[intake/POST] push:", err));
 
   return NextResponse.json({ success: true }, { status: 201 });
 }
