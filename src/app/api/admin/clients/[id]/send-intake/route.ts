@@ -106,13 +106,12 @@ export async function POST(
 
               <p style="margin:0 0 4px 0;font-size:14px;color:#334155;font-weight:600;">What happens next?</p>
               <p style="margin:0 0 20px 0;font-size:14px;color:#64748b;line-height:1.6;">
-                Once you've submitted the form, I'll review your requirements and reach out to schedule a discovery call so we can go through everything together and get things moving.
+                Once you've submitted the form, we'll review your requirements and reach out to schedule a discovery call so we can go through everything together and get things moving.
               </p>
 
               <p style="margin:0;font-size:14px;color:#475569;line-height:1.6;">
                 Talk soon,<br />
-                <strong style="color:#152238;">Godwin</strong><br />
-                <span style="color:#94a3b8;">${SITE_NAME}</span>
+                <strong style="color:#152238;">The Brightex Team</strong>
               </p>
             </td>
           </tr>
@@ -146,8 +145,7 @@ ${intakeUrl}
 Once you've submitted it, we'll review your requirements and reach out to schedule a call.
 
 Talk soon,
-Godwin
-${SITE_NAME}
+The Brightex Team
 `;
 
   try {
