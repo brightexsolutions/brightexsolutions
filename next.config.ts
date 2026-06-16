@@ -17,11 +17,11 @@ const securityHeaders = [
     value: [
       "default-src 'self'",
       // React dev mode needs unsafe-eval for error overlay / stack reconstruction
-      `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ""} https://www.googletagmanager.com`,
+      `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ""} https://www.googletagmanager.com https://va.vercel-scripts.com`,
       "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
       "font-src 'self' https://fonts.gstatic.com",
       "img-src 'self' data: blob: https://*.supabase.co https://images.unsplash.com https://image.thum.io",
-      "connect-src 'self' https://*.supabase.co https://wa.me",
+      "connect-src 'self' https://*.supabase.co https://wa.me https://vitals.vercel-insights.com",
       "frame-src 'self' blob:",
       "frame-ancestors 'self'",
     ].join("; "),

@@ -202,7 +202,7 @@ export default function DatabasePage() {
 
   const SortHeader = ({ k, children }: { k: SortKey; children: React.ReactNode }) => (
     <th
-      className="px-3 py-2.5 text-left text-[10px] font-semibold text-muted-foreground uppercase tracking-wider cursor-pointer select-none hover:text-foreground transition-colors whitespace-nowrap"
+      className="px-3 py-2.5 text-left text-[10px] font-semibold text-muted-foreground uppercase tracking-wider cursor-pointer select-none hover:text-foreground transition-colors whitespace-nowrap bg-card"
       onClick={() => toggleSort(k)}
     >
       <span className="flex items-center gap-1">
@@ -346,13 +346,13 @@ export default function DatabasePage() {
                   <h2 className="text-sm font-semibold text-foreground">Storage by Table</h2>
                   <span className="text-[10px] text-muted-foreground ml-auto">Top {sizeChartData.length}</span>
                 </div>
-                <ResponsiveContainer width="100%" height={220}>
-                  <BarChart data={sizeChartData} layout="vertical" margin={{ left: 0, right: 16, top: 0, bottom: 0 }}>
-                    <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="hsl(var(--border))" />
-                    <XAxis type="number" tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} tickLine={false} axisLine={false} tickFormatter={(v) => `${v} KB`} />
-                    <YAxis type="category" dataKey="name" tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} tickLine={false} axisLine={false} width={100} />
+                <ResponsiveContainer width="100%" height={Math.max(220, sizeChartData.length * 28)}>
+                  <BarChart data={sizeChartData} layout="vertical" margin={{ left: 8, right: 16, top: 4, bottom: 4 }}>
+                    <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#334155" />
+                    <XAxis type="number" tick={{ fontSize: 10, fill: "#cbd5e1" }} tickLine={false} axisLine={false} tickFormatter={(v) => `${v} KB`} />
+                    <YAxis type="category" dataKey="name" interval={0} tick={{ fontSize: 10, fill: "#cbd5e1" }} tickLine={false} axisLine={false} width={140} />
                     <Tooltip content={<ChartTooltip formatter={(v) => `${v} KB`} />} cursor={{ fill: "hsl(var(--muted))" }} />
-                    <Bar dataKey="size" radius={[0, 4, 4, 0]} maxBarSize={18}>
+                    <Bar dataKey="size" radius={[0, 4, 4, 0]} maxBarSize={16}>
                       {sizeChartData.map((_, i) => (
                         <Cell key={i} fill={i === 0 ? "#f9a825" : i === 1 ? "#152238" : CHART_COLORS[i % CHART_COLORS.length]} />
                       ))}
@@ -368,13 +368,13 @@ export default function DatabasePage() {
                   <h2 className="text-sm font-semibold text-foreground">Row Count by Table</h2>
                   <span className="text-[10px] text-muted-foreground ml-auto">Top {rowsChartData.length}</span>
                 </div>
-                <ResponsiveContainer width="100%" height={220}>
-                  <BarChart data={rowsChartData} layout="vertical" margin={{ left: 0, right: 16, top: 0, bottom: 0 }}>
-                    <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="hsl(var(--border))" />
-                    <XAxis type="number" tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} tickLine={false} axisLine={false} tickFormatter={prettyNum} />
-                    <YAxis type="category" dataKey="name" tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} tickLine={false} axisLine={false} width={100} />
+                <ResponsiveContainer width="100%" height={Math.max(220, rowsChartData.length * 28)}>
+                  <BarChart data={rowsChartData} layout="vertical" margin={{ left: 8, right: 16, top: 4, bottom: 4 }}>
+                    <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#334155" />
+                    <XAxis type="number" tick={{ fontSize: 10, fill: "#cbd5e1" }} tickLine={false} axisLine={false} tickFormatter={prettyNum} />
+                    <YAxis type="category" dataKey="name" interval={0} tick={{ fontSize: 10, fill: "#cbd5e1" }} tickLine={false} axisLine={false} width={140} />
                     <Tooltip content={<ChartTooltip formatter={(v) => `${prettyNum(v)} rows`} />} cursor={{ fill: "hsl(var(--muted))" }} />
-                    <Bar dataKey="rows" radius={[0, 4, 4, 0]} maxBarSize={18}>
+                    <Bar dataKey="rows" radius={[0, 4, 4, 0]} maxBarSize={16}>
                       {rowsChartData.map((_, i) => (
                         <Cell key={i} fill={i === 0 ? "#10b981" : i === 1 ? "#6366f1" : CHART_COLORS[i % CHART_COLORS.length]} />
                       ))}
@@ -396,17 +396,18 @@ export default function DatabasePage() {
               </div>
             </div>
 
-            <div className="overflow-x-auto">
+            {/* Fixed-height scrollable table — standard pattern for admin data tables */}
+            <div className="overflow-auto max-h-[420px]">
               <table className="w-full text-sm">
-                <thead className="border-b border-border bg-muted/30">
+                <thead className="border-b border-border bg-card sticky top-0 z-10 shadow-[0_1px_0_hsl(var(--border))]">
                   <tr>
-                    <th className="px-3 py-2.5 w-5" />
+                    <th className="px-3 py-2.5 w-5 bg-card" />
                     <SortHeader k="name">Table</SortHeader>
                     <SortHeader k="total_size">Total Size</SortHeader>
                     <SortHeader k="live_rows">Live Rows</SortHeader>
                     <SortHeader k="dead_pct">Dead Rows</SortHeader>
-                    <th className="px-3 py-2.5 text-left text-[10px] font-semibold text-muted-foreground uppercase tracking-wider whitespace-nowrap">Data / Index</th>
-                    <th className="px-3 py-2.5 text-left text-[10px] font-semibold text-muted-foreground uppercase tracking-wider whitespace-nowrap">Scans</th>
+                    <th className="px-3 py-2.5 text-left text-[10px] font-semibold text-muted-foreground uppercase tracking-wider whitespace-nowrap bg-card">Data / Index</th>
+                    <th className="px-3 py-2.5 text-left text-[10px] font-semibold text-muted-foreground uppercase tracking-wider whitespace-nowrap bg-card">Scans</th>
                     <SortHeader k="last_analyze">Last Analyzed</SortHeader>
                   </tr>
                 </thead>
