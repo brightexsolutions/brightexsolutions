@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Bell, BellOff } from "lucide-react";
+import { BellRing, BellOff } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 type Status = "unsupported" | "denied" | "prompt" | "subscribed" | "loading";
@@ -103,8 +103,8 @@ export function PushNotificationsToggle() {
 
   if (status === "loading") {
     return (
-      <div className="w-8 h-8 rounded-lg flex items-center justify-center text-muted-foreground/40">
-        <Bell size={14} />
+      <div className="w-8 h-8 rounded-lg flex items-center justify-center text-muted-foreground/30">
+        <BellRing size={14} />
       </div>
     );
   }
@@ -113,13 +113,13 @@ export function PushNotificationsToggle() {
     return (
       <button
         onClick={disable}
-        title="Browser notifications enabled — click to disable"
+        title="Browser push notifications on — click to disable"
         className={cn(
           "w-8 h-8 rounded-lg flex items-center justify-center transition-colors",
           "text-emerald-500 hover:text-emerald-600 hover:bg-muted"
         )}
       >
-        <Bell size={14} />
+        <BellRing size={14} />
       </button>
     );
   }
@@ -131,10 +131,10 @@ export function PushNotificationsToggle() {
       title="Enable browser push notifications"
       className={cn(
         "w-8 h-8 rounded-lg flex items-center justify-center transition-colors",
-        "text-muted-foreground hover:text-foreground hover:bg-muted"
+        "text-muted-foreground/50 hover:text-foreground hover:bg-muted"
       )}
     >
-      <Bell size={14} />
+      <BellRing size={14} />
     </button>
   );
 }
