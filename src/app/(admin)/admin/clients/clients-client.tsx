@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { Users, UserPlus, Pencil, Trash2, Loader2, PanelRightOpen } from "lucide-react";
+import { Users, UserPlus, Pencil, Trash2, Loader2, PanelRightOpen, Copy, Share2, ClipboardCheck, Mail } from "lucide-react";
 import { QuickClientPanel } from "@/components/admin/quick-client-panel";
 import { Card } from "@/components/ui/card";
 import { StatCard } from "@/components/admin/stat-card";
@@ -44,6 +44,7 @@ type Client = {
   id: string; name: string; email?: string | null; phone?: string | null;
   company?: string | null; classification: string; source?: string | null;
   notes?: string | null; last_contacted_at?: string | null; created_at: string;
+  intake_token?: string | null;
 };
 
 export function ClientsPageClient() {
@@ -58,6 +59,8 @@ export function ClientsPageClient() {
   const [saving, setSaving] = useState(false);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [error, setError] = useState("");
+  const [intakeCopiedId, setIntakeCopiedId] = useState<string | null>(null);
+  const [intakeEmailSentId, setIntakeEmailSentId] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -184,6 +187,36 @@ export function ClientsPageClient() {
     },
   ];
 
+  function intakeUrl(token: string) {
+    return `${window.location.origin}/intake/${token}`;
+  }
+
+  async function copyIntakeLink(row: Record<string, unknown>) {
+    const token = row.intake_token as string | null | undefined;
+    if (!token) return;
+    await navigator.clipboard.writeText(intakeUrl(token));
+    setIntakeCopiedId(String(row.id));
+    setTimeout(() => setIntakeCopiedId(null), 2000);
+  }
+
+  async function sendIntakeEmail(row: Record<string, unknown>) {
+    const id = String(row.id);
+    const res = await fetch(`/api/admin/clients/${id}/send-intake`, { method: "POST" });
+    if (res.ok) {
+      setIntakeEmailSentId(id);
+      setTimeout(() => setIntakeEmailSentId(null), 3000);
+    }
+  }
+
+  function shareIntakeWhatsApp(row: Record<string, unknown>) {
+    const token = row.intake_token as string | null | undefined;
+    if (!token) return;
+    const name = String(row.name ?? "there").split(" ")[0];
+    const url = intakeUrl(token);
+    const msg = `Hi ${name},\n\nTo help us understand your project better, please fill in this short requirements form:\n${url}\n\nIt only takes a few minutes and will help us prepare for our conversation.`;
+    window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, "_blank");
+  }
+
   const clientActions: RowAction<Record<string, unknown>>[] = [
     {
       label: "Quick view",
@@ -194,6 +227,24 @@ export function ClientsPageClient() {
       label: "Edit",
       icon: <Pencil size={13} />,
       onClick: (row) => openEdit(row as unknown as Client),
+    },
+    {
+      label: (row) => intakeCopiedId === String(row.id) ? "Copied!" : "Copy intake link",
+      icon: (row) => intakeCopiedId === String(row.id) ? <ClipboardCheck size={13} /> : <Copy size={13} />,
+      onClick: (row) => copyIntakeLink(row),
+      hidden: (row) => !row.intake_token,
+    },
+    {
+      label: (row) => intakeEmailSentId === String(row.id) ? "Email sent!" : "Send intake via email",
+      icon: (row) => intakeEmailSentId === String(row.id) ? <ClipboardCheck size={13} className="text-emerald-500" /> : <Mail size={13} />,
+      onClick: (row) => sendIntakeEmail(row),
+      hidden: (row) => !row.intake_token || !row.email,
+    },
+    {
+      label: "Share intake via WhatsApp",
+      icon: <Share2 size={13} />,
+      onClick: (row) => shareIntakeWhatsApp(row),
+      hidden: (row) => !row.intake_token,
     },
     {
       label: "Delete",

@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import {
   X, Mail, Phone, MessageSquare, Send, AlertCircle,
   FileText, TrendingUp, Clock, CheckCircle2, Loader2,
-  ExternalLink,
+  ExternalLink, ClipboardList, Copy, ClipboardCheck,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
@@ -19,6 +19,7 @@ type Client = {
   classification: string;
   notes?: string;
   last_contacted_at?: string;
+  intake_token?: string | null;
 };
 
 type Invoice = {
@@ -45,11 +46,23 @@ type Comm = {
   sent_at: string;
 };
 
+type Intake = {
+  id: string;
+  service_type: string;
+  project_title?: string | null;
+  description: string;
+  status: string;
+  submitted_at: string;
+  budget_range?: string | null;
+  timeline?: string | null;
+};
+
 type ClientDetail = {
   client: Client;
   invoices: Invoice[];
   deals: Deal[];
   comms: Comm[];
+  intakes: Intake[];
 };
 
 const classColour: Record<string, string> = {
@@ -82,6 +95,8 @@ export function QuickClientPanel({
   const [body, setBody] = useState("");
   const [sending, setSending] = useState(false);
   const [sent, setSent] = useState(false);
+  const [intakeLinkCopied, setIntakeLinkCopied] = useState(false);
+  const [markingIntakeId, setMarkingIntakeId] = useState<string | null>(null);
 
   useEffect(() => {
     if (!clientId) { setDetail(null); return; }
@@ -94,12 +109,14 @@ export function QuickClientPanel({
       fetch(`/api/admin/invoices?client_id=${clientId}`).then((r) => r.json()),
       fetch(`/api/admin/sales?client_id=${clientId}`).then((r) => r.json()),
       fetch(`/api/admin/communications?client_id=${clientId}&limit=5`).then((r) => r.json()),
-    ]).then(([clientRes, invRes, dealRes, commRes]) => {
+      fetch(`/api/admin/clients/${clientId}/intakes`).then((r) => r.json()),
+    ]).then(([clientRes, invRes, dealRes, commRes, intakeRes]) => {
       setDetail({
         client: clientRes.data ?? clientRes,
         invoices: invRes.data ?? [],
         deals: dealRes.data ?? [],
         comms: commRes.data ?? [],
+        intakes: intakeRes.data ?? [],
       });
     }).catch(() => {}).finally(() => setLoading(false));
   }, [clientId]);
@@ -135,6 +152,43 @@ export function QuickClientPanel({
   const client = detail?.client;
   const overdueInvoices = (detail?.invoices ?? []).filter((i) => i.status === "overdue" || (i.status === "sent" && i.due_date && new Date(i.due_date) < new Date()));
   const openDeals = (detail?.deals ?? []).filter((d) => !["won", "lost"].includes(d.status));
+
+  async function copyIntakeLink() {
+    const token = client?.intake_token;
+    if (!token) return;
+    await navigator.clipboard.writeText(`${window.location.origin}/intake/${token}`);
+    setIntakeLinkCopied(true);
+    setTimeout(() => setIntakeLinkCopied(false), 2000);
+  }
+
+  async function markIntakeReviewed(intakeId: string) {
+    if (!clientId) return;
+    setMarkingIntakeId(intakeId);
+    try {
+      await fetch(`/api/admin/clients/${clientId}/intakes?intakeId=${intakeId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: "reviewed" }),
+      });
+      setDetail((prev) => prev ? {
+        ...prev,
+        intakes: prev.intakes.map((i) => i.id === intakeId ? { ...i, status: "reviewed" } : i),
+      } : prev);
+    } finally {
+      setMarkingIntakeId(null);
+    }
+  }
+
+  const intakeStatusColour: Record<string, string> = {
+    new: "text-blue-500 bg-blue-50 dark:bg-blue-950/30",
+    reviewed: "text-emerald-500 bg-emerald-50 dark:bg-emerald-950/30",
+    archived: "text-muted-foreground bg-muted",
+  };
+
+  const serviceTypeLabel: Record<string, string> = {
+    website: "Website / Web App", mobile: "Mobile App", erp: "Software / ERP",
+    design: "Design & Branding", consultancy: "Consultancy", other: "Other",
+  };
 
   return (
     <Sheet open={!!clientId} onOpenChange={(v) => !v && onClose()}>
@@ -346,6 +400,63 @@ export function QuickClientPanel({
                   </p>
                 </section>
               )}
+
+              {/* Intake submissions */}
+              <section className="px-5 py-4">
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest flex items-center gap-1.5">
+                    <ClipboardList size={11} />Requirements Intakes
+                  </h3>
+                  {client.intake_token && (
+                    <button
+                      onClick={copyIntakeLink}
+                      className="flex items-center gap-1 text-[10px] text-muted-foreground hover:text-brand-gold transition-colors"
+                    >
+                      {intakeLinkCopied ? <ClipboardCheck size={11} className="text-emerald-500" /> : <Copy size={11} />}
+                      {intakeLinkCopied ? "Copied!" : "Copy link"}
+                    </button>
+                  )}
+                </div>
+                {(detail?.intakes ?? []).length === 0 ? (
+                  <p className="text-xs text-muted-foreground">No intake submissions yet.</p>
+                ) : (
+                  <div className="space-y-2.5">
+                    {(detail?.intakes ?? []).slice(0, 5).map((intake) => (
+                      <div key={intake.id} className="rounded-sm border border-border bg-muted/20 p-3 space-y-1.5">
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="min-w-0">
+                            <p className="text-xs font-medium text-foreground truncate">
+                              {intake.project_title || serviceTypeLabel[intake.service_type] || intake.service_type}
+                            </p>
+                            <p className="text-[10px] text-muted-foreground">
+                              {new Date(intake.submitted_at).toLocaleDateString("en-KE", { day: "numeric", month: "short", year: "numeric" })}
+                            </p>
+                          </div>
+                          <span className={cn(
+                            "shrink-0 text-[10px] font-semibold px-1.5 py-0.5 rounded-full capitalize",
+                            intakeStatusColour[intake.status] ?? "text-muted-foreground bg-muted"
+                          )}>
+                            {intake.status}
+                          </span>
+                        </div>
+                        <p className="text-[11px] text-muted-foreground line-clamp-2">{intake.description}</p>
+                        {intake.status === "new" && (
+                          <button
+                            onClick={() => markIntakeReviewed(intake.id)}
+                            disabled={markingIntakeId === intake.id}
+                            className="flex items-center gap-1 text-[10px] text-emerald-600 hover:text-emerald-700 transition-colors disabled:opacity-50"
+                          >
+                            {markingIntakeId === intake.id
+                              ? <Loader2 size={10} className="animate-spin" />
+                              : <CheckCircle2 size={10} />}
+                            Mark reviewed
+                          </button>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </section>
 
               {/* Admin link (only visible to admin, not support portal) */}
               <section className="px-5 py-3">
