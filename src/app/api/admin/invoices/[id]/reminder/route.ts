@@ -79,7 +79,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 
   const { id } = await params;
 
-  const [{ data: invoice, error }, { data: settingsRows }] = await Promise.all([
+  const [{ data: invoice, error }, { data: settingsRows }, { data: payments }] = await Promise.all([
     supabase.from("invoices").select("*, clients(name, email)").eq("id", id).single(),
     supabase.from("settings").select("key, value").in("key", [
       "invoice_mpesa_number", "invoice_mpesa_name",
@@ -88,6 +88,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       "invoice_bank_name", "invoice_bank_account_name",
       "invoice_bank_account_number", "invoice_bank_branch",
     ]),
+    supabase.from("payments").select("amount").eq("invoice_id", id).is("deleted_at", null),
   ]);
 
   if (error || !invoice) return NextResponse.json({ error: "Invoice not found" }, { status: 404 });
@@ -106,20 +107,38 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   const dueDateLabel = invoice.due_date
     ? new Date(invoice.due_date).toLocaleDateString("en-KE", { day: "2-digit", month: "long", year: "numeric" })
     : "—";
-  const overdueText = daysOverdue > 0
-    ? `Invoice ${invoice.invoice_number} is <strong>${daysOverdue} day${daysOverdue !== 1 ? "s" : ""} overdue</strong>. Please process payment as soon as possible.`
-    : `Invoice ${invoice.invoice_number} is due. Please process payment by the due date.`;
+
+  const paidAmount = (payments ?? []).reduce((s: number, p: { amount: unknown }) => s + Number(p.amount), 0);
+  const balance = Number(invoice.total) - paidAmount;
+  const hasPartial = paidAmount > 0 && balance > 0;
+
+  function fmtKES(n: number) {
+    return `KES ${n.toLocaleString("en-KE", { minimumFractionDigits: 2 })}`;
+  }
+
+  const overdueText = hasPartial
+    ? daysOverdue > 0
+      ? `Thank you for your partial payment. The remaining balance of <strong>${fmtKES(balance)}</strong> on invoice ${invoice.invoice_number} is <strong>${daysOverdue} day${daysOverdue !== 1 ? "s" : ""} overdue</strong>. Please process the outstanding balance as soon as possible.`
+      : `Thank you for your partial payment. The remaining balance of <strong>${fmtKES(balance)}</strong> on invoice ${invoice.invoice_number} is due. Please process the outstanding balance by the due date.`
+    : daysOverdue > 0
+      ? `Invoice ${invoice.invoice_number} is <strong>${daysOverdue} day${daysOverdue !== 1 ? "s" : ""} overdue</strong>. Please process payment as soon as possible.`
+      : `Invoice ${invoice.invoice_number} is due. Please process payment by the due date.`;
 
   const html = emailTemplate({
-    title: "Payment Reminder",
+    title: hasPartial ? "Balance Reminder" : "Payment Reminder",
     subtitle: invoice.invoice_number ?? undefined,
-    preheader: `Reminder: Invoice ${invoice.invoice_number} requires your attention`,
-    heroLabel: `Payment Reminder · ${invoice.invoice_number ?? ""}`,
+    preheader: hasPartial
+      ? `Reminder: Balance of ${fmtKES(balance)} outstanding on invoice ${invoice.invoice_number}`
+      : `Reminder: Invoice ${invoice.invoice_number} requires your attention`,
+    heroLabel: `${hasPartial ? "Balance Reminder" : "Payment Reminder"} · ${invoice.invoice_number ?? ""}`,
     heroTitle: `A gentle reminder,\n${firstName}.`,
     body:
       emailAlert(overdueText, daysOverdue > 0 ? "warning" : "info") +
       emailInfoCard("📄", "Invoice Number", invoice.invoice_number ?? "—") +
-      emailInfoCard("💰", "Amount Due", `KES ${Number(invoice.total).toLocaleString("en-KE", { minimumFractionDigits: 2 })}`) +
+      (hasPartial
+        ? emailInfoCard("💰", "Balance Remaining", fmtKES(balance)) +
+          emailInfoCard("✅", "Amount Paid So Far", fmtKES(paidAmount))
+        : emailInfoCard("💰", "Amount Due", fmtKES(Number(invoice.total)))) +
       emailInfoCard("📅", "Due Date", dueDateLabel) +
       emailReferenceBox(invoice.invoice_number ?? "—", "Invoice Reference") +
       buildPaymentDetailsBlock(ps) +
@@ -145,7 +164,9 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     await transporter.sendMail({
       from: SENDERS.payments,
       to: client.email,
-      subject: `Payment Reminder: Invoice ${invoice.invoice_number}`,
+      subject: hasPartial
+        ? `Balance Reminder: Invoice ${invoice.invoice_number} (${fmtKES(balance)} outstanding)`
+        : `Payment Reminder: Invoice ${invoice.invoice_number}`,
       html,
       attachments: pdfBuffer
         ? [{ filename, content: pdfBuffer, contentType: "application/pdf" }]
