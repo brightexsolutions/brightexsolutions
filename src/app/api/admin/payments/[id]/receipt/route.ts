@@ -47,15 +47,27 @@ export async function POST(
     : new Date(payment.created_at).toLocaleDateString("en-KE", { day: "2-digit", month: "long", year: "numeric" });
   const methodLabel = (payment.method as string).replace(/_/g, " ").replace(/\b\w/g, (c: string) => c.toUpperCase());
 
+  const paymentDateMs = payment.date
+    ? new Date(payment.date).getTime()
+    : new Date(payment.created_at).getTime();
+  const todayStart = new Date(); todayStart.setHours(0, 0, 0, 0);
+  const isPastPayment = paymentDateMs < todayStart.getTime();
+
+  const amtFormatted = `KES ${Number(payment.amount).toLocaleString("en-KE", { minimumFractionDigits: 2 })}`;
+
   const html = emailTemplate({
-    title: "Payment Received",
+    title: isPastPayment ? "Payment Receipt" : "Payment Received",
     subtitle: invoice?.invoice_number ?? undefined,
-    preheader: `Payment of KES ${Number(payment.amount).toLocaleString()} confirmed`,
-    heroLabel: "Payment Confirmation",
-    heroTitle: `Payment received,\n${firstName}.`,
+    preheader: isPastPayment
+      ? `Receipt for payment of ${amtFormatted} made on ${receiptDate}`
+      : `Payment of KES ${Number(payment.amount).toLocaleString()} confirmed`,
+    heroLabel: isPastPayment ? "Payment Receipt" : "Payment Confirmation",
+    heroTitle: isPastPayment ? `Here's your receipt,\n${firstName}.` : `Payment received,\n${firstName}.`,
     body:
       emailAlert(
-        `We've received your payment of <strong>KES ${Number(payment.amount).toLocaleString("en-KE", { minimumFractionDigits: 2 })}</strong>. Thank you!`,
+        isPastPayment
+          ? `This is a receipt for your payment of <strong>${amtFormatted}</strong> made on ${receiptDate}.`
+          : `We've received your payment of <strong>${amtFormatted}</strong>. Thank you!`,
         "success"
       ) +
       emailInfoCard("✅", "Amount Paid", `KES ${Number(payment.amount).toLocaleString("en-KE", { minimumFractionDigits: 2 })}`) +
@@ -74,7 +86,9 @@ export async function POST(
     await transporter.sendMail({
       from: SENDERS.payments,
       to: client.email,
-      subject: `Payment Confirmation${invoice?.invoice_number ? ` — ${invoice.invoice_number}` : ""}`,
+      subject: isPastPayment
+        ? `Payment Receipt${invoice?.invoice_number ? ` — ${invoice.invoice_number}` : ""}`
+        : `Payment Confirmation${invoice?.invoice_number ? ` — ${invoice.invoice_number}` : ""}`,
       html,
     });
   } catch {
