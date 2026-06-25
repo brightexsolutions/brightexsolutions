@@ -180,16 +180,31 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     ? new Date(invoice.due_date).toLocaleDateString("en-KE", { day: "2-digit", month: "long", year: "numeric" })
     : "On receipt";
 
+  const paidAmount = (payments ?? []).reduce((s, p: { amount: number }) => s + Number(p.amount), 0);
+  const balance = Number(invoice.total) - paidAmount;
+  const hasPartial = paidAmount > 0 && balance > 0;
+
   const html = emailTemplate({
     title: `Invoice ${invoice.invoice_number ?? ""}`,
     subtitle: invoice.invoice_number ?? undefined,
-    preheader: `${SITE_NAME} invoice for ${fmtKES(Number(invoice.total))} — due ${dueLabel}`,
+    preheader: hasPartial
+      ? `Balance of ${fmtKES(balance)} remaining on invoice ${invoice.invoice_number} — due ${dueLabel}`
+      : `${SITE_NAME} invoice for ${fmtKES(Number(invoice.total))} — due ${dueLabel}`,
     heroLabel: `Invoice · ${invoice.invoice_number ?? ""}`,
     heroTitle: `Here's your invoice,\n${firstName}.`,
     body:
+      (hasPartial
+        ? emailAlert(
+            `A payment of <strong>${fmtKES(paidAmount)}</strong> has already been recorded. The remaining balance on this invoice is <strong>${fmtKES(balance)}</strong>.`,
+            "info"
+          )
+        : "") +
       emailParagraph("Please find your invoice details below. Kindly process payment by the due date shown.") +
       emailInfoCard("📄", "Invoice Number", invoice.invoice_number ?? "—") +
-      emailInfoCard("💰", "Amount Due", fmtKES(Number(invoice.total))) +
+      (hasPartial
+        ? emailInfoCard("💰", "Balance Remaining", fmtKES(balance)) +
+          emailInfoCard("✅", "Amount Paid So Far", fmtKES(paidAmount))
+        : emailInfoCard("💰", "Amount Due", fmtKES(Number(invoice.total)))) +
       emailInfoCard("📅", "Due Date", dueLabel) +
       (invoice.projects?.name ? emailInfoCard("📁", "Project", invoice.projects.name) : "") +
       emailReferenceBox(invoice.invoice_number ?? "—", "Invoice Reference") +
@@ -212,8 +227,6 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       emailSignoff(),
   });
 
-  const paidAmount = (payments ?? []).reduce((s, p: { amount: number }) => s + Number(p.amount), 0);
-
   // Generate PDF attachment
   let pdfBuffer: Buffer | undefined;
   try {
@@ -229,7 +242,9 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     await transporter.sendMail({
       from: SENDERS.payments,
       to: client.email,
-      subject: `Invoice ${invoice.invoice_number} from ${SITE_NAME}`,
+      subject: hasPartial
+        ? `Invoice ${invoice.invoice_number} from ${SITE_NAME} — ${fmtKES(balance)} balance remaining`
+        : `Invoice ${invoice.invoice_number} from ${SITE_NAME}`,
       html,
       attachments: pdfBuffer
         ? [{ filename, content: pdfBuffer, contentType: "application/pdf" }]
@@ -245,7 +260,9 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   await supabase.from("communications").insert({
     client_id: invoice.client_id,
     type: "email",
-    subject: `Invoice ${invoice.invoice_number} sent`,
+    subject: hasPartial
+        ? `Invoice ${invoice.invoice_number} sent — ${fmtKES(balance)} balance remaining`
+        : `Invoice ${invoice.invoice_number} sent`,
     direction: "out",
     status: "sent",
   });
