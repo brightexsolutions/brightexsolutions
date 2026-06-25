@@ -201,12 +201,12 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
         : "") +
       emailParagraph("Please find your invoice details below. Kindly process payment by the due date shown.") +
       emailInfoCard("📄", "Invoice Number", invoice.invoice_number ?? "—") +
+      (invoice.projects?.name ? emailInfoCard("📁", "Project", invoice.projects.name) : "") +
       (hasPartial
         ? emailInfoCard("💰", "Balance Remaining", fmtKES(balance)) +
           emailInfoCard("✅", "Amount Paid So Far", fmtKES(paidAmount))
         : emailInfoCard("💰", "Amount Due", fmtKES(Number(invoice.total)))) +
       emailInfoCard("📅", "Due Date", dueLabel) +
-      (invoice.projects?.name ? emailInfoCard("📁", "Project", invoice.projects.name) : "") +
       emailReferenceBox(invoice.invoice_number ?? "—", "Invoice Reference") +
       buildItemsTable(items) +
       buildTotalsBlock(
