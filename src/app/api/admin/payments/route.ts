@@ -23,7 +23,7 @@ const PaymentSchema = z.object({
   reference: z.string().max(200).trim().optional(),
   date: z.string().date().optional(),
   notes: z.string().max(1000).trim().optional(),
-  send_receipt: z.boolean().default(false),
+  send_receipt: z.boolean().default(true),
 });
 
 export async function GET(request: NextRequest) {

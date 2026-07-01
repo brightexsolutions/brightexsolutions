@@ -80,7 +80,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   const { id } = await params;
 
   const [{ data: invoice, error }, { data: settingsRows }, { data: payments }] = await Promise.all([
-    supabase.from("invoices").select("*, clients(name, email)").eq("id", id).single(),
+    supabase.from("invoices").select("*, clients(name, email), projects(name)").eq("id", id).single(),
     supabase.from("settings").select("key, value").in("key", [
       "invoice_mpesa_number", "invoice_mpesa_name",
       "invoice_till_number", "invoice_till_name",
@@ -135,6 +135,9 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     body:
       emailAlert(overdueText, daysOverdue > 0 ? "warning" : "info") +
       emailInfoCard("📄", "Invoice Number", invoice.invoice_number ?? "—") +
+      ((invoice.projects as { name?: string } | null)?.name
+        ? emailInfoCard("📁", "Project", (invoice.projects as { name: string }).name)
+        : "") +
       (hasPartial
         ? emailInfoCard("💰", "Balance Remaining", fmtKES(balance)) +
           emailInfoCard("✅", "Amount Paid So Far", fmtKES(paidAmount))
@@ -178,6 +181,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 
   await supabase.from("communications").insert({
     client_id: invoice.client_id,
+    invoice_id: id,
     type: "email",
     subject: `Payment reminder sent for invoice ${invoice.invoice_number}`,
     direction: "out",

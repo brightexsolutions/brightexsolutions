@@ -3,6 +3,25 @@ import { z } from "zod";
 import { createClient, createAdminClient } from "@/lib/supabase/server";
 import { rateLimit } from "@/lib/rate-limit";
 import { logAction } from "@/lib/audit";
+import { transporter, SENDERS } from "@/lib/mail";
+import { SITE_NAME, BUSINESS_PHONE, whatsappUrl } from "@/lib/constants";
+import {
+  emailTemplate,
+  emailParagraph,
+  emailInfoCard,
+  emailDivider,
+  emailSignoff,
+} from "@/lib/email-templates";
+
+const STAGE_INFO: Record<string, { heading: string; detail: string }> = {
+  discovery:   { heading: "We're in discovery",       detail: "We're gathering all the details about your project and aligning on goals. Expect to hear from us soon with next steps." },
+  design:      { heading: "Design is underway",        detail: "We're crafting the visual direction for your project. We'll share designs for your review once they're ready." },
+  development: { heading: "Development has started",   detail: "Hands on keyboards — we're building your project. We'll keep you updated on progress." },
+  review:      { heading: "Ready for your review",     detail: "Your project is ready for a first look. We'll be reaching out shortly to walk you through what we've built." },
+  live:        { heading: "Your project is live",      detail: "We're proud to announce that your project is now live. Thank you for working with us — here's to its success." },
+  paused:      { heading: "Project temporarily paused", detail: "We've paused work on your project for now. We'll be back in touch with a timeline for resuming." },
+  completed:   { heading: "Project complete",          detail: "Your project is officially complete. It has been a genuine pleasure working with you." },
+};
 
 const UpdateProjectSchema = z.object({
   client_id: z.string().uuid().optional(),
@@ -116,6 +135,54 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
   }
 
   // ── /Calendar sync ───────────────────────────────────────────────────────────
+
+  // ── Project stage notification ───────────────────────────────────────────────
+  if (newStatus && prevStatus !== newStatus && data.client_comms_enabled !== false && data.client_id) {
+    const stage = STAGE_INFO[newStatus];
+    if (stage) {
+      const { data: clientData } = await supabase
+        .from("clients")
+        .select("name, email")
+        .eq("id", data.client_id as string)
+        .single();
+
+      if (clientData?.email) {
+        const firstName = (clientData.name as string).split(" ")[0];
+        const html = emailTemplate({
+          title: `Project Update — ${data.name}`,
+          subtitle: data.name as string,
+          preheader: `${stage.heading} — ${data.name}`,
+          heroLabel: `Project Update · ${data.name}`,
+          heroTitle: `${stage.heading},\n${firstName}.`,
+          body:
+            emailParagraph(stage.detail) +
+            emailInfoCard("📁", "Project", data.name as string) +
+            emailInfoCard("📊", "Current Stage", newStatus.charAt(0).toUpperCase() + newStatus.slice(1)) +
+            emailDivider() +
+            emailParagraph(
+              `Questions or feedback? Reply to this email or reach us on WhatsApp: <a href="${whatsappUrl()}" style="color:#f9a825;font-weight:600">${BUSINESS_PHONE}</a>`
+            ) +
+            emailSignoff(),
+        });
+
+        await transporter.sendMail({
+          from: SENDERS.payments,
+          to: clientData.email as string,
+          subject: `Project Update — ${data.name}: ${newStatus.charAt(0).toUpperCase() + newStatus.slice(1)}`,
+          html,
+        }).catch(() => {});
+
+        await supabase.from("communications").insert({
+          client_id: data.client_id as string,
+          type: "email",
+          subject: `Project stage update sent — ${data.name} → ${newStatus}`,
+          direction: "out",
+          status: "sent",
+        });
+      }
+    }
+  }
+  // ── /Project stage notification ──────────────────────────────────────────────
 
   await logAction({
     actor_id: user.id,

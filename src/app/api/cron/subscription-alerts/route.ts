@@ -3,6 +3,7 @@ import { createAdminClient } from "@/lib/supabase/server";
 import { verifyCronSecret } from "@/lib/cron-auth";
 import { transporter, SITE_NAME } from "@/lib/mail";
 import { BUSINESS_EMAIL } from "@/lib/constants";
+import { logSystemAction } from "@/lib/audit";
 import {
   emailTemplate,
   emailRow,
@@ -91,6 +92,14 @@ export async function GET(request: NextRequest) {
             emailSignoff(),
         }),
       }).catch(console.error);
+
+      await logSystemAction({
+        action: "renewal_alert_sent",
+        entity_type: "subscription",
+        entity_id: sub.id,
+        entity_label: sub.name,
+        notes: `Automated renewal reminder — due in ${daysUntil} day${daysUntil !== 1 ? "s" : ""}`,
+      });
     }
   }
 
@@ -139,6 +148,14 @@ export async function GET(request: NextRequest) {
             emailSignoff(),
         }),
       }).catch(console.error);
+
+      await logSystemAction({
+        action: "overdue_alert_sent",
+        entity_type: "subscription",
+        entity_id: sub.id,
+        entity_label: sub.name,
+        notes: `Automated overdue alert — renewal date was ${sub.next_renewal_date}`,
+      });
     }
   }
 

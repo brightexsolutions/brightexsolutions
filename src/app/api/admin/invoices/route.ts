@@ -53,7 +53,31 @@ export async function GET(request: NextRequest) {
   const { data, error } = await query;
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
-  return NextResponse.json({ data });
+  // Merge per-invoice send stats from communications table
+  const invoiceIds = (data ?? []).map((inv) => inv.id);
+  let commStats: Record<string, { send_count: number; last_comm_at: string }> = {};
+  if (invoiceIds.length > 0) {
+    const { data: comms } = await supabase
+      .from("communications")
+      .select("invoice_id, sent_at")
+      .in("invoice_id", invoiceIds)
+      .order("sent_at", { ascending: false });
+    for (const c of (comms ?? [])) {
+      const cRow = c as { invoice_id: string; sent_at: string };
+      if (!commStats[cRow.invoice_id]) {
+        commStats[cRow.invoice_id] = { send_count: 0, last_comm_at: cRow.sent_at };
+      }
+      commStats[cRow.invoice_id].send_count += 1;
+    }
+  }
+
+  const enriched = (data ?? []).map((inv) => ({
+    ...inv,
+    send_count: commStats[inv.id]?.send_count ?? 0,
+    last_comm_at: commStats[inv.id]?.last_comm_at ?? null,
+  }));
+
+  return NextResponse.json({ data: enriched });
 }
 
 export async function POST(request: NextRequest) {

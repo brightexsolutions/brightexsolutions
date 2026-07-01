@@ -3,6 +3,7 @@ import { createAdminClient } from "@/lib/supabase/server";
 import { transporter } from "@/lib/mail";
 import { verifyCronSecret } from "@/lib/cron-auth";
 import { SITE_NAME, BUSINESS_PHONE, whatsappUrl } from "@/lib/constants";
+import { logSystemAction } from "@/lib/audit";
 import {
   emailTemplate,
   emailRow,
@@ -90,7 +91,7 @@ export async function GET(request: NextRequest) {
   const [{ data: overdueInvoices }, { data: settingsRows }] = await Promise.all([
     supabase
       .from("invoices")
-      .select("id, invoice_number, total, due_date, client_id, last_reminder_sent_at, clients(name, email)")
+      .select("id, invoice_number, total, due_date, client_id, last_reminder_sent_at, clients(name, email), projects(name)")
       .eq("status", "sent")
       .lt("due_date", today)
       .or(`last_reminder_sent_at.is.null,last_reminder_sent_at.lt.${cooldownCutoff.toISOString()}`),
@@ -149,6 +150,8 @@ export async function GET(request: NextRequest) {
       ? `Thank you for your partial payment. The remaining balance of <strong>${fmtKES(balance)}</strong> on invoice <strong>${invoice.invoice_number}</strong> is <strong>${daysOverdue} day${daysOverdue !== 1 ? "s" : ""} overdue</strong>. Please process the outstanding balance as soon as possible.`
       : `Invoice <strong>${invoice.invoice_number}</strong> is <strong>${daysOverdue} day${daysOverdue !== 1 ? "s" : ""} overdue</strong>. Please process payment as soon as possible.`;
 
+    const projectName = (invoice.projects as { name?: string } | null)?.name ?? null;
+
     const amountRows = hasPartial
       ? emailRow("Balance Remaining", `<strong>${fmtKES(balance)}</strong>`) +
         emailRow("Amount Paid So Far", fmtKES(paidAmount)) +
@@ -193,6 +196,7 @@ export async function GET(request: NextRequest) {
             emailAlert(overdueText, "warning") +
             emailInfoTable(
               emailRow("Invoice", invoice.invoice_number ?? "—") +
+              (projectName ? emailRow("Project", projectName) : "") +
               amountRows +
               emailRow("Was Due", new Date(invoice.due_date).toLocaleDateString("en-KE", { day: "2-digit", month: "long", year: "numeric" }))
             ) +
@@ -214,10 +218,20 @@ export async function GET(request: NextRequest) {
           .eq("id", invoice.id),
         supabase.from("communications").insert({
           client_id: invoice.client_id,
+          invoice_id: invoice.id,
           type: "email",
           subject,
           direction: "out",
           status: "sent",
+        }),
+        logSystemAction({
+          action: "reminder_sent",
+          entity_type: "invoice",
+          entity_id: invoice.id,
+          entity_label: invoice.invoice_number ?? invoice.id,
+          notes: hasPartial
+            ? `Automated balance reminder — ${fmtKES(balance)} outstanding (${daysOverdue}d overdue)`
+            : `Automated payment reminder — ${daysOverdue} day${daysOverdue !== 1 ? "s" : ""} overdue`,
         }),
       ]);
     } catch {

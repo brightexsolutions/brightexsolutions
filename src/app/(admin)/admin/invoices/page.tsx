@@ -42,6 +42,8 @@ type Invoice = {
   clients?: { id?: string; name?: string | null; email?: string | null; company?: string | null } | null;
   projects?: { id: string; name: string } | null;
   created_at: string;
+  send_count?: number;
+  last_comm_at?: string | null;
 };
 type Project = { id: string; name: string; clients?: { name?: string | null } | null };
 type Client = { id: string; name?: string | null; company?: string | null; email?: string | null; phone?: string | null; classification?: string | null };
@@ -334,12 +336,16 @@ export default function InvoicesPage() {
               label: "Status",
               render: (row) => {
                 const inv = row as unknown as Invoice;
+                const lastSent = inv.last_comm_at ?? inv.sent_at;
                 return (
                   <div className="flex flex-col gap-0.5">
                     <StatusDot status={inv.status} />
-                    {inv.sent_at && (
+                    {lastSent && (
                       <span className="text-[10px] text-muted-foreground whitespace-nowrap">
-                        Sent {new Date(inv.sent_at).toLocaleDateString("en-KE", { day: "numeric", month: "short", year: "2-digit" })}
+                        {inv.send_count && inv.send_count > 0
+                          ? `Sent ×${inv.send_count} · ${new Date(lastSent).toLocaleDateString("en-KE", { day: "numeric", month: "short", year: "2-digit" })}`
+                          : `Sent ${new Date(lastSent).toLocaleDateString("en-KE", { day: "numeric", month: "short", year: "2-digit" })}`
+                        }
                       </span>
                     )}
                   </div>

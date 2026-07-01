@@ -44,7 +44,8 @@ type Client = {
   id: string; name: string; email?: string | null; phone?: string | null;
   company?: string | null; classification: string; source?: string | null;
   notes?: string | null; last_contacted_at?: string | null; created_at: string;
-  intake_token?: string | null;
+  intake_token?: string | null; intake_sent_at?: string | null;
+  client_intakes?: { id: string }[];
 };
 
 export function ClientsPageClient() {
@@ -185,6 +186,38 @@ export function ClientsPageClient() {
         </span>
       ),
     },
+    {
+      key: "intake_token",
+      label: "Onboarding",
+      className: "hidden lg:table-cell",
+      render: (row) => {
+        const client = row as unknown as Client;
+        if (!client.email || !client.intake_token) return null;
+        const hasResponded = (client.client_intakes?.length ?? 0) > 0;
+        if (hasResponded) {
+          return (
+            <span className="inline-flex items-center gap-1 text-[11px] font-medium text-emerald-600 bg-emerald-50 dark:bg-emerald-950/30 px-2 py-0.5 rounded-md whitespace-nowrap">
+              Responded
+            </span>
+          );
+        }
+        if (client.intake_sent_at) {
+          return (
+            <span className="inline-flex items-center gap-1 text-[11px] font-medium text-amber-600 bg-amber-50 dark:bg-amber-950/30 px-2 py-0.5 rounded-md whitespace-nowrap">
+              Sent {new Date(client.intake_sent_at).toLocaleDateString("en-KE", { day: "numeric", month: "short" })}
+            </span>
+          );
+        }
+        return (
+          <button
+            onClick={(e) => { e.stopPropagation(); sendIntakeEmail(row); }}
+            className="inline-flex items-center gap-1 text-[11px] font-medium text-muted-foreground border border-border rounded-md px-2 py-0.5 hover:text-brand-gold hover:border-brand-gold/40 transition-colors whitespace-nowrap"
+          >
+            <Mail size={10} />Send onboarding
+          </button>
+        );
+      },
+    },
   ];
 
   function intakeUrl(token: string) {
@@ -205,6 +238,7 @@ export function ClientsPageClient() {
     if (res.ok) {
       setIntakeEmailSentId(id);
       setTimeout(() => setIntakeEmailSentId(null), 3000);
+      setClients((prev) => prev.map((c) => c.id === id ? { ...c, intake_sent_at: new Date().toISOString() } : c));
     }
   }
 
