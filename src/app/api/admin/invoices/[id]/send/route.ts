@@ -259,6 +259,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   await supabase.from("invoices").update({ status: "sent", sent_at: now }).eq("id", id);
   await supabase.from("communications").insert({
     client_id: invoice.client_id,
+    invoice_id: id,
     type: "email",
     subject: hasPartial
         ? `Invoice ${invoice.invoice_number} sent — ${fmtKES(balance)} balance remaining`

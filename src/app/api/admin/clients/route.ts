@@ -25,7 +25,7 @@ export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const classification = searchParams.get("classification");
 
-  let query = supabase.from("clients").select("*").is("deleted_at", null).order("created_at", { ascending: false });
+  let query = supabase.from("clients").select("*, client_intakes(id)").is("deleted_at", null).order("created_at", { ascending: false });
   if (classification && classification !== "all") {
     query = query.eq("classification", classification);
   }

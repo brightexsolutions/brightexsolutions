@@ -218,6 +218,7 @@ export async function GET(request: NextRequest) {
           .eq("id", invoice.id),
         supabase.from("communications").insert({
           client_id: invoice.client_id,
+          invoice_id: invoice.id,
           type: "email",
           subject,
           direction: "out",

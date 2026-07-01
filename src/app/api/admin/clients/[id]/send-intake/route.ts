@@ -161,15 +161,17 @@ The Brightex Team
     return NextResponse.json({ error: "Email delivery failed" }, { status: 500 });
   }
 
-  // Log the communication
-  await supabase.from("communications").insert({
-    client_id: client.id,
-    type: "email",
-    subject: `${firstName}, tell us about your project 📋`,
-    body: `Intake requirements link sent to ${client.email}`,
-    direction: "out",
-    status: "sent",
-  });
+  await Promise.all([
+    supabase.from("communications").insert({
+      client_id: client.id,
+      type: "email",
+      subject: `${firstName}, tell us about your project 📋`,
+      body: `Intake requirements link sent to ${client.email}`,
+      direction: "out",
+      status: "sent",
+    }),
+    supabase.from("clients").update({ intake_sent_at: new Date().toISOString() }).eq("id", client.id),
+  ]);
 
   return NextResponse.json({ success: true });
 }

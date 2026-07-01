@@ -181,6 +181,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 
   await supabase.from("communications").insert({
     client_id: invoice.client_id,
+    invoice_id: id,
     type: "email",
     subject: `Payment reminder sent for invoice ${invoice.invoice_number}`,
     direction: "out",

@@ -84,6 +84,7 @@ export function QuickClientPanel({
 }) {
   const [detail, setDetail] = useState<ClientDetail | null>(null);
   const [loading, setLoading] = useState(false);
+  const [activeTab, setActiveTab] = useState<"overview" | "comms">("overview");
   const [composing, setComposing] = useState(false);
   const [subject, setSubject] = useState("");
   const [body, setBody] = useState("");
@@ -100,12 +101,13 @@ export function QuickClientPanel({
     setLoading(true);
     setComposing(false);
     setSent(false);
+    setActiveTab("overview");
 
     Promise.all([
       fetch(`/api/admin/clients/${clientId}`).then((r) => r.json()),
       fetch(`/api/admin/invoices?client_id=${clientId}`).then((r) => r.json()),
       fetch(`/api/admin/sales?client_id=${clientId}`).then((r) => r.json()),
-      fetch(`/api/admin/communications?client_id=${clientId}&limit=5`).then((r) => r.json()),
+      fetch(`/api/admin/communications?client_id=${clientId}`).then((r) => r.json()),
       fetch(`/api/admin/clients/${clientId}/intakes`).then((r) => r.json()),
     ]).then(([clientRes, invRes, dealRes, commRes, intakeRes]) => {
       setDetail({
@@ -242,8 +244,29 @@ export function QuickClientPanel({
               </div>
             </div>
 
+            {/* Tab bar */}
+            <div className="flex shrink-0 border-b border-border px-5">
+              {(["overview", "comms"] as const).map((tab) => (
+                <button
+                  key={tab}
+                  onClick={() => setActiveTab(tab)}
+                  className={cn(
+                    "py-2.5 mr-5 text-xs font-semibold border-b-2 -mb-px transition-colors capitalize",
+                    activeTab === tab
+                      ? "border-brand-gold text-foreground"
+                      : "border-transparent text-muted-foreground hover:text-foreground"
+                  )}
+                >
+                  {tab === "comms" ? `Communications${(detail?.comms ?? []).length > 0 ? ` (${(detail?.comms ?? []).length})` : ""}` : "Overview"}
+                </button>
+              ))}
+            </div>
+
             {/* Scrollable body */}
             <div className="flex-1 overflow-y-auto divide-y divide-border">
+
+              {/* ── Overview tab ─────────────────────────────── */}
+              {activeTab === "overview" && (<>
 
               {/* Contact quick-actions */}
               <section className="px-5 py-4">
@@ -358,9 +381,19 @@ export function QuickClientPanel({
               {/* Recent communications */}
               {(detail?.comms ?? []).length > 0 && (
                 <section className="px-5 py-4">
-                  <h3 className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest mb-3">Recent Comms</h3>
+                  <div className="flex items-center justify-between mb-3">
+                    <h3 className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest">Recent Comms</h3>
+                    {(detail?.comms ?? []).length > 3 && (
+                      <button
+                        onClick={() => setActiveTab("comms")}
+                        className="text-[10px] text-muted-foreground hover:text-brand-gold transition-colors"
+                      >
+                        View all {(detail?.comms ?? []).length}
+                      </button>
+                    )}
+                  </div>
                   <div className="space-y-2">
-                    {(detail?.comms ?? []).map((c) => (
+                    {(detail?.comms ?? []).slice(0, 3).map((c) => (
                       <div key={c.id} className="flex items-start gap-2">
                         <div className={cn("w-1.5 h-1.5 rounded-full mt-1.5 shrink-0",
                           c.direction === "out" ? "bg-brand-gold" : "bg-emerald-500")} />
@@ -550,6 +583,42 @@ export function QuickClientPanel({
                   </div>
                 )}
               </section>
+
+              </>)}
+
+              {/* ── Communications tab ───────────────────────── */}
+              {activeTab === "comms" && (
+                <section className="px-5 py-4">
+                  {(detail?.comms ?? []).length === 0 ? (
+                    <p className="text-xs text-muted-foreground py-4 text-center">No communications on record yet.</p>
+                  ) : (
+                    <div className="space-y-3">
+                      {(detail?.comms ?? []).map((c) => (
+                        <div key={c.id} className="flex items-start gap-3 py-2 border-b border-border/50 last:border-0">
+                          <div className={cn(
+                            "w-2 h-2 rounded-full mt-1.5 shrink-0",
+                            c.direction === "out" ? "bg-brand-gold" : "bg-emerald-500"
+                          )} />
+                          <div className="min-w-0 flex-1">
+                            <p className="text-xs font-medium text-foreground truncate">{c.subject ?? c.type}</p>
+                            <div className="flex items-center gap-2 mt-0.5">
+                              <span className="text-[11px] text-muted-foreground capitalize">{c.type}</span>
+                              <span className="text-[11px] text-muted-foreground">·</span>
+                              <span className="text-[11px] text-muted-foreground">
+                                {c.direction === "out" ? "Sent" : "Received"}
+                              </span>
+                              <span className="text-[11px] text-muted-foreground">·</span>
+                              <span className="text-[11px] text-muted-foreground whitespace-nowrap">
+                                {new Date(c.sent_at).toLocaleDateString("en-KE", { day: "numeric", month: "short", year: "numeric" })}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </section>
+              )}
 
               {/* Admin link (only visible to admin, not support portal) */}
               <section className="px-5 py-3">
