@@ -45,15 +45,10 @@ export async function GET(request: NextRequest) {
   const { data: docs, error } = await q;
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
-  // Generate short-lived signed URLs
-  const withUrls = await Promise.all(
-    (docs ?? []).map(async (doc) => {
-      const { data: signed } = await supabase.storage
-        .from(BUCKET)
-        .createSignedUrl(doc.storage_path, 3600);
-      return { ...doc, url: signed?.signedUrl ?? null };
-    })
-  );
+  const withUrls = (docs ?? []).map((doc) => ({
+    ...doc,
+    url: `/api/admin/documents/proxy?bucket=${BUCKET}&path=${encodeURIComponent(doc.storage_path)}`,
+  }));
 
   return NextResponse.json({ data: withUrls });
 }
@@ -139,10 +134,6 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: dbError.message }, { status: 500 });
   }
 
-  const { data: signed } = await supabase.storage
-    .from(BUCKET)
-    .createSignedUrl(storagePath, 3600);
-
   await logAction({
     actor_id: user.id,
     actor_name: user.email ?? user.id,
@@ -153,5 +144,10 @@ export async function POST(request: NextRequest) {
     notes: `Direction: ${direction}${amount ? ` · KES ${amount.toLocaleString()}` : ""}`,
   });
 
-  return NextResponse.json({ data: { ...doc, url: signed?.signedUrl ?? null } }, { status: 201 });
+  return NextResponse.json({
+    data: {
+      ...doc,
+      url: `/api/admin/documents/proxy?bucket=${BUCKET}&path=${encodeURIComponent(storagePath)}`,
+    },
+  }, { status: 201 });
 }

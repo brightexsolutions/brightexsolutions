@@ -32,15 +32,10 @@ export async function GET(request: NextRequest, { params }: Params) {
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
-  // Generate short-lived signed URLs for each document
-  const withUrls = await Promise.all(
-    (docs ?? []).map(async (doc) => {
-      const { data: signed } = await supabase.storage
-        .from(BUCKET)
-        .createSignedUrl(doc.storage_path, 3600); // 1-hour URL
-      return { ...doc, url: signed?.signedUrl ?? null };
-    })
-  );
+  const withUrls = (docs ?? []).map((doc) => ({
+    ...doc,
+    url: `/api/admin/documents/proxy?bucket=${BUCKET}&path=${encodeURIComponent(doc.storage_path)}`,
+  }));
 
   return NextResponse.json({ data: withUrls });
 }
@@ -97,12 +92,11 @@ export async function POST(request: NextRequest, { params }: Params) {
     return NextResponse.json({ error: dbError.message }, { status: 500 });
   }
 
-  const { data: signed } = await supabase.storage
-    .from(BUCKET)
-    .createSignedUrl(storagePath, 3600);
-
   return NextResponse.json({
-    data: { ...doc, url: signed?.signedUrl ?? null },
+    data: {
+      ...doc,
+      url: `/api/admin/documents/proxy?bucket=${BUCKET}&path=${encodeURIComponent(storagePath)}`,
+    },
     compression: { original_bytes: originalBytes, stored_bytes: savedBytes },
   }, { status: 201 });
 }
