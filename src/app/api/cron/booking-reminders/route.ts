@@ -3,6 +3,7 @@ import { createAdminClient } from "@/lib/supabase/server";
 import { transporter } from "@/lib/mail";
 import { verifyCronSecret } from "@/lib/cron-auth";
 import { SITE_NAME, BUSINESS_EMAIL, BUSINESS_PHONE, whatsappUrl } from "@/lib/constants";
+import { logSystemAction } from "@/lib/audit";
 import {
   emailTemplate,
   emailRow,
@@ -87,7 +88,16 @@ export async function GET(request: NextRequest) {
         }),
       });
 
-      await supabase.from("bookings").update({ reminder_sent: true }).eq("id", booking.id);
+      await Promise.all([
+        supabase.from("bookings").update({ reminder_sent: true }).eq("id", booking.id),
+        logSystemAction({
+          action: "reminder_sent",
+          entity_type: "booking",
+          entity_id: booking.id,
+          entity_label: `${purposeLabel} — ${booking.booker_name}`,
+          notes: `Automated 24h reminder sent to ${booking.booker_email}`,
+        }),
+      ]);
       sent++;
     } catch {
       // Continue with other bookings

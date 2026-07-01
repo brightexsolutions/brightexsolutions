@@ -3,6 +3,7 @@ import { createAdminClient } from "@/lib/supabase/server";
 import { transporter } from "@/lib/mail";
 import { verifyCronSecret } from "@/lib/cron-auth";
 import { SITE_NAME, BUSINESS_PHONE, whatsappUrl } from "@/lib/constants";
+import { logSystemAction } from "@/lib/audit";
 import {
   emailTemplate,
   emailRow,
@@ -221,6 +222,15 @@ export async function GET(request: NextRequest) {
           subject,
           direction: "out",
           status: "sent",
+        }),
+        logSystemAction({
+          action: "reminder_sent",
+          entity_type: "invoice",
+          entity_id: invoice.id,
+          entity_label: invoice.invoice_number ?? invoice.id,
+          notes: hasPartial
+            ? `Automated balance reminder — ${fmtKES(balance)} outstanding (${daysOverdue}d overdue)`
+            : `Automated payment reminder — ${daysOverdue} day${daysOverdue !== 1 ? "s" : ""} overdue`,
         }),
       ]);
     } catch {

@@ -3,6 +3,7 @@ import { createAdminClient } from "@/lib/supabase/server";
 import { transporter } from "@/lib/mail";
 import { verifyCronSecret } from "@/lib/cron-auth";
 import { SITE_NAME, BUSINESS_PHONE, whatsappUrl } from "@/lib/constants";
+import { logSystemAction } from "@/lib/audit";
 import {
   emailTemplate,
   emailRow,
@@ -69,6 +70,13 @@ export async function GET(request: NextRequest) {
               ) +
               emailSignoff(),
           }),
+        });
+        await logSystemAction({
+          action: "trial_expiry_sent",
+          entity_type: "trial",
+          entity_id: trial.id,
+          entity_label: `${productName} — ${trial.requester_name ?? trial.requester_email}`,
+          notes: `Automated trial expiry notification sent to ${trial.requester_email}`,
         });
       } catch {
         // Don't stop processing other trials if email fails
