@@ -22,7 +22,15 @@ export async function GET(request: NextRequest) {
 
   const supabase = createAdminClient();
 
-  const [invoicesRes, projectsRes, alertsRes] = await Promise.all([
+  // Same month-boundary + "revenue by payment date, not created_at" logic as the
+  // admin dashboard's own Revenue This Month card (src/app/(admin)/admin/page.tsx).
+  const now = new Date();
+  const thisMonthStart = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-01`;
+  const nextMonthStart = now.getMonth() === 11
+    ? `${now.getFullYear() + 1}-01-01`
+    : `${now.getFullYear()}-${String(now.getMonth() + 2).padStart(2, "0")}-01`;
+
+  const [invoicesRes, projectsRes, alertsRes, paymentsRes, clientsRes, salesRes, bookingsRes] = await Promise.all([
     supabase
       .from("invoices")
       .select("total")
@@ -39,12 +47,35 @@ export async function GET(request: NextRequest) {
       .eq("acknowledged", false)
       .order("created_at", { ascending: false })
       .limit(10),
+    supabase
+      .from("payments")
+      .select("amount")
+      .gte("date", thisMonthStart)
+      .lt("date", nextMonthStart)
+      .is("deleted_at", null),
+    supabase
+      .from("clients")
+      .select("id", { count: "exact", head: true })
+      .eq("classification", "active"),
+    supabase
+      .from("sales")
+      .select("estimated_value")
+      .not("status", "in", "(won,lost)"),
+    supabase
+      .from("bookings")
+      .select("id", { count: "exact", head: true })
+      .not("status", "in", "(cancelled,completed)")
+      .gte("scheduled_at", now.toISOString()),
   ]);
 
   const pendingInvoiceRows = invoicesRes.data ?? [];
   const pendingInvoices = pendingInvoiceRows.length;
   const pendingInvoiceValue = pendingInvoiceRows.reduce((s, r) => s + Number(r.total ?? 0), 0);
   const activeProjects = projectsRes.count ?? 0;
+  const revenueThisMonth = (paymentsRes.data ?? []).reduce((s, r) => s + Number(r.amount ?? 0), 0);
+  const activeClients = clientsRes.count ?? 0;
+  const salesPipelineValue = (salesRes.data ?? []).reduce((s, r) => s + Number(r.estimated_value ?? 0), 0);
+  const upcomingBookings = bookingsRes.count ?? 0;
 
   // Most-recent-first from the query, then stable-sorted so critical still leads
   // within that recency order rather than an arbitrary severity-alphabetical one.
@@ -53,10 +84,13 @@ export async function GET(request: NextRequest) {
     return (SEVERITY_RANK[a.severity ?? "info"] ?? 3) - (SEVERITY_RANK[b.severity ?? "info"] ?? 3);
   });
 
-  // Invoice-linked alerts get a real due_date + deep link; every other entity_type
+  // Invoice-linked alerts get a real due_date. There's no per-invoice admin page/URL
+  // in this app yet — invoices open in a client-side Sheet/Dialog from the list page,
+  // not a dedicated route — so the deep link goes to the list page itself rather than
+  // a fabricated /admin/invoices/{id} route that 404s. Every other entity_type
   // (booking/site/sale/subscription/trial/subcontractor_expense/system) has no
-  // per-entity admin page pattern established yet, so they're reported without one —
-  // still valid per spec (dueDate/url are both optional).
+  // admin page pattern established either, so those get no url at all — still valid
+  // per spec (dueDate/url are both optional).
   const invoiceEntityIds = alerts.filter((a) => a.entity_type === "invoice" && a.entity_id).map((a) => a.entity_id as string);
   const invoiceDueDates = new Map<string, string | null>();
   if (invoiceEntityIds.length) {
@@ -73,13 +107,17 @@ export async function GET(request: NextRequest) {
     ...(a.entity_type === "invoice" && a.entity_id && invoiceDueDates.get(a.entity_id)
       ? { dueDate: invoiceDueDates.get(a.entity_id) }
       : {}),
-    ...(a.entity_type === "invoice" && a.entity_id && siteUrl ? { url: `${siteUrl}/admin/invoices/${a.entity_id}` } : {}),
+    ...(a.entity_type === "invoice" && siteUrl ? { url: `${siteUrl}/admin/invoices` } : {}),
   }));
 
   return NextResponse.json({
     pendingInvoices,
     pendingInvoiceValue,
     activeProjects,
+    revenueThisMonth,
+    activeClients,
+    salesPipelineValue,
+    upcomingBookings,
     itemsRequiringAttention,
   });
 }
