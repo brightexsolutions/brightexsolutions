@@ -53,10 +53,13 @@ export async function GET(request: NextRequest) {
     return (SEVERITY_RANK[a.severity ?? "info"] ?? 3) - (SEVERITY_RANK[b.severity ?? "info"] ?? 3);
   });
 
-  // Invoice-linked alerts get a real due_date + deep link; every other entity_type
+  // Invoice-linked alerts get a real due_date. There's no per-invoice admin page/URL
+  // in this app yet — invoices open in a client-side Sheet/Dialog from the list page,
+  // not a dedicated route — so the deep link goes to the list page itself rather than
+  // a fabricated /admin/invoices/{id} route that 404s. Every other entity_type
   // (booking/site/sale/subscription/trial/subcontractor_expense/system) has no
-  // per-entity admin page pattern established yet, so they're reported without one —
-  // still valid per spec (dueDate/url are both optional).
+  // admin page pattern established either, so those get no url at all — still valid
+  // per spec (dueDate/url are both optional).
   const invoiceEntityIds = alerts.filter((a) => a.entity_type === "invoice" && a.entity_id).map((a) => a.entity_id as string);
   const invoiceDueDates = new Map<string, string | null>();
   if (invoiceEntityIds.length) {
@@ -73,7 +76,7 @@ export async function GET(request: NextRequest) {
     ...(a.entity_type === "invoice" && a.entity_id && invoiceDueDates.get(a.entity_id)
       ? { dueDate: invoiceDueDates.get(a.entity_id) }
       : {}),
-    ...(a.entity_type === "invoice" && a.entity_id && siteUrl ? { url: `${siteUrl}/admin/invoices/${a.entity_id}` } : {}),
+    ...(a.entity_type === "invoice" && siteUrl ? { url: `${siteUrl}/admin/invoices` } : {}),
   }));
 
   return NextResponse.json({
