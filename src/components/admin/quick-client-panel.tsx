@@ -125,7 +125,7 @@ export function QuickClientPanel({
     if (!detail?.client.email || !subject || !body) return;
     setSending(true);
     try {
-      await fetch("/api/admin/communications", {
+      const res = await fetch("/api/admin/communications", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -139,10 +139,19 @@ export function QuickClientPanel({
           to_name: detail.client.name,
         }),
       });
+
+      if (!res.ok) {
+        const payload = await res.json().catch(() => ({}));
+        throw new Error(payload.error ?? "Failed to send email");
+      }
+
       setSent(true);
       setSubject("");
       setBody("");
       setComposing(false);
+    } catch (error) {
+      console.error("[quick-client-panel]", error);
+      alert(error instanceof Error ? error.message : "Failed to send email");
     } finally {
       setSending(false);
     }
