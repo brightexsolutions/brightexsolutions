@@ -33,8 +33,8 @@ export async function GET(request: NextRequest) {
   const [invoicesRes, projectsRes, alertsRes, paymentsRes, clientsRes, salesRes, bookingsRes] = await Promise.all([
     supabase
       .from("invoices")
-      .select("total")
-      .in("status", ["sent", "overdue"])
+      .select("id, total, status")
+      .in("status", ["sent", "overdue", "partial"])
       .is("deleted_at", null),
     supabase
       .from("projects")
@@ -70,7 +70,30 @@ export async function GET(request: NextRequest) {
 
   const pendingInvoiceRows = invoicesRes.data ?? [];
   const pendingInvoices = pendingInvoiceRows.length;
-  const pendingInvoiceValue = pendingInvoiceRows.reduce((s, r) => s + Number(r.total ?? 0), 0);
+
+  // Outstanding balance, not gross total: a partially-paid invoice only still owes
+  // (total − payments so far). The previous version ignored `partial` invoices entirely
+  // and reported gross totals, so Stride never saw what clients actually still owe.
+  const invoiceIds = pendingInvoiceRows.map((r) => r.id as string);
+  const paidByInvoice = new Map<string, number>();
+  if (invoiceIds.length) {
+    const { data: payRows } = await supabase
+      .from("payments")
+      .select("invoice_id, amount")
+      .in("invoice_id", invoiceIds)
+      .is("deleted_at", null);
+    for (const p of payRows ?? []) {
+      const id = p.invoice_id as string;
+      paidByInvoice.set(id, (paidByInvoice.get(id) ?? 0) + Number(p.amount ?? 0));
+    }
+  }
+  const outstandingOf = (r: { id: string; total: number | null }) =>
+    Math.max(0, Number(r.total ?? 0) - (paidByInvoice.get(r.id as string) ?? 0));
+
+  const pendingInvoiceValue = pendingInvoiceRows.reduce((s, r) => s + outstandingOf(r as { id: string; total: number | null }), 0);
+  const partialRows = pendingInvoiceRows.filter((r) => r.status === "partial");
+  const partiallyPaidInvoices = partialRows.length;
+  const partiallyPaidOutstanding = partialRows.reduce((s, r) => s + outstandingOf(r as { id: string; total: number | null }), 0);
   const activeProjects = projectsRes.count ?? 0;
   const revenueThisMonth = (paymentsRes.data ?? []).reduce((s, r) => s + Number(r.amount ?? 0), 0);
   const activeClients = clientsRes.count ?? 0;
@@ -113,6 +136,8 @@ export async function GET(request: NextRequest) {
   return NextResponse.json({
     pendingInvoices,
     pendingInvoiceValue,
+    partiallyPaidInvoices,
+    partiallyPaidOutstanding,
     activeProjects,
     revenueThisMonth,
     activeClients,
