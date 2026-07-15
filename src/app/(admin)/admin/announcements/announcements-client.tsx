@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { Megaphone, Plus, Pencil, Trash2, ToggleLeft, ToggleRight } from "lucide-react";
+import { Megaphone, Plus, Pencil, Trash2, ToggleLeft, ToggleRight, Sparkles, Loader2 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { StatCard } from "@/components/admin/stat-card";
 import { DataTable, StackedCell, type Column, type RowAction, type FilterConfig } from "@/components/admin/data-table";
@@ -69,6 +69,45 @@ export function AnnouncementsPageClient() {
   const [error, setError] = useState("");
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [loading, setLoading] = useState(true);
+  const [aiDrafting, setAiDrafting] = useState(false);
+  const [visualIdea, setVisualIdea] = useState("");
+
+  const toneByType: Record<string, string> = { info: "professional", offer: "promotional", promo: "promotional", alert: "professional" };
+
+  async function writeWithAI() {
+    const topic = form.title.trim() || form.body.trim();
+    if (!topic) { setError("Add a title first so AI knows what to announce."); return; }
+    setAiDrafting(true);
+    setError("");
+    try {
+      const res = await fetch("/api/admin/ai", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          intent: "write_caption",
+          topic,
+          platforms: ["Website Announcement Banner"],
+          tone: toneByType[form.type] ?? "professional",
+          includeHashtags: false,
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok && data.result) {
+        const raw = (data.result as string).replace(/\*\*\[Website Announcement Banner\]\*\*\n?/i, "").trim();
+        const splitIdx = raw.search(/\*\*Visual idea\*\*/i);
+        if (splitIdx !== -1) {
+          set("body", raw.slice(0, splitIdx).trim());
+          setVisualIdea(raw.slice(splitIdx).replace(/\*\*Visual idea\*\*/i, "").trim());
+        } else {
+          set("body", raw);
+          setVisualIdea("");
+        }
+      } else {
+        setError(data.error ?? "AI draft failed. Try again.");
+      }
+    } catch { setError("Network error."); }
+    finally { setAiDrafting(false); }
+  }
 
   function set(field: string, value: string) {
     setForm((current) => ({ ...current, [field]: value }));
@@ -97,6 +136,7 @@ export function AnnouncementsPageClient() {
     setEditTarget(null);
     setForm(defaultForm);
     setError("");
+    setVisualIdea("");
     setOpen(true);
   }
 
@@ -113,6 +153,7 @@ export function AnnouncementsPageClient() {
       ends_at: toLocalDatetimeValue(ann.ends_at),
     });
     setError("");
+    setVisualIdea("");
     setOpen(true);
   }
 
@@ -281,8 +322,28 @@ export function AnnouncementsPageClient() {
               </div>
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="ann-body">Body</Label>
+              <div className="flex items-center justify-between">
+                <Label htmlFor="ann-body">Body</Label>
+                <button
+                  type="button"
+                  onClick={writeWithAI}
+                  disabled={aiDrafting}
+                  className="inline-flex items-center gap-1.5 text-xs text-brand-gold hover:text-brand-gold-hover font-medium transition-colors disabled:opacity-50"
+                >
+                  {aiDrafting ? <Loader2 size={12} className="animate-spin" /> : <Sparkles size={12} />}
+                  {aiDrafting ? "Drafting…" : "Write with AI"}
+                </button>
+              </div>
               <Textarea id="ann-body" rows={3} value={form.body} onChange={(e) => set("body", e.target.value)} />
+              {visualIdea && (
+                <div className="flex items-start gap-2 p-2.5 rounded-sm border border-dashed border-brand-gold/40 bg-brand-gold/5">
+                  <Sparkles size={13} className="text-brand-gold shrink-0 mt-0.5" />
+                  <div>
+                    <p className="text-[10px] font-semibold text-brand-gold uppercase tracking-widest mb-0.5">Visual idea</p>
+                    <p className="text-xs text-foreground leading-relaxed">{visualIdea}</p>
+                  </div>
+                </div>
+              )}
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1.5">

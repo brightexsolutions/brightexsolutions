@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
-import { SectionErrorBoundary } from "@/components/section-error-boundary";
-import { ContactForm } from "@/components/public/contact-form";
+import { ContactExperience } from "@/components/public/contact-experience";
 import { FadeIn } from "@/components/public/fade-in";
 import { Phone, Mail, MapPin, MessageCircle, Clock } from "lucide-react";
 import {
@@ -105,32 +104,10 @@ export default function ContactPage() {
           </div>
         </FadeIn>
 
-        {/* Right — form */}
+        {/* Right — intent-based stepper */}
         <FadeIn direction="right">
           <div className="bg-white rounded-2xl border border-brand-border shadow-[0_2px_24px_-4px_rgba(15,25,45,0.08)] p-8 sm:p-10">
-            <h2 className="font-display text-2xl font-bold text-brand-navy mb-1">
-              Send a message
-            </h2>
-            <p className="text-sm text-brand-muted mb-8">
-              Fill in the details and we&apos;ll come back with a clear plan within 24 hours.
-            </p>
-            <SectionErrorBoundary
-              fallback={
-                <div className="py-10 text-center">
-                  <p className="text-brand-muted mb-4 text-sm">The form is temporarily unavailable.</p>
-                  <a
-                    href={whatsappUrl()}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#25D366] text-white text-sm font-semibold"
-                  >
-                    Reach us on WhatsApp
-                  </a>
-                </div>
-              }
-            >
-              <ContactForm variant="embedded" />
-            </SectionErrorBoundary>
+            <ContactExperience />
           </div>
         </FadeIn>
       </div>

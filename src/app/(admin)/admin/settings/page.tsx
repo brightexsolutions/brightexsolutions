@@ -51,7 +51,7 @@ const defaults = {
   email: "info.brightexsolutions@gmail.com",
   phone: "+254 741 980 127",
   whatsapp: "254741980127",
-  booking_url: "/book",
+  booking_url: "/contact?intent=book_call",
   instagram: "brightexsolutions",
   facebook: "brightexsolutions",
   linkedin: "brightex-solutions",
@@ -315,7 +315,7 @@ export default function SettingsPage() {
                   <SettingRow label="WhatsApp Number" hint="Digits only with country code — e.g. 254741980127. Used in wa.me links.">
                     <Input placeholder="254741980127" value={form.whatsapp} onChange={(e) => update("whatsapp", e.target.value)} />
                   </SettingRow>
-                  <SettingRow label="Public Booking URL" hint="The URL visitors use to book a call. Default: /book">
+                  <SettingRow label="Public Booking URL" hint="The URL visitors use to book a call. Default: /contact?intent=book_call">
                     <div className="relative">
                       <ExternalLink size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
                       <Input className="pl-9" value={form.booking_url} onChange={(e) => update("booking_url", e.target.value)} />

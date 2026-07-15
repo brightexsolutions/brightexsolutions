@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
   X, Mail, Phone, MessageSquare, Send, AlertCircle,
   FileText, TrendingUp, Clock, CheckCircle2, Loader2,
@@ -11,6 +11,7 @@ import { cn } from "@/lib/utils";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { whatsappUrl } from "@/lib/constants";
 import { IntakeDetailSheet, type IntakeDetail } from "@/components/admin/intake-detail-sheet";
+import { EmailComposer } from "@/components/admin/email-composer";
 
 type Client = {
   id: string;
@@ -31,7 +32,13 @@ type Invoice = {
   status: string;
   due_date?: string;
   sent_at?: string | null;
+  payments?: { amount: number; date: string }[];
 };
+
+function outstandingOf(inv: Invoice): number {
+  const paid = (inv.payments ?? []).reduce((sum, p) => sum + Number(p.amount), 0);
+  return Math.max(0, Number(inv.total) - paid);
+}
 
 type Deal = {
   id: string;
@@ -85,30 +92,22 @@ export function QuickClientPanel({
   const [detail, setDetail] = useState<ClientDetail | null>(null);
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<"overview" | "comms">("overview");
-  const [composing, setComposing] = useState(false);
-  const [subject, setSubject] = useState("");
-  const [body, setBody] = useState("");
-  const [sending, setSending] = useState(false);
-  const [sent, setSent] = useState(false);
+  const [composerOpen, setComposerOpen] = useState(false);
   const [intakeLinkCopied, setIntakeLinkCopied] = useState(false);
   const [markingIntakeId, setMarkingIntakeId] = useState<string | null>(null);
+  const [archivingIntakeId, setArchivingIntakeId] = useState<string | null>(null);
   const [selectedIntake, setSelectedIntake] = useState<IntakeDetail | null>(null);
   const [sendingInvoiceId, setSendingInvoiceId] = useState<string | null>(null);
   const [sentInvoiceIds, setSentInvoiceIds] = useState<Set<string>>(new Set());
 
-  useEffect(() => {
-    if (!clientId) { setDetail(null); return; }
+  const loadDetail = useCallback((id: string) => {
     setLoading(true);
-    setComposing(false);
-    setSent(false);
-    setActiveTab("overview");
-
-    Promise.all([
-      fetch(`/api/admin/clients/${clientId}`).then((r) => r.json()),
-      fetch(`/api/admin/invoices?client_id=${clientId}`).then((r) => r.json()),
-      fetch(`/api/admin/sales?client_id=${clientId}`).then((r) => r.json()),
-      fetch(`/api/admin/communications?client_id=${clientId}`).then((r) => r.json()),
-      fetch(`/api/admin/clients/${clientId}/intakes`).then((r) => r.json()),
+    return Promise.all([
+      fetch(`/api/admin/clients/${id}`).then((r) => r.json()),
+      fetch(`/api/admin/invoices?client_id=${id}`).then((r) => r.json()),
+      fetch(`/api/admin/sales?client_id=${id}`).then((r) => r.json()),
+      fetch(`/api/admin/communications?client_id=${id}`).then((r) => r.json()),
+      fetch(`/api/admin/clients/${id}/intakes`).then((r) => r.json()),
     ]).then(([clientRes, invRes, dealRes, commRes, intakeRes]) => {
       setDetail({
         client: clientRes.data ?? clientRes,
@@ -118,44 +117,14 @@ export function QuickClientPanel({
         intakes: intakeRes.data ?? [],
       });
     }).catch(() => {}).finally(() => setLoading(false));
-  }, [clientId]);
+  }, []);
 
-  async function sendEmail(e: React.FormEvent) {
-    e.preventDefault();
-    if (!detail?.client.email || !subject || !body) return;
-    setSending(true);
-    try {
-      const res = await fetch("/api/admin/communications", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          client_id: clientId,
-          type: "email",
-          subject,
-          body,
-          direction: "out",
-          send_email: true,
-          to_email: detail.client.email,
-          to_name: detail.client.name,
-        }),
-      });
-
-      if (!res.ok) {
-        const payload = await res.json().catch(() => ({}));
-        throw new Error(payload.error ?? "Failed to send email");
-      }
-
-      setSent(true);
-      setSubject("");
-      setBody("");
-      setComposing(false);
-    } catch (error) {
-      console.error("[quick-client-panel]", error);
-      alert(error instanceof Error ? error.message : "Failed to send email");
-    } finally {
-      setSending(false);
-    }
-  }
+  useEffect(() => {
+    if (!clientId) { setDetail(null); return; }
+    setComposerOpen(false);
+    setActiveTab("overview");
+    loadDetail(clientId);
+  }, [clientId, loadDetail]);
 
   const client = detail?.client;
   const overdueInvoices = (detail?.invoices ?? []).filter((i) => i.status === "overdue" || (i.status === "sent" && i.due_date && new Date(i.due_date) < new Date()));
@@ -169,22 +138,23 @@ export function QuickClientPanel({
     setTimeout(() => setIntakeLinkCopied(false), 2000);
   }
 
-  async function markIntakeReviewed(intakeId: string) {
+  async function updateIntakeStatus(intakeId: string, status: "reviewed" | "archived") {
     if (!clientId) return;
-    setMarkingIntakeId(intakeId);
+    const setBusy = status === "archived" ? setArchivingIntakeId : setMarkingIntakeId;
+    setBusy(intakeId);
     try {
       await fetch(`/api/admin/clients/${clientId}/intakes?intakeId=${intakeId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status: "reviewed" }),
+        body: JSON.stringify({ status }),
       });
       setDetail((prev) => prev ? {
         ...prev,
-        intakes: prev.intakes.map((i) => i.id === intakeId ? { ...i, status: "reviewed" } : i),
+        intakes: prev.intakes.map((i) => i.id === intakeId ? { ...i, status } : i),
       } : prev);
-      setSelectedIntake((prev) => prev && prev.id === intakeId ? { ...prev, status: "reviewed" } : prev);
+      setSelectedIntake((prev) => prev && prev.id === intakeId ? { ...prev, status } : prev);
     } finally {
-      setMarkingIntakeId(null);
+      setBusy(null);
     }
   }
 
@@ -288,7 +258,7 @@ export function QuickClientPanel({
                         <Mail size={13} className="text-muted-foreground shrink-0" />
                         <span className="truncate">{client.email}</span>
                       </a>
-                      <button onClick={() => { setComposing(true); setSent(false); }}
+                      <button onClick={() => setComposerOpen(true)}
                         className="shrink-0 flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground border border-border rounded-sm px-2 py-1 hover:bg-muted transition-colors">
                         <Send size={10} />Compose
                       </button>
@@ -311,47 +281,6 @@ export function QuickClientPanel({
                 </div>
               </section>
 
-              {/* Compose email */}
-              {composing && (
-                <section className="px-5 py-4 bg-muted/20">
-                  {sent ? (
-                    <div className="flex items-center gap-2 text-sm text-emerald-600">
-                      <CheckCircle2 size={14} />Email sent successfully.
-                    </div>
-                  ) : (
-                    <form onSubmit={sendEmail} className="space-y-3">
-                      <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest">Compose Email</p>
-                      <input
-                        value={subject}
-                        onChange={(e) => setSubject(e.target.value)}
-                        placeholder="Subject"
-                        required
-                        className="w-full px-3 py-2 rounded-sm border border-input bg-background text-sm focus:outline-none focus:ring-1 focus:ring-ring"
-                      />
-                      <textarea
-                        value={body}
-                        onChange={(e) => setBody(e.target.value)}
-                        placeholder={`Hi ${client.name.split(" ")[0]},`}
-                        required
-                        rows={4}
-                        className="w-full px-3 py-2 rounded-sm border border-input bg-background text-sm resize-none focus:outline-none focus:ring-1 focus:ring-ring"
-                      />
-                      <div className="flex gap-2">
-                        <button type="button" onClick={() => setComposing(false)}
-                          className="flex-1 py-2 rounded-sm border border-input text-sm text-muted-foreground hover:bg-muted transition-colors">
-                          Cancel
-                        </button>
-                        <button type="submit" disabled={sending}
-                          className="flex-1 py-2 rounded-sm bg-brand-gold text-brand-navy text-sm font-semibold hover:bg-brand-gold-hover transition-colors disabled:opacity-60 flex items-center justify-center gap-1.5">
-                          {sending ? <Loader2 size={13} className="animate-spin" /> : <Send size={13} />}
-                          {sending ? "Sending…" : "Send"}
-                        </button>
-                      </div>
-                    </form>
-                  )}
-                </section>
-              )}
-
               {/* Pending actions */}
               {(overdueInvoices.length > 0 || openDeals.length > 0) && (
                 <section className="px-5 py-4">
@@ -367,7 +296,7 @@ export function QuickClientPanel({
                             Invoice {inv.invoice_number} overdue
                           </p>
                           <p className="text-[11px] text-red-500">
-                            KES {Number(inv.total).toLocaleString()} · {inv.status}
+                            KES {outstandingOf(inv).toLocaleString()} outstanding · {inv.status}
                           </p>
                         </div>
                       </div>
@@ -447,6 +376,7 @@ export function QuickClientPanel({
                                 <p className="text-xs font-medium text-foreground truncate">{inv.invoice_number}</p>
                                 <p className="text-[10px] text-muted-foreground">
                                   KES {Number(inv.total).toLocaleString()}
+                                  {outstandingOf(inv) > 0 && outstandingOf(inv) < Number(inv.total) && ` (${outstandingOf(inv).toLocaleString()} outstanding)`}
                                   {inv.due_date && ` · Due ${new Date(inv.due_date).toLocaleDateString("en-KE", { day: "numeric", month: "short" })}`}
                                 </p>
                               </div>
@@ -576,7 +506,7 @@ export function QuickClientPanel({
                           </button>
                           {intake.status === "new" && (
                             <button
-                              onClick={() => markIntakeReviewed(intake.id)}
+                              onClick={() => updateIntakeStatus(intake.id, "reviewed")}
                               disabled={markingIntakeId === intake.id}
                               className="flex items-center gap-1 text-[10px] text-emerald-600 hover:text-emerald-700 transition-colors disabled:opacity-50"
                             >
@@ -644,9 +574,20 @@ export function QuickClientPanel({
 
     <IntakeDetailSheet
       intake={selectedIntake}
+      clientId={clientId}
       onClose={() => setSelectedIntake(null)}
-      onMarkReviewed={async (id) => { await markIntakeReviewed(id); }}
+      onMarkReviewed={async (id) => { await updateIntakeStatus(id, "reviewed"); }}
       marking={!!markingIntakeId}
+      onArchive={async (id) => { await updateIntakeStatus(id, "archived"); }}
+      archiving={!!archivingIntakeId}
+      onEmailClient={() => { setSelectedIntake(null); setComposerOpen(true); }}
+    />
+
+    <EmailComposer
+      open={composerOpen}
+      onClose={() => setComposerOpen(false)}
+      recipient={client?.email ? { clientId: client.id, name: client.name, email: client.email } : null}
+      onSent={() => { if (clientId) loadDetail(clientId); }}
     />
     </>
   );

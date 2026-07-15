@@ -30,7 +30,7 @@ const navigation = [
   { label: "Products", href: "/products" },
   { label: "Blog", href: "/blog" },
   { label: "Contact", href: "/contact" },
-  { label: "Book a Call", href: "/book" },
+  { label: "Book a Call", href: "/contact?intent=book_call" },
 ];
 
 // ── Inline SVG helpers ────────────────────────────────────────────────────────
@@ -102,7 +102,7 @@ export function PublicFooter() {
                 Start a project <IconArrow />
               </Link>
               <Link
-                href="/book"
+                href="/contact?intent=book_call"
                 className="inline-flex items-center justify-center gap-2 px-8 py-3.5 rounded-sm border border-white/15 text-white text-sm font-medium hover:border-white/35 hover:bg-white/[0.04] transition-all duration-200"
               >
                 Book a call

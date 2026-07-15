@@ -6,7 +6,7 @@ import { sendNewClientIntakeAck, sendExistingClientIntakeAck } from "@/lib/intak
 import { sendAdminPush } from "@/lib/push";
 
 const PostSchema = z.object({
-  service_type: z.enum(["website", "mobile", "erp", "design", "consultancy", "other"]),
+  service_type: z.enum(["website", "mobile", "erp", "design", "consultancy", "ai_automation", "other"]),
   project_title: z.string().max(200).trim().optional(),
   description: z.string().min(10).max(5000).trim(),
   problem_statement: z.string().max(2000).trim().optional(),

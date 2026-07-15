@@ -23,7 +23,8 @@ import { z } from "zod";
 import { rateLimit } from "@/lib/rate-limit";
 import { createClient, createAdminClient } from "@/lib/supabase/server";
 import { logger } from "@/lib/logger";
-import { callAI, ADMIN_SYSTEM_PROMPT, AI_MODELS, isAIAvailable } from "@/lib/ai";
+import { callAI, ADMIN_SYSTEM_PROMPT, AI_MODELS, isAIAvailable, GeminiRateLimitedError } from "@/lib/ai";
+import { recordAiFailure, recordAiRecovery } from "@/lib/ai-monitor";
 import type { AIProvider } from "@/types";
 
 const AISchema = z.discriminatedUnion("intent", [
@@ -119,7 +120,7 @@ Please process payment at your earliest convenience. If you have any questions a
 Thank you for your business.
 
 Warm regards,
-Godwin — Brightex Solutions
+Brightex Solutions Team
 +254 741 980 127`;
 
     case "draft_reminder":
@@ -132,7 +133,7 @@ Outstanding amount: ${payload.total}
 Please arrange payment at your earliest convenience. If there's an issue or you need to discuss payment terms, please reply to this email or reach me on WhatsApp.
 
 Thank you,
-Godwin — Brightex Solutions
+Brightex Solutions Team
 +254 741 980 127`;
 
     case "draft_receipt_email":
@@ -143,7 +144,7 @@ Thank you — we've received your payment of ${payload.amount}${payload.invoiceN
 Your account is now up to date. We appreciate your promptness.
 
 Warm regards,
-Godwin — Brightex Solutions`;
+Brightex Solutions Team`;
 
     case "draft_project_update":
       return `Hi ${payload.clientName},
@@ -155,7 +156,7 @@ ${payload.updateSummary}${payload.nextSteps ? `\n\nNext steps:\n${payload.nextSt
 As always, feel free to reach out if you have any questions or feedback.
 
 Best,
-Godwin — Brightex Solutions`;
+Brightex Solutions Team`;
 
     default:
       return null;
@@ -174,7 +175,7 @@ Tone: ${payload.tone}${payload.subject ? `\nSubject line: ${payload.subject}` : 
 Context / what to address:
 ${payload.context}
 
-Write only the email body (no subject line, no "---" dividers). End with a professional sign-off from "The Brightex Team" or "Godwin — Brightex Solutions".`,
+Write only the email body (no subject line, no "---" dividers). End with a professional sign-off from "The Brightex Team" or "The Brightex Solutions Team".`,
       };
 
     case "draft_invoice_email":
@@ -187,7 +188,7 @@ Invoice number: ${payload.invoiceNumber}
 Amount due: ${payload.total}
 Due date: ${payload.dueDate}${payload.projectName ? `\nProject: ${payload.projectName}` : ""}
 
-Write only the email body. Keep it warm, professional, and brief — 3–4 short paragraphs. Sign off as "Godwin — Brightex Solutions".`,
+Write only the email body. Keep it warm, professional, and brief — 3–4 short paragraphs. Sign off as "The Brightex Solutions Team".`,
       };
 
     case "draft_reminder":
@@ -200,7 +201,7 @@ Invoice: ${payload.invoiceNumber}
 Amount: ${payload.total}
 Days overdue: ${payload.daysOverdue}${payload.projectName ? `\nProject: ${payload.projectName}` : ""}
 
-Keep it respectful but clear. Express urgency without being aggressive. Offer to discuss if there's an issue. Sign off as "Godwin — Brightex Solutions".`,
+Keep it respectful but clear. Express urgency without being aggressive. Offer to discuss if there's an issue. Sign off as "The Brightex Solutions Team".`,
       };
 
     case "draft_receipt_email":
@@ -211,7 +212,7 @@ Keep it respectful but clear. Express urgency without being aggressive. Offer to
 Client: ${payload.clientName}
 Amount received: ${payload.amount}${payload.invoiceNumber ? `\nInvoice: ${payload.invoiceNumber}` : ""}${payload.reference ? `\nReference: ${payload.reference}` : ""}${payload.projectName ? `\nProject: ${payload.projectName}` : ""}
 
-Thank the client sincerely, confirm the payment, and keep it brief and professional. Sign off as "Godwin — Brightex Solutions".`,
+Thank the client sincerely, confirm the payment, and keep it brief and professional. Sign off as "The Brightex Solutions Team".`,
       };
 
     case "draft_project_update":
@@ -223,7 +224,7 @@ Client: ${payload.clientName}
 Project: ${payload.projectName}
 Update summary: ${payload.updateSummary}${payload.nextSteps ? `\nNext steps: ${payload.nextSteps}` : ""}
 
-Write only the email body. Keep it clear, progress-focused, and reassuring. Sign off as "Godwin — Brightex Solutions".`,
+Write only the email body. Keep it clear, progress-focused, and reassuring. Sign off as "The Brightex Solutions Team".`,
       };
 
     case "classify_lead":
@@ -270,8 +271,8 @@ Include 6–12 tasks covering the full project lifecycle.`,
 
     case "write_caption":
       return {
-        maxTokens: 600,
-        userPrompt: `Write social media captions for Brightex Solutions on the following topic.
+        maxTokens: 700,
+        userPrompt: `You are a senior social media and marketing manager with 10+ years of experience running high-converting campaigns for service businesses. Write social media captions for Brightex Solutions on the following topic. The goal is business growth, not just announcing information: every caption should be written to drive engagement (comments, shares, saves) and move the reader toward becoming a lead — end with a clear, specific call to action (book a discovery call, send a DM, visit the site, comment with their biggest challenge, etc. — pick whichever fits the topic, never a generic "learn more"). Open with a hook in the first line that earns attention before anything else, since that's what stops the scroll.
 
 Topic: ${payload.topic}
 Platforms: ${payload.platforms.join(", ")}
@@ -283,7 +284,11 @@ Write a separate caption for each platform, formatted as:
 [caption text]
 ${payload.includeHashtags ? "[hashtags on their own line]" : ""}
 
-Keep each caption platform-appropriate in length and style.`,
+Keep each caption platform-appropriate in length and style.
+
+After all platform captions, add one final section:
+**Visual idea**
+[One concrete, practical suggestion for what image or carousel to create/use for this post — e.g. "Before/after screenshot of the new homepage" or "3-slide carousel: hero shot, mobile view, client logo". Suggest something Brightex likely already has (project screenshots, brand assets) rather than requiring a new photoshoot, unless the topic clearly calls for one.]`,
       };
 
     case "summarize":
@@ -404,7 +409,10 @@ export async function POST(request: NextRequest) {
       model:     aiModel,
       maxTokens,
       provider:  aiProvider,
+      feature:   `admin_ai:${payload.intent}`,
     });
+
+    void recordAiRecovery();
 
     const jsonIntents = ["classify_lead", "suggest_tasks", "analyze_logs"] as string[];
     if (jsonIntents.includes(payload.intent)) {
@@ -419,12 +427,24 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ result: text, intent: payload.intent });
   } catch (err) {
+    const errorMessage = err instanceof Error ? err.message : String(err);
     logger.error("Admin AI call failed", {
       route: "/api/admin/ai",
       intent: payload.intent,
       userId: user.id,
-      error: err instanceof Error ? err.message : String(err),
+      error: errorMessage,
     });
+
+    // A GeminiRateLimitedError is expected, self-imposed throttling to
+    // protect the call budget — not a provider outage, so it doesn't page.
+    if (!(err instanceof GeminiRateLimitedError)) {
+      void recordAiFailure({
+        route: "/api/admin/ai",
+        intent: payload.intent,
+        provider: aiProvider,
+        reason: errorMessage,
+      });
+    }
 
     // Fall back to template on AI failure — never leave the admin stranded
     const fallback = defaultTemplate(payload);

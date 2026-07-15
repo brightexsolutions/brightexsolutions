@@ -5,6 +5,7 @@ import { AdminSidebar } from "@/components/admin/sidebar";
 import { AdminHeader } from "@/components/admin/header";
 import { CommandPalette } from "@/components/admin/command-palette";
 import { ConfirmProvider } from "@/components/admin/confirm-dialog";
+import { AssistantFab } from "@/components/admin/assistant-fab";
 import { usePathname } from "next/navigation";
 
 export function AdminPageSkeleton() {
@@ -90,6 +91,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       </div>
 
       <CommandPalette />
+      <AssistantFab />
     </div>
     </ConfirmProvider>
   );

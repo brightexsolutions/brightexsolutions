@@ -4,6 +4,18 @@ import { createClient, createAdminClient } from "@/lib/supabase/server";
 import { rateLimit } from "@/lib/rate-limit";
 import { logAction } from "@/lib/audit";
 import { transporter, SENDERS } from "@/lib/mail";
+import { emailTemplate, emailBodyFromPlainText, emailButton } from "@/lib/email-templates";
+import { compressFile, mimeToExt } from "@/lib/compress";
+import { SITE_URL } from "@/lib/constants";
+import { generateProposalPdf } from "@/lib/proposal-pdf-helper";
+import { generateAgreementPdf } from "@/lib/agreement-pdf-helper";
+import type { ProposalData } from "@/components/admin/proposal-pdf";
+import type { AgreementData } from "@/lib/document-types";
+
+const SENDER_KEYS = Object.keys(SENDERS) as [keyof typeof SENDERS, ...(keyof typeof SENDERS)[]];
+
+// Combined attachment budget — comfortably under typical serverless request-body limits.
+const MAX_ATTACHMENTS_BYTES = 6 * 1024 * 1024;
 
 const CommSchema = z.object({
   client_id: z.string().uuid().optional(),
@@ -16,6 +28,16 @@ const CommSchema = z.object({
   send_email: z.boolean().optional().default(false),
   to_email: z.string().email().max(200).trim().optional().or(z.literal("")),
   to_name: z.string().max(200).trim().optional(),
+  sender: z.enum(SENDER_KEYS).optional(),
+  attachments: z.array(z.object({
+    filename: z.string().max(255).trim(),
+    contentType: z.string().max(100).trim(),
+    base64: z.string(),
+  })).max(5).optional(),
+  // Generated proposal/agreement to link in the email — server builds the
+  // branded "view online" button and attaches a PDF fallback for cases where
+  // the recipient can't open the link (see documents-client.tsx / email-composer.tsx).
+  documentLink: z.object({ id: z.string().uuid() }).optional(),
 });
 
 export async function GET(request: NextRequest) {
@@ -86,24 +108,77 @@ export async function POST(request: NextRequest) {
     }
   }
 
+  // Shrink image attachments before storing/sending — PDFs/docs pass through
+  // unchanged (see compressFile), so this only ever helps, never corrupts.
+  const compressedAttachments = await Promise.all(
+    (result.data.attachments ?? []).map(async (a) => {
+      const rawBuffer = Buffer.from(a.base64, "base64");
+      const rawBytes = rawBuffer.buffer.slice(rawBuffer.byteOffset, rawBuffer.byteOffset + rawBuffer.byteLength);
+      const { buffer, mimeType } = await compressFile(rawBytes, a.contentType, a.filename);
+      const filename = mimeType !== a.contentType
+        ? a.filename.replace(/\.[^.]+$/, `.${mimeToExt(mimeType)}`)
+        : a.filename;
+      return { filename, contentType: mimeType, base64: buffer.toString("base64") };
+    })
+  );
+
+  // Linked document: a real "view online" button (not a bare link) plus a
+  // PDF fallback attachment, for when the recipient can't open the link.
+  let documentButtonHtml = "";
+  let documentPdf: { filename: string; base64: string; contentType: string } | null = null;
+  if (result.data.documentLink) {
+    const { data: doc } = await supabase
+      .from("generated_documents")
+      .select("type, title, reference_code, data")
+      .eq("id", result.data.documentLink.id)
+      .maybeSingle();
+
+    if (doc && doc.type !== "sop") {
+      const url = `${SITE_URL}/api/public/documents/${result.data.documentLink.id}`;
+      documentButtonHtml = emailButton(`View ${doc.title}`, url);
+      try {
+        const pdfBuffer = doc.type === "proposal"
+          ? await generateProposalPdf(doc.data as ProposalData)
+          : await generateAgreementPdf(doc.data as AgreementData);
+        documentPdf = {
+          filename: `${doc.reference_code}.pdf`,
+          base64: pdfBuffer.toString("base64"),
+          contentType: "application/pdf",
+        };
+      } catch (pdfError) {
+        console.error("[communications-document-pdf]", pdfError);
+      }
+    }
+  }
+
+  const outgoingAttachments = documentPdf ? [...compressedAttachments, documentPdf] : compressedAttachments;
+
   if (result.data.type === "email" && result.data.send_email && recipientEmail) {
+    const totalAttachmentBytes = outgoingAttachments.reduce((sum, a) => sum + Math.ceil((a.base64.length * 3) / 4), 0);
+    if (totalAttachmentBytes > MAX_ATTACHMENTS_BYTES) {
+      return NextResponse.json({ error: "Attachments too large — max 6MB combined." }, { status: 413 });
+    }
+
     try {
-      const html = `
-        <div style="font-family: Arial, sans-serif; color: #0f172a; line-height: 1.6;">
-          <p><strong>Subject:</strong> ${result.data.subject ?? "No subject"}</p>
-          <div style="margin-top: 12px; padding: 16px; border: 1px solid #e2e8f0; border-radius: 8px; background: #f8fafc;">
-            ${String(result.data.body ?? "").replace(/\n/g, "<br />")}
-          </div>
-          <p style="margin-top: 16px; color: #64748b;">Sent from the Brightex admin dashboard.</p>
-        </div>
-      `;
+      const subject = result.data.subject ?? "Message from Brightex";
+      const html = emailTemplate({
+        title: subject,
+        subtitle: recipientName,
+        preheader: subject,
+        body: emailBodyFromPlainText(String(result.data.body ?? "")) + documentButtonHtml,
+      });
 
       await transporter.sendMail({
-        from: SENDERS.info,
+        from: result.data.sender ? SENDERS[result.data.sender] : SENDERS.info,
         to: recipientEmail,
-        subject: result.data.subject ?? "Message from Brightex",
+        subject,
         html,
         text: result.data.body ?? "",
+        attachments: outgoingAttachments.map((a) => ({
+          filename: a.filename,
+          content: Buffer.from(a.base64, "base64"),
+          contentType: a.contentType,
+        })),
       });
     } catch (mailError) {
       console.error("[communications-send-mail]", mailError);
@@ -111,20 +186,35 @@ export async function POST(request: NextRequest) {
     }
   }
 
-  const { send_email: _sendEmail, to_email: _toEmail, to_name: _toName, ...persistedData } = result.data;
+  const { send_email: _sendEmail, to_email: _toEmail, to_name: _toName, attachments: _attachments, sender: _sender, documentLink: _documentLink, ...persistedData } = result.data;
 
-  const { data, error } = await supabase
-    .from("communications")
-    .insert({
-      ...persistedData,
-      client_id: persistedClientId,
-      sent_at: result.data.sent_at ?? new Date().toISOString(),
-      status: result.data.status || (result.data.send_email ? "sent" : "logged"),
-      body: result.data.body ?? null,
-      subject: result.data.subject ?? null,
-    })
-    .select()
-    .single();
+  // Never persist attachment bytes — just enough metadata for the activity trail.
+  const attachmentMeta = outgoingAttachments.map((a) => ({
+    filename: a.filename,
+    size: Math.ceil((a.base64.length * 3) / 4),
+  }));
+
+  const baseRow = {
+    ...persistedData,
+    client_id: persistedClientId,
+    sent_at: result.data.sent_at ?? new Date().toISOString(),
+    status: result.data.status || (result.data.send_email ? "sent" : "logged"),
+    body: result.data.body ?? null,
+    subject: result.data.subject ?? null,
+  };
+  // sender/attachments need migration 024_communications_composer.sql — degrade
+  // gracefully (log without them) if it hasn't been applied yet, rather than
+  // failing the whole request after the email has already sent.
+  const rowWithNewColumns = {
+    ...baseRow,
+    sender: result.data.sender ?? null,
+    attachments: attachmentMeta.length ? attachmentMeta : null,
+  };
+
+  let { data, error } = await supabase.from("communications").insert(rowWithNewColumns).select().single();
+  if (error && /column/i.test(error.message)) {
+    ({ data, error } = await supabase.from("communications").insert(baseRow).select().single());
+  }
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 

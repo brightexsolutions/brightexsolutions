@@ -48,3 +48,58 @@ export async function rateLimit(
     throw err;
   }
 }
+
+// ─── Gemini call budget ────────────────────────────────────────────────────
+// Protects the shared Gemini API quota/credit across every caller (admin
+// dashboard tools + the public Brixo widget draw from one key/pool) — layered
+// on top of the per-route IP limiters above, which guard against abuse rather
+// than total spend. Same three-window strategy as the Stride app.
+const geminiPerMinute = new RateLimiterMemory({ points: 10, duration: 60 });
+const geminiPerHour   = new RateLimiterMemory({ points: 50, duration: 60 * 60 });
+const geminiPerDay    = new RateLimiterMemory({ points: 200, duration: 60 * 60 * 24 });
+
+export interface GeminiRateLimitResult {
+  allowed: boolean;
+  window?: "minute" | "hour" | "day";
+}
+
+export async function consumeGeminiCall(): Promise<GeminiRateLimitResult> {
+  const key = "gemini"; // single shared bucket — one API key/quota for the whole app
+  try {
+    await geminiPerMinute.consume(key);
+  } catch {
+    return { allowed: false, window: "minute" };
+  }
+  try {
+    await geminiPerHour.consume(key);
+  } catch {
+    return { allowed: false, window: "hour" };
+  }
+  try {
+    await geminiPerDay.consume(key);
+  } catch {
+    return { allowed: false, window: "day" };
+  }
+  return { allowed: true };
+}
+
+export interface GeminiBudgetStatus {
+  minute: { used: number; limit: number };
+  hour: { used: number; limit: number };
+  day: { used: number; limit: number };
+}
+
+/** Read-only — does not consume a point. For the AI Usage dashboard. */
+export async function getGeminiBudgetStatus(): Promise<GeminiBudgetStatus> {
+  const key = "gemini";
+  const [minuteRes, hourRes, dayRes] = await Promise.all([
+    geminiPerMinute.get(key),
+    geminiPerHour.get(key),
+    geminiPerDay.get(key),
+  ]);
+  return {
+    minute: { used: minuteRes?.consumedPoints ?? 0, limit: 10 },
+    hour: { used: hourRes?.consumedPoints ?? 0, limit: 50 },
+    day: { used: dayRes?.consumedPoints ?? 0, limit: 200 },
+  };
+}

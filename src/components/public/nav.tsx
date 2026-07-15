@@ -82,7 +82,7 @@ export function PublicNav() {
         {/* CTA + Mobile toggle */}
         <div className="flex items-center gap-2">
           <Link
-            href="/book"
+            href="/contact?intent=book_call"
             className="hidden lg:inline-flex items-center px-5 py-2.5 rounded-sm text-sm font-semibold bg-brand-gold text-brand-navy hover:bg-brand-gold-hover transition-colors"
           >
             Book a Call
@@ -123,7 +123,7 @@ export function PublicNav() {
               );
             })}
             <Link
-              href="/book"
+              href="/contact?intent=book_call"
               onClick={() => setOpen(false)}
               className="mt-2 px-5 py-3 text-center text-sm font-semibold bg-brand-gold text-brand-navy rounded-sm hover:bg-brand-gold-hover transition-colors"
             >

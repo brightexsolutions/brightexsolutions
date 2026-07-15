@@ -43,7 +43,7 @@ export async function GET(request: NextRequest) {
 
   let query = supabase
     .from("invoices")
-    .select("*, clients(id, name, company, email), projects(id, name), payments(amount)")
+    .select("*, clients(id, name, company, email), projects(id, name), payments(amount, date)")
     .is("deleted_at", null)
     .order("created_at", { ascending: false });
 

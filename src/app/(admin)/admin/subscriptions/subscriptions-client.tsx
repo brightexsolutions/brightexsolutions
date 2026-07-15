@@ -421,7 +421,11 @@ export function SubscriptionsPageClient() {
               <div className="space-y-1.5">
                 <Label>Linked Client</Label>
                 <Select value={form.client_id} onValueChange={(v) => set("client_id", v ?? "")}>
-                  <SelectTrigger><SelectValue placeholder="Select client…" /></SelectTrigger>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select client…">
+                      {(id: string) => clients.find((c) => c.id === id)?.name ?? "Select client…"}
+                    </SelectValue>
+                  </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="">None</SelectItem>
                     {clients.map((c) => (

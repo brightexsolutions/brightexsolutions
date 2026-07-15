@@ -2,12 +2,13 @@ import { transporter, SENDERS, SITE_NAME, SITE_URL } from "@/lib/mail";
 import { BUSINESS_WHATSAPP } from "@/lib/constants";
 
 const SERVICE_LABELS: Record<string, string> = {
-  website:     "Website / Web App",
-  mobile:      "Mobile App",
-  erp:         "Software / ERP System",
-  design:      "Design & Branding",
-  consultancy: "Business Consultancy",
-  other:       "General Enquiry",
+  website:       "Website / Web App",
+  mobile:        "Mobile App",
+  erp:           "Software / ERP System",
+  design:        "Design & Branding",
+  consultancy:   "Business Consultancy",
+  ai_automation: "AI & Automation",
+  other:         "General Enquiry",
 };
 
 const WA_URL = `https://wa.me/${BUSINESS_WHATSAPP}`;

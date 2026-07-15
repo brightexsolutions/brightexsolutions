@@ -44,7 +44,7 @@ export function CtaSection() {
                   <ArrowRight size={15} />
                 </Link>
                 <Link
-                  href="/book"
+                  href="/contact?intent=book_call"
                   className="inline-flex items-center justify-center gap-2 px-8 py-3.5 rounded-sm border border-white/20 text-white font-semibold text-sm hover:bg-white/[0.06] hover:border-white/30 transition-colors"
                 >
                   <Calendar size={15} />

@@ -199,12 +199,12 @@ export default function BookingsPage() {
           <p className="text-sm text-muted-foreground mt-1">Manage incoming meeting requests from the public booking page.</p>
         </div>
         <a
-          href="/book"
+          href="/contact?intent=book_call"
           target="_blank"
           className="inline-flex items-center gap-2 px-4 py-2.5 rounded-sm border border-brand-gold/40 text-brand-gold font-semibold text-sm hover:bg-brand-gold/10 transition-colors"
         >
           <BookOpen size={15} />
-          View /book page
+          View booking page
         </a>
       </div>
 
