@@ -36,12 +36,49 @@ export async function GET(request: NextRequest) {
 
   const { data, error } = await supabase
     .from("payments")
-    .select("*, invoices(id, invoice_number, total, client_id, clients(name, email))")
+    .select("*, invoices(id, invoice_number, total, client_id, project_id, clients(name, email))")
     .is("deleted_at", null)
     .order("created_at", { ascending: false });
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-  return NextResponse.json({ data });
+
+  // Attach the proposal/agreement tied to each payment's invoice — same
+  // client, preferring one tied to the invoice's project — so a payment can
+  // surface ("View" / "Resend") the document that led to it.
+  const clientIds = [...new Set(
+    (data ?? []).map((p) => (p.invoices as { client_id?: string } | null)?.client_id).filter(Boolean)
+  )];
+  let docsByClient: Record<string, Array<Record<string, unknown>>> = {};
+  if (clientIds.length > 0) {
+    const { data: docs } = await supabase
+      .from("generated_documents")
+      .select("id, type, title, reference_code, status, gated, accepted_at, created_at, project_id, client_id")
+      .in("client_id", clientIds as string[])
+      .in("type", ["proposal", "agreement"])
+      .order("accepted_at", { ascending: false, nullsFirst: false })
+      .order("created_at", { ascending: false });
+    docsByClient = (docs ?? []).reduce<Record<string, Array<Record<string, unknown>>>>((acc, d) => {
+      const key = d.client_id as string;
+      (acc[key] ??= []).push(d);
+      return acc;
+    }, {});
+  }
+
+  const enriched = (data ?? []).map((p) => {
+    const inv = p.invoices as { client_id?: string; project_id?: string } | null;
+    if (!inv) return p;
+    const candidates = docsByClient[inv.client_id as string] ?? [];
+    const generated_documents = [...candidates]
+      .sort((a, b) => {
+        const aProj = inv.project_id && a.project_id === inv.project_id ? 1 : 0;
+        const bProj = inv.project_id && b.project_id === inv.project_id ? 1 : 0;
+        return bProj - aProj;
+      })
+      .slice(0, 3);
+    return { ...p, invoices: { ...inv, generated_documents } };
+  });
+
+  return NextResponse.json({ data: enriched });
 }
 
 export async function POST(request: NextRequest) {

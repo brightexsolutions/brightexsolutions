@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { CreditCard, Plus, Pencil, Trash2, Send, Loader2, Eye, X } from "lucide-react";
+import { CreditCard, Plus, Pencil, Trash2, Send, Loader2, Eye, X, ScrollText, Briefcase } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { StatCard } from "@/components/admin/stat-card";
 import { DataTable, StackedCell, type Column, type RowAction } from "@/components/admin/data-table";
@@ -13,6 +13,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { useConfirm } from "@/components/admin/confirm-dialog";
+import { EmailComposer, type EmailComposerRecipient } from "@/components/admin/email-composer";
+import { DocumentViewerSheet, type DocumentViewerTarget } from "@/components/admin/document-viewer-sheet";
 
 const methods = ["mpesa", "bank", "paypal", "cash"] as const;
 const methodLabels: Record<string, string> = {
@@ -32,6 +34,17 @@ const defaultForm = {
   send_receipt: false,
 };
 
+type GeneratedDoc = {
+  id: string;
+  type: "proposal" | "agreement";
+  title: string;
+  reference_code: string | null;
+  status: string;
+  gated?: boolean | null;
+  accepted_at?: string | null;
+  created_at: string;
+};
+
 type Payment = {
   id: string;
   invoice_id?: string | null;
@@ -48,6 +61,7 @@ type Payment = {
     invoice_number?: string | null;
     total?: number | null;
     client_id?: string | null;
+    generated_documents?: GeneratedDoc[] | null;
     clients?: { name?: string | null; email?: string | null } | null;
   } | null;
 };
@@ -74,6 +88,12 @@ export function PaymentsPageClient() {
   const [invoiceOptions, setInvoiceOptions] = useState<InvoiceOption[]>([]);
   const [busyReceiptIds, setBusyReceiptIds] = useState<Set<string>>(new Set());
   const [viewReceiptPayment, setViewReceiptPayment] = useState<Payment | null>(null);
+
+  // Linked proposal/agreement viewer + resend
+  const [docViewerTarget, setDocViewerTarget] = useState<DocumentViewerTarget | null>(null);
+  const [emailDocTarget, setEmailDocTarget] = useState<{ id: string; title: string } | null>(null);
+  const [emailDocRecipient, setEmailDocRecipient] = useState<EmailComposerRecipient | null>(null);
+  const [emailDocOpen, setEmailDocOpen] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -189,6 +209,38 @@ export function PaymentsPageClient() {
     } finally {
       setBusyReceiptIds((prev) => { const next = new Set(prev); next.delete(payment.id); return next; });
     }
+  }
+
+  async function viewPaymentDoc(payment: Payment, doc: GeneratedDoc) {
+    const base: DocumentViewerTarget = {
+      title: doc.title,
+      subtitle: doc.reference_code,
+      client: payment.invoices?.clients?.name ?? undefined,
+      date: doc.created_at,
+      viewUrl: `/api/admin/documents/${doc.id}/view`,
+      isHtmlDocument: true,
+    };
+    setDocViewerTarget(base);
+    const res = await fetch(`/api/admin/documents/${doc.id}`).then((r) => r.json()).catch(() => null);
+    if (res?.data) {
+      setDocViewerTarget({
+        ...base,
+        refine: { documentId: doc.id, docType: doc.type, data: res.data.data },
+        gating: { documentId: doc.id, gated: !!res.data.gated },
+        onEmailClient: () => {
+          setDocViewerTarget(null);
+          resendPaymentDoc(payment, doc);
+        },
+      });
+    }
+  }
+
+  function resendPaymentDoc(payment: Payment, doc: GeneratedDoc) {
+    const email = payment.invoices?.clients?.email;
+    if (!email) { alert("This client has no email on file."); return; }
+    setEmailDocTarget({ id: doc.id, title: doc.title });
+    setEmailDocRecipient({ clientId: payment.invoices?.client_id ?? undefined, name: payment.invoices?.clients?.name ?? "Client", email });
+    setEmailDocOpen(true);
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -386,6 +438,26 @@ export function PaymentsPageClient() {
           data={payments as unknown as Record<string, unknown>[]}
           actions={[
             { label: "Edit", icon: <Pencil size={13} />, onClick: (row) => openEdit(row as unknown as Payment) },
+            {
+              label: (row) => `View ${(row as unknown as Payment).invoices?.generated_documents?.[0]?.type === "agreement" ? "Agreement" : "Proposal"}`,
+              icon: (row) => (row as unknown as Payment).invoices?.generated_documents?.[0]?.type === "agreement" ? <ScrollText size={13} /> : <Briefcase size={13} />,
+              hidden: (row) => !(row as unknown as Payment).invoices?.generated_documents?.length,
+              onClick: (row) => {
+                const p = row as unknown as Payment;
+                const doc = p.invoices?.generated_documents?.[0];
+                if (doc) viewPaymentDoc(p, doc);
+              },
+            },
+            {
+              label: (row) => `Resend ${(row as unknown as Payment).invoices?.generated_documents?.[0]?.type === "agreement" ? "Agreement" : "Proposal"}`,
+              icon: <Send size={13} />,
+              hidden: (row) => !(row as unknown as Payment).invoices?.generated_documents?.length,
+              onClick: (row) => {
+                const p = row as unknown as Payment;
+                const doc = p.invoices?.generated_documents?.[0];
+                if (doc) resendPaymentDoc(p, doc);
+              },
+            },
             { label: "Delete", icon: <Trash2 size={13} />, destructive: true, onClick: (row) => handleDelete(row as unknown as Payment) },
           ] as RowAction<Record<string, unknown>>[]}
           searchable
@@ -471,6 +543,38 @@ export function PaymentsPageClient() {
                 <div className="rounded-lg bg-muted/40 px-4 py-3 text-sm">
                   <p className="text-xs text-muted-foreground mb-1 font-medium">Notes</p>
                   <p className="text-foreground">{viewReceiptPayment.notes}</p>
+                </div>
+              )}
+
+              {viewReceiptPayment.invoices?.generated_documents?.[0] && (
+                <div className="rounded-lg border border-border px-4 py-3">
+                  <p className="text-xs text-muted-foreground mb-2 font-medium">
+                    {viewReceiptPayment.invoices.generated_documents[0].type === "agreement" ? "Agreement" : "Proposal"} on file
+                  </p>
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium text-foreground truncate">{viewReceiptPayment.invoices.generated_documents[0].title}</p>
+                      {viewReceiptPayment.invoices.generated_documents[0].reference_code && (
+                        <p className="text-xs text-muted-foreground font-mono truncate">{viewReceiptPayment.invoices.generated_documents[0].reference_code}</p>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-1 shrink-0">
+                      <button
+                        onClick={() => viewPaymentDoc(viewReceiptPayment, viewReceiptPayment.invoices!.generated_documents![0])}
+                        className="p-1.5 rounded-sm text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+                        title="View"
+                      >
+                        <Eye size={14} />
+                      </button>
+                      <button
+                        onClick={() => resendPaymentDoc(viewReceiptPayment, viewReceiptPayment.invoices!.generated_documents![0])}
+                        className="p-1.5 rounded-sm text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+                        title="Resend"
+                      >
+                        <Send size={14} />
+                      </button>
+                    </div>
+                  </div>
                 </div>
               )}
 
@@ -616,6 +720,14 @@ export function PaymentsPageClient() {
           </form>
         </DialogContent>
       </Dialog>
+
+      <DocumentViewerSheet doc={docViewerTarget} onClose={() => setDocViewerTarget(null)} />
+      <EmailComposer
+        open={emailDocOpen}
+        onClose={() => { setEmailDocOpen(false); setEmailDocTarget(null); setEmailDocRecipient(null); }}
+        recipient={emailDocRecipient}
+        linkDocument={emailDocTarget}
+      />
     </div>
   );
 }
