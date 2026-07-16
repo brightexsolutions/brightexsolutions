@@ -5,7 +5,7 @@ import {
   X, Mail, Phone, MessageSquare, Send, AlertCircle,
   FileText, TrendingUp, Clock, CheckCircle2, Loader2,
   ExternalLink, ClipboardList, Copy, ClipboardCheck, Eye,
-  RefreshCw, CheckCircle,
+  RefreshCw, CheckCircle, Briefcase, ScrollText,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
@@ -59,12 +59,30 @@ type Comm = {
 
 type Intake = IntakeDetail;
 
+type ClientDoc = {
+  id: string;
+  type: "proposal" | "agreement" | "sop";
+  title: string;
+  reference_code: string | null;
+  status: string;
+  gated?: boolean | null;
+  accepted_at?: string | null;
+  created_at: string;
+};
+
 type ClientDetail = {
   client: Client;
   invoices: Invoice[];
   deals: Deal[];
   comms: Comm[];
   intakes: Intake[];
+  documents: ClientDoc[];
+};
+
+const docTypeIcon: Record<ClientDoc["type"], typeof Briefcase> = {
+  proposal: Briefcase,
+  agreement: ScrollText,
+  sop: ClipboardList,
 };
 
 const classColour: Record<string, string> = {
@@ -112,13 +130,15 @@ export function QuickClientPanel({
       fetch(`/api/admin/sales?client_id=${id}`).then((r) => r.json()),
       fetch(`/api/admin/communications?client_id=${id}`).then((r) => r.json()),
       fetch(`/api/admin/clients/${id}/intakes`).then((r) => r.json()),
-    ]).then(([clientRes, invRes, dealRes, commRes, intakeRes]) => {
+      fetch(`/api/admin/documents?client_id=${id}`).then((r) => r.json()),
+    ]).then(([clientRes, invRes, dealRes, commRes, intakeRes, docRes]) => {
       setDetail({
         client: clientRes.data ?? clientRes,
         invoices: invRes.data ?? [],
         deals: dealRes.data ?? [],
         comms: commRes.data ?? [],
         intakes: intakeRes.data ?? [],
+        documents: (docRes.data ?? []).filter((d: ClientDoc) => d.type !== "sop"),
       });
     }).catch(() => {}).finally(() => setLoading(false));
   }, []);
@@ -204,6 +224,38 @@ export function QuickClientPanel({
         setComposerOpen(true);
       },
     });
+  }
+
+  async function viewClientDoc(doc: ClientDoc) {
+    const base: DocumentViewerTarget = {
+      title: doc.title,
+      subtitle: doc.reference_code,
+      client: client?.company?.trim() || client?.name,
+      date: doc.created_at,
+      viewUrl: `/api/admin/documents/${doc.id}/view`,
+      isHtmlDocument: true,
+    };
+    setViewerDoc(base);
+    const res = await fetch(`/api/admin/documents/${doc.id}`).then((r) => r.json()).catch(() => null);
+    if (res?.data) {
+      setViewerDoc({
+        ...base,
+        refine: { documentId: doc.id, docType: doc.type as "proposal" | "agreement", data: res.data.data },
+        gating: { documentId: doc.id, gated: !!res.data.gated },
+        onEmailClient: () => {
+          setViewerDoc(null);
+          setEmailLinkDocument({ id: doc.id, title: doc.title });
+          setEmailContext(null);
+          setComposerOpen(true);
+        },
+      });
+    }
+  }
+
+  function resendClientDoc(doc: ClientDoc) {
+    setEmailLinkDocument({ id: doc.id, title: doc.title });
+    setEmailContext(null);
+    setComposerOpen(true);
   }
 
   async function sendInvoice(invoiceId: string) {
@@ -567,6 +619,62 @@ export function QuickClientPanel({
                         </div>
                       </div>
                     ))}
+                  </div>
+                )}
+              </section>
+
+              {/* Documents */}
+              <section className="px-5 py-4">
+                <h3 className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest flex items-center gap-1.5 mb-3">
+                  <FileText size={11} />Documents
+                </h3>
+                {(detail?.documents ?? []).length === 0 ? (
+                  <p className="text-xs text-muted-foreground">No proposals or agreements yet.</p>
+                ) : (
+                  <div className="space-y-2.5">
+                    {(detail?.documents ?? []).slice(0, 5).map((doc) => {
+                      const Icon = docTypeIcon[doc.type];
+                      return (
+                        <div key={doc.id} className="rounded-sm border border-border bg-muted/20 p-3 space-y-1.5">
+                          <div className="flex items-start justify-between gap-2">
+                            <div className="min-w-0 flex items-start gap-2">
+                              <Icon size={13} className="text-muted-foreground shrink-0 mt-0.5" />
+                              <div className="min-w-0">
+                                <p className="text-xs font-medium text-foreground truncate">{doc.title}</p>
+                                <p className="text-[10px] text-muted-foreground">
+                                  {doc.reference_code} · {new Date(doc.created_at).toLocaleDateString("en-KE", { day: "numeric", month: "short", year: "numeric" })}
+                                </p>
+                              </div>
+                            </div>
+                            {doc.accepted_at ? (
+                              <span className="shrink-0 flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-emerald-400/10 text-emerald-600">
+                                <CheckCircle2 size={10} />Accepted
+                              </span>
+                            ) : (
+                              <span className="shrink-0 text-[10px] font-semibold px-1.5 py-0.5 rounded-full capitalize text-muted-foreground bg-muted">
+                                {doc.status}
+                              </span>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-3 pt-0.5">
+                            <button
+                              onClick={() => viewClientDoc(doc)}
+                              className="flex items-center gap-1 text-[10px] text-primary hover:text-primary/80 transition-colors font-medium"
+                            >
+                              <Eye size={10} />View
+                            </button>
+                            {doc.type !== "sop" && (
+                              <button
+                                onClick={() => resendClientDoc(doc)}
+                                className="flex items-center gap-1 text-[10px] text-muted-foreground hover:text-foreground transition-colors font-medium"
+                              >
+                                <Send size={10} />Resend
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
                   </div>
                 )}
               </section>

@@ -49,16 +49,21 @@ export async function GET(request: NextRequest) {
   const type = searchParams.get("type");
   const client_id = searchParams.get("client_id");
 
-  let query = supabase
-    .from("communications")
-    .select("*, clients(id, name, company)")
-    .is("deleted_at", null)
-    .order("sent_at", { ascending: false });
+  function buildQuery(withDocument: boolean) {
+    let q = supabase
+      .from("communications")
+      .select(withDocument ? "*, clients(id, name, company), generated_documents(id, title, type)" : "*, clients(id, name, company)")
+      .is("deleted_at", null)
+      .order("sent_at", { ascending: false });
+    if (type && type !== "all") q = q.eq("type", type);
+    if (client_id) q = q.eq("client_id", client_id);
+    return q;
+  }
 
-  if (type && type !== "all") query = query.eq("type", type);
-  if (client_id) query = query.eq("client_id", client_id);
-
-  const { data, error } = await query;
+  // document_id / the generated_documents relation need migration
+  // 031_document_lifecycle.sql — degrade gracefully if it hasn't run yet.
+  let { data, error } = await buildQuery(true);
+  if (error) ({ data, error } = await buildQuery(false));
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
   return NextResponse.json({ data });
@@ -184,13 +189,15 @@ export async function POST(request: NextRequest) {
     body: result.data.body ?? null,
     subject: result.data.subject ?? null,
   };
-  // sender/attachments need migration 024_communications_composer.sql — degrade
-  // gracefully (log without them) if it hasn't been applied yet, rather than
-  // failing the whole request after the email has already sent.
+  // sender/attachments need migration 024_communications_composer.sql,
+  // document_id needs 031_document_lifecycle.sql — degrade gracefully (log
+  // without them) if not yet applied, rather than failing the whole request
+  // after the email has already sent.
   const rowWithNewColumns = {
     ...baseRow,
     sender: result.data.sender ?? null,
     attachments: attachmentMeta.length ? attachmentMeta : null,
+    document_id: result.data.documentLink?.id ?? null,
   };
 
   let { data, error } = await supabase.from("communications").insert(rowWithNewColumns).select().single();

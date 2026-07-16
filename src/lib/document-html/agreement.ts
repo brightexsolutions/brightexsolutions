@@ -1,7 +1,7 @@
 import type { AgreementData } from "@/lib/document-types";
 import {
   documentShell, sectionHeader, arrowList, investmentTable, signatureBlock, splitTitleForCover,
-  noteBox, clauseParagraph, blurredSection, SITE_NAME,
+  noteBox, clauseParagraph, blurredSection, acceptedBox, acceptButton, SITE_NAME,
 } from "@/lib/document-html";
 import { BUSINESS_CITY, BUSINESS_COUNTRY, SITE_URL, whatsappUrl } from "@/lib/constants";
 
@@ -22,7 +22,7 @@ const CLAUSES = {
   governingLaw: "This Agreement is governed by and construed in accordance with the laws of the Republic of Kenya. Any dispute arising from this Agreement will first be addressed through good-faith negotiation between the parties before pursuing formal legal action.",
 };
 
-export function renderAgreementHtml(data: AgreementData): string {
+export function renderAgreementHtml(data: AgreementData, opts?: { documentId?: string; acceptedAt?: string | null; allowPublicAccept?: boolean }): string {
   const clientLabel = data.client.company?.trim() || data.client.name;
 
   const sections: string[] = [];
@@ -78,7 +78,11 @@ export function renderAgreementHtml(data: AgreementData): string {
   sections.push(`<section class="section">
     ${sectionHeader(num(), "Sign-off", "Signatures")}
     ${noteBox("This document is AI-assisted and reflects the commercial terms of the engagement as understood at the time of drafting. It should be reviewed by both parties before signature.")}
-    ${signatureBlock(SITE_NAME, clientLabel)}
+    ${opts?.acceptedAt
+      ? acceptedBox(clientLabel, opts.acceptedAt)
+      : opts?.allowPublicAccept && opts?.documentId
+        ? acceptButton(opts.documentId)
+        : signatureBlock(SITE_NAME, clientLabel)}
   </section>`);
 
   return documentShell({

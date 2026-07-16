@@ -36,6 +36,10 @@ const GenerateSchema = z.object({
   saleId: z.string().uuid().optional(),
   projectId: z.string().uuid().optional(),
   gated: z.boolean().optional(),
+  /** The proposal (or other document) this one was prepared from — e.g. an
+   * agreement generated from an accepted proposal. Purely a reference for
+   * cross-navigation; content is always freshly drafted, never copied. */
+  sourceDocumentId: z.string().uuid().optional(),
 });
 
 const COPY_RULES = DOCUMENT_COPY_RULES;
@@ -246,6 +250,7 @@ Return JSON in exactly this shape:
         status: "draft",
         source: "ai",
         gated: payload.gated ?? false,
+        source_document_id: payload.sourceDocumentId ?? null,
         engagement_summary: payload.engagementSummary,
         created_by: user.id,
       })

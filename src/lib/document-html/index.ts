@@ -187,6 +187,22 @@ const DOCUMENT_CSS = `
   .dl-btn-locked{background:rgba(255,255,255,.12) !important;color:rgba(255,255,255,.6) !important;
     cursor:not-allowed;display:flex;align-items:center;gap:6px}
 
+  /* Digital agreement acceptance */
+  .accept-box{background:var(--navy);border-radius:10px;padding:32px 36px;text-align:center;margin-top:22px}
+  .accept-box h4{font-family:var(--font);color:#fff;font-size:19px;margin:0 0 8px}
+  .accept-box p{color:rgba(255,255,255,.72);font-size:13.5px;line-height:1.65;margin:0 auto 20px;max-width:32rem}
+  .accept-btn{display:inline-flex;align-items:center;gap:8px;background:var(--orange);color:#fff;font-weight:700;
+    font-size:14px;padding:14px 34px;border-radius:6px;border:none;cursor:pointer;font-family:var(--sans)}
+  .accept-btn:hover{background:#cf8009}
+  .accept-btn:disabled{opacity:.6;cursor:default}
+  .accept-error{color:#ffb4b4;font-size:12.5px;margin-top:12px;display:none}
+  .accepted-box{background:#f0fdf4;border:1px solid #b7e6c4;border-radius:10px;padding:22px 26px;
+    display:flex;align-items:center;gap:14px}
+  .accepted-box .ic{width:34px;height:34px;border-radius:50%;background:#1a7a34;color:#fff;flex:none;
+    display:flex;align-items:center;justify-content:center;font-size:17px}
+  .accepted-box h4{font-family:var(--font);color:#155d28;font-size:15px;margin:0 0 3px}
+  .accepted-box p{color:#2f6b3f;font-size:12.5px;margin:0}
+
   .resp-table thead th:first-child{width:160px}
   .clause p{font-size:14px;color:var(--gray-600);line-height:1.75}
   .sig-row{display:flex;gap:24px;margin-top:20px}
@@ -475,6 +491,53 @@ export function signatureBlock(leftLabel: string, rightLabel: string): string {
     <div class="sig-box"><div class="sig-line"><div class="label">${esc(leftLabel)}</div><div class="sub">Name, signature &amp; date</div></div></div>
     <div class="sig-box"><div class="sig-line"><div class="label">${esc(rightLabel)}</div><div class="sub">Name, signature &amp; date</div></div></div>
   </div>`;
+}
+
+/** Already-accepted status — shown in place of the accept button once a
+ * client has confirmed, on both the public link and Godwin's own view. */
+export function acceptedBox(clientLabel: string, acceptedAt: string): string {
+  const when = new Date(acceptedAt).toLocaleDateString("en-KE", { day: "numeric", month: "long", year: "numeric" });
+  return `<div class="accepted-box">
+    <div class="ic">✓</div>
+    <div><h4>Accepted by ${esc(clientLabel)}</h4><p>Confirmed on ${esc(when)}. This marks the start of the project.</p></div>
+  </div>`;
+}
+
+/** Live "I Agree" button — only ever shown on the public link for a full
+ * (ungated) agreement that hasn't been accepted yet. Posts to
+ * /api/public/documents/[id]/accept and swaps itself for the accepted
+ * state in place, no page reload. */
+export function acceptButton(documentId: string): string {
+  return `<div class="accept-box" id="acceptBox">
+    <h4>Ready to proceed?</h4>
+    <p>Confirming below is your agreement to the scope, fees, and terms set out in this document. This is what starts the project.</p>
+    <button class="accept-btn" id="acceptBtn" onclick="brxAcceptAgreement()">I Agree — Accept This Agreement</button>
+    <p class="accept-error" id="acceptError"></p>
+  </div>
+  <script>
+    function brxAcceptAgreement(){
+      var btn = document.getElementById('acceptBtn');
+      var err = document.getElementById('acceptError');
+      btn.disabled = true; btn.textContent = 'Confirming…'; err.style.display = 'none';
+      fetch('/api/public/documents/${esc(documentId)}/accept', { method: 'POST' })
+        .then(function(r){ return r.json(); })
+        .then(function(data){
+          if (data.ok) {
+            document.getElementById('acceptBox').outerHTML =
+              '<div class="accepted-box"><div class="ic">\\u2713</div><div><h4>Agreement accepted</h4><p>Thank you — we will be in touch to schedule the next steps.</p></div></div>';
+          } else {
+            err.textContent = data.error || 'Something went wrong. Please try again or contact us directly.';
+            err.style.display = 'block';
+            btn.disabled = false; btn.textContent = 'I Agree — Accept This Agreement';
+          }
+        })
+        .catch(function(){
+          err.textContent = 'Network error. Please try again.';
+          err.style.display = 'block';
+          btn.disabled = false; btn.textContent = 'I Agree — Accept This Agreement';
+        });
+    }
+  </script>`;
 }
 
 /** Scope-at-a-glance grid: what's included, what's out of scope, and what's

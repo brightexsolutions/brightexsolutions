@@ -32,7 +32,9 @@ export async function GET(request: NextRequest, { params }: Params) {
   } else if (doc.type === "proposal") {
     html = gated ? renderProposalTeaserHtml(doc.data as ProposalData) : renderProposalHtml(doc.data as ProposalData);
   } else if (doc.type === "agreement") {
-    html = gated ? renderAgreementTeaserHtml(doc.data as AgreementData) : renderAgreementHtml(doc.data as AgreementData);
+    html = gated
+      ? renderAgreementTeaserHtml(doc.data as AgreementData)
+      : renderAgreementHtml(doc.data as AgreementData, { documentId: doc.id, acceptedAt: doc.accepted_at, allowPublicAccept: true });
   } else {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }

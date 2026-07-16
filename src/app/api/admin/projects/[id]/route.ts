@@ -50,11 +50,21 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
   if (!user) return NextResponse.json({ error: "Unauthorised" }, { status: 401 });
 
   const { id } = await params;
-  const { data, error } = await supabase
+  // generated_documents(...accepted_at...) needs migration
+  // 031_document_lifecycle.sql — degrade gracefully if it hasn't run yet,
+  // rather than breaking project detail entirely in the meantime.
+  let { data, error } = await supabase
     .from("projects")
-    .select("*, clients(id, name, company, email), tasks(*), invoices(*, payments(*)), consultancy_rate_history(id, monthly_rate, effective_from, notes, created_at)")
+    .select("*, clients(id, name, company, email), tasks(*), invoices(*, payments(*)), consultancy_rate_history(id, monthly_rate, effective_from, notes, created_at), generated_documents(id, type, title, reference_code, status, gated, accepted_at, created_at)")
     .eq("id", id)
     .single();
+  if (error) {
+    ({ data, error } = await supabase
+      .from("projects")
+      .select("*, clients(id, name, company, email), tasks(*), invoices(*, payments(*)), consultancy_rate_history(id, monthly_rate, effective_from, notes, created_at)")
+      .eq("id", id)
+      .single());
+  }
 
   if (error) return NextResponse.json({ error: error.message }, { status: 404 });
 

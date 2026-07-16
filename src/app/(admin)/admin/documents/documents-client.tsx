@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback } from "react";
 import {
   FileSignature, Plus, Trash2, Eye, Send, Sparkles, Loader2, ScrollText, Briefcase, ClipboardList,
-  Receipt, FolderOpen, Wallet, Library,
+  Receipt, FolderOpen, Wallet, Library, CheckCircle2,
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { StatCard } from "@/components/admin/stat-card";
@@ -29,6 +29,8 @@ type GeneratedDocument = {
   status: string;
   created_at: string;
   client_id: string | null;
+  accepted_at?: string | null;
+  source_document_id?: string | null;
   clients?: { id: string; name: string; company: string | null } | null;
 };
 
@@ -107,6 +109,7 @@ export function DocumentsPageClient() {
 
   const [emailDoc, setEmailDoc] = useState<{ id: string; title: string; client: ClientOption } | null>(null);
   const [viewerDoc, setViewerDoc] = useState<DocumentViewerTarget | null>(null);
+  const [preparingId, setPreparingId] = useState<string | null>(null);
 
   function set<K extends keyof typeof defaultForm>(field: K, value: (typeof defaultForm)[K]) {
     setForm((current) => ({ ...current, [field]: value }));
@@ -175,6 +178,55 @@ export function DocumentsPageClient() {
     if (!await confirm({ message: `Delete "${doc.title}"? This cannot be undone.` })) return;
     await fetch(`/api/admin/documents/${doc.id}`, { method: "DELETE" });
     setDocuments((prev) => prev.filter((d) => d.id !== doc.id));
+  }
+
+  async function prepareAgreement(doc: GeneratedDocument) {
+    if (!doc.client_id) { alert("This document has no client on file."); return; }
+    setPreparingId(doc.id);
+    try {
+      const res = await fetch(`/api/admin/documents/${doc.id}`);
+      const json = await res.json().catch(() => ({}));
+      const proposalData = json?.data?.data;
+      if (!res.ok || !proposalData) { alert(json?.error ?? "Could not load the proposal."); return; }
+
+      const total = (proposalData.line_items ?? []).reduce((s: number, it: { qty: number; unit_price: number }) => s + it.qty * it.unit_price, 0);
+      const summary = [
+        `This agreement formalises an already-discussed proposal: "${proposalData.project_title}".`,
+        proposalData.intro,
+        `Agreed scope: ${(proposalData.scope_items ?? []).map((s: { title: string }) => s.title).join(", ")}.`,
+        `Total fees: KES ${total.toLocaleString()}.`,
+      ].filter(Boolean).join("\n");
+
+      const genRes = await fetch("/api/admin/documents/generate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          type: "agreement",
+          clientId: doc.client_id,
+          engagementSummary: summary,
+          totalBudget: total || undefined,
+          timeline: proposalData.timeline || undefined,
+          sourceDocumentId: doc.id,
+        }),
+      });
+      const genJson = await genRes.json().catch(() => ({}));
+      if (!genRes.ok) { alert(genJson.error ?? "Failed to prepare the agreement."); return; }
+      setDocuments((prev) => [genJson.data, ...prev]);
+    } finally {
+      setPreparingId(null);
+    }
+  }
+
+  async function markAccepted(doc: GeneratedDocument) {
+    if (!await confirm({ message: `Mark "${doc.title}" as accepted? Use this if the client agreed off-platform (call, email reply) rather than clicking Accept on the document itself.` })) return;
+    const res = await fetch(`/api/admin/documents/${doc.id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ accepted_at: new Date().toISOString(), status: "final" }),
+    });
+    if (res.ok) {
+      setDocuments((prev) => prev.map((d) => d.id === doc.id ? { ...d, accepted_at: new Date().toISOString(), status: "final" } : d));
+    }
   }
 
   function openEmail(doc: GeneratedDocument) {
@@ -294,6 +346,13 @@ export function DocumentsPageClient() {
               label: "Status",
               render: (row) => {
                 const d = row as unknown as GeneratedDocument;
+                if (d.accepted_at) {
+                  return (
+                    <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold bg-emerald-400/10 text-emerald-600">
+                      <CheckCircle2 size={10} /> Accepted
+                    </span>
+                  );
+                }
                 return <span className="text-xs font-medium capitalize text-muted-foreground">{d.status}</span>;
               },
             },
@@ -323,6 +382,18 @@ export function DocumentsPageClient() {
               }
             } },
             { label: "Email to client", icon: <Send size={13} />, onClick: (row) => openEmail(row as unknown as GeneratedDocument) },
+            {
+              label: (row) => preparingId === (row as unknown as GeneratedDocument).id ? "Preparing…" : "Prepare Agreement",
+              icon: (row) => preparingId === (row as unknown as GeneratedDocument).id ? <Loader2 size={13} className="animate-spin" /> : <FileSignature size={13} />,
+              hidden: (row) => (row as unknown as GeneratedDocument).type !== "proposal",
+              onClick: (row) => prepareAgreement(row as unknown as GeneratedDocument),
+            },
+            {
+              label: "Mark as Accepted",
+              icon: <CheckCircle2 size={13} />,
+              hidden: (row) => { const d = row as unknown as GeneratedDocument; return d.type !== "agreement" || !!d.accepted_at; },
+              onClick: (row) => markAccepted(row as unknown as GeneratedDocument),
+            },
             { label: "Delete", icon: <Trash2 size={13} />, destructive: true, onClick: (row) => handleDelete(row as unknown as GeneratedDocument) },
           ] as RowAction<Record<string, unknown>>[]}
           searchable

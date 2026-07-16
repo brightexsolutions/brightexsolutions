@@ -37,7 +37,7 @@ export async function GET(request: NextRequest, { params }: Params) {
   } else if (doc.type === "proposal") {
     html = renderProposalHtml(doc.data as ProposalData);
   } else if (doc.type === "agreement") {
-    html = renderAgreementHtml(doc.data as AgreementData);
+    html = renderAgreementHtml(doc.data as AgreementData, { documentId: doc.id, acceptedAt: doc.accepted_at });
   } else if (doc.type === "sop") {
     html = renderSopHtml(doc.data as SopData);
   } else {
