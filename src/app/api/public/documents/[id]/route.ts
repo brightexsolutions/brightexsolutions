@@ -1,9 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/server";
 import { rateLimit } from "@/lib/rate-limit";
-import { renderProposalHtml } from "@/lib/document-html/proposal";
-import { renderAgreementHtml } from "@/lib/document-html/agreement";
-import { renderSopHtml } from "@/lib/document-html/sop";
+import { renderProposalHtml, renderProposalTeaserHtml } from "@/lib/document-html/proposal";
+import { renderAgreementHtml, renderAgreementTeaserHtml } from "@/lib/document-html/agreement";
 import type { ProposalData } from "@/components/admin/proposal-pdf";
 import type { AgreementData } from "@/lib/document-types";
 
@@ -25,11 +24,15 @@ export async function GET(request: NextRequest, { params }: Params) {
   if (error || !doc) return NextResponse.json({ error: "Not found" }, { status: 404 });
   if (doc.type === "sop") return NextResponse.json({ error: "Not found" }, { status: 404 });
 
+  const gated = !!doc.gated;
+
   let html: string;
-  if (doc.type === "proposal") {
-    html = renderProposalHtml(doc.data as ProposalData);
+  if (doc.raw_html) {
+    html = gated && doc.raw_html_gated ? doc.raw_html_gated : doc.raw_html;
+  } else if (doc.type === "proposal") {
+    html = gated ? renderProposalTeaserHtml(doc.data as ProposalData) : renderProposalHtml(doc.data as ProposalData);
   } else if (doc.type === "agreement") {
-    html = renderAgreementHtml(doc.data as AgreementData);
+    html = gated ? renderAgreementTeaserHtml(doc.data as AgreementData) : renderAgreementHtml(doc.data as AgreementData);
   } else {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }

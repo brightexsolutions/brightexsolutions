@@ -10,6 +10,7 @@ const PatchSchema = z.object({
   status: z.enum(["draft", "sent", "final"]).optional(),
   data: z.record(z.string(), z.unknown()).optional(),
   title: z.string().max(200).trim().optional(),
+  gated: z.boolean().optional(),
 });
 
 export async function GET(request: NextRequest, { params }: Params) {

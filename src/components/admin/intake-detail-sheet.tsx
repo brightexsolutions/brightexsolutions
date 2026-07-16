@@ -4,7 +4,7 @@ import { useState } from "react";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { CheckCircle, Clock, User, Mail, Briefcase, Calendar, DollarSign, FileText, Tag, Sparkles, Loader2, ArrowRight, FileSignature, Archive } from "lucide-react";
+import { CheckCircle, Clock, User, Mail, Briefcase, Calendar, DollarSign, FileText, Tag, Sparkles, Loader2, FileSignature, Archive, Download } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -36,7 +36,7 @@ export type IntakeDetail = {
 
 // ─── Label maps ───────────────────────────────────────────────────────────────
 
-const SERVICE_LABELS: Record<string, string> = {
+export const SERVICE_LABELS: Record<string, string> = {
   website:       "Website / Web App",
   mobile:        "Mobile App",
   erp:           "Software / ERP System",
@@ -176,19 +176,31 @@ function Section({ title, icon: Icon, children }: {
 
 // ─── Main component ───────────────────────────────────────────────────────────
 
+function buildEngagementSummary(intake: IntakeDetail, sp: Record<string, unknown>, serviceLabel: string): string {
+  return [
+    `Service requested: ${serviceLabel}`,
+    intake.project_title && `Project title: ${intake.project_title}`,
+    `Description: ${intake.description}`,
+    intake.problem_statement && `Problem / challenge: ${intake.problem_statement}`,
+    Object.keys(sp).length > 0 && `Project specifics: ${JSON.stringify(sp)}`,
+    intake.budget_range && `Client's stated budget range: ${intake.budget_range}`,
+    intake.additional_notes && `Additional notes: ${intake.additional_notes}`,
+  ].filter(Boolean).join("\n");
+}
+
 function IntakeAiPanel({
-  intake, clientId, sp, serviceLabel,
+  intake, clientId, onAnalysisSaved,
 }: {
   intake: IntakeDetail;
   clientId: string;
-  sp: Record<string, unknown>;
-  serviceLabel: string;
+  /** Bubbles the fresh analysis up to the parent's cached intake list —
+   * without this, reopening the panel later re-reads stale pre-analysis
+   * data that was fetched before this analyze call ever ran. */
+  onAnalysisSaved?: (analysis: IntakeAnalysis, analyzedAt: string) => void;
 }) {
   const [analysis, setAnalysis] = useState<IntakeAnalysis | null>(intake.ai_analysis ?? null);
   const [analyzedAt, setAnalyzedAt] = useState<string | null>(intake.ai_analyzed_at ?? null);
   const [analyzing, setAnalyzing] = useState(false);
-  const [generating, setGenerating] = useState(false);
-  const [generated, setGenerated] = useState(false);
   const [error, setError] = useState("");
 
   async function analyzeWithAI() {
@@ -198,46 +210,14 @@ function IntakeAiPanel({
       const res = await fetch(`/api/admin/clients/${clientId}/intakes/analyze?intakeId=${intake.id}`, { method: "POST" });
       const payload = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(payload.error ?? "Analysis failed");
+      const now = new Date().toISOString();
       setAnalysis(payload.data);
-      setAnalyzedAt(new Date().toISOString());
+      setAnalyzedAt(now);
+      onAnalysisSaved?.(payload.data, now);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Analysis failed");
     } finally {
       setAnalyzing(false);
-    }
-  }
-
-  async function generateProposal() {
-    setGenerating(true);
-    setError("");
-    try {
-      const summary = [
-        `Service requested: ${serviceLabel}`,
-        intake.project_title && `Project title: ${intake.project_title}`,
-        `Description: ${intake.description}`,
-        intake.problem_statement && `Problem / challenge: ${intake.problem_statement}`,
-        Object.keys(sp).length > 0 && `Project specifics: ${JSON.stringify(sp)}`,
-        intake.budget_range && `Client's stated budget range: ${intake.budget_range}`,
-        intake.additional_notes && `Additional notes: ${intake.additional_notes}`,
-      ].filter(Boolean).join("\n");
-
-      const res = await fetch("/api/admin/documents/generate", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          type: "proposal",
-          clientId,
-          engagementSummary: summary,
-          timeline: intake.timeline || undefined,
-        }),
-      });
-      const payload = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(payload.error ?? "Proposal generation failed");
-      setGenerated(true);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Proposal generation failed");
-    } finally {
-      setGenerating(false);
     }
   }
 
@@ -289,33 +269,81 @@ function IntakeAiPanel({
           {analysis.action_items.length > 0 && (
             <div className="space-y-1.5">
               <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Suggested next steps</p>
-              {analysis.action_items.map((item, i) =>
-                item.type === "generate_proposal" ? (
-                  <button
-                    key={i}
-                    type="button"
-                    onClick={generateProposal}
-                    disabled={generating || generated}
-                    className="flex items-center justify-between gap-2 w-full px-3 py-2 rounded-sm bg-brand-gold/10 border border-brand-gold/30 text-xs font-semibold text-brand-navy dark:text-brand-gold hover:bg-brand-gold/20 transition-colors disabled:opacity-60"
-                  >
-                    <span className="flex items-center gap-1.5">
-                      {generating ? <Loader2 size={12} className="animate-spin" /> : generated ? <CheckCircle size={12} /> : <FileSignature size={12} />}
-                      {generated ? "Proposal generated" : generating ? "Generating…" : item.label}
-                    </span>
-                    {!generated && !generating && <ArrowRight size={12} />}
-                  </button>
-                ) : (
-                  <div key={i} className="flex items-start gap-1.5 px-3 py-1.5 text-xs text-foreground">
-                    <span className="text-primary mt-0.5">-</span>{item.label}
-                  </div>
-                )
-              )}
-              {generated && (
-                <a href="/admin/documents" className="text-[11px] text-primary underline">View it in Documents →</a>
-              )}
+              {analysis.action_items.map((item, i) => (
+                <div key={i} className="flex items-start gap-1.5 px-3 py-1.5 text-xs text-foreground">
+                  {item.type === "generate_proposal"
+                    ? <FileSignature size={12} className="text-brand-gold mt-0.5 shrink-0" />
+                    : <span className="text-primary mt-0.5">-</span>}
+                  {item.label}
+                </div>
+              ))}
             </div>
           )}
         </div>
+      )}
+      {error && <p className="text-xs text-red-500 mt-1.5">{error}</p>}
+    </Section>
+  );
+}
+
+function IntakeProposalPanel({
+  intake, clientId, sp, serviceLabel, onReady,
+}: {
+  intake: IntakeDetail;
+  clientId: string;
+  sp: Record<string, unknown>;
+  serviceLabel: string;
+  onReady?: (doc: { id: string; title: string; data: Record<string, unknown> }) => void;
+}) {
+  const [generating, setGenerating] = useState(false);
+  const [doc, setDoc] = useState<{ id: string; title: string; data: Record<string, unknown> } | null>(null);
+  const [error, setError] = useState("");
+
+  async function generateProposal() {
+    setGenerating(true);
+    setError("");
+    try {
+      const res = await fetch("/api/admin/documents/generate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          type: "proposal",
+          clientId,
+          engagementSummary: buildEngagementSummary(intake, sp, serviceLabel),
+          timeline: intake.timeline || undefined,
+        }),
+      });
+      const payload = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(payload.error ?? "Proposal generation failed");
+      const created = { id: payload.data.id as string, title: payload.data.title as string, data: payload.data.data as Record<string, unknown> };
+      setDoc(created);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Proposal generation failed");
+    } finally {
+      setGenerating(false);
+    }
+  }
+
+  return (
+    <Section title="Generate Proposal" icon={FileSignature}>
+      {!doc ? (
+        <button
+          type="button"
+          onClick={generateProposal}
+          disabled={generating}
+          className="flex items-center justify-center gap-1.5 w-full py-2 rounded-sm bg-brand-gold/10 border border-brand-gold/30 text-xs font-semibold text-brand-navy dark:text-brand-gold hover:bg-brand-gold/20 transition-colors disabled:opacity-60"
+        >
+          {generating ? <Loader2 size={13} className="animate-spin" /> : <FileSignature size={13} />}
+          {generating ? "Generating…" : "Generate Proposal from this Intake"}
+        </button>
+      ) : (
+        <button
+          type="button"
+          onClick={() => onReady?.(doc)}
+          className="flex items-center justify-center gap-1.5 w-full py-2 rounded-sm bg-emerald-50 border border-emerald-200 text-xs font-semibold text-emerald-700 hover:bg-emerald-100 transition-colors"
+        >
+          <Download size={13} /> View / Download / Send to Client
+        </button>
       )}
       {error && <p className="text-xs text-red-500 mt-1.5">{error}</p>}
     </Section>
@@ -331,9 +359,11 @@ interface Props {
   onEmailClient?: () => void;
   onArchive?: (id: string) => Promise<void>;
   archiving?: boolean;
+  onAnalysisSaved?: (intakeId: string, analysis: IntakeAnalysis, analyzedAt: string) => void;
+  onProposalReady?: (intake: IntakeDetail, doc: { id: string; title: string; data: Record<string, unknown> }) => void;
 }
 
-export function IntakeDetailSheet({ intake, clientId, onClose, onMarkReviewed, marking, onEmailClient, onArchive, archiving }: Props) {
+export function IntakeDetailSheet({ intake, clientId, onClose, onMarkReviewed, marking, onEmailClient, onArchive, archiving, onAnalysisSaved, onProposalReady }: Props) {
   if (!intake) return null;
 
   const sp = (intake.specifics ?? {}) as Record<string, unknown>;
@@ -446,7 +476,24 @@ export function IntakeDetailSheet({ intake, clientId, onClose, onMarkReviewed, m
 
           {/* AI analysis & action items */}
           {clientId && (
-            <IntakeAiPanel key={intake.id} intake={intake} clientId={clientId} sp={sp} serviceLabel={serviceLabel} />
+            <IntakeAiPanel
+              key={intake.id}
+              intake={intake}
+              clientId={clientId}
+              onAnalysisSaved={(analysis, analyzedAt) => onAnalysisSaved?.(intake.id, analysis, analyzedAt)}
+            />
+          )}
+
+          {/* Generate proposal — always available, not just when AI suggests it */}
+          {clientId && (
+            <IntakeProposalPanel
+              key={`proposal-${intake.id}`}
+              intake={intake}
+              clientId={clientId}
+              sp={sp}
+              serviceLabel={serviceLabel}
+              onReady={(doc) => onProposalReady?.(intake, doc)}
+            />
           )}
 
           {/* Reviewed info */}

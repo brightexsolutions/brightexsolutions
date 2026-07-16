@@ -1,9 +1,9 @@
 import type { AgreementData } from "@/lib/document-types";
 import {
   documentShell, sectionHeader, arrowList, investmentTable, signatureBlock, splitTitleForCover,
-  noteBox, clauseParagraph, SITE_NAME,
+  noteBox, clauseParagraph, blurredSection, SITE_NAME,
 } from "@/lib/document-html";
-import { BUSINESS_CITY, BUSINESS_COUNTRY } from "@/lib/constants";
+import { BUSINESS_CITY, BUSINESS_COUNTRY, SITE_URL, whatsappUrl } from "@/lib/constants";
 
 function fmt(n: number): string {
   return `KES ${n.toLocaleString("en-KE")}`;
@@ -108,5 +108,71 @@ export function renderAgreementHtml(data: AgreementData): string {
       { num: "10", label: "Governing Law" },
     ],
     bodyHtml: sections.join("\n"),
+  });
+}
+
+/**
+ * Gated preview — see renderProposalTeaserHtml for the reasoning. Shows the
+ * real scope and total fees (trust through specificity, price anchoring)
+ * but withholds the payment milestone breakdown and every legal clause,
+ * released after the walkthrough call.
+ */
+export function renderAgreementTeaserHtml(data: AgreementData): string {
+  const clientLabel = data.client.company?.trim() || data.client.name;
+
+  const sections: string[] = [];
+  const tocLabels: string[] = [];
+  let n = 1;
+  const num = () => String(n++).padStart(2, "0");
+
+  sections.push(`<section class="section">
+    ${sectionHeader(num(), "Deliverables", "Scope of Work")}
+    ${clauseParagraph(data.scope_summary)}
+    ${data.deliverables.length ? arrowList(data.deliverables) : ""}
+  </section>`);
+  tocLabels.push("Scope of Work");
+
+  sections.push(`<section class="section">
+    ${sectionHeader(num(), "Schedule", "Timeline")}
+    ${clauseParagraph(`This engagement is expected to be completed within ${data.timeline} of kick-off, subject to timely feedback and materials from your side.`)}
+  </section>`);
+  tocLabels.push("Timeline");
+
+  sections.push(`<section class="section">
+    ${sectionHeader(num(), "Billing", "Fees & Payment Schedule")}
+    ${blurredSection(
+      investmentTable(
+        data.payment_milestones.map((m) => ({ desc: m.label, sub: m.due, amount: fmt(m.amount) })),
+        { label: "Total Fees", amount: fmt(data.total_fees) }
+      ),
+      {
+        heading: "Your full fee schedule is ready.",
+        body: "We've broken down the milestones and payment schedule for your project. Let's walk through it together and lock in your timeline.",
+        buttonLabel: "Schedule a Walkthrough",
+        buttonHref: `${SITE_URL}/contact?intent=book_call`,
+        secondaryLabel: "Prefer to chat first? Message us on WhatsApp",
+        secondaryHref: whatsappUrl(`Hi, I'd like to go through the ${data.project_title} agreement.`),
+      }
+    )}
+  </section>`);
+  tocLabels.push("Fees & Payment Schedule");
+
+  return documentShell({
+    title: `${data.project_title} — Services Agreement ${data.agreement_number}`,
+    dlBarLabel: `SERVICES AGREEMENT · ${clientLabel.toUpperCase()}`,
+    coverTag: "Services Agreement",
+    coverTitleLines: splitTitleForCover(data.project_title),
+    coverSub: `Between ${SITE_NAME} and ${clientLabel}.`,
+    metaFields: [
+      { label: "Client", value: clientLabel },
+      { label: "Date", value: fmtDate(data.created_at) },
+      { label: "Reference", value: data.agreement_number },
+      { label: "Timeline", value: data.timeline },
+    ],
+    badges: [{ label: "Total Fees", value: fmt(data.total_fees) }],
+    confidentialFor: clientLabel,
+    tocItems: tocLabels.map((label, i) => ({ num: String(i + 1).padStart(2, "0"), label })),
+    bodyHtml: sections.join("\n"),
+    dlLocked: true,
   });
 }

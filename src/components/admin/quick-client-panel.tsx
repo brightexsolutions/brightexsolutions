@@ -10,8 +10,9 @@ import {
 import { cn } from "@/lib/utils";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { whatsappUrl } from "@/lib/constants";
-import { IntakeDetailSheet, type IntakeDetail } from "@/components/admin/intake-detail-sheet";
+import { IntakeDetailSheet, type IntakeDetail, type IntakeAnalysis, SERVICE_LABELS } from "@/components/admin/intake-detail-sheet";
 import { EmailComposer } from "@/components/admin/email-composer";
+import { DocumentViewerSheet, type DocumentViewerTarget } from "@/components/admin/document-viewer-sheet";
 
 type Client = {
   id: string;
@@ -99,6 +100,9 @@ export function QuickClientPanel({
   const [selectedIntake, setSelectedIntake] = useState<IntakeDetail | null>(null);
   const [sendingInvoiceId, setSendingInvoiceId] = useState<string | null>(null);
   const [sentInvoiceIds, setSentInvoiceIds] = useState<Set<string>>(new Set());
+  const [emailLinkDocument, setEmailLinkDocument] = useState<{ id: string; title: string } | null>(null);
+  const [emailContext, setEmailContext] = useState<{ context: string; subject: string } | null>(null);
+  const [viewerDoc, setViewerDoc] = useState<DocumentViewerTarget | null>(null);
 
   const loadDetail = useCallback((id: string) => {
     setLoading(true);
@@ -156,6 +160,50 @@ export function QuickClientPanel({
     } finally {
       setBusy(null);
     }
+  }
+
+  // Without this, an analysis generated in the panel is lost on reopen — the
+  // sheet only ever re-reads the intake list fetched on load, before the
+  // analysis existed.
+  function onIntakeAnalysisSaved(intakeId: string, analysis: IntakeAnalysis, analyzedAt: string) {
+    setDetail((prev) => prev ? {
+      ...prev,
+      intakes: prev.intakes.map((i) => i.id === intakeId ? { ...i, ai_analysis: analysis, ai_analyzed_at: analyzedAt } : i),
+    } : prev);
+    setSelectedIntake((prev) => prev && prev.id === intakeId ? { ...prev, ai_analysis: analysis, ai_analyzed_at: analyzedAt } : prev);
+  }
+
+  function replyToIntake(intake: IntakeDetail) {
+    const serviceLabel = SERVICE_LABELS[intake.service_type] ?? intake.service_type;
+    const context = [
+      `Replying to their ${serviceLabel} intake submission.`,
+      `They said: ${intake.description}`,
+      intake.ai_analysis?.summary && `Our read on it: ${intake.ai_analysis.summary}`,
+      intake.ai_analysis?.considerations?.length ? `Worth addressing: ${intake.ai_analysis.considerations.join("; ")}` : "",
+    ].filter(Boolean).join("\n");
+    setEmailLinkDocument(null);
+    setEmailContext({ context, subject: `Re: Your ${serviceLabel} enquiry` });
+    setSelectedIntake(null);
+    setComposerOpen(true);
+  }
+
+  function onIntakeProposalReady(_intake: IntakeDetail, doc: { id: string; title: string; data: Record<string, unknown> }) {
+    setSelectedIntake(null);
+    setViewerDoc({
+      title: doc.title,
+      subtitle: "Proposal",
+      client: client?.company?.trim() || client?.name,
+      viewUrl: `/api/admin/documents/${doc.id}/view`,
+      isHtmlDocument: true,
+      refine: { documentId: doc.id, docType: "proposal", data: doc.data },
+      gating: { documentId: doc.id, gated: false },
+      onEmailClient: () => {
+        setViewerDoc(null);
+        setEmailLinkDocument({ id: doc.id, title: doc.title });
+        setEmailContext(null);
+        setComposerOpen(true);
+      },
+    });
   }
 
   async function sendInvoice(invoiceId: string) {
@@ -258,7 +306,7 @@ export function QuickClientPanel({
                         <Mail size={13} className="text-muted-foreground shrink-0" />
                         <span className="truncate">{client.email}</span>
                       </a>
-                      <button onClick={() => setComposerOpen(true)}
+                      <button onClick={() => { setEmailLinkDocument(null); setEmailContext(null); setComposerOpen(true); }}
                         className="shrink-0 flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground border border-border rounded-sm px-2 py-1 hover:bg-muted transition-colors">
                         <Send size={10} />Compose
                       </button>
@@ -580,13 +628,20 @@ export function QuickClientPanel({
       marking={!!markingIntakeId}
       onArchive={async (id) => { await updateIntakeStatus(id, "archived"); }}
       archiving={!!archivingIntakeId}
-      onEmailClient={() => { setSelectedIntake(null); setComposerOpen(true); }}
+      onEmailClient={() => { if (selectedIntake) replyToIntake(selectedIntake); }}
+      onAnalysisSaved={onIntakeAnalysisSaved}
+      onProposalReady={onIntakeProposalReady}
     />
+
+    <DocumentViewerSheet doc={viewerDoc} onClose={() => setViewerDoc(null)} />
 
     <EmailComposer
       open={composerOpen}
-      onClose={() => setComposerOpen(false)}
+      onClose={() => { setComposerOpen(false); setEmailLinkDocument(null); setEmailContext(null); }}
       recipient={client?.email ? { clientId: client.id, name: client.name, email: client.email } : null}
+      linkDocument={emailLinkDocument}
+      initialContext={emailContext?.context}
+      initialSubject={emailContext?.subject}
       onSent={() => { if (clientId) loadDetail(clientId); }}
     />
     </>

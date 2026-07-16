@@ -86,6 +86,7 @@ const defaultForm = {
   totalBudget: "",
   timeline: "",
   depositPercent: "50",
+  gated: false,
 };
 
 export function DocumentsPageClient() {
@@ -156,6 +157,7 @@ export function DocumentsPageClient() {
           totalBudget: form.totalBudget ? Number(form.totalBudget) : undefined,
           timeline: form.timeline.trim() || undefined,
           depositPercent: form.type === "proposal" && form.depositPercent ? Number(form.depositPercent) : undefined,
+          gated: form.type !== "sop" ? form.gated : undefined,
         }),
       });
       const data = await res.json().catch(() => ({}));
@@ -313,7 +315,11 @@ export function DocumentsPageClient() {
               setViewerDoc(base);
               const res = await fetch(`/api/admin/documents/${d.id}`).then((r) => r.json()).catch(() => null);
               if (res?.data) {
-                setViewerDoc({ ...base, refine: { documentId: d.id, docType: d.type, data: res.data.data } });
+                setViewerDoc({
+                  ...base,
+                  refine: { documentId: d.id, docType: d.type, data: res.data.data },
+                  gating: d.type !== "sop" ? { documentId: d.id, gated: !!res.data.gated } : undefined,
+                });
               }
             } },
             { label: "Email to client", icon: <Send size={13} />, onClick: (row) => openEmail(row as unknown as GeneratedDocument) },
@@ -513,6 +519,24 @@ export function DocumentsPageClient() {
                   <span className="text-sm text-muted-foreground">% upfront, balance on delivery — adjust per client&apos;s agreed plan.</span>
                 </div>
               </div>
+            )}
+
+            {form.type !== "sop" && (
+              <label className="flex items-start gap-2.5 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={form.gated}
+                  onChange={(e) => set("gated", e.target.checked)}
+                  className="mt-0.5 h-4 w-4 rounded border-input"
+                />
+                <span className="text-sm text-foreground">
+                  Show a summary first
+                  <span className="block text-xs text-muted-foreground font-normal">
+                    The client sees the full write-up, deliverables, timeline, and total price — but not the itemised
+                    breakdown — until you open it up after your call with them. Toggle this per document; most don&apos;t need it.
+                  </span>
+                </span>
+              </label>
             )}
 
             {form.type === "agreement" && (

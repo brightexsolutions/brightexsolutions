@@ -26,8 +26,15 @@ export async function GET(request: NextRequest, { params }: Params) {
   const { data: doc, error } = await supabase.from("generated_documents").select("*").eq("id", id).maybeSingle();
   if (error || !doc) return NextResponse.json({ error: "Document not found" }, { status: 404 });
 
+  // Bespoke, already-authored documents (e.g. a real client proposal that
+  // exists as its own HTML file) are served verbatim — the generic *Data
+  // shapes below can't represent custom structure without flattening it.
+  // Godwin (admin view) always sees the untouched full version regardless
+  // of the public `gated` toggle.
   let html: string;
-  if (doc.type === "proposal") {
+  if (doc.raw_html) {
+    html = doc.raw_html;
+  } else if (doc.type === "proposal") {
     html = renderProposalHtml(doc.data as ProposalData);
   } else if (doc.type === "agreement") {
     html = renderAgreementHtml(doc.data as AgreementData);

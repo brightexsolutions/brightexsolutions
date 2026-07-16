@@ -56,6 +56,12 @@ interface EmailComposerProps {
    * pre-filled with a public view link rather than a file attachment, so
    * the client always sees the same rich page you reviewed. */
   linkDocument?: { id: string; title: string } | null;
+  /** Pre-fills the "General" purpose note (the context "Write with AI" drafts
+   * from) — e.g. a summary of the intake submission being replied to, so the
+   * AI draft is grounded in what the client actually asked, not blank. */
+  initialContext?: string;
+  /** Pre-fills the subject line — e.g. "Re: Your Website enquiry". */
+  initialSubject?: string;
   onSent?: () => void;
 }
 
@@ -66,7 +72,7 @@ function firstName(name: string): string {
   return name.trim().split(" ")[0] || name;
 }
 
-export function EmailComposer({ open, onClose, recipient: initialRecipient, linkDocument, onSent }: EmailComposerProps) {
+export function EmailComposer({ open, onClose, recipient: initialRecipient, linkDocument, initialContext, initialSubject, onSent }: EmailComposerProps) {
   const [recipient, setRecipient] = useState<EmailComposerRecipient | null>(initialRecipient ?? null);
   const [clients, setClients] = useState<ClientOption[]>([]);
   const [invoices, setInvoices] = useState<InvoiceOption[]>([]);
@@ -102,9 +108,9 @@ export function EmailComposer({ open, onClose, recipient: initialRecipient, link
     setCustomName("");
     setCustomEmail("");
     setSender("info");
-    setSubject(linkDocument ? linkDocument.title : "");
+    setSubject(initialSubject ?? (linkDocument ? linkDocument.title : ""));
     setPurpose("general");
-    setPurposeNote("");
+    setPurposeNote(initialContext ?? "");
     setSelectedInvoiceId("");
     setSelectedDealId("");
     setProjectNameManual("");
@@ -117,7 +123,7 @@ export function EmailComposer({ open, onClose, recipient: initialRecipient, link
         ? `Hi ${firstName(initialRecipient.name)},\n\n${linkDocument ? `Please find your ${linkDocument.title} below, or as a PDF attached for your records.\n\n` : ""}— The Brightex Team`
         : ""
     );
-  }, [open, initialRecipient, linkDocument]);
+  }, [open, initialRecipient, linkDocument, initialContext, initialSubject]);
 
   // Standalone mode (Communications page): load the client list to pick from
   useEffect(() => {

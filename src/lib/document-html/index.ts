@@ -133,6 +133,60 @@ const DOCUMENT_CSS = `
   .note{border:1px dashed var(--gray-200);border-radius:6px;padding:12px 14px;color:var(--gray-600);font-size:12px;margin-top:16px}
   .about-box{background:var(--gray-50);border-radius:8px;padding:22px 24px}
 
+  /* Scope-at-a-glance: included / out of scope / needed from client */
+  .scope3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:16px;
+    background:var(--gray-50);border:1px solid var(--gray-100);border-radius:8px;padding:16px 18px}
+  .scope3 .col h5{font-family:var(--sans);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;
+    color:var(--navy);margin:0 0 9px;display:flex;align-items:center;gap:6px}
+  .scope3 .col.inc h5{color:#1a7a34}
+  .scope3 .col.out h5{color:#b23b3b}
+  .scope3 ul{list-style:none;padding:0;margin:0}
+  .scope3 li{font-size:12px;color:var(--gray-600);margin-bottom:6px;padding-left:14px;position:relative;line-height:1.45}
+  .scope3 li::before{content:"·";position:absolute;left:2px;color:var(--orange);font-weight:700}
+  .scope-label{font-family:var(--sans);font-size:10px;letter-spacing:.14em;text-transform:uppercase;
+    color:var(--gray-600);margin:22px 0 0}
+  @media(max-width:720px){.scope3{grid-template-columns:1fr}}
+
+  /* Recommended bundle tag + retainer tiers */
+  .rec-tag{background:var(--orange);color:#fff;font-size:9px;font-weight:700;padding:2px 7px;border-radius:4px;
+    letter-spacing:.06em;margin-left:8px;vertical-align:middle}
+  .tiers{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:18px}
+  .tier{border:1px solid var(--gray-200);border-radius:8px;overflow:hidden;display:flex;flex-direction:column}
+  .tier .head{background:var(--navy);color:#fff;padding:14px;text-align:center;font-family:var(--font);font-weight:700}
+  .tier.feat .head{background:var(--orange)}
+  .tier .body{padding:16px;display:flex;flex-direction:column;flex:1}
+  .tier .body ul{list-style:none;padding:0;margin:0 0 14px}
+  .tier .body li{position:relative;padding-left:20px;margin-bottom:7px;font-size:13px;color:var(--gray-600)}
+  .tier .body li::before{content:"✓";position:absolute;left:0;color:var(--orange);font-weight:700}
+  .tier .price{margin-top:auto;font-family:var(--font);font-size:20px;font-weight:700;color:var(--navy)}
+  .tier .price span{font-size:12px;color:var(--gray-600);font-weight:400}
+  @media(max-width:720px){.tiers{grid-template-columns:1fr}}
+
+  .cta-box{background:var(--navy);border-radius:8px;padding:36px;text-align:center;margin-top:8px}
+  .cta-box h4{font-family:var(--font);color:#fff;font-size:21px;margin:0 0 10px}
+  .cta-box p{color:rgba(255,255,255,.7);font-size:14px;margin:0 0 22px;max-width:34rem;margin-left:auto;margin-right:auto}
+  .cta-btn{display:inline-block;background:var(--orange);color:#fff;font-weight:700;font-size:14px;
+    padding:14px 32px;border-radius:6px;text-decoration:none;font-family:var(--sans);border:none;cursor:pointer}
+  .cta-btn:hover{background:#cf8009}
+  .cta-secondary{display:block;margin-top:16px;color:rgba(255,255,255,.55);font-size:12px;text-decoration:underline}
+
+  .gate-wrap{margin-top:8px}
+  .gate-fade{position:relative;max-height:190px;overflow:hidden;border:1px solid var(--gray-200);
+    border-bottom:none;border-radius:8px 8px 0 0}
+  .gate-fade-content{filter:blur(5px);-webkit-filter:blur(5px);user-select:none;-webkit-user-select:none;pointer-events:none}
+  .gate-fade::after{content:"";position:absolute;inset:0;
+    background:linear-gradient(180deg,rgba(255,255,255,0) 0%,rgba(255,255,255,.75) 60%,#fff 100%)}
+  .gate-card{border:1px solid var(--gray-200);border-top:none;border-radius:0 0 8px 8px;
+    background:var(--gray-50);text-align:center;padding:8px 32px 32px}
+  .gate-card .lock-icon{width:38px;height:38px;border-radius:50%;background:var(--orange-light);
+    color:var(--orange);display:inline-flex;align-items:center;justify-content:center;margin-bottom:14px}
+  .gate-card h4{font-family:var(--font);color:var(--navy);font-size:18px;margin:0 0 6px}
+  .gate-card p{color:var(--gray-600);font-size:13.5px;line-height:1.6;margin:0 auto 20px;max-width:26rem}
+  .gate-card .cta-secondary{display:block;margin-top:14px;color:var(--gray-600);font-size:12px;text-decoration:underline}
+
+  .dl-btn-locked{background:rgba(255,255,255,.12) !important;color:rgba(255,255,255,.6) !important;
+    cursor:not-allowed;display:flex;align-items:center;gap:6px}
+
   .resp-table thead th:first-child{width:160px}
   .clause p{font-size:14px;color:var(--gray-600);line-height:1.75}
   .sig-row{display:flex;gap:24px;margin-top:20px}
@@ -177,6 +231,13 @@ const LOGO_SVG_LIGHT = `<svg viewBox="0 0 220 65" width="190" xmlns="http://www.
     fill="rgba(255,255,255,0.6)" letter-spacing="1.5">Solutions</text>
 </svg>`;
 
+/** Padlock icon (stroke = currentColor, so it picks up the surrounding
+ * text color) — used on gated documents instead of a 🔒 emoji, which
+ * renders inconsistently across mail clients and platforms. */
+function lockIconSvg(size: number): string {
+  return `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>`;
+}
+
 /** Escapes for safe HTML interpolation. Accepts unknown, not just string:
  * AI JSON output isn't guaranteed to match the requested shape exactly (a
  * field can come back as a number, an array, or missing) — coercing here
@@ -220,6 +281,10 @@ export interface DocShellOptions {
   confidentialFor?: string | null;
   tocItems: { num: string; label: string }[];
   bodyHtml: string;
+  /** Disables the "Download PDF" button — used on gated teasers, where a
+   * downloadable copy would let the full (blurred-but-present) content be
+   * captured regardless of the visual gate. */
+  dlLocked?: boolean;
 }
 
 export function documentShell(opts: DocShellOptions): string {
@@ -240,7 +305,9 @@ export function documentShell(opts: DocShellOptions): string {
 
 <div class="dl-bar">
   <span>${esc(opts.dlBarLabel)}</span>
-  <button class="dl-btn" onclick="window.print()">Download PDF</button>
+  ${opts.dlLocked
+    ? `<button class="dl-btn dl-btn-locked" disabled title="Available after your walkthrough call">${lockIconSvg(13)} Download PDF</button>`
+    : `<button class="dl-btn" onclick="window.print()">Download PDF</button>`}
 </div>
 
 <div class="doc-wrap">
@@ -280,7 +347,7 @@ export function documentShell(opts: DocShellOptions): string {
   </div>
 
 </div>
-<script>if (new URLSearchParams(location.search).get("print")) { window.addEventListener("load", () => window.print()); }</script>
+${opts.dlLocked ? "" : `<script>if (new URLSearchParams(location.search).get("print")) { window.addEventListener("load", () => window.print()); }</script>`}
 </body>
 </html>`;
 }
@@ -346,6 +413,52 @@ export function aboutBox(text: string): string {
   return `<div class="about-box"><p style="margin:0">${esc(text)}</p></div>`;
 }
 
+/** Warm, human next-step prompt — used on teaser (gated) documents instead
+ * of pricing detail. Never mentions payment; frames the next step as
+ * getting the full plan and locking in a timeline, not a transaction. */
+export function ctaBox(opts: {
+  heading: string;
+  body: string;
+  buttonLabel: string;
+  buttonHref: string;
+  secondaryLabel?: string;
+  secondaryHref?: string;
+}): string {
+  return `<div class="cta-box">
+    <h4>${esc(opts.heading)}</h4>
+    <p>${esc(opts.body)}</p>
+    <a class="cta-btn" href="${esc(opts.buttonHref)}">${esc(opts.buttonLabel)}</a>
+    ${opts.secondaryLabel && opts.secondaryHref ? `<a class="cta-secondary" href="${esc(opts.secondaryHref)}">${esc(opts.secondaryLabel)}</a>` : ""}
+  </div>`;
+}
+
+/** Wraps real, specific content (e.g. the actual pricing table) in a
+ * Medium-style paywall: the content sits at full size but blurred, fading
+ * to the page background toward the bottom instead of sitting under a
+ * heavy tinted scrim, followed by a clean, minimal gate card below it in
+ * normal document flow — not stacked on top. `contentHtml` should be
+ * genuine content (built from the same data as the full document), not a
+ * fake sample. */
+export function blurredSection(contentHtml: string, overlay: {
+  heading: string;
+  body: string;
+  buttonLabel: string;
+  buttonHref: string;
+  secondaryLabel?: string;
+  secondaryHref?: string;
+}): string {
+  return `<div class="gate-wrap">
+    <div class="gate-fade"><div class="gate-fade-content">${contentHtml}</div></div>
+    <div class="gate-card">
+      <div class="lock-icon">${lockIconSvg(16)}</div>
+      <h4>${esc(overlay.heading)}</h4>
+      <p>${esc(overlay.body)}</p>
+      <a class="cta-btn" href="${esc(overlay.buttonHref)}">${esc(overlay.buttonLabel)}</a>
+      ${overlay.secondaryLabel && overlay.secondaryHref ? `<a class="cta-secondary" href="${esc(overlay.secondaryHref)}">${esc(overlay.secondaryLabel)}</a>` : ""}
+    </div>
+  </div>`;
+}
+
 export function respTable(rows: { role: string; responsibility: string }[]): string {
   return `<table class="resp-table">
     <thead><tr><th>Role</th><th>Responsibility</th></tr></thead>
@@ -362,6 +475,39 @@ export function signatureBlock(leftLabel: string, rightLabel: string): string {
     <div class="sig-box"><div class="sig-line"><div class="label">${esc(leftLabel)}</div><div class="sub">Name, signature &amp; date</div></div></div>
     <div class="sig-box"><div class="sig-line"><div class="label">${esc(rightLabel)}</div><div class="sub">Name, signature &amp; date</div></div></div>
   </div>`;
+}
+
+/** Scope-at-a-glance grid: what's included, what's out of scope, and what's
+ * needed from the client — makes a deliverable's boundaries explicit instead
+ * of leaving them implied by a one-line description. */
+export function scope3Grid(included: string[], excluded: string[], neededFromClient: string[]): string {
+  return `<div class="scope3">
+    <div class="col inc"><h5>✓ Included</h5><ul>${included.map((i) => `<li>${esc(i)}</li>`).join("")}</ul></div>
+    <div class="col out"><h5>✗ Out of scope</h5><ul>${excluded.map((i) => `<li>${esc(i)}</li>`).join("")}</ul></div>
+    <div class="col"><h5>◦ We&apos;ll need from you</h5><ul>${neededFromClient.map((i) => `<li>${esc(i)}</li>`).join("")}</ul></div>
+  </div>`;
+}
+
+export function scopeLabel(text: string): string {
+  return `<p class="scope-label">${esc(text)}</p>`;
+}
+
+/** Small orange tag appended inline to a table cell, e.g. next to a
+ * recommended line item — "YOUR FOCUS" / "RECOMMENDED". */
+export function recTag(text: string): string {
+  return `<span class="rec-tag">${esc(text)}</span>`;
+}
+
+/** 3-tier pricing cards — e.g. a monthly care/growth/scale retainer plan.
+ * `featured` highlights one tier (orange header) as the recommended choice. */
+export function tiersGrid(tiers: { name: string; price: number; priceSuffix?: string; features: string[]; featured?: boolean }[]): string {
+  return `<div class="tiers">${tiers.map((t) => `<div class="tier${t.featured ? " feat" : ""}">
+    <div class="head">${esc(t.name)}</div>
+    <div class="body">
+      <ul>${t.features.map((f) => `<li>${esc(f)}</li>`).join("")}</ul>
+      <div class="price">KES ${t.price.toLocaleString("en-KE")}<span> ${esc(t.priceSuffix ?? "/ mo")}</span></div>
+    </div>
+  </div>`).join("")}</div>`;
 }
 
 export { SITE_NAME };

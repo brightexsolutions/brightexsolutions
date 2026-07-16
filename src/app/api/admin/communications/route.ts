@@ -7,10 +7,6 @@ import { transporter, SENDERS } from "@/lib/mail";
 import { emailTemplate, emailBodyFromPlainText, emailButton } from "@/lib/email-templates";
 import { compressFile, mimeToExt } from "@/lib/compress";
 import { SITE_URL } from "@/lib/constants";
-import { generateProposalPdf } from "@/lib/proposal-pdf-helper";
-import { generateAgreementPdf } from "@/lib/agreement-pdf-helper";
-import type { ProposalData } from "@/components/admin/proposal-pdf";
-import type { AgreementData } from "@/lib/document-types";
 
 const SENDER_KEYS = Object.keys(SENDERS) as [keyof typeof SENDERS, ...(keyof typeof SENDERS)[]];
 
@@ -35,8 +31,9 @@ const CommSchema = z.object({
     base64: z.string(),
   })).max(5).optional(),
   // Generated proposal/agreement to link in the email — server builds the
-  // branded "view online" button and attaches a PDF fallback for cases where
-  // the recipient can't open the link (see documents-client.tsx / email-composer.tsx).
+  // branded "view online" button (see documents-client.tsx / email-composer.tsx).
+  // Deliberately no PDF fallback attachment: a PDF would carry the full
+  // document even when the link is gated, defeating the gate entirely.
   documentLink: z.object({ id: z.string().uuid() }).optional(),
 });
 
@@ -122,39 +119,24 @@ export async function POST(request: NextRequest) {
     })
   );
 
-  // Linked document: a real "view online" button (not a bare link) plus a
-  // PDF fallback attachment, for when the recipient can't open the link.
+  // Linked document: a real "view online" button (not a bare link, and no
+  // PDF fallback — see the documentLink schema comment above for why).
   let documentButtonHtml = "";
-  let documentPdf: { filename: string; base64: string; contentType: string } | null = null;
   if (result.data.documentLink) {
     const { data: doc } = await supabase
       .from("generated_documents")
-      .select("type, title, reference_code, data")
+      .select("type, title")
       .eq("id", result.data.documentLink.id)
       .maybeSingle();
 
     if (doc && doc.type !== "sop") {
       const url = `${SITE_URL}/api/public/documents/${result.data.documentLink.id}`;
       documentButtonHtml = emailButton(`View ${doc.title}`, url);
-      try {
-        const pdfBuffer = doc.type === "proposal"
-          ? await generateProposalPdf(doc.data as ProposalData)
-          : await generateAgreementPdf(doc.data as AgreementData);
-        documentPdf = {
-          filename: `${doc.reference_code}.pdf`,
-          base64: pdfBuffer.toString("base64"),
-          contentType: "application/pdf",
-        };
-      } catch (pdfError) {
-        console.error("[communications-document-pdf]", pdfError);
-      }
     }
   }
 
-  const outgoingAttachments = documentPdf ? [...compressedAttachments, documentPdf] : compressedAttachments;
-
   if (result.data.type === "email" && result.data.send_email && recipientEmail) {
-    const totalAttachmentBytes = outgoingAttachments.reduce((sum, a) => sum + Math.ceil((a.base64.length * 3) / 4), 0);
+    const totalAttachmentBytes = compressedAttachments.reduce((sum, a) => sum + Math.ceil((a.base64.length * 3) / 4), 0);
     if (totalAttachmentBytes > MAX_ATTACHMENTS_BYTES) {
       return NextResponse.json({ error: "Attachments too large — max 6MB combined." }, { status: 413 });
     }
@@ -174,7 +156,7 @@ export async function POST(request: NextRequest) {
         subject,
         html,
         text: result.data.body ?? "",
-        attachments: outgoingAttachments.map((a) => ({
+        attachments: compressedAttachments.map((a) => ({
           filename: a.filename,
           content: Buffer.from(a.base64, "base64"),
           contentType: a.contentType,
@@ -189,7 +171,7 @@ export async function POST(request: NextRequest) {
   const { send_email: _sendEmail, to_email: _toEmail, to_name: _toName, attachments: _attachments, sender: _sender, documentLink: _documentLink, ...persistedData } = result.data;
 
   // Never persist attachment bytes — just enough metadata for the activity trail.
-  const attachmentMeta = outgoingAttachments.map((a) => ({
+  const attachmentMeta = compressedAttachments.map((a) => ({
     filename: a.filename,
     size: Math.ceil((a.base64.length * 3) / 4),
   }));

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { ExternalLink, Download, X } from "lucide-react";
+import { ExternalLink, Download, Send, X, Loader2, Eye, EyeOff } from "lucide-react";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { DocumentRefinePanel, type DocumentRefineTarget } from "@/components/admin/document-refine-panel";
 
@@ -19,6 +19,46 @@ export interface DocumentViewerTarget {
   /** When present (AI-generated proposal/agreement/SOP only), shows the
    * "Ask AI" / "Edit Manually" refine panel below the preview. */
   refine?: Omit<DocumentRefineTarget, "onUpdated"> & { onUpdated?: (newData: Record<string, unknown>) => void };
+  /** When present, shows an "Email to Client" button in the footer. */
+  onEmailClient?: () => void;
+  /** When present, shows a "Summary only" / "Full document" toggle — flips
+   * the `gated` flag the public link checks (see /api/public/documents/[id]). */
+  gating?: { documentId: string; gated: boolean };
+}
+
+function GatingToggle({ gating }: { gating: { documentId: string; gated: boolean } }) {
+  const [gated, setGated] = useState(gating.gated);
+  const [busy, setBusy] = useState(false);
+
+  async function toggle() {
+    const next = !gated;
+    setBusy(true);
+    try {
+      const res = await fetch(`/api/admin/documents/${gating.documentId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ gated: next }),
+      });
+      if (res.ok) setGated(next);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <button
+      type="button"
+      onClick={toggle}
+      disabled={busy}
+      className="w-full flex items-center justify-between gap-2 px-3 py-2 rounded-sm border border-border bg-muted/20 text-xs disabled:opacity-60"
+    >
+      <span className="flex items-center gap-1.5 text-foreground font-medium">
+        {busy ? <Loader2 size={12} className="animate-spin" /> : gated ? <EyeOff size={12} /> : <Eye size={12} />}
+        {gated ? "Client sees a summary only" : "Client sees the full document"}
+      </span>
+      <span className="text-primary font-semibold">{gated ? "Show full document" : "Show summary only"}</span>
+    </button>
+  );
 }
 
 export function DocumentViewerSheet({ doc, onClose }: { doc: DocumentViewerTarget | null; onClose: () => void }) {
@@ -59,6 +99,12 @@ export function DocumentViewerSheet({ doc, onClose }: { doc: DocumentViewerTarge
               />
             )}
 
+            {doc.gating && (
+              <div className="px-5 pt-3 shrink-0">
+                <GatingToggle key={doc.gating.documentId} gating={doc.gating} />
+              </div>
+            )}
+
             <div className="px-5 py-4 border-t border-border shrink-0 flex gap-2">
               <a
                 href={doc.viewUrl}
@@ -66,15 +112,24 @@ export function DocumentViewerSheet({ doc, onClose }: { doc: DocumentViewerTarge
                 rel="noopener noreferrer"
                 className="flex-1 py-2 rounded-sm border border-input text-sm text-foreground hover:bg-muted transition-colors flex items-center justify-center gap-1.5"
               >
-                <ExternalLink size={13} />Open in new tab
+                <ExternalLink size={13} />Open
               </a>
               <a
                 href={doc.isHtmlDocument ? `${doc.viewUrl}?print=1` : doc.viewUrl}
                 {...(doc.isHtmlDocument ? { target: "_blank", rel: "noopener noreferrer" } : { download: true })}
-                className="flex-1 py-2 rounded-sm bg-brand-gold text-brand-navy text-sm font-semibold hover:bg-brand-gold-hover transition-colors flex items-center justify-center gap-1.5"
+                className="flex-1 py-2 rounded-sm border border-input text-sm text-foreground hover:bg-muted transition-colors flex items-center justify-center gap-1.5"
               >
-                <Download size={13} />{doc.isHtmlDocument ? "Print / Save as PDF" : "Download"}
+                <Download size={13} />{doc.isHtmlDocument ? "Save PDF" : "Download"}
               </a>
+              {doc.onEmailClient && (
+                <button
+                  type="button"
+                  onClick={doc.onEmailClient}
+                  className="flex-1 py-2 rounded-sm bg-brand-gold text-brand-navy text-sm font-semibold hover:bg-brand-gold-hover transition-colors flex items-center justify-center gap-1.5"
+                >
+                  <Send size={13} />Email to Client
+                </button>
+              )}
             </div>
           </>
         )}
