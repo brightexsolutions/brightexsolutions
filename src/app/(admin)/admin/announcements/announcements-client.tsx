@@ -173,12 +173,16 @@ export function AnnouncementsPageClient() {
     setError("");
     setSaving(true);
     try {
+      // Creating: an empty date must be omitted (POST's schema only allows
+      // undefined). Editing: an empty date means "clear it", which needs an
+      // explicit null (PATCH's schema accepts null, unlike POST's).
+      const emptyDate = editTarget ? null : undefined;
       const payload = {
         ...form,
         cta_label: form.cta_label || undefined,
         cta_url: form.cta_url || undefined,
-        starts_at: form.starts_at ? new Date(form.starts_at).toISOString() : null,
-        ends_at: form.ends_at ? new Date(form.ends_at).toISOString() : null,
+        starts_at: form.starts_at ? new Date(form.starts_at).toISOString() : emptyDate,
+        ends_at: form.ends_at ? new Date(form.ends_at).toISOString() : emptyDate,
         ...(editTarget ? {} : { active: false }),
       };
       const url = editTarget ? `/api/admin/announcements/${editTarget.id}` : "/api/admin/announcements";

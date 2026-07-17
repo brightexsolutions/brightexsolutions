@@ -4,7 +4,7 @@ import { createClient, createAdminClient } from "@/lib/supabase/server";
 import { rateLimit } from "@/lib/rate-limit";
 
 const UpdateSchema = z.object({
-  platforms: z.array(z.enum(["instagram", "facebook", "tiktok", "linkedin", "twitter"])).min(1).optional(),
+  platforms: z.array(z.enum(["instagram", "facebook", "tiktok", "linkedin", "whatsapp"])).min(1).optional(),
   caption: z.string().min(1).max(2200).trim().optional(),
   hashtags: z.array(z.string().max(100)).optional(),
   scheduled_at: z.string().datetime().optional().nullable(),
