@@ -291,7 +291,7 @@ export type SystemAlert = Timestamped & {
 
 // ─── Social Posts ─────────────────────────────────────────────────────────────
 
-export type SocialPlatform = "instagram" | "facebook" | "tiktok" | "linkedin" | "twitter";
+export type SocialPlatform = "instagram" | "facebook" | "tiktok" | "linkedin" | "whatsapp";
 export type SocialPostStatus =
   | "draft"
   | "pending_approval"

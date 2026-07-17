@@ -4,7 +4,7 @@ import { createClient, createAdminClient } from "@/lib/supabase/server";
 import { rateLimit } from "@/lib/rate-limit";
 
 const PostSchema = z.object({
-  platforms: z.array(z.enum(["instagram", "facebook", "tiktok", "linkedin", "twitter"])).min(1),
+  platforms: z.array(z.enum(["instagram", "facebook", "tiktok", "linkedin", "whatsapp"])).min(1),
   caption: z.string().min(1).max(2200).trim(),
   media_urls: z.array(z.string().url()).default([]),
   hashtags: z.array(z.string().max(100)).default([]),
