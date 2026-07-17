@@ -50,9 +50,18 @@ export async function POST(request: NextRequest) {
   const result = PostSchema.safeParse(body);
   if (!result.success) return NextResponse.json({ error: "Invalid input", details: result.error.flatten() }, { status: 400 });
 
+  // social_posts.created_by references team_members(id), not auth.users(id)
+  // directly — resolve it, but the primary admin/owner has no team_members
+  // row, so fall back to null rather than violating the foreign key.
+  const { data: member } = await supabase
+    .from("team_members")
+    .select("id")
+    .eq("user_id", user.id)
+    .maybeSingle();
+
   const { data, error } = await supabase
     .from("social_posts")
-    .insert({ ...result.data, created_by: user.id })
+    .insert({ ...result.data, created_by: member?.id ?? null })
     .select()
     .single();
 
