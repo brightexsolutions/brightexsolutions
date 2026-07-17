@@ -26,7 +26,21 @@ function total(items: ProposalLineItem[]) {
 }
 
 // ─── Types ────────────────────────────────────────────────────────────────────
-export type ScopeItem = { title: string; description?: string | null };
+/** A deliverable, with an optional "deep dive": the problem it solves, what
+ * it actually does, and a scope-at-a-glance grid — matching the depth of a
+ * hand-authored client proposal (e.g. the Magic Movers reference) rather
+ * than a bare title + one-line description. All deep-dive fields are
+ * optional so older/simpler documents still render fine. */
+export type ScopeItem = {
+  title: string;
+  description?: string | null;
+  tag?: string | null;                  // e.g. "Part 1 · The website"
+  problem_points?: string[] | null;     // what holds things back today
+  solution_points?: string[] | null;    // what this deliverable actually does
+  included?: string[] | null;
+  excluded?: string[] | null;
+  needed_from_client?: string[] | null;
+};
 export type ProposalLineItem = { description: string; qty: number; unit_price: number };
 export type PaymentTerms = {
   deposit_percent: number;
@@ -34,17 +48,30 @@ export type PaymentTerms = {
   balance_due?: string | null;
   note?: string | null;
 };
+export type RecommendedBundle = { label: string; item_titles: string[]; amount: number; note?: string | null };
+export type TimelinePhase = { period: string; title: string; description: string; is_launch?: boolean };
+export type RetainerTier = { name: string; price: number; features: string[]; featured?: boolean };
+export type NextStep = { title: string; description: string };
+
 export type ProposalData = {
   proposal_number: string;
   created_at: string;
   valid_until?: string | null;
   project_title: string;
+  cover_tagline?: string | null;        // short punchy cover headline, e.g. "Turning every enquiry into a booked move."
   intro?: string | null;
   client: { name: string; company?: string | null; email?: string | null; phone?: string | null };
+  // "Understanding the Brief" — problem framing before scope, optional.
+  problem_points?: string[] | null;
+  solution_points?: string[] | null;
   scope_items: ScopeItem[];
   line_items: ProposalLineItem[];
+  recommended_bundle?: RecommendedBundle | null;
   payment_terms?: PaymentTerms | null;
-  timeline?: string | null;
+  timeline?: string | null;             // short fallback summary, e.g. "4-6 weeks"
+  phased_timeline?: TimelinePhase[] | null;
+  retainer_tiers?: RetainerTier[] | null;
+  next_steps?: NextStep[] | null;
   notes?: string | null;
 };
 

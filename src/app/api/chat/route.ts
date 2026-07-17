@@ -124,12 +124,14 @@ export async function POST(request: NextRequest) {
       });
     }
 
+    // Declared outside the try so the catch block below can report which
+    // provider failed.
+    let provider: AIProvider = hasAnthropic ? "anthropic" : "gemini";
+
     try {
       const { callAI, brixoSystemPrompt, isAIAvailable, AI_MODELS } = await import("@/lib/ai");
       const faqs = dbFaqs.length ? dbFaqs : FALLBACK_FAQS;
 
-      // Read admin-configured provider from DB; fall back to whichever key exists
-      let provider: AIProvider = hasAnthropic ? "anthropic" : "gemini";
       let model: string = hasAnthropic ? AI_MODELS.haiku : AI_MODELS.gemini_flash;
 
       try {
@@ -162,14 +164,31 @@ export async function POST(request: NextRequest) {
         model,
         maxTokens: 350,
         provider,
+        feature: "brixo_chat",
       });
+
+      const { recordAiRecovery } = await import("@/lib/ai-monitor");
+      void recordAiRecovery();
 
       return NextResponse.json({ answer: aiAnswer, escalate: false, source: "ai" });
     } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : String(err);
       logger.error("Brixo AI call failed", {
         route: "/api/chat",
-        error: err instanceof Error ? err.message : String(err),
+        error: errorMessage,
       });
+
+      const { GeminiRateLimitedError } = await import("@/lib/ai");
+      // A GeminiRateLimitedError is expected, self-imposed throttling to
+      // protect the call budget — not a provider outage, so it doesn't page.
+      if (!(err instanceof GeminiRateLimitedError)) {
+        const { recordAiFailure } = await import("@/lib/ai-monitor");
+        void recordAiFailure({
+          route: "/api/chat",
+          provider,
+          reason: errorMessage,
+        });
+      }
       // Fall through to escalate
     }
   }

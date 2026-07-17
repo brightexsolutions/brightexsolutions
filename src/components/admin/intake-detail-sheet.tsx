@@ -1,12 +1,19 @@
 "use client";
 
+import { useState } from "react";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { CheckCircle, Clock, User, Mail, Briefcase, Calendar, DollarSign, FileText, Tag } from "lucide-react";
+import { CheckCircle, Clock, User, Mail, Briefcase, Calendar, DollarSign, FileText, Tag, Sparkles, Loader2, FileSignature, Archive, Download } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
+
+export type IntakeAnalysis = {
+  summary: string;
+  considerations: string[];
+  action_items: { label: string; type: "generate_proposal" | "note" }[];
+};
 
 export type IntakeDetail = {
   id: string;
@@ -23,17 +30,20 @@ export type IntakeDetail = {
   status: string;
   submitted_at: string;
   reviewed_at?: string | null;
+  ai_analysis?: IntakeAnalysis | null;
+  ai_analyzed_at?: string | null;
 };
 
 // ─── Label maps ───────────────────────────────────────────────────────────────
 
-const SERVICE_LABELS: Record<string, string> = {
-  website:     "Website / Web App",
-  mobile:      "Mobile App",
-  erp:         "Software / ERP System",
-  design:      "Design & Branding",
-  consultancy: "Business Consultancy",
-  other:       "General Enquiry",
+export const SERVICE_LABELS: Record<string, string> = {
+  website:       "Website / Web App",
+  mobile:        "Mobile App",
+  erp:           "Software / ERP System",
+  design:        "Design & Branding",
+  consultancy:   "Business Consultancy",
+  ai_automation: "AI & Automation",
+  other:         "General Enquiry",
 };
 
 const STATUS_COLOUR: Record<string, string> = {
@@ -99,6 +109,17 @@ function ConsultancySpecifics({ sp }: { sp: Record<string, unknown> }) {
   );
 }
 
+function AiAutomationSpecifics({ sp }: { sp: Record<string, unknown> }) {
+  return (
+    <>
+      {arrVal(sp.focus_areas).length > 0 && <SpecRow label="Type of automation" value={arrVal(sp.focus_areas).join(", ")} />}
+      <SpecRow label="Currently done manually / with another tool" value={boolVal(sp.has_current_process)} />
+      {sp.current_process && <SpecRow label="Current process" value={sp.current_process as string} />}
+      {sp.automation_goal && <SpecRow label="What to automate" value={sp.automation_goal as string} multiline />}
+    </>
+  );
+}
+
 function OtherSpecifics({ sp }: { sp: Record<string, unknown> }) {
   if (sp.extra) return <SpecRow label="Additional context" value={sp.extra as string} multiline />;
   return null;
@@ -155,14 +176,194 @@ function Section({ title, icon: Icon, children }: {
 
 // ─── Main component ───────────────────────────────────────────────────────────
 
+function buildEngagementSummary(intake: IntakeDetail, sp: Record<string, unknown>, serviceLabel: string): string {
+  return [
+    `Service requested: ${serviceLabel}`,
+    intake.project_title && `Project title: ${intake.project_title}`,
+    `Description: ${intake.description}`,
+    intake.problem_statement && `Problem / challenge: ${intake.problem_statement}`,
+    Object.keys(sp).length > 0 && `Project specifics: ${JSON.stringify(sp)}`,
+    intake.budget_range && `Client's stated budget range: ${intake.budget_range}`,
+    intake.additional_notes && `Additional notes: ${intake.additional_notes}`,
+  ].filter(Boolean).join("\n");
+}
+
+function IntakeAiPanel({
+  intake, clientId, onAnalysisSaved,
+}: {
+  intake: IntakeDetail;
+  clientId: string;
+  /** Bubbles the fresh analysis up to the parent's cached intake list —
+   * without this, reopening the panel later re-reads stale pre-analysis
+   * data that was fetched before this analyze call ever ran. */
+  onAnalysisSaved?: (analysis: IntakeAnalysis, analyzedAt: string) => void;
+}) {
+  const [analysis, setAnalysis] = useState<IntakeAnalysis | null>(intake.ai_analysis ?? null);
+  const [analyzedAt, setAnalyzedAt] = useState<string | null>(intake.ai_analyzed_at ?? null);
+  const [analyzing, setAnalyzing] = useState(false);
+  const [error, setError] = useState("");
+
+  async function analyzeWithAI() {
+    setAnalyzing(true);
+    setError("");
+    try {
+      const res = await fetch(`/api/admin/clients/${clientId}/intakes/analyze?intakeId=${intake.id}`, { method: "POST" });
+      const payload = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(payload.error ?? "Analysis failed");
+      const now = new Date().toISOString();
+      setAnalysis(payload.data);
+      setAnalyzedAt(now);
+      onAnalysisSaved?.(payload.data, now);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Analysis failed");
+    } finally {
+      setAnalyzing(false);
+    }
+  }
+
+  return (
+    <Section title="AI Analysis" icon={Sparkles}>
+      {!analysis ? (
+        <button
+          type="button"
+          onClick={analyzeWithAI}
+          disabled={analyzing}
+          className="flex items-center justify-center gap-1.5 w-full py-2 rounded-sm border border-dashed border-border text-xs font-semibold text-muted-foreground hover:text-foreground hover:border-foreground/40 transition-colors disabled:opacity-50"
+        >
+          {analyzing ? <Loader2 size={13} className="animate-spin" /> : <Sparkles size={13} />}
+          {analyzing ? "Analyzing…" : "Analyze with AI"}
+        </button>
+      ) : (
+        <div className="space-y-3">
+          <div className="flex items-center justify-between gap-2">
+            {analyzedAt && (
+              <p className="text-[10px] text-muted-foreground">
+                Analyzed {new Date(analyzedAt).toLocaleDateString("en-KE", { day: "numeric", month: "short", year: "numeric" })}
+              </p>
+            )}
+            <button
+              type="button"
+              onClick={analyzeWithAI}
+              disabled={analyzing}
+              className="ml-auto flex items-center gap-1 text-[11px] font-semibold text-muted-foreground hover:text-foreground transition-colors disabled:opacity-50"
+            >
+              {analyzing ? <Loader2 size={11} className="animate-spin" /> : <Sparkles size={11} />}
+              {analyzing ? "Re-analyzing…" : "Re-analyze"}
+            </button>
+          </div>
+          <p className="text-xs text-foreground leading-relaxed">{analysis.summary}</p>
+
+          {analysis.considerations.length > 0 && (
+            <div className="space-y-1">
+              <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Worth clarifying</p>
+              <ul className="space-y-1">
+                {analysis.considerations.map((c, i) => (
+                  <li key={i} className="text-xs text-muted-foreground flex gap-1.5">
+                    <span className="text-primary">-</span>{c}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {analysis.action_items.length > 0 && (
+            <div className="space-y-1.5">
+              <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Suggested next steps</p>
+              {analysis.action_items.map((item, i) => (
+                <div key={i} className="flex items-start gap-1.5 px-3 py-1.5 text-xs text-foreground">
+                  {item.type === "generate_proposal"
+                    ? <FileSignature size={12} className="text-brand-gold mt-0.5 shrink-0" />
+                    : <span className="text-primary mt-0.5">-</span>}
+                  {item.label}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+      {error && <p className="text-xs text-red-500 mt-1.5">{error}</p>}
+    </Section>
+  );
+}
+
+function IntakeProposalPanel({
+  intake, clientId, sp, serviceLabel, onReady,
+}: {
+  intake: IntakeDetail;
+  clientId: string;
+  sp: Record<string, unknown>;
+  serviceLabel: string;
+  onReady?: (doc: { id: string; title: string; data: Record<string, unknown> }) => void;
+}) {
+  const [generating, setGenerating] = useState(false);
+  const [doc, setDoc] = useState<{ id: string; title: string; data: Record<string, unknown> } | null>(null);
+  const [error, setError] = useState("");
+
+  async function generateProposal() {
+    setGenerating(true);
+    setError("");
+    try {
+      const res = await fetch("/api/admin/documents/generate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          type: "proposal",
+          clientId,
+          engagementSummary: buildEngagementSummary(intake, sp, serviceLabel),
+          timeline: intake.timeline || undefined,
+        }),
+      });
+      const payload = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(payload.error ?? "Proposal generation failed");
+      const created = { id: payload.data.id as string, title: payload.data.title as string, data: payload.data.data as Record<string, unknown> };
+      setDoc(created);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Proposal generation failed");
+    } finally {
+      setGenerating(false);
+    }
+  }
+
+  return (
+    <Section title="Generate Proposal" icon={FileSignature}>
+      {!doc ? (
+        <button
+          type="button"
+          onClick={generateProposal}
+          disabled={generating}
+          className="flex items-center justify-center gap-1.5 w-full py-2 rounded-sm bg-brand-gold/10 border border-brand-gold/30 text-xs font-semibold text-brand-navy dark:text-brand-gold hover:bg-brand-gold/20 transition-colors disabled:opacity-60"
+        >
+          {generating ? <Loader2 size={13} className="animate-spin" /> : <FileSignature size={13} />}
+          {generating ? "Generating…" : "Generate Proposal from this Intake"}
+        </button>
+      ) : (
+        <button
+          type="button"
+          onClick={() => onReady?.(doc)}
+          className="flex items-center justify-center gap-1.5 w-full py-2 rounded-sm bg-emerald-50 border border-emerald-200 text-xs font-semibold text-emerald-700 hover:bg-emerald-100 transition-colors"
+        >
+          <Download size={13} /> View / Download / Send to Client
+        </button>
+      )}
+      {error && <p className="text-xs text-red-500 mt-1.5">{error}</p>}
+    </Section>
+  );
+}
+
 interface Props {
   intake: IntakeDetail | null;
+  clientId?: string | null;
   onClose: () => void;
   onMarkReviewed?: (id: string) => Promise<void>;
   marking?: boolean;
+  onEmailClient?: () => void;
+  onArchive?: (id: string) => Promise<void>;
+  archiving?: boolean;
+  onAnalysisSaved?: (intakeId: string, analysis: IntakeAnalysis, analyzedAt: string) => void;
+  onProposalReady?: (intake: IntakeDetail, doc: { id: string; title: string; data: Record<string, unknown> }) => void;
 }
 
-export function IntakeDetailSheet({ intake, onClose, onMarkReviewed, marking }: Props) {
+export function IntakeDetailSheet({ intake, clientId, onClose, onMarkReviewed, marking, onEmailClient, onArchive, archiving, onAnalysisSaved, onProposalReady }: Props) {
   if (!intake) return null;
 
   const sp = (intake.specifics ?? {}) as Record<string, unknown>;
@@ -175,6 +376,7 @@ export function IntakeDetailSheet({ intake, onClose, onMarkReviewed, marking }: 
       case "erp":         return <ERPSpecifics sp={sp} />;
       case "design":      return <DesignSpecifics sp={sp} />;
       case "consultancy": return <ConsultancySpecifics sp={sp} />;
+      case "ai_automation": return <AiAutomationSpecifics sp={sp} />;
       case "other":       return <OtherSpecifics sp={sp} />;
       default:            return null;
     }
@@ -272,6 +474,28 @@ export function IntakeDetailSheet({ intake, onClose, onMarkReviewed, marking }: 
             </Section>
           )}
 
+          {/* AI analysis & action items */}
+          {clientId && (
+            <IntakeAiPanel
+              key={intake.id}
+              intake={intake}
+              clientId={clientId}
+              onAnalysisSaved={(analysis, analyzedAt) => onAnalysisSaved?.(intake.id, analysis, analyzedAt)}
+            />
+          )}
+
+          {/* Generate proposal — always available, not just when AI suggests it */}
+          {clientId && (
+            <IntakeProposalPanel
+              key={`proposal-${intake.id}`}
+              intake={intake}
+              clientId={clientId}
+              sp={sp}
+              serviceLabel={serviceLabel}
+              onReady={(doc) => onProposalReady?.(intake, doc)}
+            />
+          )}
+
           {/* Reviewed info */}
           {intake.status === "reviewed" && intake.reviewed_at && (
             <div className="flex items-center gap-2 text-xs text-emerald-600 bg-emerald-50 rounded-lg px-3 py-2">
@@ -283,18 +507,37 @@ export function IntakeDetailSheet({ intake, onClose, onMarkReviewed, marking }: 
           )}
         </div>
 
-        {/* Footer action */}
-        {intake.status === "new" && onMarkReviewed && (
-          <div className="flex-shrink-0 border-t border-border px-5 py-4">
-            <Button
-              className="w-full gap-2"
-              onClick={() => onMarkReviewed(intake.id)}
-              disabled={marking}
-              size="sm"
-            >
-              <CheckCircle size={14} />
-              {marking ? "Marking…" : "Mark as reviewed"}
-            </Button>
+        {/* Footer actions */}
+        {(onMarkReviewed || onEmailClient || onArchive) && intake.status !== "archived" && (
+          <div className="flex-shrink-0 border-t border-border px-5 py-4 space-y-2">
+            <div className="flex gap-2">
+              {intake.status === "new" && onMarkReviewed && (
+                <Button
+                  className="flex-1 gap-2"
+                  onClick={() => onMarkReviewed(intake.id)}
+                  disabled={marking}
+                  size="sm"
+                >
+                  <CheckCircle size={14} />
+                  {marking ? "Marking…" : "Mark as reviewed"}
+                </Button>
+              )}
+              {onEmailClient && (
+                <Button className="flex-1 gap-2" variant="outline" onClick={onEmailClient} size="sm">
+                  <Mail size={14} /> Reply by Email
+                </Button>
+              )}
+            </div>
+            {onArchive && (
+              <button
+                type="button"
+                onClick={() => onArchive(intake.id)}
+                disabled={archiving}
+                className="flex items-center justify-center gap-1.5 w-full py-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors disabled:opacity-50"
+              >
+                <Archive size={12} /> {archiving ? "Archiving…" : "Archive this submission"}
+              </button>
+            )}
           </div>
         )}
       </SheetContent>

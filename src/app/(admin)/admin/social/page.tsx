@@ -17,7 +17,7 @@ import { useConfirm } from "@/components/admin/confirm-dialog";
 const tabs = ["All Posts", "Pending Approval", "Approved", "Posted"] as const;
 type Tab = (typeof tabs)[number];
 
-const PLATFORMS = ["instagram", "facebook", "tiktok", "linkedin"] as const;
+const PLATFORMS = ["instagram", "facebook", "tiktok", "linkedin", "whatsapp"] as const;
 
 const defaultForm = { caption: "", hashtags: "", platforms: [] as string[], scheduled_at: "", notes: "" };
 
@@ -48,6 +48,25 @@ function toLocalDatetime(iso: string | null | undefined): string {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
 
+/** Simple, no-AI-cost heuristic: next weekday (Tue/Thu/Sat read best for a
+ * B2B service audience) at 9am or 6pm EAT, whichever comes next. Just a
+ * sensible default the user can always override. */
+function suggestNextPostTime(): string {
+  const goodHours = [9, 18];
+  const goodDays = [2, 4, 6]; // Tue, Thu, Sat
+  const d = new Date();
+  d.setSeconds(0, 0);
+  for (let i = 0; i < 14; i++) {
+    const candidate = new Date(d.getTime() + i * 86400000);
+    if (!goodDays.includes(candidate.getDay())) continue;
+    for (const hour of goodHours) {
+      candidate.setHours(hour, 0, 0, 0);
+      if (candidate.getTime() > d.getTime()) return toLocalDatetime(candidate.toISOString());
+    }
+  }
+  return "";
+}
+
 export default function SocialMediaPage() {
   const confirm = useConfirm();
   const [activeTab, setActiveTab] = useState<Tab>("All Posts");
@@ -59,6 +78,9 @@ export default function SocialMediaPage() {
   const [form, setForm] = useState(defaultForm);
   const [saving, setSaving] = useState(false);
   const [aiDrafting, setAiDrafting] = useState(false);
+  const [visualIdea, setVisualIdea] = useState("");
+  const [topicSuggestions, setTopicSuggestions] = useState<{ topic: string; angle: string }[]>([]);
+  const [suggestingTopics, setSuggestingTopics] = useState(false);
   const [busyIds, setBusyIds] = useState<Set<string>>(new Set());
   const [error, setError] = useState("");
 
@@ -83,7 +105,21 @@ export default function SocialMediaPage() {
     setEditTarget(null);
     setForm(defaultForm);
     setError("");
+    setVisualIdea("");
+    setTopicSuggestions([]);
     setOpen(true);
+  }
+
+  async function suggestTopics() {
+    setSuggestingTopics(true);
+    setError("");
+    try {
+      const res = await fetch("/api/admin/social/suggest-topics");
+      const data = await res.json().catch(() => ({}));
+      if (res.ok && data.topics) setTopicSuggestions(data.topics);
+      else setError(data.error ?? "Couldn't get topic suggestions.");
+    } catch { setError("Network error."); }
+    finally { setSuggestingTopics(false); }
   }
 
   function openEdit(post: SocialPost) {
@@ -96,6 +132,8 @@ export default function SocialMediaPage() {
       notes: post.notes ?? "",
     });
     setError("");
+    setVisualIdea("");
+    setTopicSuggestions([]);
     setOpen(true);
   }
 
@@ -192,7 +230,34 @@ export default function SocialMediaPage() {
       });
       const data = await res.json().catch(() => ({}));
       if (res.ok && data.result) {
-        setForm((f) => ({ ...f, caption: data.result }));
+        const raw = data.result as string;
+        const splitIdx = raw.search(/\*\*Visual idea\*\*/i);
+        const withoutVisual = splitIdx !== -1 ? raw.slice(0, splitIdx).trim() : raw;
+        if (splitIdx !== -1) {
+          setVisualIdea(raw.slice(splitIdx).replace(/\*\*Visual idea\*\*/i, "").trim());
+        } else {
+          setVisualIdea("");
+        }
+
+        // Pull hashtag-only lines out into the dedicated field, keep captions clean.
+        const foundHashtags = new Set<string>();
+        const lines = withoutVisual.split("\n");
+        const captionLines = lines.filter((line) => {
+          const trimmed = line.trim();
+          const isHashtagLine = trimmed.length > 0 && /^(#[\w]+\s*)+$/.test(trimmed);
+          if (isHashtagLine) {
+            trimmed.split(/\s+/).forEach((tag) => foundHashtags.add(tag));
+            return false;
+          }
+          return true;
+        });
+
+        setForm((f) => ({
+          ...f,
+          caption: captionLines.join("\n").replace(/\n{3,}/g, "\n\n").trim(),
+          hashtags: foundHashtags.size ? Array.from(foundHashtags).join(" ") : f.hashtags,
+          scheduled_at: f.scheduled_at || suggestNextPostTime(),
+        }));
       } else {
         setError(data.error ?? "AI draft failed. Try again.");
       }
@@ -462,6 +527,15 @@ export default function SocialMediaPage() {
                 </button>
               </div>
               <Textarea rows={4} placeholder="Write your caption… or select platforms + add a topic in Notes, then click Write with AI" value={form.caption} onChange={(e) => setForm((f) => ({ ...f, caption: e.target.value }))} required />
+              {visualIdea && (
+                <div className="flex items-start gap-2 p-2.5 rounded-sm border border-dashed border-brand-gold/40 bg-brand-gold/5">
+                  <Sparkles size={13} className="text-brand-gold shrink-0 mt-0.5" />
+                  <div>
+                    <p className="text-[10px] font-semibold text-brand-gold uppercase tracking-widest mb-0.5">Visual idea</p>
+                    <p className="text-xs text-foreground leading-relaxed">{visualIdea}</p>
+                  </div>
+                </div>
+              )}
             </div>
             <div className="space-y-1.5">
               <Label>Hashtags <span className="text-muted-foreground font-normal">(space or comma separated)</span></Label>
@@ -483,8 +557,34 @@ export default function SocialMediaPage() {
               <Input type="datetime-local" value={form.scheduled_at} onChange={(e) => setForm((f) => ({ ...f, scheduled_at: e.target.value }))} />
             </div>
             <div className="space-y-1.5">
-              <Label>Notes</Label>
-              <Textarea rows={2} placeholder="Internal notes…" value={form.notes} onChange={(e) => setForm((f) => ({ ...f, notes: e.target.value }))} />
+              <div className="flex items-center justify-between">
+                <Label>Notes / Topic</Label>
+                <button
+                  type="button"
+                  onClick={suggestTopics}
+                  disabled={suggestingTopics}
+                  className="inline-flex items-center gap-1.5 text-xs text-brand-gold hover:text-brand-gold-hover font-medium transition-colors disabled:opacity-50"
+                >
+                  {suggestingTopics ? <Loader2 size={12} className="animate-spin" /> : <Sparkles size={12} />}
+                  {suggestingTopics ? "Thinking…" : "Suggest Topics"}
+                </button>
+              </div>
+              <Textarea rows={2} placeholder="Internal notes… or click Suggest Topics for ideas" value={form.notes} onChange={(e) => setForm((f) => ({ ...f, notes: e.target.value }))} />
+              {topicSuggestions.length > 0 && (
+                <div className="space-y-1.5 pt-1">
+                  {topicSuggestions.map((t, i) => (
+                    <button
+                      key={i}
+                      type="button"
+                      onClick={() => { setForm((f) => ({ ...f, notes: t.topic })); setTopicSuggestions([]); }}
+                      className="block w-full text-left text-xs px-3 py-2 rounded-sm border border-border hover:border-brand-gold/40 hover:bg-muted/30 transition-colors"
+                    >
+                      <span className="font-medium text-foreground">{t.topic}</span>
+                      <span className="block text-[11px] text-muted-foreground mt-0.5">{t.angle}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
             {error && <p className="text-sm text-red-500">{error}</p>}
             <div className="flex justify-end gap-2 pt-2">

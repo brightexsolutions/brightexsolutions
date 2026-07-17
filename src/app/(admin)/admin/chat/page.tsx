@@ -12,8 +12,9 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { useConfirm } from "@/components/admin/confirm-dialog";
+import { AiUsagePanel } from "@/components/admin/ai-usage-panel";
 
-const tabs = ["FAQ Manager", "Sessions", "Analytics"] as const;
+const tabs = ["FAQ Manager", "Sessions", "Analytics", "AI Usage"] as const;
 type Tab = (typeof tabs)[number];
 
 const categories = ["services", "products", "pricing", "process", "general"] as const;
@@ -363,6 +364,8 @@ export default function BrixoChatPage() {
           ))}
         </div>
       )}
+
+      {activeTab === "AI Usage" && <AiUsagePanel />}
 
       <Dialog open={faqOpen} onOpenChange={setFaqOpen}>
         <DialogContent className="max-w-lg">

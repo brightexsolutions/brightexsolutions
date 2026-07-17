@@ -43,7 +43,7 @@ export async function GET(request: NextRequest) {
 
   let query = supabase
     .from("invoices")
-    .select("*, clients(id, name, company, email), projects(id, name), payments(amount)")
+    .select("*, clients(id, name, company, email), projects(id, name), payments(amount, date)")
     .is("deleted_at", null)
     .order("created_at", { ascending: false });
 
@@ -55,7 +55,7 @@ export async function GET(request: NextRequest) {
 
   // Merge per-invoice send stats from communications table
   const invoiceIds = (data ?? []).map((inv) => inv.id);
-  let commStats: Record<string, { send_count: number; last_comm_at: string }> = {};
+  const commStats: Record<string, { send_count: number; last_comm_at: string }> = {};
   if (invoiceIds.length > 0) {
     const { data: comms } = await supabase
       .from("communications")
@@ -71,11 +71,42 @@ export async function GET(request: NextRequest) {
     }
   }
 
-  const enriched = (data ?? []).map((inv) => ({
-    ...inv,
-    send_count: commStats[inv.id]?.send_count ?? 0,
-    last_comm_at: commStats[inv.id]?.last_comm_at ?? null,
-  }));
+  // Attach any proposal/agreement generated for the same client — preferring
+  // one tied to the same project when this invoice has one — so the invoice
+  // list can show and act on ("View" / "Resend") the document it grew out of.
+  const clientIds = [...new Set((data ?? []).map((inv) => inv.client_id).filter(Boolean))];
+  let docsByClient: Record<string, Array<Record<string, unknown>>> = {};
+  if (clientIds.length > 0) {
+    const { data: docs } = await supabase
+      .from("generated_documents")
+      .select("id, type, title, reference_code, status, gated, accepted_at, created_at, project_id, client_id")
+      .in("client_id", clientIds)
+      .in("type", ["proposal", "agreement"])
+      .order("accepted_at", { ascending: false, nullsFirst: false })
+      .order("created_at", { ascending: false });
+    docsByClient = (docs ?? []).reduce<Record<string, Array<Record<string, unknown>>>>((acc, d) => {
+      const key = d.client_id as string;
+      (acc[key] ??= []).push(d);
+      return acc;
+    }, {});
+  }
+
+  const enriched = (data ?? []).map((inv) => {
+    const candidates = docsByClient[inv.client_id as string] ?? [];
+    const generated_documents = [...candidates]
+      .sort((a, b) => {
+        const aProj = inv.project_id && a.project_id === inv.project_id ? 1 : 0;
+        const bProj = inv.project_id && b.project_id === inv.project_id ? 1 : 0;
+        return bProj - aProj;
+      })
+      .slice(0, 3);
+    return {
+      ...inv,
+      send_count: commStats[inv.id]?.send_count ?? 0,
+      last_comm_at: commStats[inv.id]?.last_comm_at ?? null,
+      generated_documents,
+    };
+  });
 
   return NextResponse.json({ data: enriched });
 }

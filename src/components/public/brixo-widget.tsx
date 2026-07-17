@@ -251,7 +251,7 @@ export function BrixoWidget() {
                     {/* Book CTA — shown after booking-related bot responses */}
                     {showBookCTA && (
                       <Link
-                        href="/book"
+                        href="/contact?intent=book_call"
                         onClick={() => setOpen(false)}
                         className="inline-flex items-center gap-2 px-4 py-2.5 rounded-sm bg-brand-gold text-brand-navy text-xs font-bold hover:opacity-90 transition-opacity w-fit"
                       >

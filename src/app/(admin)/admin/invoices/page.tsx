@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { FileText, Plus, Trash2, Send, Eye, X, Pencil, Download, Loader2 } from "lucide-react";
+import { FileText, Plus, Trash2, Send, Eye, X, Pencil, Download, Loader2, ScrollText, Briefcase } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { StatCard } from "@/components/admin/stat-card";
 import { DataTable, StackedCell, StatusDot, type Column, type RowAction } from "@/components/admin/data-table";
@@ -14,6 +14,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useConfirm } from "@/components/admin/confirm-dialog";
+import { EmailComposer, type EmailComposerRecipient } from "@/components/admin/email-composer";
+import { DocumentViewerSheet, type DocumentViewerTarget } from "@/components/admin/document-viewer-sheet";
 
 const statusColors: Record<string, string> = {
   draft: "bg-slate-400/10 text-slate-400",
@@ -27,6 +29,16 @@ const statusColors: Record<string, string> = {
 const filterTabs = ["All", "Draft", "Sent", "Partial", "Paid", "Overdue"];
 
 type LineItem = { description: string; qty: number; unit_price: number };
+type GeneratedDoc = {
+  id: string;
+  type: "proposal" | "agreement";
+  title: string;
+  reference_code: string | null;
+  status: string;
+  gated?: boolean | null;
+  accepted_at?: string | null;
+  created_at: string;
+};
 type Invoice = {
   id: string;
   invoice_number?: string | null;
@@ -44,6 +56,7 @@ type Invoice = {
   created_at: string;
   send_count?: number;
   last_comm_at?: string | null;
+  generated_documents?: GeneratedDoc[] | null;
 };
 type Project = { id: string; name: string; clients?: { name?: string | null } | null };
 type Client = { id: string; name?: string | null; company?: string | null; email?: string | null; phone?: string | null; classification?: string | null };
@@ -84,6 +97,12 @@ export default function InvoicesPage() {
   const [previewOpen, setPreviewOpen] = useState(false);
   const [pdfBlobUrl, setPdfBlobUrl] = useState<string | null>(null);
   const [pdfLoading, setPdfLoading] = useState(false);
+
+  // Linked proposal/agreement viewer + resend
+  const [docViewerTarget, setDocViewerTarget] = useState<DocumentViewerTarget | null>(null);
+  const [emailDocTarget, setEmailDocTarget] = useState<{ id: string; title: string } | null>(null);
+  const [emailDocRecipient, setEmailDocRecipient] = useState<EmailComposerRecipient | null>(null);
+  const [emailDocOpen, setEmailDocOpen] = useState(false);
 
   const load = useCallback(async () => {
     try {
@@ -156,6 +175,37 @@ export default function InvoicesPage() {
       setPdfBlobUrl(null);
     }
   }, [previewOpen]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  async function viewInvoiceDoc(inv: Invoice, doc: GeneratedDoc) {
+    const base: DocumentViewerTarget = {
+      title: doc.title,
+      subtitle: doc.reference_code,
+      client: inv.clients?.company?.trim() || inv.clients?.name || undefined,
+      date: doc.created_at,
+      viewUrl: `/api/admin/documents/${doc.id}/view`,
+      isHtmlDocument: true,
+    };
+    setDocViewerTarget(base);
+    const res = await fetch(`/api/admin/documents/${doc.id}`).then((r) => r.json()).catch(() => null);
+    if (res?.data) {
+      setDocViewerTarget({
+        ...base,
+        refine: { documentId: doc.id, docType: doc.type, data: res.data.data },
+        gating: { documentId: doc.id, gated: !!res.data.gated },
+        onEmailClient: () => {
+          setDocViewerTarget(null);
+          resendInvoiceDoc(inv, doc);
+        },
+      });
+    }
+  }
+
+  function resendInvoiceDoc(inv: Invoice, doc: GeneratedDoc) {
+    if (!inv.clients?.email) { alert("This client has no email on file."); return; }
+    setEmailDocTarget({ id: doc.id, title: doc.title });
+    setEmailDocRecipient({ clientId: inv.clients.id, name: inv.clients.name ?? "Client", email: inv.clients.email });
+    setEmailDocOpen(true);
+  }
 
   function updateItem(i: number, field: keyof LineItem, value: string | number) {
     setForm((f) => {
@@ -396,6 +446,26 @@ export default function InvoicesPage() {
           actions={[
             { label: "Edit", icon: <Pencil size={13} />, onClick: (row) => openEdit(row as unknown as Invoice) },
             { label: "Preview PDF", icon: <Eye size={13} />, onClick: (row) => openPreview(String(row.id)) },
+            {
+              label: (row) => `View ${(row as unknown as Invoice).generated_documents?.[0]?.type === "agreement" ? "Agreement" : "Proposal"}`,
+              icon: (row) => (row as unknown as Invoice).generated_documents?.[0]?.type === "agreement" ? <ScrollText size={13} /> : <Briefcase size={13} />,
+              hidden: (row) => !(row as unknown as Invoice).generated_documents?.length,
+              onClick: (row) => {
+                const inv = row as unknown as Invoice;
+                const doc = inv.generated_documents?.[0];
+                if (doc) viewInvoiceDoc(inv, doc);
+              },
+            },
+            {
+              label: (row) => `Resend ${(row as unknown as Invoice).generated_documents?.[0]?.type === "agreement" ? "Agreement" : "Proposal"}`,
+              icon: <Send size={13} />,
+              hidden: (row) => !(row as unknown as Invoice).generated_documents?.length,
+              onClick: (row) => {
+                const inv = row as unknown as Invoice;
+                const doc = inv.generated_documents?.[0];
+                if (doc) resendInvoiceDoc(inv, doc);
+              },
+            },
             { label: "Delete", icon: <Trash2 size={13} />, destructive: true, onClick: (row) => deleteInvoice(row as unknown as Invoice) },
           ] as RowAction<Record<string, unknown>>[]}
           searchable
@@ -642,6 +712,14 @@ export default function InvoicesPage() {
           </form>
         </DialogContent>
       </Dialog>
+
+      <DocumentViewerSheet doc={docViewerTarget} onClose={() => setDocViewerTarget(null)} />
+      <EmailComposer
+        open={emailDocOpen}
+        onClose={() => { setEmailDocOpen(false); setEmailDocTarget(null); setEmailDocRecipient(null); }}
+        recipient={emailDocRecipient}
+        linkDocument={emailDocTarget}
+      />
     </div>
   );
 }

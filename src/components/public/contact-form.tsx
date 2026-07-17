@@ -25,9 +25,14 @@ const services = [
 
 interface ContactFormProps {
   variant?: "card" | "embedded";
+  /** Omits the "Service Interested In" field — for a general inquiry where
+   * the visitor has already told us this isn't about a specific service. */
+  hideService?: boolean;
+  /** Pre-fills the service field — used when arriving from the service-specific step. */
+  defaultService?: string;
 }
 
-export function ContactForm({ variant = "card" }: ContactFormProps) {
+export function ContactForm({ variant = "card", hideService, defaultService }: ContactFormProps) {
   const [submitted, setSubmitted] = useState(false);
   const [serverError, setServerError] = useState<string | null>(null);
 
@@ -35,7 +40,10 @@ export function ContactForm({ variant = "card" }: ContactFormProps) {
     register,
     handleSubmit,
     formState: { errors, isSubmitting },
-  } = useForm<FormData>({ resolver: zodResolver(schema) });
+  } = useForm<FormData>({
+    resolver: zodResolver(schema),
+    defaultValues: defaultService ? { service: defaultService } : undefined,
+  });
 
   async function onSubmit(data: FormData) {
     setServerError(null);
@@ -91,13 +99,15 @@ export function ContactForm({ variant = "card" }: ContactFormProps) {
         {errors.contact && <p className="mt-1.5 text-xs text-red-500">{errors.contact.message}</p>}
       </div>
 
-      <div>
-        <label className={label}>Service Interested In</label>
-        <select {...register("service")} className={cn(field, "dark:bg-brand-navy")}>
-          <option value="">Select a service…</option>
-          {services.map((s) => <option key={s} value={s}>{s}</option>)}
-        </select>
-      </div>
+      {!hideService && (
+        <div>
+          <label className={label}>Service Interested In</label>
+          <select {...register("service")} className={cn(field, "dark:bg-brand-navy")}>
+            <option value="">Select a service…</option>
+            {services.map((s) => <option key={s} value={s}>{s}</option>)}
+          </select>
+        </div>
+      )}
 
       <div>
         <label className={label}>Message <span className="text-brand-gold">*</span></label>

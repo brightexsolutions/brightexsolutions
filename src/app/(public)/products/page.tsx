@@ -155,7 +155,7 @@ export default async function ProductsPage() {
                     <MessageCircle size={15} />
                     Get Early Access
                   </a>
-                  <Link href="/book" className="inline-flex items-center justify-center gap-2 px-8 py-4 rounded-sm border border-white/20 text-white font-semibold text-sm hover:border-brand-gold/40 transition-colors">
+                  <Link href="/contact?intent=book_call" className="inline-flex items-center justify-center gap-2 px-8 py-4 rounded-sm border border-white/20 text-white font-semibold text-sm hover:border-brand-gold/40 transition-colors">
                     Book a Discovery Call <ArrowRight size={14} />
                   </Link>
                 </div>
@@ -189,7 +189,7 @@ export default async function ProductsPage() {
                     Express Interest on WhatsApp
                   </a>
                   <Link
-                    href="/book"
+                    href="/contact?intent=book_call"
                     className="inline-flex items-center justify-center gap-2 px-8 py-4 rounded-sm border border-white/20 text-white font-semibold text-sm hover:border-white/40 transition-colors"
                   >
                     Book a Discovery Call <ArrowRight size={14} />

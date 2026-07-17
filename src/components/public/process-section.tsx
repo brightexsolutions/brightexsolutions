@@ -1,31 +1,10 @@
 import { FadeIn, FadeInStagger, StaggerChild } from "./fade-in";
+import { PROCESS_STAGES } from "@/lib/brightex-sop";
 
-const steps = [
-  {
-    number: "01",
-    title: "Discovery",
-    description:
-      "We start by understanding your business — goals, audience, constraints, and what success looks like. No assumptions.",
-  },
-  {
-    number: "02",
-    title: "Strategy & Design",
-    description:
-      "Architecture decisions, user flows, and visual design — all mapped out before a single line of code.",
-  },
-  {
-    number: "03",
-    title: "Build",
-    description:
-      "Iterative development with regular check-ins. You see progress every week, not just at the end.",
-  },
-  {
-    number: "04",
-    title: "Launch & Grow",
-    description:
-      "Deployment, handover, and post-launch support. We don't disappear after go-live.",
-  },
-];
+// Sourced from PROCESS_STAGES (src/lib/brightex-sop.ts) — the same four
+// stages back the internal Standard Operating Procedure, so what's promised
+// here is exactly what the team actually follows, not a separate claim.
+const steps = PROCESS_STAGES.map((s) => ({ number: s.number, title: s.title, description: s.clientDescription }));
 
 export function ProcessSection() {
   return (
@@ -39,7 +18,7 @@ export function ProcessSection() {
             A Process Built for Clarity
           </h2>
           <p className="text-brand-muted text-lg max-w-xl mx-auto">
-            From first call to launch, you always know what's happening and what's next.
+            From first call to launch, you always know what&apos;s happening and what&apos;s next.
           </p>
         </FadeIn>
 

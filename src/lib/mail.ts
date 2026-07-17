@@ -48,7 +48,7 @@ function resolveSender(from?: string): string {
 }
 
 // ─── Drop-in nodemailer transporter replacement ───────────────────────────────
-// Keeps the same .sendMail() interface so all 15 existing callers work unchanged.
+// Keeps the same .sendMail() interface so all existing callers work unchanged.
 export const transporter = {
   sendMail: async (options: MailOptions) => {
     const result = await resend.emails.send({
@@ -64,6 +64,14 @@ export const transporter = {
         content_type: a.contentType,
       })),
     });
+    // The Resend SDK does NOT throw on API-level failures (rate limits,
+    // invalid domain, quota exceeded, etc.) — it returns { data: null, error }
+    // instead. Every caller of this wrapper (15+ routes) uses try/catch
+    // around sendMail() expecting a throw on failure, so without this check
+    // a rate-limited or rejected send silently reports success everywhere.
+    if (result.error) {
+      throw new Error(`Resend send failed [${result.error.name}]: ${result.error.message}`);
+    }
     return result;
   },
 };

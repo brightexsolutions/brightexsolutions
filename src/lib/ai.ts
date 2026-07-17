@@ -3,7 +3,8 @@
  *
  * Supports two providers, selectable per-call or via admin settings:
  *   anthropic  → Claude (Haiku / Sonnet / Opus)
- *   gemini     → Google Gemini (free-tier: 2.0 Flash, 1.5 Flash, 1.5 Pro)
+ *   gemini     → Google Gemini (free-tier first: 2.5 Flash / Flash Lite / Pro,
+ *                escalating to GEMINI_PAID_API_KEY only once the free tier is quota-limited)
  *
  * All keys are server-side only — ANTHROPIC_API_KEY and GEMINI_API_KEY
  * never reach the browser.
@@ -17,6 +18,19 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import type { AIProvider } from "@/types";
+import { consumeGeminiCall } from "@/lib/rate-limit";
+import { logAiUsage } from "@/lib/ai-monitor";
+
+/** Thrown when the app-side Gemini call budget is exhausted (protects the
+ * shared quota/credit, independent of the per-route IP rate limiters).
+ * Callers should treat this as an expected throttle — fall back to a
+ * template — not as a provider outage. */
+export class GeminiRateLimitedError extends Error {
+  constructor(public window: "minute" | "hour" | "day") {
+    super(`Gemini call budget exhausted (${window} window)`);
+    this.name = "GeminiRateLimitedError";
+  }
+}
 
 // Model catalogues live in ai-models.ts (no SDK imports — safe for Client Components).
 // Import them here for internal use and re-export so API routes can still
@@ -29,6 +43,7 @@ export type { AIModel } from "@/lib/ai-models";
 
 let _anthropic: Anthropic | null = null;
 let _gemini: GoogleGenerativeAI | null = null;
+let _geminiPaid: GoogleGenerativeAI | null = null;
 
 export function getAnthropicClient(): Anthropic {
   if (!_anthropic) {
@@ -38,12 +53,27 @@ export function getAnthropicClient(): Anthropic {
   return _anthropic;
 }
 
-export function getGeminiClient(): GoogleGenerativeAI {
+/** GEMINI_API_KEY is the free-tier key. GEMINI_PAID_API_KEY (optional) is only
+ * ever reached after the free key hits a quota/rate-limit error — see
+ * callGemini() below. Same escalation strategy as the Stride app. */
+export function getGeminiClient(usePaidKey = false): GoogleGenerativeAI {
+  if (usePaidKey) {
+    if (!_geminiPaid) {
+      if (!process.env.GEMINI_PAID_API_KEY) throw new Error("GEMINI_PAID_API_KEY is not set");
+      _geminiPaid = new GoogleGenerativeAI(process.env.GEMINI_PAID_API_KEY);
+    }
+    return _geminiPaid;
+  }
   if (!_gemini) {
     if (!process.env.GEMINI_API_KEY) throw new Error("GEMINI_API_KEY is not set");
     _gemini = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
   }
   return _gemini;
+}
+
+function isGeminiQuotaError(err: unknown): boolean {
+  const msg = err instanceof Error ? err.message : String(err);
+  return msg.includes("429") || /quota|rate.?limit|exhausted/i.test(msg);
 }
 
 // Legacy alias — existing callers that used getAIClient() keep working
@@ -73,6 +103,12 @@ export interface ChatMessage {
 
 // ─── Core call helpers ────────────────────────────────────────────────────────
 
+interface AIResult {
+  text: string;
+  tokensIn: number;
+  tokensOut: number;
+}
+
 async function callClaude({
   messages,
   system,
@@ -83,7 +119,7 @@ async function callClaude({
   system: string;
   model: string;
   maxTokens: number;
-}): Promise<string> {
+}): Promise<AIResult> {
   const client = getAnthropicClient();
   const res = await client.messages.create({
     model,
@@ -93,7 +129,14 @@ async function callClaude({
   });
   const block = res.content[0];
   if (block.type !== "text") throw new Error("Unexpected Anthropic response type");
-  return block.text.trim();
+  return { text: block.text.trim(), tokensIn: res.usage.input_tokens, tokensOut: res.usage.output_tokens };
+}
+
+function geminiUsage(response: { usageMetadata?: { promptTokenCount?: number; candidatesTokenCount?: number } }): { tokensIn: number; tokensOut: number } {
+  return {
+    tokensIn: response.usageMetadata?.promptTokenCount ?? 0,
+    tokensOut: response.usageMetadata?.candidatesTokenCount ?? 0,
+  };
 }
 
 async function callGemini({
@@ -101,24 +144,33 @@ async function callGemini({
   system,
   model,
   maxTokens,
+  usePaidKey = false,
 }: {
   messages: ChatMessage[];
   system: string;
   model: string;
   maxTokens: number;
-}): Promise<string> {
-  const client = getGeminiClient();
+  usePaidKey?: boolean;
+}): Promise<AIResult> {
+  const client = getGeminiClient(usePaidKey);
   const genModel = client.getGenerativeModel({
     model,
     systemInstruction: system,
-    generationConfig: { maxOutputTokens: maxTokens },
+    generationConfig: {
+      maxOutputTokens: maxTokens,
+      // 2.5-series Gemini models think by default — without this, hidden
+      // reasoning can consume the whole output budget and truncate the
+      // visible reply. Utility calls here never need chain-of-thought.
+      // Not in this SDK's types yet; passes straight through to the API.
+      thinkingConfig: { thinkingBudget: 0 },
+    } as Record<string, unknown>,
   });
 
   // Gemini uses alternating user/model roles; collapse to a single user prompt
   // when there's only one message (typical for admin intents)
   if (messages.length === 1) {
     const result = await genModel.generateContent(messages[0].content);
-    return result.response.text().trim();
+    return { text: result.response.text().trim(), ...geminiUsage(result.response) };
   }
 
   // Multi-turn: convert to Gemini history format
@@ -133,14 +185,14 @@ async function callGemini({
   // No user turns in history at all — fall back to single-shot
   if (firstUserIdx === -1) {
     const result = await genModel.generateContent(messages[messages.length - 1].content);
-    return result.response.text().trim();
+    return { text: result.response.text().trim(), ...geminiUsage(result.response) };
   }
 
   const history = firstUserIdx > 0 ? rawHistory.slice(firstUserIdx) : rawHistory;
   const chat = genModel.startChat({ history });
   const lastMessage = messages[messages.length - 1].content;
   const result = await chat.sendMessage(lastMessage);
-  return result.response.text().trim();
+  return { text: result.response.text().trim(), ...geminiUsage(result.response) };
 }
 
 // ─── Unified callAI ───────────────────────────────────────────────────────────
@@ -151,20 +203,47 @@ export async function callAI({
   model = AI_MODELS.haiku,
   maxTokens = 400,
   provider,
+  feature = "unknown",
 }: {
   messages: ChatMessage[];
   system: string;
   model?: string;
   maxTokens?: number;
   provider?: AIProvider;
+  /** Tags this call for the AI Usage dashboard, e.g. "admin_ai:draft_reply", "assistant_chat". */
+  feature?: string;
 }): Promise<string> {
   const resolvedProvider: AIProvider = provider ?? "anthropic";
 
   if (resolvedProvider === "gemini") {
-    return callGemini({ messages, system, model, maxTokens });
+    const budget = await consumeGeminiCall();
+    if (!budget.allowed) throw new GeminiRateLimitedError(budget.window!);
+
+    let result: AIResult;
+    let isFreeTier = true;
+    try {
+      result = await callGemini({ messages, system, model, maxTokens });
+    } catch (err) {
+      // Escalate to the paid key only when the free tier is actually
+      // rate-limited/exhausted and a paid key is configured — never on
+      // other errors (bad model name, invalid input, etc).
+      if (isGeminiQuotaError(err) && process.env.GEMINI_PAID_API_KEY) {
+        result = await callGemini({ messages, system, model, maxTokens, usePaidKey: true });
+        isFreeTier = false;
+      } else {
+        throw err;
+      }
+    }
+    // Awaited, not fire-and-forget: in a serverless runtime, work left running
+    // after the response is sent can be cut off before it completes, and
+    // silently losing usage logs would defeat the point of tracking them.
+    await logAiUsage({ feature, provider: "gemini", model, isFreeTier, tokensIn: result.tokensIn, tokensOut: result.tokensOut });
+    return result.text;
   }
 
-  return callClaude({ messages, system, model, maxTokens });
+  const result = await callClaude({ messages, system, model, maxTokens });
+  await logAiUsage({ feature, provider: "anthropic", model, isFreeTier: false, tokensIn: result.tokensIn, tokensOut: result.tokensOut });
+  return result.text;
 }
 
 // ─── Brixo public chat system prompt ─────────────────────────────────────────
@@ -218,12 +297,13 @@ YOUR TASKS: You help with:
 1. Drafting client emails in Brightex's voice
 2. Qualifying and scoring incoming leads
 3. Suggesting task breakdowns for projects
-4. Writing on-brand social media captions
+4. Writing on-brand social media captions and announcements that grow the business
 5. Summarising communication threads or project notes
 
 RULES:
 - Be direct and actionable — no unnecessary preamble
 - Match the Brightex brand voice in all client-facing drafts
+- Marketing content (captions, announcements) exists to grow the business: write for engagement and lead conversion, not just information — a strong opening hook and a specific call to action are not optional
 - For task suggestions, be practical and ordered by sequence
 - For lead scoring, give a score 1–10 with a one-line reason
 - Never add placeholder text like [YOUR NAME] — either fill it in or leave a clear NOTE: comment`;

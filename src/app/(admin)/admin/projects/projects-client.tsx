@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback, useRef } from "react";
 import {
   FolderOpen, Plus, Pencil, Trash2, Eye, Upload, FileText,
   Trash, CheckCircle2, RefreshCw, ChevronRight, TrendingUp,
-  Link2, Copy, ExternalLink,
+  Link2, Copy, ExternalLink, Briefcase, ScrollText, Send, Loader2,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { StatCard } from "@/components/admin/stat-card";
@@ -19,6 +19,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useConfirm } from "@/components/admin/confirm-dialog";
+import { EmailComposer } from "@/components/admin/email-composer";
+import { DocumentViewerSheet, type DocumentViewerTarget } from "@/components/admin/document-viewer-sheet";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -129,11 +131,23 @@ type Task = {
   team_members?: TaskMember;
 };
 
+type GeneratedDoc = {
+  id: string;
+  type: "proposal" | "agreement" | "sop";
+  title: string;
+  reference_code: string | null;
+  status: string;
+  gated?: boolean | null;
+  accepted_at?: string | null;
+  created_at: string;
+};
+
 type ProjectDetail = Project & {
   clients?: { id: string; name?: string | null; company?: string | null; email?: string | null } | null;
   invoices: Invoice[];
   tasks: Task[];
   consultancy_rate_history?: RateHistory[] | null;
+  generated_documents?: GeneratedDoc[] | null;
 };
 
 type Subcontractor = { id: string; name: string; role: string };
@@ -288,6 +302,12 @@ export function ProjectsPageClient() {
   const [docUploading, setDocUploading] = useState(false);
   const [statusChanging, setStatusChanging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Proposals & agreements linked to the project
+  const [docViewerTarget, setDocViewerTarget] = useState<DocumentViewerTarget | null>(null);
+  const [emailDocTarget, setEmailDocTarget] = useState<{ id: string; title: string } | null>(null);
+  const [emailDocOpen, setEmailDocOpen] = useState(false);
+  const [generatingDocType, setGeneratingDocType] = useState<"proposal" | "agreement" | null>(null);
 
   // Rate history modal
   const [rateModalOpen, setRateModalOpen] = useState(false);
@@ -467,6 +487,66 @@ export function ProjectsPageClient() {
         setProjects((prev) => prev.map((p) => p.id === viewProject.id ? { ...p, status: newStatus } : p));
       }
     } finally { setStatusChanging(false); }
+  }
+
+  async function viewGeneratedDoc(doc: GeneratedDoc) {
+    if (!viewProject) return;
+    const base: DocumentViewerTarget = {
+      title: doc.title,
+      subtitle: doc.reference_code,
+      client: viewProject.clients?.company?.trim() || viewProject.clients?.name || undefined,
+      date: doc.created_at,
+      viewUrl: `/api/admin/documents/${doc.id}/view`,
+      isHtmlDocument: true,
+    };
+    setDocViewerTarget(base);
+    const res = await fetch(`/api/admin/documents/${doc.id}`).then((r) => r.json()).catch(() => null);
+    if (res?.data) {
+      setDocViewerTarget({
+        ...base,
+        refine: { documentId: doc.id, docType: doc.type as "proposal" | "agreement", data: res.data.data },
+        gating: { documentId: doc.id, gated: !!res.data.gated },
+        onEmailClient: () => {
+          setDocViewerTarget(null);
+          setEmailDocTarget({ id: doc.id, title: doc.title });
+          setEmailDocOpen(true);
+        },
+      });
+    }
+  }
+
+  function resendGeneratedDoc(doc: GeneratedDoc) {
+    setEmailDocTarget({ id: doc.id, title: doc.title });
+    setEmailDocOpen(true);
+  }
+
+  async function generateDocForProject(type: "proposal" | "agreement") {
+    if (!viewProject?.client_id) { alert("This project has no client on file."); return; }
+    setGeneratingDocType(type);
+    try {
+      const summary = [
+        `${type === "proposal" ? "Proposal" : "Agreement"} prepared for an already-running project: "${viewProject.name}".`,
+        viewProject.notes,
+        viewProject.type ? `Project type: ${viewProject.type}.` : "",
+      ].filter(Boolean).join("\n") || `Prepare a ${type} for the project "${viewProject.name}".`;
+
+      const res = await fetch("/api/admin/documents/generate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          type,
+          clientId: viewProject.client_id,
+          projectId: viewProject.id,
+          engagementSummary: summary,
+          totalBudget: viewProject.budget || undefined,
+        }),
+      });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) { alert(json.error ?? `Failed to generate the ${type}.`); return; }
+      setViewProject((p) => p ? { ...p, generated_documents: [json.data, ...(p.generated_documents ?? [])] } : p);
+    } finally {
+      setGeneratingDocType(null);
+    }
   }
 
   async function handleDocUpload(file: File) {
@@ -1159,6 +1239,60 @@ export function ProjectsPageClient() {
                   )}
                 </div>
 
+                {/* Proposals & Agreements */}
+                <div className="px-6 py-5 border-b border-border">
+                  <div className="flex items-center justify-between mb-3">
+                    <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Proposals &amp; Agreements</p>
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => generateDocForProject("proposal")}
+                        disabled={generatingDocType !== null}
+                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-sm border border-border text-xs font-medium hover:border-brand-gold/40 hover:text-foreground transition-colors text-muted-foreground disabled:opacity-50"
+                      >
+                        {generatingDocType === "proposal" ? <Loader2 size={12} className="animate-spin" /> : <Briefcase size={12} />}
+                        {generatingDocType === "proposal" ? "Generating…" : "Generate Proposal"}
+                      </button>
+                      <button
+                        onClick={() => generateDocForProject("agreement")}
+                        disabled={generatingDocType !== null}
+                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-sm border border-border text-xs font-medium hover:border-brand-gold/40 hover:text-foreground transition-colors text-muted-foreground disabled:opacity-50"
+                      >
+                        {generatingDocType === "agreement" ? <Loader2 size={12} className="animate-spin" /> : <ScrollText size={12} />}
+                        {generatingDocType === "agreement" ? "Generating…" : "Generate Agreement"}
+                      </button>
+                    </div>
+                  </div>
+                  {(viewProject.generated_documents ?? []).length === 0 ? (
+                    <p className="text-xs text-muted-foreground">No proposal or agreement prepared for this project yet — generate one directly from what&apos;s already known about it.</p>
+                  ) : (
+                    <div className="space-y-2">
+                      {(viewProject.generated_documents ?? []).map((doc) => {
+                        const Icon = doc.type === "proposal" ? Briefcase : ScrollText;
+                        return (
+                          <div key={doc.id} className="flex items-center gap-3 p-2.5 rounded-sm border border-border group/gdoc hover:border-brand-gold/30 transition-colors">
+                            <Icon size={16} className="text-muted-foreground shrink-0" />
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm text-foreground truncate">{doc.title}</p>
+                              <p className="text-[11px] text-muted-foreground">
+                                {doc.reference_code} · {fmtDate(doc.created_at)}
+                                {doc.accepted_at ? " · Accepted" : ""}
+                              </p>
+                            </div>
+                            <div className="flex items-center gap-1">
+                              <button onClick={() => viewGeneratedDoc(doc)} className="p-1 rounded-sm text-muted-foreground hover:text-foreground hover:bg-muted transition-colors" title="View">
+                                <Eye size={13} />
+                              </button>
+                              <button onClick={() => resendGeneratedDoc(doc)} className="p-1 rounded-sm text-muted-foreground hover:text-foreground hover:bg-muted transition-colors" title="Resend">
+                                <Send size={13} />
+                              </button>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+
                 {/* Documents */}
                 <div className="px-6 py-5 border-b border-border">
                   <div className="flex items-center justify-between mb-3">
@@ -1390,6 +1524,15 @@ export function ProjectsPageClient() {
           )}
         </SheetContent>
       </Sheet>
+
+      <DocumentViewerSheet doc={docViewerTarget} onClose={() => setDocViewerTarget(null)} />
+
+      <EmailComposer
+        open={emailDocOpen}
+        onClose={() => { setEmailDocOpen(false); setEmailDocTarget(null); }}
+        recipient={viewProject?.clients?.email ? { clientId: viewProject.client_id ?? undefined, name: viewProject.clients.name ?? "Client", email: viewProject.clients.email } : null}
+        linkDocument={emailDocTarget}
+      />
     </div>
   );
 }

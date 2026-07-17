@@ -257,7 +257,7 @@ export default async function WorkPage() {
                     Get Early Access
                   </a>
                   <Link
-                    href="/book"
+                    href="/contact?intent=book_call"
                     className="inline-flex items-center justify-center gap-2 px-8 py-4 rounded-sm border border-white/20 text-white font-semibold text-sm hover:border-brand-gold/40 transition-colors"
                   >
                     Book a Discovery Call <ArrowRight size={14} />
@@ -320,7 +320,7 @@ export default async function WorkPage() {
                 Start a project
               </Link>
               <Link
-                href="/book"
+                href="/contact?intent=book_call"
                 className="inline-flex items-center justify-center gap-2 px-8 py-3.5 rounded-sm border border-white/15 text-white text-sm font-medium hover:border-white/35 hover:bg-white/[0.04] transition-all"
               >
                 Book a call

@@ -128,6 +128,81 @@ export function emailParagraph(html: string): string {
   return `<p style="color:#475569;font-size:15px;line-height:1.75;margin:14px 0">${html}</p>`;
 }
 
+/** Escapes HTML special characters. Use before interpolating user-typed text
+ * into an email — otherwise a client's own plain-text input becomes live
+ * markup in the outgoing email. */
+export function escapeHtml(text: string): string {
+  return text
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+/** Turns bare URLs in already-escaped plain text into clickable links. Run
+ * AFTER escapeHtml() so the href itself can't inject markup either. */
+export function linkifyText(escapedText: string): string {
+  return escapedText.replace(
+    /(https?:\/\/[^\s<]+)/g,
+    (url) => `<a href="${url}" style="color:${GOLD};text-decoration:underline">${url}</a>`
+  );
+}
+
+/** Applies the composer's lightweight formatting marks to already-escaped
+ * text: **bold**, __underline__, then linkifies. Run in that order so a URL
+ * containing an underscore can't be mistaken for an underline mark. */
+function applyInlineFormatting(escaped: string): string {
+  const formatted = escaped
+    .replace(/\*\*([^\n*]+)\*\*/g, "<strong>$1</strong>")
+    .replace(/__([^\n_]+)__/g, "<u>$1</u>");
+  return linkifyText(formatted);
+}
+
+/** Plain, free-typed email body (composer / manual comms log) → safe HTML:
+ * escaped, then bold/underline/link formatting applied, blank-line-separated
+ * paragraphs (single newlines within one become <br>), and consecutive
+ * "- " lines become a real bulleted list. */
+export function emailBodyFromPlainText(body: string): string {
+  const html: string[] = [];
+  let paragraphLines: string[] = [];
+  let listItems: string[] = [];
+
+  const flushParagraph = () => {
+    if (paragraphLines.length === 0) return;
+    const text = paragraphLines.join("\n").trim();
+    if (text) html.push(emailParagraph(applyInlineFormatting(escapeHtml(text)).replace(/\n/g, "<br>")));
+    paragraphLines = [];
+  };
+  const flushList = () => {
+    if (listItems.length === 0) return;
+    const items = listItems
+      .map((item) => `<li style="margin:4px 0;color:#475569;font-size:15px;line-height:1.6">${applyInlineFormatting(escapeHtml(item))}</li>`)
+      .join("");
+    html.push(`<ul style="margin:14px 0;padding-left:22px">${items}</ul>`);
+    listItems = [];
+  };
+
+  for (const rawLine of body.split("\n")) {
+    const trimmed = rawLine.trim();
+    const bulletMatch = /^[-*]\s+(.+)$/.exec(trimmed);
+    if (bulletMatch) {
+      flushParagraph();
+      listItems.push(bulletMatch[1]);
+    } else if (trimmed === "") {
+      flushList();
+      flushParagraph();
+    } else {
+      flushList();
+      paragraphLines.push(rawLine);
+    }
+  }
+  flushList();
+  flushParagraph();
+
+  return html.join("");
+}
+
 /** Small uppercase section label. */
 export function emailSectionLabel(text: string): string {
   return `<p style="font-size:11px;font-weight:700;color:${MUTED};text-transform:uppercase;

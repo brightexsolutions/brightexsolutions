@@ -10,6 +10,7 @@ import { StatCard } from "@/components/admin/stat-card";
 import { ActivityFeedTable, BookingsFeedTable, type ActivityRow, type BookingRow } from "@/components/admin/dashboard-tables";
 import { RevenueChart, type MonthlyDataPoint } from "@/components/admin/revenue-chart";
 import { DashboardGreeting } from "@/components/admin/dashboard-greeting";
+import { AiAssistantPanel } from "@/components/admin/ai-assistant-panel";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 export const metadata: Metadata = { title: "Dashboard | Admin" };
@@ -317,6 +318,9 @@ export default async function AdminDashboardPage() {
           </CardContent>
         </Card>
       </div>
+
+      {/* ── AI Assistant: suggested actions + approval queue ── */}
+      <AiAssistantPanel />
 
       {/* ── Recent Activity table ── */}
       <Card className="rounded-xl">

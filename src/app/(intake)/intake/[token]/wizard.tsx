@@ -5,7 +5,7 @@ import { SITE_NAME, BUSINESS_WHATSAPP } from "@/lib/constants";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-type ServiceType = "website" | "mobile" | "erp" | "design" | "consultancy" | "other";
+type ServiceType = "website" | "mobile" | "erp" | "design" | "consultancy" | "ai_automation" | "other";
 
 interface IntakeState {
   // Step 1
@@ -45,6 +45,7 @@ const SERVICE_TYPES: { value: ServiceType; label: string; icon: string; sub: str
   { value: "erp",          label: "Software / ERP System", icon: "⚙️",  sub: "Custom software or business management system" },
   { value: "design",       label: "Design & Branding",     icon: "🎨", sub: "Logo, brand identity, graphics, or marketing materials" },
   { value: "consultancy",  label: "Business Consultancy",  icon: "💼", sub: "Strategy, digital transformation, or advisory" },
+  { value: "ai_automation",label: "AI & Automation",       icon: "🤖", sub: "AI assistants, workflow automation, or integrations" },
   { value: "other",        label: "Something Else",        icon: "🔧", sub: "Tell us what you have in mind" },
 ];
 
@@ -69,6 +70,7 @@ const BUDGET_OPTIONS = [
 const WEBSITE_PAGES = ["Home", "About Us", "Services", "Portfolio / Work", "Blog", "Contact", "Online Store / Shop", "Booking / Appointments", "Custom pages"];
 const DESIGN_TYPES  = ["Logo", "Business Card", "Flyer / Poster", "Social Media Kit", "Full Brand Identity", "Packaging Design", "Presentation / Pitch Deck", "Other"];
 const CONSULTANCY_AREAS = ["Business Strategy", "Digital Transformation", "Process Optimisation", "Market Entry / Expansion", "Tech / Software Advisory", "Other"];
+const AI_AUTOMATION_AREAS = ["AI Chat Assistant", "Workflow / Process Automation", "Data & Reporting Automation", "Integrations Between Systems", "Content / Document Generation", "Other"];
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -170,7 +172,7 @@ function Step1({ state, update }: { state: IntakeState; update: (p: Partial<Inta
 function Step2({ state, update }: { state: IntakeState; update: (p: Partial<IntakeState>) => void }) {
   const typeLabelMap: Record<string, string> = {
     website: "website or web app", mobile: "mobile app", erp: "software or system",
-    design: "design project", consultancy: "consultancy engagement", other: "project",
+    design: "design project", consultancy: "consultancy engagement", ai_automation: "AI or automation project", other: "project",
   };
   const typeLabel = state.service_type ? typeLabelMap[state.service_type] : "project";
 
@@ -416,7 +418,7 @@ function Step3Consultancy({ state, update }: { state: IntakeState; update: (p: P
     <div className="space-y-5">
       <div>
         <h2 className="text-xl font-bold text-slate-800">Your consultancy needs</h2>
-        <p className="text-sm text-slate-500 mt-1">Help us understand the challenge you're facing.</p>
+        <p className="text-sm text-slate-500 mt-1">Help us understand the challenge you&apos;re facing.</p>
       </div>
 
       <SpecField label="Area of focus" note="Select all that apply.">
@@ -426,6 +428,43 @@ function Step3Consultancy({ state, update }: { state: IntakeState; update: (p: P
       <SpecField label="Describe the challenge in your own words">
         <textarea rows={4} value={(sp.challenge as string) ?? ""} onChange={(e) => setSp("challenge", e.target.value)}
           placeholder="What's the situation? What's not working? What outcome are you hoping for?…"
+          className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white text-sm text-slate-700 placeholder:text-slate-300 focus:outline-none focus:ring-2 focus:ring-[#f9a825]/40 focus:border-[#f9a825] resize-none" />
+      </SpecField>
+    </div>
+  );
+}
+
+function Step3AiAutomation({ state, update }: { state: IntakeState; update: (p: Partial<IntakeState>) => void }) {
+  const sp = state.specifics as Record<string, unknown>;
+  function setSp(k: string, v: unknown) { update({ specifics: { ...sp, [k]: v } }); }
+  function toggleArea(a: string) {
+    const cur = (sp.focus_areas ?? []) as string[];
+    setSp("focus_areas", cur.includes(a) ? cur.filter((x) => x !== a) : [...cur, a]);
+  }
+
+  return (
+    <div className="space-y-5">
+      <div>
+        <h2 className="text-xl font-bold text-slate-800">About your AI / automation need</h2>
+        <p className="text-sm text-slate-500 mt-1">Help us understand what you&apos;d like to automate or add AI to.</p>
+      </div>
+
+      <SpecField label="What kind of AI or automation?" note="Select all that apply.">
+        <ChipGroup options={AI_AUTOMATION_AREAS} selected={(sp.focus_areas ?? []) as string[]} onToggle={toggleArea} />
+      </SpecField>
+
+      <SpecField label="Do you currently do this manually or with another tool?">
+        <ToggleYesNo value={sp.has_current_process as boolean ?? null} onChange={(v) => setSp("has_current_process", v)} />
+        {!!sp.has_current_process && (
+          <input type="text" value={(sp.current_process as string) ?? ""} onChange={(e) => setSp("current_process", e.target.value)}
+            placeholder="e.g. Manually replying to WhatsApp messages, using spreadsheets…"
+            className="mt-2 w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white text-sm text-slate-700 placeholder:text-slate-300 focus:outline-none focus:ring-2 focus:ring-[#f9a825]/40 focus:border-[#f9a825]" />
+        )}
+      </SpecField>
+
+      <SpecField label="Describe what you'd like automated or AI-assisted" note="Be as specific as you can — the actual task, not the technology.">
+        <textarea rows={3} value={(sp.automation_goal as string) ?? ""} onChange={(e) => setSp("automation_goal", e.target.value)}
+          placeholder="e.g. Auto-reply to customer WhatsApp enquiries, generate weekly sales reports, sync orders between our website and accounting system…"
           className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white text-sm text-slate-700 placeholder:text-slate-300 focus:outline-none focus:ring-2 focus:ring-[#f9a825]/40 focus:border-[#f9a825] resize-none" />
       </SpecField>
     </div>
@@ -613,16 +652,24 @@ export function IntakeWizard({
   clientEmail = "",
   clientCompany = "",
   isGeneric = false,
+  defaultServiceType = "",
 }: {
   token?: string;
   clientName?: string;
   clientEmail?: string;
   clientCompany?: string;
   isGeneric?: boolean;
+  /** Pre-selects step 1 — e.g. arriving from /contact after picking a service. */
+  defaultServiceType?: string;
 }) {
+  const validDefaultService = SERVICE_TYPES.some((s) => s.value === defaultServiceType)
+    ? (defaultServiceType as ServiceType)
+    : "";
+
   const [step, setStep] = useState(1);
   const [state, setState] = useState<IntakeState>({
     ...EMPTY,
+    service_type: validDefaultService,
     submitter_name: clientName,
     submitter_email: clientEmail,
     submitter_company: clientCompany,
@@ -879,6 +926,7 @@ export function IntakeWizard({
             {step === 3 && state.service_type === "erp"          && <Step3ERP state={state} update={update} />}
             {step === 3 && state.service_type === "design"       && <Step3Design state={state} update={update} />}
             {step === 3 && state.service_type === "consultancy"  && <Step3Consultancy state={state} update={update} />}
+            {step === 3 && state.service_type === "ai_automation" && <Step3AiAutomation state={state} update={update} />}
             {step === 3 && state.service_type === "other"        && <Step3Other state={state} update={update} />}
             {step === 4 && <Step4 state={state} update={update} />}
             {step === 5 && <Step5 state={state} update={update} clientName={clientName} clientEmail={clientEmail} clientCompany={clientCompany} isGeneric={isGeneric} />}

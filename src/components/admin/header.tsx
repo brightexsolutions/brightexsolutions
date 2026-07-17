@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import { NotificationBell } from "@/components/admin/notification-bell";
 import { PushNotificationsToggle } from "@/components/admin/push-notifications-toggle";
+import { SopQuickAccess } from "@/components/admin/sop-quick-access";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem,
   DropdownMenuSeparator, DropdownMenuTrigger,
@@ -119,6 +120,9 @@ export function AdminHeader({ onMenuClick }: AdminHeaderProps) {
 
         {/* Notifications */}
         <NotificationBell />
+
+        {/* SOPs quick access */}
+        <SopQuickAccess />
 
         {/* Theme */}
         <DropdownMenu>

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { MessageSquare, Plus, Pencil, Trash2, Sparkles, Loader2 } from "lucide-react";
+import { MessageSquare, Plus, Pencil, Trash2, Sparkles, Loader2, Send } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { StatCard } from "@/components/admin/stat-card";
 import { DataTable, StackedCell, type Column, type RowAction, type FilterConfig } from "@/components/admin/data-table";
@@ -12,6 +12,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { useConfirm } from "@/components/admin/confirm-dialog";
+import { EmailComposer } from "@/components/admin/email-composer";
 
 const typeColors: Record<string, string> = {
   email: "bg-blue-400/10 text-blue-400",
@@ -48,6 +49,7 @@ type Communication = {
 export function CommunicationsPageClient() {
   const confirm = useConfirm();
   const [open, setOpen] = useState(false);
+  const [composerOpen, setComposerOpen] = useState(false);
   const [editTarget, setEditTarget] = useState<Communication | null>(null);
   const [activeFilter, setActiveFilter] = useState("All");
   const [form, setForm] = useState(defaultForm);
@@ -154,9 +156,14 @@ export function CommunicationsPageClient() {
           <h1 className="font-display text-2xl font-bold text-foreground">Communications</h1>
           <p className="text-sm text-muted-foreground mt-1">Log calls, emails, and meetings with clients.</p>
         </div>
-        <button onClick={openCreate} className="inline-flex items-center gap-2 px-4 py-2.5 rounded-sm bg-brand-gold text-brand-navy font-semibold text-sm hover:bg-brand-gold-hover transition-colors">
-          <Plus size={15} />Log Entry
-        </button>
+        <div className="flex items-center gap-2">
+          <button onClick={() => setComposerOpen(true)} className="inline-flex items-center gap-2 px-4 py-2.5 rounded-sm border border-brand-gold/40 text-brand-gold font-semibold text-sm hover:bg-brand-gold/10 transition-colors">
+            <Send size={15} />Compose Email
+          </button>
+          <button onClick={openCreate} className="inline-flex items-center gap-2 px-4 py-2.5 rounded-sm bg-brand-gold text-brand-navy font-semibold text-sm hover:bg-brand-gold-hover transition-colors">
+            <Plus size={15} />Log Entry
+          </button>
+        </div>
       </div>
 
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
@@ -286,6 +293,12 @@ export function CommunicationsPageClient() {
           </form>
         </DialogContent>
       </Dialog>
+
+      <EmailComposer
+        open={composerOpen}
+        onClose={() => setComposerOpen(false)}
+        onSent={() => load()}
+      />
     </div>
   );
 }
