@@ -2,7 +2,7 @@
 
 # Brightex Solutions
 
-### Tech Consultancy Company · Global
+### Tech Consultancy · Global
 
 **We design, build, and ship production web & mobile products.**
 
