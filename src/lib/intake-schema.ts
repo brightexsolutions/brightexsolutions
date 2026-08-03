@@ -903,6 +903,196 @@ export const LEGACY_FIELD_LABELS: Record<string, string> = {
   extra:               "Additional context",
 };
 
+// ─── Migrating v1 answers into the v2 form ────────────────────────────────────
+
+/**
+ * Chip options whose wording changed between v1 and v2. Case differences are
+ * handled automatically, so only genuine rewordings belong here.
+ *
+ * A value mapped to null had its question replaced by a different mechanism
+ * entirely (an online store is now the needs_ecommerce toggle, not a page), so
+ * it is preserved as free text rather than forced onto a chip that means
+ * something subtly different.
+ */
+const LEGACY_VALUE_MAP: Record<string, Record<string, string | null>> = {
+  pages: {
+    "Portfolio / Work": "Portfolio or past work",
+    "Blog": "Blog or news",
+    "Online Store / Shop": null,
+    "Booking / Appointments": null,
+    "Custom pages": null,
+  },
+  design_types: {
+    "Business Card": "Business cards",
+    "Flyer / Poster": "Flyers or posters",
+    "Social Media Kit": "Social media templates",
+    "Full Brand Identity": "Full brand identity",
+    "Packaging Design": "Packaging or labels",
+    "Presentation / Pitch Deck": "Pitch deck or presentation",
+  },
+  platforms: {
+    "iOS (iPhone)": "iPhone (iOS)",
+  },
+  focus_areas: {
+    "Business Strategy": "Business strategy",
+    "Digital Transformation": "Digital transformation",
+    "Process Optimisation": "Process and operations",
+    "Market Entry / Expansion": "Market entry or expansion",
+    "Tech / Software Advisory": "Choosing the right software",
+    "AI Chat Assistant": "AI assistant answering customer questions",
+    "Workflow / Process Automation": "Repetitive admin work done automatically",
+    "Data & Reporting Automation": "Reports generated on a schedule",
+    "Integrations Between Systems": "Connecting two systems that do not talk",
+    "Content / Document Generation": "Documents or quotes generated automatically",
+  },
+  audience: {
+    "My customers / public": "Our customers or the public",
+    "Internal staff / team": "Our staff or team",
+  },
+  team_size: {
+    "2 – 10 people": "2 to 10",
+    "11 – 50 people": "11 to 50",
+    "50+ people": "51 to 200",
+  },
+};
+
+/**
+ * v1 answers that are expressed by a different question in v2.
+ *
+ * A client who asked for an "Online Store / Shop" page was telling us they
+ * want to sell online, which v2 asks directly. Turning the matching toggle on
+ * is a fair reading of what they already said, and they can correct it in the
+ * form. Only applied where the target has not been answered, so an explicit
+ * answer is never overwritten by an inference.
+ */
+const IMPLIED_BY_VALUE: Record<string, Record<string, { field: string; value: unknown }>> = {
+  pages: {
+    "Online Store / Shop": { field: "needs_ecommerce", value: true },
+    "Booking / Appointments": { field: "needs_bookings", value: true },
+  },
+};
+
+/** Top-level fields that moved out of `specifics` between v1 and v2. */
+const LEGACY_FIELD_MOVES: { from: string; to: string }[] = [
+  // The website questionnaire asked for reference sites; that question is now
+  // asked once for the whole project rather than per service.
+  { from: "references", to: "reference_links" },
+];
+
+/** Resolves a stored value against a field's current options. */
+function matchOption(field: IntakeField, value: string): string | null {
+  const options = field.options ?? [];
+  if (options.includes(value)) return value;
+
+  const lower = value.trim().toLowerCase();
+  const caseMatch = options.find((o) => o.toLowerCase() === lower);
+  if (caseMatch) return caseMatch;
+
+  const mapped = LEGACY_VALUE_MAP[field.key]?.[value];
+  if (mapped && options.includes(mapped)) return mapped;
+
+  return null;
+}
+
+/**
+ * Reshapes answers stored under an older version of the questionnaire so the
+ * current form can render them.
+ *
+ * Two things changed between versions and both lose data if ignored. Question
+ * wording moved on, so a stored "About Us" no longer lights up the "About us"
+ * chip. More seriously, some questions changed kind: a mobile app's feature
+ * list was free text in v1 and is a chip list in v2, so a client's carefully
+ * written spec sat in an array-typed field, invisible, and would have been
+ * wiped the moment they touched a chip.
+ *
+ * Nothing is ever discarded. Anything that cannot be matched to a current
+ * option is preserved as free text in the field's "something else" box, where
+ * the client can see and edit it.
+ */
+export function migrateLegacyAnswers(
+  serviceType: string,
+  answers: Record<string, unknown>
+): Record<string, unknown> {
+  const fields = fieldsFor(serviceType);
+  if (fields.length === 0) return { ...answers };
+
+  const out: Record<string, unknown> = { ...answers };
+
+  for (const field of fields) {
+    const value = out[field.key];
+    if (value === undefined || value === null || value === "") continue;
+
+    const otherKey = `${field.key}_other`;
+    const spillover: string[] = [];
+    const existingOther = typeof out[otherKey] === "string" ? (out[otherKey] as string) : "";
+
+    if (field.kind === "chips") {
+      const multi = field.multi !== false;
+      const rawValues = Array.isArray(value)
+        ? (value as unknown[]).map(String)
+        : [String(value)];
+
+      const matched: string[] = [];
+      for (const raw of rawValues) {
+        const hit = matchOption(field, raw);
+        if (hit) {
+          if (!matched.includes(hit)) matched.push(hit);
+          continue;
+        }
+
+        // Retired options that v2 asks about through a different question.
+        const implied = IMPLIED_BY_VALUE[field.key]?.[raw];
+        if (implied && (out[implied.field] === undefined || out[implied.field] === null)) {
+          out[implied.field] = implied.value;
+        }
+        spillover.push(raw);
+      }
+
+      // A single-select field that used to accept several answers keeps the
+      // first as the selection and the rest as text, rather than dropping them.
+      out[field.key] = multi ? matched : (matched[0] ?? "");
+      if (!multi) spillover.push(...matched.slice(1));
+    } else if (field.kind === "text" || field.kind === "textarea") {
+      if (Array.isArray(value)) out[field.key] = (value as unknown[]).map(String).join(", ");
+      else if (typeof value !== "string") out[field.key] = String(value);
+    } else if (field.kind === "yesno") {
+      if (typeof value !== "boolean") {
+        const s = String(value).toLowerCase();
+        out[field.key] = s === "true" || s === "yes" ? true : s === "false" || s === "no" ? false : null;
+      }
+    }
+
+    if (spillover.length > 0) {
+      out[otherKey] = [existingOther, ...spillover].filter(Boolean).join(", ");
+    }
+  }
+
+  return out;
+}
+
+/** Applies the field moves that lifted answers out of `specifics`. */
+export function applyLegacyFieldMoves(
+  specifics: Record<string, Record<string, unknown>>,
+  topLevel: Record<string, unknown>
+): { specifics: Record<string, Record<string, unknown>>; topLevel: Record<string, unknown> } {
+  const nextSpecifics: Record<string, Record<string, unknown>> = {};
+  const nextTop = { ...topLevel };
+
+  for (const [service, answers] of Object.entries(specifics)) {
+    const copy = { ...answers };
+    for (const move of LEGACY_FIELD_MOVES) {
+      const value = copy[move.from];
+      if (typeof value === "string" && value.trim() && !String(nextTop[move.to] ?? "").trim()) {
+        nextTop[move.to] = value;
+        delete copy[move.from];
+      }
+    }
+    nextSpecifics[service] = copy;
+  }
+
+  return { specifics: nextSpecifics, topLevel: nextTop };
+}
+
 // ─── Read-back helpers (admin sheet, AI brief) ────────────────────────────────
 
 /** Every field for a service type, flattened, so answers can be labelled. */

@@ -849,6 +849,10 @@ export function IntakeWizard({
   clientPhone = "",
   isGeneric = false,
   defaultServiceType = "",
+  editToken = "",
+  initialState,
+  editsRemaining = 0,
+  maxEdits = 0,
 }: {
   token?: string;
   clientName?: string;
@@ -858,12 +862,22 @@ export function IntakeWizard({
   isGeneric?: boolean;
   /** Pre-selects step 1, e.g. arriving from /contact after picking a service. */
   defaultServiceType?: string;
+  /** Set when reopening an already-submitted intake. Switches the wizard from
+   * creating a submission to revising one. */
+  editToken?: string;
+  /** Previous answers, so an edit opens with everything already filled in. */
+  initialState?: Partial<IntakeState>;
+  editsRemaining?: number;
+  maxEdits?: number;
 }) {
+  const isEditing = !!editToken;
   const defaultServices: ServiceType[] = (SERVICE_TYPES as readonly string[]).includes(defaultServiceType)
     ? [defaultServiceType as ServiceType]
     : [];
 
-  const draftKey = `${DRAFT_KEY_PREFIX}:${token || "generic"}`;
+  // Scoped per intake when editing, so a revision in progress can never be
+  // confused with a draft of a brand new submission.
+  const draftKey = `${DRAFT_KEY_PREFIX}:${editToken ? `edit-${editToken}` : token || "generic"}`;
 
   const [step, setStep] = useState(1);
   const [state, setState] = useState<IntakeState>({
@@ -873,10 +887,14 @@ export function IntakeWizard({
     submitter_email: clientEmail,
     submitter_company: clientCompany,
     submitter_phone: clientPhone,
+    ...initialState,
   });
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState("");
+  /** Returned on submission, so the client can come back and revise. */
+  const [editUrl, setEditUrl] = useState("");
+  const [remainingEdits, setRemainingEdits] = useState(editsRemaining);
   const [scrolled, setScrolled] = useState(false);
   const [draftRestored, setDraftRestored] = useState(false);
   const [hydrated, setHydrated] = useState(false);
@@ -922,6 +940,13 @@ export function IntakeWizard({
     window.scrollTo({ top: 0, behavior: "smooth" });
   }, [step]);
 
+  // The furthest step reached, so someone who jumps back to fix an answer can
+  // jump forward again rather than clicking Continue through everything.
+  const [maxStepReached, setMaxStepReached] = useState(1);
+  useEffect(() => {
+    setMaxStepReached((prev) => Math.max(prev, step));
+  }, [step]);
+
   const update = useCallback((patch: Partial<IntakeState>) => {
     setState((prev) => ({ ...prev, ...patch }));
     setError("");
@@ -962,9 +987,11 @@ export function IntakeWizard({
     setSubmitting(true);
     setError("");
     try {
-      const url = token ? `/api/intake/${token}` : "/api/intake";
+      const url = isEditing
+        ? `/api/intake/edit/${editToken}`
+        : token ? `/api/intake/${token}` : "/api/intake";
       const res = await fetch(url, {
-        method: "POST",
+        method: isEditing ? "PUT" : "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           ...state,
@@ -993,6 +1020,13 @@ export function IntakeWizard({
           : (j.error ?? "Submission failed. Please try again."));
         return;
       }
+      const payload = await res.json().catch(() => ({}));
+      if (isEditing) {
+        setRemainingEdits(Number(payload.editsRemaining ?? 0));
+      } else if (payload.editUrl) {
+        setEditUrl(String(payload.editUrl));
+        setRemainingEdits(Number(payload.editsRemaining ?? maxEdits));
+      }
       try { window.localStorage.removeItem(draftKey); } catch { /* best effort */ }
       setSubmitted(true);
     } catch {
@@ -1016,6 +1050,41 @@ export function IntakeWizard({
     setDraftRestored(false);
   }
 
+  // ── Edit budget spent ──────────────────────────────────────────────────────
+  // Checked before the form renders. Letting someone rewrite six steps and
+  // only then telling them it cannot be saved would be the worse failure.
+
+  if (isEditing && remainingEdits <= 0 && !submitted) {
+    return (
+      <div className="min-h-screen flex flex-col" style={{ background: "#f1f5f9" }}>
+        <div style={{ background: NAVY }} className="px-4 pt-5 pb-6 shrink-0">
+          <div className="max-w-lg mx-auto flex items-center gap-3">
+            <div className="w-9 h-9 rounded-lg flex items-center justify-center text-base font-extrabold shrink-0 shadow-sm"
+              style={{ background: GOLD, color: NAVY }}>B</div>
+            <p className="text-white font-semibold text-sm tracking-wide">{SITE_NAME}</p>
+          </div>
+        </div>
+        <div className="flex-1 flex items-center justify-center px-4 py-16">
+          <div className="bg-white rounded-2xl shadow-sm border border-slate-200/60 p-8 sm:p-12 text-center max-w-md w-full">
+            <div className="w-16 h-16 rounded-full bg-slate-100 flex items-center justify-center mx-auto mb-6 text-2xl">
+              📋
+            </div>
+            <h2 className="text-xl font-bold text-slate-800 mb-3">This submission is now final</h2>
+            <p className="text-slate-500 text-sm leading-relaxed mb-5">
+              You have already updated it {maxEdits} times, which is the limit. Nothing is lost, we still have
+              everything you sent. If something else needs changing, message us and we will update it for you.
+            </p>
+            <a href={`https://wa.me/${BUSINESS_WHATSAPP}`} target="_blank" rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold text-white"
+              style={{ background: "#25D366" }}>
+              💬 Message us on WhatsApp
+            </a>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   // ── Thank you screen ───────────────────────────────────────────────────────
 
   if (submitted) {
@@ -1037,18 +1106,52 @@ export function IntakeWizard({
                 <polyline points="20 6 9 17 4 12" />
               </svg>
             </div>
-            <h2 className="text-2xl font-bold text-slate-800 mb-3">We have your requirements</h2>
+            <h2 className="text-2xl font-bold text-slate-800 mb-3">
+              {isEditing ? "Your changes are saved" : "We have your requirements"}
+            </h2>
             <p className="text-slate-500 text-sm leading-relaxed mb-2">
-              Thank you, {firstName}. We are reviewing what you sent and will reach out to arrange a
-              discovery call so we can go through it together.
+              {isEditing
+                ? `Thank you, ${firstName}. We have the updated version and will work from that.`
+                : `Thank you, ${firstName}. We are reviewing what you sent and will reach out to arrange a discovery call so we can go through it together.`}
             </p>
-            {state.cc_emails.length > 0 && (
+            {!isEditing && state.cc_emails.length > 0 && (
               <p className="text-slate-400 text-xs leading-relaxed mb-4">
                 We have also copied {state.cc_emails.join(", ")} on the confirmation.
               </p>
             )}
+
+            {/* Coming back to change something is expected, not an exception,
+                so the way to do it is offered here rather than left to be
+                found in the email. */}
+            {(editUrl || isEditing) && (
+              <div className="mt-5 pt-5 border-t border-slate-200 text-left">
+                {remainingEdits > 0 ? (
+                  <>
+                    <p className="text-xs text-slate-500 leading-relaxed">
+                      Remembered something? You can update this submission{" "}
+                      <strong className="text-slate-700">
+                        {remainingEdits} more {remainingEdits === 1 ? "time" : "times"}
+                      </strong>
+                      . We have emailed you the link as well.
+                    </p>
+                    <a
+                      href={editUrl || `/intake/edit/${editToken}`}
+                      className="inline-flex items-center gap-1.5 mt-2.5 text-xs font-semibold text-[#152238] underline"
+                    >
+                      Update my answers
+                    </a>
+                  </>
+                ) : (
+                  <p className="text-xs text-slate-500 leading-relaxed">
+                    That was your last available update. If anything else needs changing, just reply to
+                    our email and we will take care of it.
+                  </p>
+                )}
+              </div>
+            )}
+
             <a href={`https://wa.me/${BUSINESS_WHATSAPP}`} target="_blank" rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold text-white mt-4"
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold text-white mt-5"
               style={{ background: "#25D366" }}>
               💬 Chat on WhatsApp
             </a>
@@ -1083,7 +1186,9 @@ export function IntakeWizard({
           <button type="button" onClick={handleSubmit} disabled={submitting || !canAdvance}
             className="flex-1 py-3 rounded-xl text-sm font-semibold transition-all disabled:opacity-40"
             style={{ background: NAVY, color: "#ffffff" }}>
-            {submitting ? "Submitting..." : "Submit requirements"}
+            {submitting
+              ? (isEditing ? "Saving..." : "Submitting...")
+              : (isEditing ? "Save my changes" : "Submit requirements")}
           </button>
         )}
       </div>
@@ -1109,27 +1214,50 @@ export function IntakeWizard({
               style={{ background: GOLD, color: NAVY }}>B</div>
             <p className="text-white font-semibold text-sm tracking-wide">{SITE_NAME}</p>
           </div>
-          <h1 className="text-white text-xl font-bold leading-snug">Tell us about your project</h1>
+          <h1 className="text-white text-xl font-bold leading-snug">
+            {isEditing ? "Update your requirements" : "Tell us about your project"}
+          </h1>
           <p className="text-white/50 text-xs mt-1 leading-relaxed">
-            Six short steps, and only three answers are actually required. Skip anything that does not apply,
-            and your progress saves as you go.
+            {isEditing
+              ? `Your previous answers are all here. Change whatever you need and submit again. This is update ${maxEdits - remainingEdits + 1} of ${maxEdits}.`
+              : "Six short steps, and only three answers are actually required. Skip anything that does not apply, and your progress saves as you go."}
           </p>
         </div>
 
-        {/* Progress. Completed steps are clickable so nothing feels like a trap. */}
+        {/* Progress. Any step already reached is clickable, on every screen
+            size, so nothing feels like a trap and a correction does not mean
+            paging through the whole form again. When editing, every step is
+            open immediately because all the answers already exist. */}
         <div className="px-4 pb-5 max-w-lg mx-auto">
-          <div className="hidden sm:flex justify-between mb-2 gap-1">
-            {STEP_LABELS.map((label, i) => (
-              <button key={label} type="button"
-                onClick={() => i + 1 < step && setStep(i + 1)}
-                disabled={i + 1 >= step}
-                className={cn(
-                  "text-[10px] font-semibold transition-colors truncate",
-                  i + 1 === step ? "text-[#f9a825]" : i + 1 < step ? "text-white/50 hover:text-white cursor-pointer" : "text-white/20"
-                )}>
-                {label}
-              </button>
-            ))}
+          <div className="flex gap-1.5 mb-2.5 overflow-x-auto pb-1 -mx-1 px-1 sm:mx-0 sm:px-0"
+            style={{ scrollbarWidth: "none" }}>
+            {STEP_LABELS.map((label, i) => {
+              const n = i + 1;
+              const reachable = isEditing || n <= maxStepReached;
+              const current = n === step;
+              return (
+                <button key={label} type="button"
+                  onClick={() => reachable && setStep(n)}
+                  disabled={!reachable}
+                  aria-current={current ? "step" : undefined}
+                  className={cn(
+                    "flex items-center gap-1.5 shrink-0 px-2 py-1 rounded-full text-[10px] font-semibold transition-colors",
+                    current
+                      ? "bg-[#f9a825] text-[#152238]"
+                      : reachable
+                        ? "text-white/60 hover:text-white hover:bg-white/10 cursor-pointer"
+                        : "text-white/25 cursor-not-allowed"
+                  )}>
+                  <span className={cn(
+                    "w-3.5 h-3.5 rounded-full flex items-center justify-center text-[9px] shrink-0",
+                    current ? "bg-[#152238] text-[#f9a825]" : "bg-white/10"
+                  )}>
+                    {n}
+                  </span>
+                  <span className="whitespace-nowrap">{label}</span>
+                </button>
+              );
+            })}
           </div>
           <div className="h-1.5 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.1)" }}>
             <div className="h-full rounded-full transition-all duration-500"
@@ -1166,6 +1294,20 @@ export function IntakeWizard({
       {/* Content */}
       <div className="flex-1 px-4 py-6 pb-40 sm:pb-6">
         <div className="max-w-lg mx-auto space-y-3">
+
+          {/* A submission made before the questionnaire was expanded opens
+              with new, unanswered questions. Saying so prevents it reading as
+              though their original answers were lost. */}
+          {isEditing && (
+            <div className="flex items-start gap-2 px-4 py-3 rounded-xl bg-white border border-slate-200 text-xs text-slate-500">
+              <span className="shrink-0 mt-0.5">✏️</span>
+              <span className="flex-1 leading-relaxed">
+                Everything you told us before is already filled in. We have since added a few more
+                questions, all optional, so you may see some blanks. Answer any that are useful and
+                leave the rest.
+              </span>
+            </div>
+          )}
 
           {draftRestored && (
             <div className="flex items-start gap-2 px-4 py-3 rounded-xl bg-white border border-slate-200 text-xs text-slate-500">
