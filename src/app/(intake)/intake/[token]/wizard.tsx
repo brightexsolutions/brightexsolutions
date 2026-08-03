@@ -79,6 +79,14 @@ const STEP_LABELS = [
 ];
 
 /**
+ * One-word versions for the step indicator. Six full labels cannot fit the
+ * form's width without scrolling, and a rail you have to discover is worse
+ * than a shorter word: the full label is always shown under the rail for
+ * whichever step is current.
+ */
+const STEP_SHORT_LABELS = ["Need", "Business", "Project", "Details", "Budget", "Contact"];
+
+/**
  * Only these steps hold anything we genuinely cannot proceed without. Every
  * other step can be skipped outright, and every field inside them is optional.
  */
@@ -1036,6 +1044,15 @@ export function IntakeWizard({
     }
   }
 
+  /**
+   * Throws away the locally-saved draft.
+   *
+   * What that means depends on why the form is open. On a new submission it is
+   * "start over", so everything clears. When editing, the baseline is not an
+   * empty form but the version already submitted, so this reverts to that.
+   * Clearing outright would silently destroy answers the client had already
+   * sent us, which is the opposite of what "discard my unsaved changes" means.
+   */
   function discardDraft() {
     try { window.localStorage.removeItem(draftKey); } catch { /* best effort */ }
     setState({
@@ -1045,6 +1062,7 @@ export function IntakeWizard({
       submitter_email: clientEmail,
       submitter_company: clientCompany,
       submitter_phone: clientPhone,
+      ...(isEditing ? initialState : {}),
     });
     setStep(1);
     setDraftRestored(false);
@@ -1224,48 +1242,81 @@ export function IntakeWizard({
           </p>
         </div>
 
-        {/* Progress. Any step already reached is clickable, on every screen
-            size, so nothing feels like a trap and a correction does not mean
-            paging through the whole form again. When editing, every step is
-            open immediately because all the answers already exist. */}
+        {/* Progress rail. All six steps are always in view: an earlier version
+            scrolled horizontally, which hid half the form's structure behind a
+            gesture nobody was told about. Every step already reached is
+            clickable, so correcting one answer does not mean paging through
+            the rest. When editing, all steps are open from the start, since
+            every answer already exists. */}
         <div className="px-4 pb-5 max-w-lg mx-auto">
-          <div className="flex gap-1.5 mb-2.5 overflow-x-auto pb-1 -mx-1 px-1 sm:mx-0 sm:px-0"
-            style={{ scrollbarWidth: "none" }}>
-            {STEP_LABELS.map((label, i) => {
-              const n = i + 1;
-              const reachable = isEditing || n <= maxStepReached;
-              const current = n === step;
-              return (
-                <button key={label} type="button"
-                  onClick={() => reachable && setStep(n)}
-                  disabled={!reachable}
-                  aria-current={current ? "step" : undefined}
-                  className={cn(
-                    "flex items-center gap-1.5 shrink-0 px-2 py-1 rounded-full text-[10px] font-semibold transition-colors",
-                    current
-                      ? "bg-[#f9a825] text-[#152238]"
-                      : reachable
-                        ? "text-white/60 hover:text-white hover:bg-white/10 cursor-pointer"
-                        : "text-white/25 cursor-not-allowed"
-                  )}>
-                  <span className={cn(
-                    "w-3.5 h-3.5 rounded-full flex items-center justify-center text-[9px] shrink-0",
-                    current ? "bg-[#152238] text-[#f9a825]" : "bg-white/10"
-                  )}>
-                    {n}
-                  </span>
-                  <span className="whitespace-nowrap">{label}</span>
-                </button>
-              );
-            })}
-          </div>
-          <div className="h-1.5 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.1)" }}>
-            <div className="h-full rounded-full transition-all duration-500"
-              style={{ width: `${progressPct}%`, background: GOLD }} />
-          </div>
-          <div className="flex justify-between mt-1.5">
+          <nav aria-label="Form progress">
+            <ol className="flex items-start">
+              {STEP_LABELS.map((label, i) => {
+                const n = i + 1;
+                const reachable = isEditing || n <= maxStepReached;
+                const current = n === step;
+                const done = n < step;
+                const isFirst = i === 0;
+                const isLast = i === STEP_LABELS.length - 1;
+
+                return (
+                  <li key={label} className="flex-1 flex flex-col items-center min-w-0">
+                    <div className="relative w-full flex items-center justify-center h-7">
+                      {/* Connectors, drawn behind the markers so the rail reads
+                          as one continuous line rather than six detached dots. */}
+                      {!isFirst && (
+                        <span aria-hidden className="absolute left-0 right-1/2 h-[2px] transition-colors"
+                          style={{ background: step >= n ? GOLD : "rgba(255,255,255,0.14)" }} />
+                      )}
+                      {!isLast && (
+                        <span aria-hidden className="absolute left-1/2 right-0 h-[2px] transition-colors"
+                          style={{ background: step > n ? GOLD : "rgba(255,255,255,0.14)" }} />
+                      )}
+
+                      <button type="button"
+                        onClick={() => reachable && setStep(n)}
+                        disabled={!reachable}
+                        aria-current={current ? "step" : undefined}
+                        aria-label={`Step ${n}: ${label}${reachable ? "" : " (not yet available)"}`}
+                        title={label}
+                        className={cn(
+                          "relative z-10 w-7 h-7 rounded-full flex items-center justify-center",
+                          "text-[11px] font-bold transition-all",
+                          "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70",
+                          current
+                            ? "scale-110 shadow-sm"
+                            : reachable
+                              ? "cursor-pointer hover:scale-105"
+                              : "cursor-not-allowed"
+                        )}
+                        style={
+                          current
+                            ? { background: GOLD, color: NAVY }
+                            : done || (isEditing && reachable)
+                              ? { background: "rgba(249,168,37,0.22)", color: GOLD, border: `1px solid ${GOLD}` }
+                              : { background: "rgba(255,255,255,0.08)", color: "rgba(255,255,255,0.4)" }
+                        }>
+                        {done ? "✓" : n}
+                      </button>
+                    </div>
+
+                    <span className={cn(
+                      "mt-1.5 text-[10px] font-medium text-center leading-tight px-0.5 truncate max-w-full transition-colors",
+                      current ? "text-[#f9a825] font-bold" : reachable ? "text-white/55" : "text-white/25"
+                    )}>
+                      {STEP_SHORT_LABELS[i]}
+                    </span>
+                  </li>
+                );
+              })}
+            </ol>
+          </nav>
+
+          {/* The full label for wherever they are, since the rail only has
+              room for one word per step. */}
+          <div className="flex justify-between items-baseline mt-3 pt-3 border-t border-white/10">
             <span className="text-white/40 text-[11px]">Step {step} of {TOTAL_STEPS}</span>
-            <span style={{ color: GOLD }} className="text-[11px] font-medium">{STEP_LABELS[step - 1]}</span>
+            <span style={{ color: GOLD }} className="text-[11px] font-semibold">{STEP_LABELS[step - 1]}</span>
           </div>
         </div>
       </div>
@@ -1298,7 +1349,10 @@ export function IntakeWizard({
           {/* A submission made before the questionnaire was expanded opens
               with new, unanswered questions. Saying so prevents it reading as
               though their original answers were lost. */}
-          {isEditing && (
+          {/* Suppressed when a draft was restored: the draft notice below is
+              the more current truth, and stacking both said two different
+              things about the same form. */}
+          {isEditing && !draftRestored && (
             <div className="flex items-start gap-2 px-4 py-3 rounded-xl bg-white border border-slate-200 text-xs text-slate-500">
               <span className="shrink-0 mt-0.5">✏️</span>
               <span className="flex-1 leading-relaxed">
@@ -1313,10 +1367,12 @@ export function IntakeWizard({
             <div className="flex items-start gap-2 px-4 py-3 rounded-xl bg-white border border-slate-200 text-xs text-slate-500">
               <span className="shrink-0 mt-0.5">💾</span>
               <span className="flex-1 leading-relaxed">
-                We picked up where you left off.{" "}
+                {isEditing
+                  ? "You have unsaved changes from last time. "
+                  : "We picked up where you left off. "}
                 <button type="button" onClick={discardDraft}
                   className="font-semibold text-slate-700 underline hover:text-[#152238]">
-                  Start over
+                  {isEditing ? "Discard them" : "Start over"}
                 </button>
               </span>
             </div>
