@@ -4,7 +4,7 @@ import { useState } from "react";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { CheckCircle, User, Mail, Phone, Building2, Briefcase, Calendar, FileText, Tag, Sparkles, Loader2, FileSignature, Archive, Download, Users, ClipboardList } from "lucide-react";
+import { CheckCircle, User, Mail, Phone, Building2, Briefcase, Calendar, FileText, Tag, Sparkles, Loader2, FileSignature, Archive, Download, Users, ClipboardList, Pencil } from "lucide-react";
 import { sopsForServices } from "@/lib/sop-library";
 import { cn } from "@/lib/utils";
 import {
@@ -60,6 +60,11 @@ export type IntakeDetail = {
   status: string;
   submitted_at: string;
   reviewed_at?: string | null;
+  // Client-side revisions (migration 037)
+  edit_count?: number | null;
+  last_edited_at?: string | null;
+  edited_after_review?: boolean | null;
+  revisions?: { edited_at: string; changed_fields: string[] }[] | null;
   ai_analysis?: IntakeAnalysis | null;
   ai_analyzed_at?: string | null;
 };
@@ -459,6 +464,52 @@ export function IntakeDetailSheet({ intake, clientId, onClose, onMarkReviewed, m
                 {intake.additional_notes}
               </p>
             </Section>
+          )}
+
+          {/* Client revisions. An edit landing after the intake was reviewed is
+              the case that matters, because a quote may already have been
+              built from the previous version. */}
+          {!!intake.edit_count && intake.edit_count > 0 && (
+            <div className={cn(
+              "rounded-sm border px-3 py-2.5 space-y-1.5",
+              intake.edited_after_review
+                ? "border-amber-300 bg-amber-50 dark:bg-amber-950/20"
+                : "border-border bg-muted/20"
+            )}>
+              <div className="flex items-center gap-1.5">
+                <Pencil size={11} className={intake.edited_after_review ? "text-amber-600" : "text-muted-foreground"} />
+                <p className={cn(
+                  "text-[11px] font-bold uppercase tracking-widest",
+                  intake.edited_after_review ? "text-amber-700 dark:text-amber-500" : "text-muted-foreground"
+                )}>
+                  {intake.edited_after_review ? "Changed after you reviewed it" : "Updated by the client"}
+                </p>
+              </div>
+              <p className="text-xs text-foreground">
+                {intake.edit_count} {intake.edit_count === 1 ? "revision" : "revisions"}
+                {intake.last_edited_at && (
+                  <span className="text-muted-foreground">
+                    {" · last on "}
+                    {new Date(intake.last_edited_at).toLocaleDateString("en-KE", {
+                      day: "numeric", month: "short", year: "numeric",
+                    })}
+                  </span>
+                )}
+              </p>
+              {!!intake.revisions?.length && (
+                <p className="text-[11px] text-muted-foreground leading-relaxed">
+                  Most recently changed:{" "}
+                  {intake.revisions[intake.revisions.length - 1].changed_fields
+                    .map((f) => f.replace(/_/g, " "))
+                    .join(", ")}
+                </p>
+              )}
+              {intake.edited_after_review && (
+                <p className="text-[11px] text-amber-700 dark:text-amber-500 leading-relaxed">
+                  Worth re-reading before anything is quoted from it.
+                </p>
+              )}
+            </div>
           )}
 
           {/* The procedures that apply to what this client actually asked

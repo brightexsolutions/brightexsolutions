@@ -4,7 +4,7 @@ import { rateLimit } from "@/lib/rate-limit";
 import { sendNewClientIntakeAck, sendExistingClientIntakeAck } from "@/lib/intake-mail";
 import { sendAdminPush } from "@/lib/push";
 import {
-  IntakeSubmissionSchema, buildIntakeRow, insertIntake, summariseSubmission,
+  IntakeSubmissionSchema, buildIntakeRow, insertIntake, summariseSubmission, MAX_INTAKE_EDITS,
 } from "@/lib/intake-submission";
 import { resolveCc, normaliseEmail } from "@/lib/cc-recipients";
 
@@ -72,7 +72,7 @@ export async function POST(request: NextRequest) {
     clientId = created.id;
   }
 
-  const { error } = await insertIntake(supabase, buildIntakeRow(data, clientId));
+  const { error, editToken } = await insertIntake(supabase, buildIntakeRow(data, clientId));
   if (error) {
     console.error("[intake/POST generic]", error);
     return NextResponse.json({ error: "Submission failed" }, { status: 500 });
@@ -119,6 +119,8 @@ export async function POST(request: NextRequest) {
         serviceTypes: data.service_types,
         projectTitle: data.project_title,
         description: data.description,
+        editUrl: editToken ? `/intake/edit/${editToken}` : null,
+        editsAllowed: MAX_INTAKE_EDITS,
       })
     )
     .catch((err) => console.error("[intake/POST generic] ack email:", err));
@@ -130,5 +132,14 @@ export async function POST(request: NextRequest) {
     tag: "new-intake",
   }).catch((err) => console.error("[intake/POST generic] push:", err));
 
-  return NextResponse.json({ success: true }, { status: 201 });
+  // The edit link lets the client correct their own submission rather than
+  // emailing a change for someone to retype.
+  return NextResponse.json(
+    {
+      success: true,
+      editUrl: editToken ? `/intake/edit/${editToken}` : null,
+      editsRemaining: MAX_INTAKE_EDITS,
+    },
+    { status: 201 }
+  );
 }

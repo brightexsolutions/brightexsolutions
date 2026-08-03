@@ -15,6 +15,33 @@ interface IntakeAckOptions {
   serviceTypes?: string[];
   projectTitle?: string | null;
   description: string;
+  /** Path to revise the submission, e.g. /intake/edit/<token>. */
+  editUrl?: string | null;
+  editsAllowed?: number;
+}
+
+/**
+ * People remember the thing they left out shortly after sending. Offering the
+ * way back in the acknowledgement is what stops that arriving as a reply we
+ * then have to transcribe into the record by hand.
+ */
+function editNote(opts: IntakeAckOptions) {
+  if (!opts.editUrl) return "";
+  const url = opts.editUrl.startsWith("http") ? opts.editUrl : `${SITE_URL}${opts.editUrl}`;
+  const times = opts.editsAllowed ?? 2;
+  return `
+  <table width="100%" cellpadding="0" cellspacing="0" style="margin:22px 0 0;border-top:1px solid #e2e8f0;">
+    <tr><td style="padding-top:18px;">
+      <p style="margin:0 0 6px 0;font-size:14px;font-weight:600;color:#334155;">Forgotten something?</p>
+      <p style="margin:0 0 12px 0;font-size:13px;color:#64748b;line-height:1.6;">
+        You can update what you sent us up to ${times} times. Everything you already filled in will
+        still be there.
+      </p>
+      <a href="${url}" style="display:inline-block;font-size:13px;font-weight:700;color:#152238;text-decoration:underline;">
+        Update my answers
+      </a>
+    </td></tr>
+  </table>`;
 }
 
 /** "a website", "a website and branding", "a website, branding and automation" */
@@ -140,6 +167,7 @@ export async function sendNewClientIntakeAck(opts: IntakeAckOptions) {
       In the meantime, WhatsApp is the fastest way to reach us if anything comes to mind.
     </p>
     ${whatsappBtn()}
+    ${editNote(opts)}
     ${signOff()}
     ${ccNote(opts.cc)}
   `);
@@ -193,6 +221,7 @@ export async function sendExistingClientIntakeAck(opts: IntakeAckOptions) {
       If you want to add anything in the meantime, WhatsApp is the fastest way to reach us.
     </p>
     ${whatsappBtn()}
+    ${editNote(opts)}
     ${signOff()}
     ${ccNote(opts.cc)}
   `);
