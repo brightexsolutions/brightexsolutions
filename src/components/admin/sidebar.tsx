@@ -8,7 +8,7 @@ import {
   FileText, CreditCard, Calendar, Globe, Package, BarChart3,
   Megaphone, BookOpen, CheckSquare, DollarSign, UserCheck,
   Rss, Settings, ScrollText, Search, ChevronLeft, ChevronRight,
-  LogOut, User, ChevronDown, Database, FileSignature,
+  LogOut, User, ChevronDown, Database, FileSignature, ClipboardList,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { createBrowserClient } from "@supabase/ssr";
@@ -39,6 +39,7 @@ const navGroups = [
     items: [
       { href: "/admin/projects", icon: FolderOpen, label: "Projects" },
       { href: "/admin/tasks", icon: CheckSquare, label: "Tasks", badge: true },
+      { href: "/admin/sops", icon: ClipboardList, label: "SOPs" },
     ],
   },
   {
