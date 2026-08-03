@@ -7,10 +7,11 @@ import { transporter, SENDERS } from "@/lib/mail";
 import { emailTemplate, emailBodyFromPlainText, emailButton } from "@/lib/email-templates";
 import { compressFile, mimeToExt } from "@/lib/compress";
 import { SITE_URL } from "@/lib/constants";
+import { resolveCc, describeCc, dedupeCc, CC_SCOPES } from "@/lib/cc-recipients";
 
 const SENDER_KEYS = Object.keys(SENDERS) as [keyof typeof SENDERS, ...(keyof typeof SENDERS)[]];
 
-// Combined attachment budget — comfortably under typical serverless request-body limits.
+// Combined attachment budget: comfortably under typical serverless request-body limits.
 const MAX_ATTACHMENTS_BYTES = 6 * 1024 * 1024;
 
 const CommSchema = z.object({
@@ -24,13 +25,19 @@ const CommSchema = z.object({
   send_email: z.boolean().optional().default(false),
   to_email: z.string().email().max(200).trim().optional().or(z.literal("")),
   to_name: z.string().max(200).trim().optional(),
+  // Explicit CC list from the composer. Merged with (not replaced by) the
+  // client's own routing rules, so a per-client contact configured for this
+  // scope is still copied even when the sender adds someone ad hoc.
+  cc_emails: z.array(z.string().email().max(200).trim()).max(10).optional(),
+  /** Which routing scope to resolve the client's standing CC contacts for. */
+  cc_scope: z.enum(CC_SCOPES).optional(),
   sender: z.enum(SENDER_KEYS).optional(),
   attachments: z.array(z.object({
     filename: z.string().max(255).trim(),
     contentType: z.string().max(100).trim(),
     base64: z.string(),
   })).max(5).optional(),
-  // Generated proposal/agreement to link in the email — server builds the
+  // Generated proposal/agreement to link in the email: server builds the
   // branded "view online" button (see documents-client.tsx / email-composer.tsx).
   // Deliberately no PDF fallback attachment: a PDF would carry the full
   // document even when the link is gated, defeating the gate entirely.
@@ -61,7 +68,7 @@ export async function GET(request: NextRequest) {
   }
 
   // document_id / the generated_documents relation need migration
-  // 031_document_lifecycle.sql — degrade gracefully if it hasn't run yet.
+  // 031_document_lifecycle.sql: degrade gracefully if it hasn't run yet.
   let { data, error } = await buildQuery(true);
   if (error) ({ data, error } = await buildQuery(false));
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
@@ -110,7 +117,7 @@ export async function POST(request: NextRequest) {
     }
   }
 
-  // Shrink image attachments before storing/sending — PDFs/docs pass through
+  // Shrink image attachments before storing/sending: PDFs/docs pass through
   // unchanged (see compressFile), so this only ever helps, never corrupts.
   const compressedAttachments = await Promise.all(
     (result.data.attachments ?? []).map(async (a) => {
@@ -125,7 +132,7 @@ export async function POST(request: NextRequest) {
   );
 
   // Linked document: a real "view online" button (not a bare link, and no
-  // PDF fallback — see the documentLink schema comment above for why).
+  // PDF fallback: see the documentLink schema comment above for why).
   let documentButtonHtml = "";
   if (result.data.documentLink) {
     const { data: doc } = await supabase
@@ -140,10 +147,27 @@ export async function POST(request: NextRequest) {
     }
   }
 
+  // Who else sees this message. Resolved once, so the send and the logged
+  // record can never disagree about who was copied.
+  //
+  // With cc_scope given (automated sends), the client's standing contacts for
+  // that scope are added. Without it (the composer, which already shows those
+  // contacts and lets the sender edit them), the supplied list is taken as
+  // final: re-adding a contact the sender deliberately removed would quietly
+  // override a deliberate choice.
+  const ccEmails = result.data.cc_scope
+    ? await resolveCc({
+        clientId: persistedClientId,
+        scope: result.data.cc_scope,
+        extra: result.data.cc_emails ?? [],
+        to: recipientEmail,
+      })
+    : dedupeCc(result.data.cc_emails ?? [], recipientEmail);
+
   if (result.data.type === "email" && result.data.send_email && recipientEmail) {
     const totalAttachmentBytes = compressedAttachments.reduce((sum, a) => sum + Math.ceil((a.base64.length * 3) / 4), 0);
     if (totalAttachmentBytes > MAX_ATTACHMENTS_BYTES) {
-      return NextResponse.json({ error: "Attachments too large — max 6MB combined." }, { status: 413 });
+      return NextResponse.json({ error: "Attachments too large. The combined limit is 6MB." }, { status: 413 });
     }
 
     try {
@@ -158,6 +182,7 @@ export async function POST(request: NextRequest) {
       await transporter.sendMail({
         from: result.data.sender ? SENDERS[result.data.sender] : SENDERS.info,
         to: recipientEmail,
+        cc: ccEmails,
         subject,
         html,
         text: result.data.body ?? "",
@@ -173,9 +198,14 @@ export async function POST(request: NextRequest) {
     }
   }
 
-  const { send_email: _sendEmail, to_email: _toEmail, to_name: _toName, attachments: _attachments, sender: _sender, documentLink: _documentLink, ...persistedData } = result.data;
+  const {
+    send_email: _sendEmail, to_email: _toEmail, to_name: _toName,
+    attachments: _attachments, sender: _sender, documentLink: _documentLink,
+    cc_emails: _ccEmails, cc_scope: _ccScope,
+    ...persistedData
+  } = result.data;
 
-  // Never persist attachment bytes — just enough metadata for the activity trail.
+  // Never persist attachment bytes: just enough metadata for the activity trail.
   const attachmentMeta = compressedAttachments.map((a) => ({
     filename: a.filename,
     size: Math.ceil((a.base64.length * 3) / 4),
@@ -190,7 +220,7 @@ export async function POST(request: NextRequest) {
     subject: result.data.subject ?? null,
   };
   // sender/attachments need migration 024_communications_composer.sql,
-  // document_id needs 031_document_lifecycle.sql — degrade gracefully (log
+  // document_id needs 031_document_lifecycle.sql: degrade gracefully (log
   // without them) if not yet applied, rather than failing the whole request
   // after the email has already sent.
   const rowWithNewColumns = {
@@ -198,6 +228,8 @@ export async function POST(request: NextRequest) {
     sender: result.data.sender ?? null,
     attachments: attachmentMeta.length ? attachmentMeta : null,
     document_id: result.data.documentLink?.id ?? null,
+    // cc_emails needs migration 033_client_contacts_cc.sql.
+    cc_emails: ccEmails,
   };
 
   let { data, error } = await supabase.from("communications").insert(rowWithNewColumns).select().single();
@@ -218,7 +250,10 @@ export async function POST(request: NextRequest) {
     entity_type: "communication",
     entity_id: data.id,
     entity_label: result.data.subject ?? result.data.type,
-    notes: `Type: ${result.data.type} · ${result.data.direction}bound${result.data.send_email ? " · email sent" : ""}`,
+    notes: [
+      `Type: ${result.data.type} · ${result.data.direction}bound${result.data.send_email ? " · email sent" : ""}`,
+      describeCc(ccEmails),
+    ].filter(Boolean).join(" · "),
   });
 
   return NextResponse.json({ data }, { status: 201 });

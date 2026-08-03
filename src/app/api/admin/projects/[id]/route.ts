@@ -12,13 +12,14 @@ import {
   emailDivider,
   emailSignoff,
 } from "@/lib/email-templates";
+import { resolveCc } from "@/lib/cc-recipients";
 
 const STAGE_INFO: Record<string, { heading: string; detail: string }> = {
   discovery:   { heading: "We're in discovery",       detail: "We're gathering all the details about your project and aligning on goals. Expect to hear from us soon with next steps." },
   design:      { heading: "Design is underway",        detail: "We're crafting the visual direction for your project. We'll share designs for your review once they're ready." },
-  development: { heading: "Development has started",   detail: "Hands on keyboards — we're building your project. We'll keep you updated on progress." },
+  development: { heading: "Development has started",   detail: "Hands on keyboards: we're building your project. We'll keep you updated on progress." },
   review:      { heading: "Ready for your review",     detail: "Your project is ready for a first look. We'll be reaching out shortly to walk you through what we've built." },
-  live:        { heading: "Your project is live",      detail: "We're proud to announce that your project is now live. Thank you for working with us — here's to its success." },
+  live:        { heading: "Your project is live",      detail: "We're proud to announce that your project is now live. Thank you for working with us: here's to its success." },
   paused:      { heading: "Project temporarily paused", detail: "We've paused work on your project for now. We'll be back in touch with a timeline for resuming." },
   completed:   { heading: "Project complete",          detail: "Your project is officially complete. It has been a genuine pleasure working with you." },
 };
@@ -51,7 +52,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 
   const { id } = await params;
   // generated_documents(...accepted_at...) needs migration
-  // 031_document_lifecycle.sql — degrade gracefully if it hasn't run yet,
+  // 031_document_lifecycle.sql: degrade gracefully if it hasn't run yet,
   // rather than breaking project detail entirely in the meantime.
   let { data, error } = await supabase
     .from("projects")
@@ -107,7 +108,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       .eq("entity_type", "project")
       .eq("entity_id", id)
       .eq("type", "project_milestone")
-      .ilike("title", "% — deadline")
+      .ilike("title", "%: deadline")
       .maybeSingle();
 
     if (newEnd) {
@@ -115,7 +116,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
         await supabase.from("calendar_events").update({ start_at: new Date(newEnd).toISOString() }).eq("id", existingDeadline.id);
       } else {
         await supabase.from("calendar_events").insert({
-          title: `${data.name} — deadline`,
+          title: `${data.name}: deadline`,
           type: "project_milestone",
           start_at: new Date(newEnd).toISOString(),
           all_day: true,
@@ -135,7 +136,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
   if (newStatus && milestoneStatuses.includes(newStatus as "live" | "completed") && prevStatus !== newStatus) {
     const label = newStatus === "live" ? "goes live" : "completed";
     await supabase.from("calendar_events").insert({
-      title: `${data.name} — ${label}`,
+      title: `${data.name}: ${label}`,
       type: "project_milestone",
       start_at: new Date().toISOString(),
       all_day: true,
@@ -159,9 +160,9 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       if (clientData?.email) {
         const firstName = (clientData.name as string).split(" ")[0];
         const html = emailTemplate({
-          title: `Project Update — ${data.name}`,
+          title: `Project Update: ${data.name}`,
           subtitle: data.name as string,
-          preheader: `${stage.heading} — ${data.name}`,
+          preheader: `${stage.heading}: ${data.name}`,
           heroLabel: `Project Update · ${data.name}`,
           heroTitle: `${stage.heading},\n${firstName}.`,
           body:
@@ -178,14 +179,19 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
         await transporter.sendMail({
           from: SENDERS.payments,
           to: clientData.email as string,
-          subject: `Project Update — ${data.name}: ${newStatus.charAt(0).toUpperCase() + newStatus.slice(1)}`,
+          cc: await resolveCc({
+            clientId: data.client_id as string,
+            scope: "projects",
+            to: clientData.email as string,
+          }),
+          subject: `Project update: ${data.name} is now ${newStatus}`,
           html,
         }).catch(() => {});
 
         await supabase.from("communications").insert({
           client_id: data.client_id as string,
           type: "email",
-          subject: `Project stage update sent — ${data.name} → ${newStatus}`,
+          subject: `Project stage update sent: ${data.name} → ${newStatus}`,
           direction: "out",
           status: "sent",
         });
