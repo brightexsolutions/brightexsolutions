@@ -25,10 +25,10 @@ const services = [
 
 interface ContactFormProps {
   variant?: "card" | "embedded";
-  /** Omits the "Service Interested In" field — for a general inquiry where
+  /** Omits the "Service Interested In" field: for a general inquiry where
    * the visitor has already told us this isn't about a specific service. */
   hideService?: boolean;
-  /** Pre-fills the service field — used when arriving from the service-specific step. */
+  /** Pre-fills the service field: used when arriving from the service-specific step. */
   defaultService?: string;
 }
 
@@ -114,7 +114,7 @@ export function ContactForm({ variant = "card", hideService, defaultService }: C
         <textarea
           {...register("message")}
           rows={5}
-          placeholder="Tell us about your project — what you're building, your timeline, and any specific requirements."
+          placeholder="Tell us about your project: what you're building, your timeline, and any specific requirements."
           className={cn(field, "resize-none")}
         />
         {errors.message && <p className="mt-1.5 text-xs text-red-500">{errors.message.message}</p>}

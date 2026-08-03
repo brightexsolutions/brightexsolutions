@@ -1,5 +1,5 @@
 /**
- * Route handler wrapper — applied to every API route handler.
+ * Route handler wrapper: applied to every API route handler.
  *
  * Provides:
  *   1. Request ID generation (rid) attached to every log line
@@ -49,7 +49,7 @@ export function withRoute(handler: Handler, routeLabel?: string): Handler {
         );
       }
 
-      // Unknown / unexpected error — sanitise before responding
+      // Unknown / unexpected error: sanitise before responding
       logger.error("Unhandled route error", {
         rid,
         route,

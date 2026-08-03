@@ -23,16 +23,16 @@ const ContactSchema = z.object({
 });
 
 export async function POST(request: NextRequest) {
-  // Layer 1 — rate limit (5 req / 60s per IP)
+  // Layer 1: rate limit (5 req / 60s per IP)
   const limited = await rateLimit(request, "contact");
   if (limited) return limited;
 
-  // Layer 2 — origin check
+  // Layer 2: origin check
   if (!verifyOrigin(request)) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  // Layer 3 — parse + validate
+  // Layer 3: parse + validate
   let body: unknown;
   try {
     body = await request.json();
@@ -48,7 +48,7 @@ export async function POST(request: NextRequest) {
   const { name, company, contact, service, message } = result.data;
   const isEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contact);
 
-  // Layer 4 — DB insert (skip gracefully if Supabase not yet configured)
+  // Layer 4: DB insert (skip gracefully if Supabase not yet configured)
   let dbSaved = false;
   if (process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY) {
     try {
@@ -96,7 +96,7 @@ export async function POST(request: NextRequest) {
     }
   }
 
-  // Layer 5 — admin notification email
+  // Layer 5: admin notification email
   let emailSent = false;
   try {
     await transporter.sendMail({
@@ -133,7 +133,7 @@ export async function POST(request: NextRequest) {
         subject: `Thanks for reaching out, ${firstName}!`,
         html: emailTemplate({
           title: `We received your message, ${firstName}!`,
-          preheader: "Thanks for reaching out — we'll respond within 24 hours",
+          preheader: "Thanks for reaching out: we'll respond within 24 hours",
           body:
             emailParagraph(
               `Hi ${firstName}, thanks for reaching out to <strong>${SITE_NAME}</strong>. We've received your enquiry and will get back to you within 24 hours.`

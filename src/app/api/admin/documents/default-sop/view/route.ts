@@ -4,7 +4,7 @@ import { rateLimit } from "@/lib/rate-limit";
 import { renderSopHtml } from "@/lib/document-html/sop";
 import { DEFAULT_SOP_DATA } from "@/lib/brightex-sop";
 
-/** The always-referenceable default Brightex SOP — rendered live from code
+/** The always-referenceable default Brightex SOP: rendered live from code
  * (src/lib/brightex-sop.ts), not stored in generated_documents, so it can
  * never be deleted, edited into drift, or go missing. This is the canonical
  * internal procedure; anything generated ad hoc in Documents is a variant

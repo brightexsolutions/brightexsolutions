@@ -86,7 +86,7 @@ async function getDashboardData() {
     ]);
 
     const mrr = (mrrRes.data ?? []).reduce((s: number, r: { amount: number }) => s + Number(r.amount), 0);
-    // Previous month revenue for trend calculation — also by payment date
+    // Previous month revenue for trend calculation: also by payment date
     const { data: prevPayments } = await supabase
       .from("payments")
       .select("amount")
@@ -230,14 +230,14 @@ export default async function AdminDashboardPage() {
               value: `${pct >= 0 ? "+" : ""}${pct}%`,
               label: "vs last month",
             };
-          })() : { direction: "flat" as const, value: "—" }}
+          })() : { direction: "flat" as const, value: "-" }}
           icon={DollarSign}
           href="/admin/finance"
         />
         <StatCard
           title="Active Projects"
-          value={hasData ? String(data.projects) : "—"}
-          trend={{ direction: "flat", value: hasData ? `${data.projects} active` : "—" }}
+          value={hasData ? String(data.projects) : "-"}
+          trend={{ direction: "flat", value: hasData ? `${data.projects} active` : "-" }}
           sub="Currently in progress"
           icon={FolderOpen}
           accent={{ bg: "bg-blue-400/10", text: "text-blue-500" }}
@@ -245,10 +245,10 @@ export default async function AdminDashboardPage() {
         />
         <StatCard
           title="Open Invoices"
-          value={hasData ? String(data.openInvoices) : "—"}
+          value={hasData ? String(data.openInvoices) : "-"}
           trend={
             hasData && data.overdueInvoices > 0
-              ? { direction: "down", value: `${data.overdueInvoices} overdue`, label: "— action needed" }
+              ? { direction: "down", value: `${data.overdueInvoices} overdue`, label: ": action needed" }
               : { direction: "flat", value: "All on time" }
           }
           icon={FileText}
@@ -261,7 +261,7 @@ export default async function AdminDashboardPage() {
         />
         <StatCard
           title="Active Clients"
-          value={hasData ? String(data.clients) : "—"}
+          value={hasData ? String(data.clients) : "-"}
           trend={{ direction: "up", value: "+2", label: "this quarter" }}
           sub="Current engagements"
           icon={Users}
@@ -279,7 +279,7 @@ export default async function AdminDashboardPage() {
             <div className="flex items-center justify-between">
               <div>
                 <CardTitle className="text-base font-semibold">Revenue Overview</CardTitle>
-                <p className="text-xs text-muted-foreground mt-0.5">Income vs Expenses — last 8 months</p>
+                <p className="text-xs text-muted-foreground mt-0.5">Income vs Expenses: last 8 months</p>
               </div>
               <Link href="/admin/finance" className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1 transition-colors">
                 Full report <ArrowUpRight size={12} />

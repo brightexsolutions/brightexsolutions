@@ -61,7 +61,7 @@ export async function GET(request: NextRequest) {
       await transporter.sendMail({
         from: `${SITE_NAME} <${process.env.SMTP_USER}>`,
         to: booking.booker_email,
-        subject: `Following up on your ${purposeLabel} — ${formattedDate}`,
+        subject: `Following up on your ${purposeLabel}: ${formattedDate}`,
         html: emailTemplate({
           title: "Following Up",
           subtitle: purposeLabel,
@@ -77,7 +77,7 @@ export async function GET(request: NextRequest) {
             ) +
             emailDivider() +
             emailParagraph(
-              `Reply to this email or reach us on WhatsApp: <a href="${whatsappUrl()}" style="color:#f9a825;font-weight:600">${BUSINESS_PHONE}</a> — we'd love to hear from you.`
+              `Reply to this email or reach us on WhatsApp: <a href="${whatsappUrl()}" style="color:#f9a825;font-weight:600">${BUSINESS_PHONE}</a>: we'd love to hear from you.`
             ) +
             emailSignoff(),
         }),
@@ -89,7 +89,7 @@ export async function GET(request: NextRequest) {
           action: "followup_sent",
           entity_type: "booking",
           entity_id: booking.id,
-          entity_label: `${purposeLabel} — ${booking.booker_name}`,
+          entity_label: `${purposeLabel}: ${booking.booker_name}`,
           notes: `Post-booking follow-up sent to ${booking.booker_email}`,
         }),
       ]);

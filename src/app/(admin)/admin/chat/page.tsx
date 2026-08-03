@@ -233,7 +233,7 @@ export default function BrixoChatPage() {
           → {(row.escalation_type as string | null | undefined) ?? "WhatsApp"}
         </span>
       ) : (
-        <span className="text-xs text-muted-foreground">—</span>
+        <span className="text-xs text-muted-foreground">-</span>
       ),
     },
   ];
@@ -316,7 +316,7 @@ export default function BrixoChatPage() {
             </CardHeader>
             <CardContent>
               <div className="border border-border rounded-sm bg-muted/30 p-4 min-h-30 flex items-center justify-center">
-                <p className="text-xs text-muted-foreground">Type a message to test FAQ matching — available once FAQs are added.</p>
+                <p className="text-xs text-muted-foreground">Type a message to test FAQ matching: available once FAQs are added.</p>
               </div>
               <div className="flex gap-2 mt-3">
                 <input
@@ -350,10 +350,10 @@ export default function BrixoChatPage() {
       {activeTab === "Analytics" && (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {[
-            { label: "Total sessions", value: sessions.length || "—" },
-            { label: "Bot resolution rate", value: sessions.length ? `${resolutionRate}%` : "—" },
-            { label: "WhatsApp escalation rate", value: sessions.length ? `${Math.round((escalatedCount / sessions.length) * 100)}%` : "—" },
-            { label: "Active FAQs", value: faqs.filter((f) => f.active).length || "—" },
+            { label: "Total sessions", value: sessions.length || "-" },
+            { label: "Bot resolution rate", value: sessions.length ? `${resolutionRate}%` : "-" },
+            { label: "WhatsApp escalation rate", value: sessions.length ? `${Math.round((escalatedCount / sessions.length) * 100)}%` : "-" },
+            { label: "Active FAQs", value: faqs.filter((f) => f.active).length || "-" },
           ].map((item) => (
             <Card key={item.label}>
               <CardContent className="pt-5 pb-5">

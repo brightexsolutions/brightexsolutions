@@ -18,9 +18,9 @@ const categories = ["domain", "hosting", "tool", "software", "other"];
 const cycles = ["monthly", "yearly", "one_time"];
 
 const OWNERSHIP_OPTIONS = [
-  { value: "internal", label: "Internal", description: "Our own business subscription — we pay", icon: Building2, color: "bg-blue-400/10 text-blue-500 dark:text-blue-400" },
-  { value: "on_behalf", label: "On Behalf of Client", description: "We pay it, but it's for a client — expense to us", icon: Users, color: "bg-purple-400/10 text-purple-500 dark:text-purple-400" },
-  { value: "client_managed", label: "Client Managed", description: "Client pays themselves — we only track it", icon: Lock, color: "bg-muted text-muted-foreground" },
+  { value: "internal", label: "Internal", description: "Our own business subscription: we pay", icon: Building2, color: "bg-blue-400/10 text-blue-500 dark:text-blue-400" },
+  { value: "on_behalf", label: "On Behalf of Client", description: "We pay it, but it's for a client: expense to us", icon: Users, color: "bg-purple-400/10 text-purple-500 dark:text-purple-400" },
+  { value: "client_managed", label: "Client Managed", description: "Client pays themselves: we only track it", icon: Lock, color: "bg-muted text-muted-foreground" },
 ] as const;
 
 type Client = { id: string; name: string; email?: string | null; phone?: string | null };
@@ -232,7 +232,7 @@ export function SubscriptionsPageClient() {
         <div className="flex items-start gap-3 p-4 rounded-sm bg-amber-50 border border-amber-200 dark:bg-amber-950/20 dark:border-amber-800/30">
           <AlertTriangle size={16} className="text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
           <p className="text-sm font-medium text-amber-700 dark:text-amber-300">
-            {renewingSoon.length} renewal{renewingSoon.length !== 1 ? "s" : ""} due in the next 14 days — review before they slip past.
+            {renewingSoon.length} renewal{renewingSoon.length !== 1 ? "s" : ""} due in the next 14 days: review before they slip past.
           </p>
         </div>
       )}

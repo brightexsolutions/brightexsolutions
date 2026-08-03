@@ -2,7 +2,7 @@
 
 import { DataTable, StatusDot, StackedCell, type Column } from "./data-table";
 
-// ─── Types (serializable — only plain data) ───────────────────────────────────
+// ─── Types (serializable: only plain data) ───────────────────────────────────
 
 export interface ActivityRow {
   id: string;
@@ -52,7 +52,7 @@ const ACTIVITY_COLS: Column<Record<string, unknown>>[] = [
     className: "text-right hidden sm:table-cell",
     render: (row) => (
       <span className="font-semibold text-foreground">
-        {row.amount ? String(row.amount) : "—"}
+        {row.amount ? String(row.amount) : "-"}
       </span>
     ),
   },
@@ -109,7 +109,7 @@ const BOOKING_COLS: Column<Record<string, unknown>>[] = [
     label: "Purpose",
     render: (row) => (
       <span className="capitalize text-sm">
-        {String(row.purpose ?? "—").replace(/_/g, " ")}
+        {String(row.purpose ?? "-").replace(/_/g, " ")}
       </span>
     ),
   },

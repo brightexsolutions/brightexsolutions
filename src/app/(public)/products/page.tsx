@@ -10,7 +10,7 @@ export const revalidate = 3600;
 
 export const metadata: Metadata = {
   title: "Products",
-  description: "Ready-to-deploy software built by Brightex Solutions — ERP systems, booking platforms, and management tools for businesses across East Africa.",
+  description: "Ready-to-deploy software built by Brightex Solutions: ERP systems, booking platforms, and management tools for businesses across East Africa.",
   alternates: { canonical: "/products" },
 };
 
@@ -36,7 +36,7 @@ export default async function ProductsPage() {
               Business Software
             </h1>
             <p className="text-white/60 text-lg leading-relaxed">
-              Software built by Brightex — designed for specific industries, licensed to businesses across East Africa. Try any product free for 7 days.
+              Software built by Brightex: designed for specific industries, licensed to businesses across East Africa. Try any product free for 7 days.
             </p>
           </FadeIn>
         </div>
@@ -143,7 +143,7 @@ export default async function ProductsPage() {
                   <span className="text-brand-gold">Right now.</span>
                 </h2>
                 <p className="text-white/55 text-base max-w-xl mx-auto mb-10 leading-relaxed">
-                  Every product Brightex ships starts life as a real client problem — something we solved so well it became software. The first wave is in active development. We&apos;ll announce when they&apos;re ready.
+                  Every product Brightex ships starts life as a real client problem: something we solved so well it became software. The first wave is in active development. We&apos;ll announce when they&apos;re ready.
                 </p>
                 <div className="flex flex-col sm:flex-row gap-4 justify-center">
                   <a
@@ -176,7 +176,7 @@ export default async function ProductsPage() {
                   Need a specific tool for your business?
                 </h3>
                 <p className="text-white/60 text-base max-w-xl mx-auto mb-8 leading-relaxed">
-                  Tell us what you are building or struggling to manage. We may already be developing it — or we can build it for you as a custom engagement and license it back to the market.
+                  Tell us what you are building or struggling to manage. We may already be developing it: or we can build it for you as a custom engagement and license it back to the market.
                 </p>
                 <div className="flex flex-col sm:flex-row gap-4 justify-center">
                   <a

@@ -105,7 +105,7 @@ export async function PATCH(
         });
       }
     } else {
-      // due_date cleared — remove the event
+      // due_date cleared: remove the event
       await supabase
         .from("calendar_events")
         .delete()
@@ -171,7 +171,7 @@ export async function PATCH(
         await transporter.sendMail({
           from: `"Brightex Solutions" <${ADMIN_EMAIL}>`,
           to: clientEmail,
-          subject: `Project Update — ${project.name}`,
+          subject: `Project Update: ${project.name}`,
           html: `
             <div style="font-family:system-ui,sans-serif;max-width:560px;margin:0 auto;color:#1e293b">
               <div style="background:#152238;padding:24px 32px;border-radius:8px 8px 0 0">
@@ -198,7 +198,7 @@ export async function PATCH(
         await supabase.from("communications").insert({
           client_id: project.clients.id,
           type: "email",
-          subject: `Project Update — ${project.name}`,
+          subject: `Project Update: ${project.name}`,
           body: `Auto-sent: task "${taskTitle}" was ${triggerLabel}`,
           direction: "out",
           status: "sent",

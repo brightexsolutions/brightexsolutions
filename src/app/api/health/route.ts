@@ -8,7 +8,7 @@ export async function GET(request: NextRequest) {
   const token = request.headers.get("x-brightex-token");
   const start = Date.now();
 
-  // Basic ping — always fast, no auth needed
+  // Basic ping: always fast, no auth needed
   if (!token || token !== process.env.BRIGHTEX_HEALTH_TOKEN) {
     return NextResponse.json({
       status: "ok",
@@ -16,7 +16,7 @@ export async function GET(request: NextRequest) {
     });
   }
 
-  // Authenticated detail check — for Brightex dashboard and monitoring
+  // Authenticated detail check: for Brightex dashboard and monitoring
   const checks: Record<string, string> = {};
 
   if (process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY) {

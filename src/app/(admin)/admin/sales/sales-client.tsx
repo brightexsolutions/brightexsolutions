@@ -25,7 +25,7 @@ const stages = [
     criteria: [
       "Reached out via form, referral, or social media",
       "You've spotted them as a potential fit",
-      "Initial conversation happened — nothing confirmed",
+      "Initial conversation happened: nothing confirmed",
     ],
   },
   {
@@ -35,10 +35,10 @@ const stages = [
     dotColor: "bg-cyan-400",
     description: "You've assessed the lead and confirmed they are worth pursuing. They have a genuine need, a reachable decision-maker, and a budget.",
     criteria: [
-      "Budget confirmed — they can afford the service",
-      "Authority — you're speaking to the decision-maker",
-      "Need — a clear problem Brightex can solve",
-      "Timeline — they intend to proceed soon",
+      "Budget confirmed: they can afford the service",
+      "Authority: you're speaking to the decision-maker",
+      "Need: a clear problem Brightex can solve",
+      "Timeline: they intend to proceed soon",
     ],
   },
   {
@@ -58,11 +58,11 @@ const stages = [
     label: "Negotiation",
     color: "border-t-orange-400",
     dotColor: "bg-orange-400",
-    description: "The prospect wants to proceed but there are open discussions — price adjustments, scope changes, or contract terms need to be finalised.",
+    description: "The prospect wants to proceed but there are open discussions: price adjustments, scope changes, or contract terms need to be finalised.",
     criteria: [
       "Active back-and-forth on price or scope",
       "Contract or agreement under review",
-      "They are committed in principle — details remain",
+      "They are committed in principle: details remain",
     ],
   },
   {
@@ -74,7 +74,7 @@ const stages = [
     criteria: [
       "Verbal or written confirmation received",
       "Deposit or full payment made",
-      "Project kickoff scheduled — create a Project record",
+      "Project kickoff scheduled: create a Project record",
     ],
   },
   {
@@ -87,7 +87,7 @@ const stages = [
       "Prospect chose a competitor",
       "Budget constraints or project cancelled",
       "No response after multiple follow-ups",
-      "Timing didn't work — may revisit later",
+      "Timing didn't work: may revisit later",
     ],
   },
 ] as const;
@@ -125,7 +125,7 @@ function StageHeader({ stage, count }: { stage: typeof stages[number]; count: nu
           >
             <Info size={12} />
           </button>
-          {/* Tooltip — appears below the icon */}
+          {/* Tooltip: appears below the icon */}
           <div className="absolute top-full left-0 z-200 mt-2 hidden group-hover/info:block w-64 pointer-events-none">
             <div className="bg-popover border border-border rounded-sm shadow-xl p-3 text-left">
               <div className="flex items-center gap-1.5 mb-2">

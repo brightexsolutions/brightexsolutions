@@ -5,7 +5,7 @@ import { rateLimit } from "@/lib/rate-limit";
 
 // Summary endpoint for Stride's Settings → Integrations "Brightex Dashboard API".
 // Shape matches stride-app/docs/brightex-api-spec.md exactly. Bearer-token auth via
-// STRIDE_API_KEY (a dedicated secret — not CRON_SECRET, which is for internal
+// STRIDE_API_KEY (a dedicated secret: not CRON_SECRET, which is for internal
 // scheduler triggers, and not admin session cookies, which are for human users).
 const SEVERITY_TO_PRIORITY: Record<string, "high" | "medium" | "low"> = {
   critical: "high",
@@ -108,11 +108,11 @@ export async function GET(request: NextRequest) {
   });
 
   // Invoice-linked alerts get a real due_date. There's no per-invoice admin page/URL
-  // in this app yet — invoices open in a client-side Sheet/Dialog from the list page,
-  // not a dedicated route — so the deep link goes to the list page itself rather than
+  // in this app yet: invoices open in a client-side Sheet/Dialog from the list page,
+  // not a dedicated route: so the deep link goes to the list page itself rather than
   // a fabricated /admin/invoices/{id} route that 404s. Every other entity_type
   // (booking/site/sale/subscription/trial/subcontractor_expense/system) has no
-  // admin page pattern established either, so those get no url at all — still valid
+  // admin page pattern established either, so those get no url at all: still valid
   // per spec (dueDate/url are both optional).
   const invoiceEntityIds = alerts.filter((a) => a.entity_type === "invoice" && a.entity_id).map((a) => a.entity_id as string);
   const invoiceDueDates = new Map<string, string | null>();

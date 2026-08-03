@@ -113,7 +113,7 @@ export function PushNotificationsToggle() {
     return (
       <button
         onClick={disable}
-        title="Browser push notifications on — click to disable"
+        title="Browser push notifications on: click to disable"
         className={cn(
           "w-8 h-8 rounded-lg flex items-center justify-center transition-colors",
           "text-emerald-500 hover:text-emerald-600 hover:bg-muted"

@@ -94,7 +94,7 @@ const AISchema = z.discriminatedUnion("intent", [
   }),
   z.object({
     intent:     z.literal("analyze_logs"),
-    // Raw log paste (optional — if omitted, recent system_alerts are fetched from DB)
+    // Raw log paste (optional: if omitted, recent system_alerts are fetched from DB)
     logs:       z.string().max(8000).trim().optional(),
     // Number of recent system_alerts to include when no logs are pasted
     alertLimit: z.number().min(1).max(100).default(50),
@@ -139,7 +139,7 @@ Brightex Solutions Team
     case "draft_receipt_email":
       return `Hi ${payload.clientName},
 
-Thank you — we've received your payment of ${payload.amount}${payload.invoiceNumber ? ` for invoice ${payload.invoiceNumber}` : ""}${payload.projectName ? ` (${payload.projectName})` : ""}.${payload.reference ? `\n\nPayment reference: ${payload.reference}` : ""}
+Thank you: we've received your payment of ${payload.amount}${payload.invoiceNumber ? ` for invoice ${payload.invoiceNumber}` : ""}${payload.projectName ? ` (${payload.projectName})` : ""}.${payload.reference ? `\n\nPayment reference: ${payload.reference}` : ""}
 
 Your account is now up to date. We appreciate your promptness.
 
@@ -188,7 +188,7 @@ Invoice number: ${payload.invoiceNumber}
 Amount due: ${payload.total}
 Due date: ${payload.dueDate}${payload.projectName ? `\nProject: ${payload.projectName}` : ""}
 
-Write only the email body. Keep it warm, professional, and brief — 3–4 short paragraphs. Sign off as "The Brightex Solutions Team".`,
+Write only the email body. Keep it warm, professional, and brief: 3–4 short paragraphs. Sign off as "The Brightex Solutions Team".`,
       };
 
     case "draft_reminder":
@@ -272,7 +272,7 @@ Include 6–12 tasks covering the full project lifecycle.`,
     case "write_caption":
       return {
         maxTokens: 700,
-        userPrompt: `You are a senior social media and marketing manager with 10+ years of experience running high-converting campaigns for service businesses. Write social media captions for Brightex Solutions on the following topic. The goal is business growth, not just announcing information: every caption should be written to drive engagement (comments, shares, saves) and move the reader toward becoming a lead — end with a clear, specific call to action (book a discovery call, send a DM, visit the site, comment with their biggest challenge, etc. — pick whichever fits the topic, never a generic "learn more"). Open with a hook in the first line that earns attention before anything else, since that's what stops the scroll.
+        userPrompt: `You are a senior social media and marketing manager with 10+ years of experience running high-converting campaigns for service businesses. Write social media captions for Brightex Solutions on the following topic. The goal is business growth, not just announcing information: every caption should be written to drive engagement (comments, shares, saves) and move the reader toward becoming a lead: end with a clear, specific call to action (book a discovery call, send a DM, visit the site, comment with their biggest challenge, etc.: pick whichever fits the topic, never a generic "learn more"). Open with a hook in the first line that earns attention before anything else, since that's what stops the scroll.
 
 Topic: ${payload.topic}
 Platforms: ${payload.platforms.join(", ")}
@@ -288,7 +288,7 @@ Keep each caption platform-appropriate in length and style.
 
 After all platform captions, add one final section:
 **Visual idea**
-[One concrete, practical suggestion for what image or carousel to create/use for this post — e.g. "Before/after screenshot of the new homepage" or "3-slide carousel: hero shot, mobile view, client logo". Suggest something Brightex likely already has (project screenshots, brand assets) rather than requiring a new photoshoot, unless the topic clearly calls for one.]`,
+[One concrete, practical suggestion for what image or carousel to create/use for this post: e.g. "Before/after screenshot of the new homepage" or "3-slide carousel: hero shot, mobile view, client logo". Suggest something Brightex likely already has (project screenshots, brand assets) rather than requiring a new photoshoot, unless the topic clearly calls for one.]`,
       };
 
     case "summarize":
@@ -306,7 +306,7 @@ Write a clear, structured summary in 3–6 bullet points.`,
     case "analyze_logs":
       return {
         maxTokens: 1200,
-        userPrompt: `You are a senior full-stack engineer reviewing error logs and system alerts for Brightex Solutions — a Next.js + Supabase web application.
+        userPrompt: `You are a senior full-stack engineer reviewing error logs and system alerts for Brightex Solutions: a Next.js + Supabase web application.
 
 Analyse the following logs/alerts and return your findings as JSON in this exact shape:
 {
@@ -316,7 +316,7 @@ Analyse the following logs/alerts and return your findings as JSON in this exact
       "severity": "critical|warning|info",
       "title": "<short issue title>",
       "description": "<what is happening and why>",
-      "suggestedFix": "<concrete actionable fix — file paths, code snippets, or config changes if relevant>",
+      "suggestedFix": "<concrete actionable fix: file paths, code snippets, or config changes if relevant>",
       "affectedArea": "<route, module, or service name>"
     }
   ],
@@ -324,7 +324,7 @@ Analyse the following logs/alerts and return your findings as JSON in this exact
   "topPriority": "<the single most important thing to fix first>"
 }
 
-${payload.logs ? `LOGS / ALERTS:\n${payload.logs}` : "No raw logs provided — analyse the system_alerts data above."}`,
+${payload.logs ? `LOGS / ALERTS:\n${payload.logs}` : "No raw logs provided: analyse the system_alerts data above."}`,
       };
   }
 }
@@ -333,7 +333,7 @@ export async function POST(request: NextRequest) {
   const limited = await rateLimit(request, "ai_admin");
   if (limited) return limited;
 
-  // Auth check — admin only
+  // Auth check: admin only
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Unauthorised" }, { status: 401 });
@@ -397,7 +397,7 @@ export async function POST(request: NextRequest) {
 
     // Re-build the prompt now that we have the alert data
     userPrompt = userPrompt.replace(
-      "No raw logs provided — analyse the system_alerts data above.",
+      "No raw logs provided: analyse the system_alerts data above.",
       `SYSTEM ALERTS (last ${(alerts ?? []).length}):\n${alertText}`
     );
   }
@@ -436,7 +436,7 @@ export async function POST(request: NextRequest) {
     });
 
     // A GeminiRateLimitedError is expected, self-imposed throttling to
-    // protect the call budget — not a provider outage, so it doesn't page.
+    // protect the call budget: not a provider outage, so it doesn't page.
     if (!(err instanceof GeminiRateLimitedError)) {
       void recordAiFailure({
         route: "/api/admin/ai",
@@ -446,7 +446,7 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    // Fall back to template on AI failure — never leave the admin stranded
+    // Fall back to template on AI failure: never leave the admin stranded
     const fallback = defaultTemplate(payload);
     if (fallback) {
       return NextResponse.json({ result: fallback, intent: payload.intent, source: "template" });

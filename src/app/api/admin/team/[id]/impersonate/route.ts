@@ -50,7 +50,7 @@ export async function POST(
 
   const portalPath = ROLE_PORTAL[member.role] ?? "/admin";
 
-  // Generate link — redirect_to is only used as fallback if user follows the raw
+  // Generate link: redirect_to is only used as fallback if user follows the raw
   // action_link directly; our flow extracts the raw OTP token instead and calls
   // verifyOtp on the client, bypassing Supabase's redirect URL whitelist entirely.
   const { data: linkData, error: linkErr } = await supabase.auth.admin.generateLink({

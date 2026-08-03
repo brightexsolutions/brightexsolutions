@@ -1,7 +1,7 @@
 import type { User } from "@supabase/supabase-js";
 import { NextResponse } from "next/server";
 
-// Roles that are limited team portals — NOT the business owner / admin.
+// Roles that are limited team portals: NOT the business owner / admin.
 const TEAM_ROLES = new Set(["finance", "marketing", "support", "subcontractor"]);
 
 /**

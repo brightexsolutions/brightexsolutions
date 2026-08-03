@@ -54,7 +54,7 @@ export async function POST(
   if (sub.ownership !== "client_managed" && sub.amount) {
     const category = sub.ownership === "internal" ? "subscription" : "subscription";
     const description = sub.ownership === "on_behalf"
-      ? `${sub.name} — paid on behalf of client`
+      ? `${sub.name}: paid on behalf of client`
       : sub.name;
 
     await supabase.from("expenses").insert({

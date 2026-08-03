@@ -73,7 +73,7 @@ export function PendingActionsCard({ refreshKey }: { refreshKey: number }) {
             <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-brand-gold/10 text-brand-gold">{items.length}</span>
           )}
         </div>
-        <p className="text-xs text-muted-foreground mt-0.5">AI-drafted emails, waiting on your review — nothing sends without your approval.</p>
+        <p className="text-xs text-muted-foreground mt-0.5">AI-drafted emails, waiting on your review: nothing sends without your approval.</p>
       </CardHeader>
       <CardContent className="pt-0">
         {loading ? (
@@ -98,7 +98,7 @@ export function PendingActionsCard({ refreshKey }: { refreshKey: number }) {
                   </button>
                   {isOpen && (
                     <div className="p-2.5 pt-0 space-y-2 bg-muted/10">
-                      <p className="text-[11px] text-muted-foreground">To: {item.clients?.name}{item.clients?.email ? ` <${item.clients.email}>` : " — no email on file"}</p>
+                      <p className="text-[11px] text-muted-foreground">To: {item.clients?.name}{item.clients?.email ? ` <${item.clients.email}>` : ": no email on file"}</p>
                       <input
                         value={edit.subject}
                         onChange={(e) => setEdits((prev) => ({ ...prev, [item.id]: { ...edit, subject: e.target.value } }))}

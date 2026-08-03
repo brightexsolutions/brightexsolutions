@@ -7,7 +7,7 @@ import {
 import { SITE_URL, whatsappUrl } from "@/lib/constants";
 import { PROCESS_STAGES } from "@/lib/brightex-sop";
 
-/** The same 4-stage process shown on the public "How We Work" section —
+/** The same 4-stage process shown on the public "How We Work" section -
  * generic and identical for every client, never deal-specific, so it's safe
  * to always show even on a gated document. */
 function howWeWorkSection(num: string): string {
@@ -27,7 +27,7 @@ function fmtDate(d: string): string {
 const ABOUT_TEXT = `${SITE_NAME} is a Nairobi-based technology and business consulting firm. We specialise in designing and building digital products, websites, web applications, management systems, and business automation tools, for organisations across East Africa and beyond. Every project we take on is built to a professional standard: clean code, modern design, and practical systems your team can actually use.`;
 
 /** A scope item with a `tag` gets its own deep-dive section (problem/solution
- * cards + scope-at-a-glance grid) — a plainer item (just title/description)
+ * cards + scope-at-a-glance grid): a plainer item (just title/description)
  * renders as a simple card inside the shared "Scope of Work" section. AI
  * chooses depth per deliverable based on how much the engagement summary
  * actually supports; this only renders what's there, never invents detail. */
@@ -193,7 +193,7 @@ export function renderProposalHtml(data: ProposalData): string {
   tocLabels.push("Terms & Next Steps");
 
   return documentShell({
-    title: `${data.project_title} — Proposal ${data.proposal_number}`,
+    title: `${data.project_title}: Proposal ${data.proposal_number}`,
     dlBarLabel: `PROPOSAL · ${clientLabel.toUpperCase()}`,
     coverTag: "Project Proposal",
     coverTitleLines: splitTitleForCover(data.cover_tagline?.trim() || data.project_title),
@@ -215,7 +215,7 @@ export function renderProposalHtml(data: ProposalData): string {
 }
 
 /**
- * Gated preview — shown on the public link instead of the full proposal when
+ * Gated preview: shown on the public link instead of the full proposal when
  * a document is marked `gated`. Deliberately not a "paywall": the full
  * executive summary, deliverable titles, timeline, and total investment are
  * all real and specific (trust through specificity, and the headline number
@@ -232,7 +232,7 @@ export function renderProposalTeaserHtml(data: ProposalData): string {
   let n = 1;
   const num = () => String(n++).padStart(2, "0");
 
-  // 01 — Executive Summary: the hook. Real and specific, always visible.
+  // 01: Executive Summary: the hook. Real and specific, always visible.
   if (data.intro) {
     sections.push(`<section class="section">
       ${sectionHeader(num(), "Overview", "Executive Summary")}
@@ -246,7 +246,7 @@ export function renderProposalTeaserHtml(data: ProposalData): string {
     tocLabels.push("Executive Summary");
   }
 
-  // 02-N — the actual consulting output: problem framing, per-deliverable
+  // 02-N: the actual consulting output: problem framing, per-deliverable
   // solution design, pricing, and rollout plan. This is what took real time
   // to produce, so it's gated as one block, not given away with the hook.
   const gatedParts: string[] = [];
@@ -325,7 +325,7 @@ export function renderProposalTeaserHtml(data: ProposalData): string {
     tocLabels.push("The Detailed Plan");
   }
 
-  // Tail — only genuinely generic, non-deal-specific content is visible:
+  // Tail: only genuinely generic, non-deal-specific content is visible:
   // who Brightex is, and the standard process every client goes through.
   sections.push(`<section class="section">
     ${sectionHeader(num(), "Who We Are", "About Brightex Solutions")}
@@ -337,7 +337,7 @@ export function renderProposalTeaserHtml(data: ProposalData): string {
   tocLabels.push("How We Work");
 
   // Terms (deposit %, ownership, confidentiality) and this proposal's
-  // specific next steps are deal-specific, so they're gated too — released
+  // specific next steps are deal-specific, so they're gated too: released
   // alongside the rest of the detailed plan.
   const validityDays = 14;
   const termsBullets = [
@@ -376,7 +376,7 @@ export function renderProposalTeaserHtml(data: ProposalData): string {
   tocLabels.push("Terms & Next Steps");
 
   return documentShell({
-    title: `${data.project_title} — Proposal ${data.proposal_number}`,
+    title: `${data.project_title}: Proposal ${data.proposal_number}`,
     dlBarLabel: `PROPOSAL · ${clientLabel.toUpperCase()}`,
     coverTag: "Project Proposal",
     coverTitleLines: splitTitleForCover(data.cover_tagline?.trim() || data.project_title),

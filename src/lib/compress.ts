@@ -19,7 +19,7 @@ type CompressResult = {
  * Images (JPEG, PNG, WebP, GIF) are re-encoded at reduced quality and
  * downscaled if they exceed MAX_PX on either axis.
  *
- * PDFs and office documents are returned unchanged — lossless JS-only PDF
+ * PDFs and office documents are returned unchanged: lossless JS-only PDF
  * compression yields negligible savings and risks corrupting the file.
  *
  * The caller should use `result.mimeType` (not the original file.type) when
@@ -37,7 +37,7 @@ export async function compressFile(
   const IMAGE_TYPES = ["image/jpeg", "image/jpg", "image/png", "image/webp", "image/gif"];
 
   if (!IMAGE_TYPES.includes(mimeType)) {
-    // Non-image — return as-is
+    // Non-image: return as-is
     return { buffer: input, mimeType, originalBytes, compressedBytes: originalBytes };
   }
 
@@ -74,7 +74,7 @@ export async function compressFile(
     return { buffer: buf, mimeType: "image/webp", originalBytes, compressedBytes: buf.byteLength };
   }
 
-  // GIF — convert to WebP (animated WebP supported by sharp)
+  // GIF: convert to WebP (animated WebP supported by sharp)
   if (mimeType === "image/gif") {
     const buf = await pipeline.webp({ quality: QUALITY }).toBuffer();
     return { buffer: buf, mimeType: "image/webp", originalBytes, compressedBytes: buf.byteLength };

@@ -71,8 +71,8 @@ export async function GET(request: NextRequest) {
     }
   }
 
-  // Attach any proposal/agreement generated for the same client — preferring
-  // one tied to the same project when this invoice has one — so the invoice
+  // Attach any proposal/agreement generated for the same client: preferring
+  // one tied to the same project when this invoice has one: so the invoice
   // list can show and act on ("View" / "Resend") the document it grew out of.
   const clientIds = [...new Set((data ?? []).map((inv) => inv.client_id).filter(Boolean))];
   let docsByClient: Record<string, Array<Record<string, unknown>>> = {};
@@ -156,7 +156,7 @@ export async function POST(request: NextRequest) {
     total: it.total ?? it.qty * it.unit_price,
   }));
 
-  // Auto-generate invoice number — {PREFIX}-{YEAR}-{SEQUENCE}, sequence resets each year
+  // Auto-generate invoice number: {PREFIX}-{YEAR}-{SEQUENCE}, sequence resets each year
   const year = new Date().getFullYear();
   const yearStart = `${year}-01-01`;
   const { count } = await supabase

@@ -27,7 +27,7 @@ const RefineSchema = z.object({
   instruction: z.string().min(3).max(1000).trim(),
 });
 
-// Fields the AI must never be allowed to drift — restored from the original
+// Fields the AI must never be allowed to drift: restored from the original
 // document after every refine, regardless of what the AI returns for them.
 const LOCKED_FIELDS: Record<string, string[]> = {
   proposal: ["proposal_number", "created_at", "valid_until", "client"],
@@ -68,7 +68,7 @@ export async function POST(request: NextRequest, { params }: Params) {
   const aiModel: string = settingsMap.ai_model ?? AI_MODELS.haiku;
 
   if (!aiEnabled || !isAIAvailable(aiProvider)) {
-    return NextResponse.json({ error: "AI is currently unavailable — enable it in Admin → Settings → AI, or try again shortly." }, { status: 503 });
+    return NextResponse.json({ error: "AI is currently unavailable: enable it in Admin → Settings → AI, or try again shortly." }, { status: 503 });
   }
 
   const userPrompt = `${DOCUMENT_COPY_RULES}
@@ -84,7 +84,7 @@ The business owner's instruction for this revision:
 ${result.data.instruction}
 """
 
-Apply ONLY what the instruction asks for. Leave every other field exactly as it was. Return the COMPLETE updated JSON object in the exact same shape as the input (same keys, same structure) — not a diff, not just the changed fields.`;
+Apply ONLY what the instruction asks for. Leave every other field exactly as it was. Return the COMPLETE updated JSON object in the exact same shape as the input (same keys, same structure): not a diff, not just the changed fields.`;
 
   try {
     const text = await callAI({

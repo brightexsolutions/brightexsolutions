@@ -8,7 +8,7 @@ export const revalidate = 3600;
 export const metadata: Metadata = {
   title: "Services",
   description:
-    "Web development, UI/UX design, SEO, branding, AI automation, ERP systems, and technology consultancy — all from one team in Nairobi.",
+    "Web development, UI/UX design, SEO, branding, AI automation, ERP systems, and technology consultancy: all from one team in Nairobi.",
   alternates: { canonical: "/services" },
 };
 
@@ -19,7 +19,7 @@ const services = [
     title: "Web Development",
     tagline: "Fast, scalable, built to last.",
     description:
-      "From marketing sites to complex web applications — we build with modern stacks optimised for performance, SEO, and maintainability. Every project ships with full deployment, CI/CD setup, and handover documentation.",
+      "From marketing sites to complex web applications: we build with modern stacks optimised for performance, SEO, and maintainability. Every project ships with full deployment, CI/CD setup, and handover documentation.",
     points: ["Custom websites & web apps", "E-commerce platforms", "API development", "Performance & Core Web Vitals"],
     featured: false,
   },
@@ -29,7 +29,7 @@ const services = [
     title: "UI/UX Design",
     tagline: "Interfaces people actually enjoy using.",
     description:
-      "User research, wireframing, prototyping, and high-fidelity UI design — grounded in how real people use products. We design for conversion, accessibility, and consistency across every screen size.",
+      "User research, wireframing, prototyping, and high-fidelity UI design: grounded in how real people use products. We design for conversion, accessibility, and consistency across every screen size.",
     points: ["UX research & strategy", "Wireframes & prototypes", "UI design systems", "Accessibility audits"],
     featured: false,
   },
@@ -49,7 +49,7 @@ const services = [
     title: "Branding & Identity",
     tagline: "A brand that commands attention.",
     description:
-      "Logo design, colour systems, typography, and complete brand guidelines — giving your business a consistent, professional presence across every digital and print touchpoint.",
+      "Logo design, colour systems, typography, and complete brand guidelines: giving your business a consistent, professional presence across every digital and print touchpoint.",
     points: ["Logo & mark design", "Full brand guidelines", "Colour & typography systems", "Social media templates"],
     featured: false,
   },
@@ -59,7 +59,7 @@ const services = [
     title: "AI & Automation",
     tagline: "Work smarter with intelligent systems.",
     description:
-      "AI integrations, chatbots, automated workflows, and data pipelines that eliminate manual work and surface better business intelligence — from simple automation to complex ML-backed systems.",
+      "AI integrations, chatbots, automated workflows, and data pipelines that eliminate manual work and surface better business intelligence: from simple automation to complex ML-backed systems.",
     points: ["AI chatbot development", "Workflow automation", "Data pipelines", "Custom AI tools & integrations"],
     featured: true,
   },
@@ -69,7 +69,7 @@ const services = [
     title: "ERP Systems",
     tagline: "Built around how you actually operate.",
     description:
-      "Custom enterprise resource planning designed around your workflows — not a rigid off-the-shelf product forced into your processes. Built for schools, hospitals, hospitality, NGOs, and more.",
+      "Custom enterprise resource planning designed around your workflows: not a rigid off-the-shelf product forced into your processes. Built for schools, hospitals, hospitality, NGOs, and more.",
     points: ["Custom ERP development", "Module & workflow design", "Data migration & cleanup", "Training & ongoing support"],
     featured: false,
   },
@@ -86,7 +86,7 @@ const services = [
 ];
 
 const pillars = [
-  "No bloated retainers — pay for what you need",
+  "No bloated retainers, pay only for what you need",
   "Every project starts with a discovery conversation",
   "We build for the long run, not the demo",
   "Transparent timelines and plain-language updates",
@@ -155,7 +155,7 @@ export default function ServicesPage() {
                 Real Business Goals
               </h1>
               <p className="text-white/60 text-lg leading-relaxed mb-8">
-                We don&apos;t sell packages — we solve problems. Every engagement starts with understanding what you&apos;re trying to achieve, then building the right solution for that specific goal.
+                We don&apos;t sell packages: we solve problems. Every engagement starts with understanding what you&apos;re trying to achieve, then building the right solution for that specific goal.
               </p>
               <Link
                 href="/contact"
@@ -201,7 +201,7 @@ export default function ServicesPage() {
         </div>
       </section>
 
-      {/* Services — asymmetric layout */}
+      {/* Services: asymmetric layout */}
       <section className="py-24 dark:bg-brand-navy-dark" style={{ background: "linear-gradient(155deg, #f4f6f8 0%, #edeae2 55%, #f2efe9 100%)" }}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 lg:grid-cols-[1fr_2fr] gap-12 lg:gap-16 items-start">
@@ -215,7 +215,7 @@ export default function ServicesPage() {
                 7 disciplines.<br />One team.
               </h2>
               <p className="text-brand-muted leading-relaxed mb-8 text-sm">
-                Whether you need one service or all seven working together — every engagement starts with your goals, not a pre-written proposal.
+                Whether you need one service or all seven working together: every engagement starts with your goals, not a pre-written proposal.
               </p>
               <Link
                 href="/contact"
@@ -228,7 +228,7 @@ export default function ServicesPage() {
             {/* Right: asymmetric service card grid */}
             <FadeInStagger className="grid grid-cols-1 sm:grid-cols-6 gap-4">
 
-              {/* Featured card — spans 4/6 */}
+              {/* Featured card: spans 4/6 */}
               {(() => {
                 const s = services.find(x => x.featured)!;
                 return (
@@ -300,7 +300,7 @@ export default function ServicesPage() {
                 One team. Every discipline.<br />No handoff headaches.
               </h2>
               <p className="text-white/55 text-base leading-relaxed mb-8">
-                Most agencies specialise in one area. You end up stitching together multiple vendors — a designer here, a developer there, an SEO consultant elsewhere. With Brightex, strategy, design, development, and growth live under one roof.
+                Most agencies specialise in one area. You end up stitching together multiple vendors: a designer here, a developer there, an SEO consultant elsewhere. With Brightex, strategy, design, development, and growth live under one roof.
               </p>
               <Link
                 href="/contact"
@@ -312,7 +312,7 @@ export default function ServicesPage() {
             <FadeIn direction="right">
               <div className="grid grid-cols-1 gap-4">
                 {[
-                  { title: "Discovery first", body: "Every engagement starts with a conversation about your actual goals — not a proposal we've already written." },
+                  { title: "Discovery first", body: "Every engagement starts with a conversation about your actual goals: not a proposal we've already written." },
                   { title: "Built to hand over", body: "You own everything. Code is yours, documented, and deployable by any competent developer." },
                   { title: "No surprise invoices", body: "Scoped, quoted, and agreed before a line of code is written. Changes go through a formal request process." },
                 ].map((item) => (

@@ -51,7 +51,7 @@ export async function PATCH(
 
     if (newScheduled) {
       const caption = (data.caption as string | null) ?? "";
-      const title = `Post: ${((data.platforms as string[]) ?? []).join(", ")} — ${caption.slice(0, 60)}${caption.length > 60 ? "…" : ""}`;
+      const title = `Post: ${((data.platforms as string[]) ?? []).join(", ")}: ${caption.slice(0, 60)}${caption.length > 60 ? "…" : ""}`;
       if (existing) {
         await supabase.from("calendar_events").update({ start_at: new Date(newScheduled).toISOString(), title }).eq("id", existing.id);
       } else {
@@ -65,7 +65,7 @@ export async function PATCH(
         });
       }
     } else if (existing) {
-      // scheduled_at cleared — remove the event
+      // scheduled_at cleared: remove the event
       await supabase.from("calendar_events").delete().eq("id", existing.id);
     }
   }

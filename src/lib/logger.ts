@@ -2,7 +2,7 @@
  * Structured application logger.
  *
  * Development: readable coloured output.
- * Production:  single-line JSON — machine-parseable by Vercel Log Drains,
+ * Production:  single-line JSON: machine-parseable by Vercel Log Drains,
  *              Datadog, Axiom, or any log aggregator.
  *
  * Usage:
@@ -15,7 +15,7 @@ type Level = "debug" | "info" | "warn" | "error";
 
 export interface LogContext {
   route?: string;
-  rid?: string;      // request ID — pass from withRoute()
+  rid?: string;      // request ID: pass from withRoute()
   userId?: string;
   error?: string;
   [key: string]: unknown;
@@ -46,7 +46,7 @@ function emit(level: Level, msg: string, ctx?: LogContext): void {
     const colour = DEV_COLOURS[level];
     const tag    = `${colour}[${level.toUpperCase().padEnd(5)}]${RESET}`;
     const route  = ctx?.route ? ` ${ctx.route}` : "";
-    const extra  = ctx?.error ? ` — ${ctx.error}` : "";
+    const extra  = ctx?.error ? `: ${ctx.error}` : "";
     const fn     = level === "error" ? console.error
                  : level === "warn"  ? console.warn
                  : console.log;

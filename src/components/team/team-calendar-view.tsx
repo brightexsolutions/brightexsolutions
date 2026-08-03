@@ -180,7 +180,7 @@ function CalendarGrid({
         })}
       </div>
 
-      {/* Legend — only show types present in this month */}
+      {/* Legend: only show types present in this month */}
       {(() => {
         const presentTypes = [...new Set(events.map((e) => e.type))];
         if (presentTypes.length === 0) return null;
@@ -268,7 +268,7 @@ export function TeamCalendarView({ title, subtitle }: { title: string; subtitle:
       {/* Two-panel layout */}
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_280px] gap-6 items-start">
 
-        {/* LEFT — event list (read-only) */}
+        {/* LEFT: event list (read-only) */}
         <Card>
           <CardHeader className="pb-3">
             <CardTitle className="text-base flex items-center justify-between gap-2">
@@ -335,7 +335,7 @@ export function TeamCalendarView({ title, subtitle }: { title: string; subtitle:
           </CardContent>
         </Card>
 
-        {/* RIGHT — mini calendar grid */}
+        {/* RIGHT: mini calendar grid */}
         <Card>
           <CardContent className="pt-5 pb-4 overflow-visible">
             <CalendarGrid

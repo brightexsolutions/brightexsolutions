@@ -18,7 +18,7 @@ const PostSchema = z.object({
   due_date: z.string().date().optional(),
 });
 
-// GET — fetch tasks assigned to the current team member
+// GET: fetch tasks assigned to the current team member
 export async function GET(request: NextRequest) {
   const limited = await rateLimit(request, "admin");
   if (limited) return limited;
@@ -39,7 +39,7 @@ export async function GET(request: NextRequest) {
 
   const { searchParams } = new URL(request.url);
 
-  // ?projects=1 — return unique projects this member has tasks on
+  // ?projects=1: return unique projects this member has tasks on
   if (searchParams.get("projects") === "1") {
     const { data: tasks } = await supabase
       .from("tasks")
@@ -71,7 +71,7 @@ export async function GET(request: NextRequest) {
   return NextResponse.json({ data: tasks ?? [], member });
 }
 
-// POST — create a new task on a project the member is already assigned to
+// POST: create a new task on a project the member is already assigned to
 export async function POST(request: NextRequest) {
   const limited = await rateLimit(request, "admin");
   if (limited) return limited;
@@ -147,7 +147,7 @@ export async function POST(request: NextRequest) {
   return NextResponse.json({ data: task }, { status: 201 });
 }
 
-// PATCH — update task status or deliverable
+// PATCH: update task status or deliverable
 export async function PATCH(request: NextRequest) {
   const limited = await rateLimit(request, "admin");
   if (limited) return limited;

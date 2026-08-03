@@ -242,7 +242,7 @@ export function InvoicePDFDocument({ invoice, paymentSettings }: { invoice: Invo
           </View>
         )}
 
-        {/* Payment Details — method-aware */}
+        {/* Payment Details: method-aware */}
         {paymentSettings && (() => {
           const m = invoice.payment_method ?? "all";
           const show = (method: string) => m === "all" || m === method;

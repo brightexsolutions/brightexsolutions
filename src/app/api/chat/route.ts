@@ -16,7 +16,7 @@ const ChatSchema = z.object({
   history:   z.array(MessageSchema).max(10).optional(), // last N messages for AI context
 });
 
-// Greeting keywords — answered instantly without AI or DB
+// Greeting keywords: answered instantly without AI or DB
 const GREETING_KEYWORDS = [
   "hello", "hi", "hey", "hiya", "howdy",
   "good morning", "good afternoon", "good evening", "good day",
@@ -29,17 +29,17 @@ function isGreeting(message: string): boolean {
   return GREETING_KEYWORDS.some((g) => lower === g || lower.startsWith(g + " ") || lower.startsWith(g + "!") || lower.startsWith(g + ","));
 }
 
-// Hardcoded fallback FAQs — used when DB is not connected
+// Hardcoded fallback FAQs: used when DB is not connected
 const FALLBACK_FAQS = [
   { keywords: ["service", "what do you do", "offer", "build"],
     question: "What services does Brightex offer?",
     answer: "We offer Web Development, UI/UX Design, SEO & Growth, Branding, AI & Automation, ERP Systems, and Technology Consultancy. Visit our services page to see the full breakdown." },
   { keywords: ["product", "erp", "software", "school", "hospital"],
     question: "Do you have pre-built software products?",
-    answer: "Yes — we build licensable software for industries like education, healthcare, and hospitality. Visit our products page to see what's available." },
+    answer: "Yes: we build licensable software for industries like education, healthcare, and hospitality. Visit our products page to see what's available." },
   { keywords: ["price", "cost", "quote", "how much", "pricing"],
     question: "How much does a project cost?",
-    answer: "Pricing is tailored to each project's scope and requirements — we don't publish fixed rates. Get in touch via the contact page and we'll send a detailed proposal within 24 hours." },
+    answer: "Pricing is tailored to each project's scope and requirements: we don't publish fixed rates. Get in touch via the contact page and we'll send a detailed proposal within 24 hours." },
   { keywords: ["contact", "reach", "talk", "call", "phone", "whatsapp"],
     question: "How do I reach Brightex?",
     answer: `You can reach us at ${BUSINESS_PHONE} (WhatsApp/phone) or email ${BUSINESS_EMAIL}. You can also book a call directly from the website.` },
@@ -48,10 +48,10 @@ const FALLBACK_FAQS = [
     answer: "We're based in Nairobi, Kenya, and work with clients across East Africa and globally." },
   { keywords: ["timeline", "how long", "duration", "how quickly", "time", "weeks", "typical project", "turnaround", "delivery", "deadline", "how fast"],
     question: "How long does a project take?",
-    answer: "Timelines vary — a marketing site typically takes 2–4 weeks, a web app 6–12 weeks, and an ERP 8–16 weeks. We'll give you a specific estimate after the discovery call." },
+    answer: "Timelines vary: a marketing site typically takes 2–4 weeks, a web app 6–12 weeks, and an ERP 8–16 weeks. We'll give you a specific estimate after the discovery call." },
   { keywords: ["book", "schedule", "meeting", "demo", "appointment"],
     question: "How do I book a call?",
-    answer: "You can book a discovery call directly from our booking page — pick a time that works for you and we'll confirm within a few hours." },
+    answer: "You can book a discovery call directly from our booking page: pick a time that works for you and we'll confirm within a few hours." },
 ];
 
 function keywordMatch(message: string, faqs: Array<{ keywords?: string[]; answer: string }>): string | null {
@@ -75,7 +75,7 @@ export async function POST(request: NextRequest) {
 
   const { message, history = [] } = result.data;
 
-  // ── 0. Greeting fast path — no AI or DB needed ────────────────────────────
+  // ── 0. Greeting fast path: no AI or DB needed ────────────────────────────
   if (isGreeting(message) && history.length === 0) {
     return NextResponse.json({
       answer: "Hi there! 👋 I'm Brixo, the Brightex assistant. How can I help you today?",
@@ -110,7 +110,7 @@ export async function POST(request: NextRequest) {
 
   if (answer) return NextResponse.json({ answer, escalate: false, source: "faq" });
 
-  // ── 2. AI fallback — respects admin provider setting ─────────────────────
+  // ── 2. AI fallback: respects admin provider setting ─────────────────────
   const hasAnthropic = !!process.env.ANTHROPIC_API_KEY;
   const hasGemini    = !!process.env.GEMINI_API_KEY;
 
@@ -150,7 +150,7 @@ export async function POST(request: NextRequest) {
           model    = s.ai_model ?? model;
         }
       } catch {
-        // Use key-based defaults — settings read is best-effort
+        // Use key-based defaults: settings read is best-effort
       }
 
       const messages = [
@@ -180,7 +180,7 @@ export async function POST(request: NextRequest) {
 
       const { GeminiRateLimitedError } = await import("@/lib/ai");
       // A GeminiRateLimitedError is expected, self-imposed throttling to
-      // protect the call budget — not a provider outage, so it doesn't page.
+      // protect the call budget: not a provider outage, so it doesn't page.
       if (!(err instanceof GeminiRateLimitedError)) {
         const { recordAiFailure } = await import("@/lib/ai-monitor");
         void recordAiFailure({
@@ -193,6 +193,6 @@ export async function POST(request: NextRequest) {
     }
   }
 
-  // ── 3. No match + no AI — suggest WhatsApp ────────────────────────────────
+  // ── 3. No match + no AI: suggest WhatsApp ────────────────────────────────
   return NextResponse.json({ answer: null, escalate: true, source: "no_match" });
 }

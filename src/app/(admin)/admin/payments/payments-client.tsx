@@ -366,7 +366,7 @@ export function PaymentsPageClient() {
               label: "Method",
               render: (row) => (
                 <span className="px-2 py-0.5 rounded-md text-[11px] font-medium bg-muted text-muted-foreground uppercase">
-                  {methodLabels[String(row.method)] ?? String(row.method ?? "—")}
+                  {methodLabels[String(row.method)] ?? String(row.method ?? "-")}
                 </span>
               ),
             },
@@ -626,7 +626,7 @@ export function PaymentsPageClient() {
                 }));
               }}>
                 <SelectTrigger>
-                  {/* Render label from state directly — Radix SelectValue can't track
+                  {/* Render label from state directly: Radix SelectValue can't track
                       dynamically-loaded options and falls back to showing the raw UUID */}
                   {form.invoice_id ? (
                     (() => {
@@ -634,7 +634,7 @@ export function PaymentsPageClient() {
                       if (!inv) return <span className="text-muted-foreground text-sm">Loading…</span>;
                       return (
                         <span className="text-sm truncate">
-                          {inv.invoice_number ?? "Invoice"} — {inv.clients?.name ?? "Unknown"}
+                          {inv.invoice_number ?? "Invoice"}: {inv.clients?.name ?? "Unknown"}
                         </span>
                       );
                     })()
@@ -648,7 +648,7 @@ export function PaymentsPageClient() {
                     const bal = inv.total - inv.paid_total;
                     return (
                       <SelectItem key={inv.id} value={inv.id}>
-                        {inv.invoice_number ?? inv.id.slice(0, 8)} — {inv.clients?.name ?? "Unknown"} — Balance: KES {bal.toLocaleString()}
+                        {inv.invoice_number ?? inv.id.slice(0, 8)}: {inv.clients?.name ?? "Unknown"}: Balance: KES {bal.toLocaleString()}
                       </SelectItem>
                     );
                   })}
@@ -670,7 +670,7 @@ export function PaymentsPageClient() {
                 <Label htmlFor="pay-amount">Amount (KES) *</Label>
                 <Input id="pay-amount" type="number" min="0" step="0.01" value={form.amount} onChange={(e) => set("amount", e.target.value)} required />
                 {selectedInvoice && balance !== null && Number(form.amount) > 0 && Number(form.amount) < balance && (
-                  <p className="text-[11px] text-amber-600 dark:text-amber-400">Partial payment — KES {(balance - Number(form.amount)).toLocaleString()} will remain</p>
+                  <p className="text-[11px] text-amber-600 dark:text-amber-400">Partial payment: KES {(balance - Number(form.amount)).toLocaleString()} will remain</p>
                 )}
               </div>
               <div className="space-y-1.5">

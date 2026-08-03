@@ -11,7 +11,7 @@ const TEAM_PORTALS: Record<string, string> = {
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // Admin maintenance mode — locks /admin/* but leaves public routes untouched
+  // Admin maintenance mode: locks /admin/* but leaves public routes untouched
   if (
     pathname.startsWith("/admin") &&
     !pathname.startsWith("/admin/login") &&
@@ -49,7 +49,7 @@ export async function proxy(request: NextRequest) {
     }
   );
 
-  // Refresh the session — required to keep the cookie alive
+  // Refresh the session: required to keep the cookie alive
   const { data: { user } } = await supabase.auth.getUser();
 
   // app_metadata.app_role is set by /api/team/register after first password set.
@@ -67,7 +67,7 @@ export async function proxy(request: NextRequest) {
       return NextResponse.redirect(new URL("/admin/login", request.url));
     }
 
-    // Team members trying to reach admin — send them to their portal
+    // Team members trying to reach admin: send them to their portal
     if (role && TEAM_PORTALS[role]) {
       return NextResponse.redirect(new URL(TEAM_PORTALS[role], request.url));
     }
@@ -91,7 +91,7 @@ export async function proxy(request: NextRequest) {
     }
 
     if (role === route.role) {
-      return response; // correct role — allow through
+      return response; // correct role: allow through
     }
 
     // Wrong role: redirect to their own portal (or admin if no role = owner)
@@ -105,6 +105,6 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  // Public routes are NOT in the matcher — zero proxy overhead on visitor traffic
+  // Public routes are NOT in the matcher: zero proxy overhead on visitor traffic
   matcher: ["/admin/:path*", "/portal/:path*", "/team/:path*"],
 };

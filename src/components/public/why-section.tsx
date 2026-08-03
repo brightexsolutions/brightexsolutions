@@ -2,10 +2,10 @@ import { FadeIn, FadeInStagger, StaggerChild } from "./fade-in";
 import { CheckCircle2 } from "lucide-react";
 
 const reasons = [
-  "Context-aware — we understand the Kenyan and East African market",
+  "Context-aware: we understand the Kenyan and East African market",
   "Full-stack team: design, development, and strategy in one place",
   "Transparent pricing and milestone-based delivery",
-  "We build for growth — not just for launch day",
+  "We build for growth: not just for launch day",
   "Direct communication with the people doing the work",
   "Post-launch support without hidden retainer fees",
 ];
@@ -27,12 +27,12 @@ export function WhySection() {
             </h2>
             <p className="text-white/60 text-lg leading-relaxed">
               We're not a factory. We're a focused team of builders who care
-              about the outcome — not just the deliverable. Every project we
+              about the outcome: not just the deliverable. Every project we
               take on, we take seriously.
             </p>
           </FadeIn>
 
-          {/* Right — checklist */}
+          {/* Right: checklist */}
           <FadeInStagger className="space-y-4" staggerDelay={0.08}>
             {reasons.map((r) => (
               <StaggerChild key={r}>

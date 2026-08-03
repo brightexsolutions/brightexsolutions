@@ -3,7 +3,7 @@
  *
  * The FAB "chat with your dashboard" assistant. Grounded in the same
  * candidate data as /api/admin/suggested-actions plus a few headline
- * business stats — answers "how are we doing" / "what needs my attention"
+ * business stats: answers "how are we doing" / "what needs my attention"
  * style questions. AI-first, deterministic rule-based fallback when AI is
  * unavailable so the assistant is never just an error message.
  */
@@ -11,7 +11,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { createClient, createAdminClient } from "@/lib/supabase/server";
 import { rateLimit } from "@/lib/rate-limit";
-import { callAI, AI_MODELS, isAIAvailable, GeminiRateLimitedError } from "@/lib/ai";
+import { callAI, AI_MODELS, isAIAvailable, GeminiRateLimitedError, BRIGHTEX_WRITING_RULES } from "@/lib/ai";
 import { recordAiFailure, recordAiRecovery } from "@/lib/ai-monitor";
 import { getActionCandidates } from "@/lib/ops-candidates";
 import type { AIProvider } from "@/types";
@@ -22,7 +22,9 @@ const ChatSchema = z.object({
   history: z.array(MessageSchema).max(12).optional(),
 });
 
-const ASSISTANT_SYSTEM_PROMPT = `You are Godwin's AI co-pilot inside the Brightex Solutions admin dashboard — a teammate, not a generic chatbot. You have live access to the business's real operational data (given below in each message). Answer questions about how the business is doing and what needs attention, grounded ONLY in the data provided — never invent figures, clients, or invoices not listed. Be direct and concise (2-5 sentences unless a list is clearly better). When something needs action, name it specifically (not "some invoices need attention" — name the client/invoice). If asked something outside this data, say so plainly rather than guessing.`;
+const ASSISTANT_SYSTEM_PROMPT = `You are Godwin's AI co-pilot inside the Brightex Solutions admin dashboard: a teammate, not a generic chatbot. You have live access to the business's real operational data (given below in each message). Answer questions about how the business is doing and what needs attention, grounded ONLY in the data provided: never invent figures, clients, or invoices not listed. Be direct and concise (2-5 sentences unless a list is clearly better). When something needs action, name it specifically (not "some invoices need attention": name the client/invoice). If asked something outside this data, say so plainly rather than guessing.
+
+${BRIGHTEX_WRITING_RULES}`;
 
 async function buildSnapshot(supabase: ReturnType<typeof createAdminClient>) {
   const now = new Date();
@@ -51,7 +53,7 @@ function snapshotText(snap: Awaited<ReturnType<typeof buildSnapshot>>): string {
     snap.candidates.length === 0
       ? "Nothing flagged across invoices, leads, tasks, clients, projects, or alerts."
       : `${snap.candidates.length} item(s) flagged:`,
-    ...snap.candidates.map((c) => `- [${c.type}] ${c.title} — ${c.detail}`),
+    ...snap.candidates.map((c) => `- [${c.type}] ${c.title}: ${c.detail}`),
   ];
   return lines.join("\n");
 }

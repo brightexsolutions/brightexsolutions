@@ -163,7 +163,7 @@ export default function WorkPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           project_id: noteProjectId,
-          title: `Progress Update — ${new Date().toLocaleDateString("en-KE", { day: "2-digit", month: "short", year: "numeric" })}`,
+          title: `Progress Update: ${new Date().toLocaleDateString("en-KE", { day: "2-digit", month: "short", year: "numeric" })}`,
           description: noteText.trim(),
           priority: "normal",
         }),

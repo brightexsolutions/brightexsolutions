@@ -62,7 +62,7 @@ export async function POST(request: NextRequest) {
   // Auto-create calendar event for project deadline
   if (result.data.end_date) {
     await supabase.from("calendar_events").insert({
-      title: `${result.data.name} — deadline`,
+      title: `${result.data.name}: deadline`,
       type: "project_milestone",
       start_at: new Date(result.data.end_date).toISOString(),
       all_day: true,

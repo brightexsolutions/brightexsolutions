@@ -39,7 +39,7 @@ export async function GET(request: NextRequest) {
   return NextResponse.json({ data });
 }
 
-// POST — create an external team member (no portal login)
+// POST: create an external team member (no portal login)
 export async function POST(request: NextRequest) {
   const limited = await rateLimit(request, "admin");
   if (limited) return limited;
@@ -56,7 +56,7 @@ export async function POST(request: NextRequest) {
     .from("team_members")
     .insert({
       ...result.data,
-      user_id: null, // no portal login — external contractor
+      user_id: null, // no portal login: external contractor
       active: true,
     })
     .select()
@@ -71,7 +71,7 @@ export async function POST(request: NextRequest) {
     entity_type: "team",
     entity_id: data.id,
     entity_label: `${result.data.name} (external ${result.data.role})`,
-    notes: "External contractor — no portal access",
+    notes: "External contractor: no portal access",
   });
 
   return NextResponse.json({ data }, { status: 201 });

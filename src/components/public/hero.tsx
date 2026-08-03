@@ -79,7 +79,7 @@ export function Hero({ announcement }: { announcement?: HeroAnnouncement }) {
         <FadeIn delay={0.2}>
           <p className="text-white/60 text-lg sm:text-xl max-w-2xl mx-auto mb-10 leading-relaxed">
             We build websites, platforms, ERP systems, and AI-powered tools for
-            businesses across Kenya and East Africa — from concept to launch.
+            businesses across Kenya and East Africa: from concept to launch.
           </p>
         </FadeIn>
 

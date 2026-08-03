@@ -12,9 +12,9 @@ import { whatsappUrl } from "@/lib/constants";
 type Intent = "book_call" | "general" | "service";
 
 const INTENTS: { value: Intent; icon: typeof Calendar; title: string; description: string }[] = [
-  { value: "book_call", icon: Calendar, title: "Book a Consultation", description: "A focused 30-minute call to talk through your project — no obligation." },
+  { value: "book_call", icon: Calendar, title: "Book a Consultation", description: "A focused 30-minute call to talk through your project: no obligation." },
   { value: "general", icon: MessageSquare, title: "General Inquiry", description: "Have a question, or just want to say hello? Send us a message." },
-  { value: "service", icon: Briefcase, title: "Inquiry About a Specific Service", description: "Tell us exactly what you need — we'll ask the right questions." },
+  { value: "service", icon: Briefcase, title: "Inquiry About a Specific Service", description: "Tell us exactly what you need: we'll ask the right questions." },
 ];
 
 const SERVICES: { value: string; label: string; icon: typeof Globe; sub: string }[] = [
@@ -48,7 +48,7 @@ function ContactExperienceInner() {
   const [service, setService] = useState<string | null>(null);
 
   // The ?intent= param isn't reliably known on the very first render of a
-  // statically-rendered page (useSearchParams resolves after hydration) —
+  // statically-rendered page (useSearchParams resolves after hydration) -
   // re-sync once it does, without clobbering a manual "Back" click afterwards.
   const [syncedIntent, setSyncedIntent] = useState(validIntent);
   if (validIntent !== syncedIntent) {
@@ -133,7 +133,7 @@ function ContactExperienceInner() {
     );
   }
 
-  // ── Step: specific service — pick which, then hand off to the full intake questionnaire ──
+  // ── Step: specific service: pick which, then hand off to the full intake questionnaire ──
   if (!service) {
     return (
       <div>
@@ -191,7 +191,7 @@ function ContactExperienceInner() {
       >
         Continue to questionnaire <ArrowRight size={15} />
       </Link>
-      <p className="text-[11px] text-brand-muted/70 text-center mt-3">Takes about 3 minutes — no account needed.</p>
+      <p className="text-[11px] text-brand-muted/70 text-center mt-3">Takes about 3 minutes: no account needed.</p>
     </div>
   );
 }

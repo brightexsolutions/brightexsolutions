@@ -43,10 +43,10 @@ export function AssistantFab() {
       if (res.ok && data.reply) {
         setMessages((prev) => [...prev, { role: "assistant", content: data.reply, source: data.source }]);
       } else {
-        setMessages((prev) => [...prev, { role: "assistant", content: "Something went wrong — try again in a moment." }]);
+        setMessages((prev) => [...prev, { role: "assistant", content: "Something went wrong: try again in a moment." }]);
       }
     } catch {
-      setMessages((prev) => [...prev, { role: "assistant", content: "Network error — try again." }]);
+      setMessages((prev) => [...prev, { role: "assistant", content: "Network error: try again." }]);
     } finally {
       setSending(false);
     }

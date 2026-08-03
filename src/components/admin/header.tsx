@@ -91,10 +91,10 @@ export function AdminHeader({ onMenuClick }: AdminHeaderProps) {
         </button>
       )}
 
-      {/* Page title — mobile only (breadcrumb hidden on mobile) */}
+      {/* Page title: mobile only (breadcrumb hidden on mobile) */}
       <span className="sm:hidden font-semibold text-foreground text-sm flex-1 truncate">{pageTitle}</span>
 
-      {/* Breadcrumb — desktop only */}
+      {/* Breadcrumb: desktop only */}
       <nav className="hidden sm:flex items-center gap-1 min-w-0 flex-1">
         {breadcrumbs.map((crumb, i) => (
           <div key={crumb.href} className="flex items-center gap-1 min-w-0">

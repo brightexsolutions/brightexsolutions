@@ -63,14 +63,14 @@ export function PublicFooter() {
   return (
     <footer className="bg-[#090f1a] text-white">
 
-      {/* ── 1. CTA STRIP — cinematic background ────────────────────────── */}
+      {/* ── 1. CTA STRIP: cinematic background ────────────────────────── */}
       <div className="relative overflow-hidden border-b border-white/[0.06]">
         {/* Background image */}
         <div
           className="absolute inset-0 bg-cover bg-center bg-no-repeat"
           style={{ backgroundImage: "url('https://images.unsplash.com/photo-1519389950473-47ba0277781c?auto=format&fit=crop&w=2400&q=80')" }}
         />
-        {/* Cinematic overlay — deep navy gradient */}
+        {/* Cinematic overlay: deep navy gradient */}
         <div className="absolute inset-0 bg-gradient-to-r from-[#090f1a]/96 via-[#090f1a]/88 to-[#090f1a]/80" />
         {/* Subtle gold radial glow */}
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_65%_50%,rgba(249,168,37,0.06)_0%,transparent_60%)] pointer-events-none" />

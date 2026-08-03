@@ -53,7 +53,7 @@ export async function GET(request: NextRequest) {
           });
         }
       } else {
-        // Site is up — auto-acknowledge any outstanding site_down alerts for this site
+        // Site is up: auto-acknowledge any outstanding site_down alerts for this site
         await supabase
           .from("system_alerts")
           .update({ acknowledged: true })

@@ -248,7 +248,7 @@ export default async function ClientPortalPage({
             })}
           </div>
           {project.status === "paused" && (
-            <p className="text-center text-xs text-slate-400 mt-3">This project is currently paused — we&apos;ll be in touch soon.</p>
+            <p className="text-center text-xs text-slate-400 mt-3">This project is currently paused: we&apos;ll be in touch soon.</p>
           )}
         </div>
 

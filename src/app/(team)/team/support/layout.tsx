@@ -10,7 +10,7 @@ export default function SupportLayout({ children }: { children: ReactNode }) {
           <Headphones size={13} className="text-white" />
         </div>
         <span className="font-display font-semibold text-foreground text-sm">
-          Brightex — Support
+          Brightex: Support
         </span>
         <nav className="ml-4 flex items-center gap-1">
           <Link href="/team/support"

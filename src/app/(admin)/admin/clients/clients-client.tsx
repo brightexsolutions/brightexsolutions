@@ -160,7 +160,7 @@ export function ClientsPageClient() {
       className: "hidden md:table-cell",
       render: (row) => (
         <StackedCell
-          primary={row.email ? String(row.email) : "—"}
+          primary={row.email ? String(row.email) : "-"}
           secondary={row.phone ? String(row.phone) : undefined}
         />
       ),
@@ -171,7 +171,7 @@ export function ClientsPageClient() {
       className: "hidden lg:table-cell",
       render: (row) => (
         <span className="text-sm text-muted-foreground capitalize">
-          {row.source ? String(row.source).replace(/_/g, " ") : "—"}
+          {row.source ? String(row.source).replace(/_/g, " ") : "-"}
         </span>
       ),
     },

@@ -15,9 +15,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Button } from "@/components/ui/button";
 
 const integrationLevels = [
-  { level: "Passive", desc: "HTTP ping + SSL check — no changes to the tracked site" },
-  { level: "Active", desc: "Structured health endpoint — one file added to the site" },
-  { level: "WordPress", desc: "mu-plugin + config line — full WP version and update tracking" },
+  { level: "Passive", desc: "HTTP ping + SSL check: no changes to the tracked site" },
+  { level: "Active", desc: "Structured health endpoint: one file added to the site" },
+  { level: "WordPress", desc: "mu-plugin + config line: full WP version and update tracking" },
 ];
 
 const statusConfig = {
@@ -162,7 +162,7 @@ export function SiteMonitoringPageClient() {
   function checkAll() {
     if (checking) return;
     setChecking(true);
-    // Fire the check in the background — don't block the UI
+    // Fire the check in the background: don't block the UI
     void fetch("/api/admin/sites/health").catch(() => {});
     // Poll every 3s for up to 60s, refreshing the table as results arrive
     const startedAt = Date.now();
@@ -247,7 +247,7 @@ export function SiteMonitoringPageClient() {
       className: "w-32",
       render: (row) => (
         <span className="text-xs text-muted-foreground">
-          {row.ssl_expiry ? new Date(row.ssl_expiry as string).toLocaleDateString("en-KE") : "—"}
+          {row.ssl_expiry ? new Date(row.ssl_expiry as string).toLocaleDateString("en-KE") : "-"}
         </span>
       ),
     },
@@ -431,7 +431,7 @@ export function SiteMonitoringPageClient() {
               <div>
                 <h3 className="text-sm font-semibold text-foreground mb-3">What gets tracked</h3>
                 <ul className="space-y-2">
-                  {["HTTP status (up / degraded / down)", "Response time in milliseconds", "SSL certificate expiry date", "WordPress version (via /wp-json/ — free, no plugin needed)"].map((item) => (
+                  {["HTTP status (up / degraded / down)", "Response time in milliseconds", "SSL certificate expiry date", "WordPress version (via /wp-json/: free, no plugin needed)"].map((item) => (
                     <li key={item} className="flex items-start gap-2 text-xs text-muted-foreground">
                       <CheckCircle2 size={12} className="text-emerald-500 shrink-0 mt-0.5" />
                       {item}
@@ -470,7 +470,7 @@ export function SiteMonitoringPageClient() {
               <div>
                 <h3 className="text-sm font-semibold text-foreground mb-3">What gets tracked (beyond Passive)</h3>
                 <ul className="space-y-2">
-                  {["Database connectivity (ok / error)", "App version / deployment tag", "Custom checks you define (storage, email service, etc.)", "Structured JSON response — richer than a plain HTTP ping"].map((item) => (
+                  {["Database connectivity (ok / error)", "App version / deployment tag", "Custom checks you define (storage, email service, etc.)", "Structured JSON response: richer than a plain HTTP ping"].map((item) => (
                     <li key={item} className="flex items-start gap-2 text-xs text-muted-foreground">
                       <CheckCircle2 size={12} className="text-blue-500 shrink-0 mt-0.5" />
                       {item}
@@ -598,7 +598,7 @@ function brightex_health_check(WP_REST_Request $req) {
                   </li>
                   <li className="flex items-start gap-3">
                     <span className="w-5 h-5 rounded-full bg-brand-gold/20 text-brand-gold text-[10px] font-bold flex items-center justify-center shrink-0 mt-0.5">3</span>
-                    <p className="text-xs text-muted-foreground">Test the endpoint: <code className="bg-muted px-1 rounded text-[11px]">https://clientsite.com/wp-json/brightex/v1/health</code> — should return <code className="bg-muted px-1 rounded text-[11px]">{`{"status":"ok"}`}</code>.</p>
+                    <p className="text-xs text-muted-foreground">Test the endpoint: <code className="bg-muted px-1 rounded text-[11px]">https://clientsite.com/wp-json/brightex/v1/health</code>: should return <code className="bg-muted px-1 rounded text-[11px]">{`{"status":"ok"}`}</code>.</p>
                   </li>
                   <li className="flex items-start gap-3">
                     <span className="w-5 h-5 rounded-full bg-brand-gold/20 text-brand-gold text-[10px] font-bold flex items-center justify-center shrink-0 mt-0.5">4</span>
@@ -608,7 +608,7 @@ function brightex_health_check(WP_REST_Request $req) {
               </div>
               <div className="p-3 rounded-sm bg-muted/50 border border-border">
                 <p className="text-xs font-medium text-foreground mb-1">How to upload the file</p>
-                <p className="text-xs text-muted-foreground">Use cPanel File Manager → navigate to <code className="bg-muted px-1 rounded text-[11px]">wp-content/mu-plugins/</code> (create folder if it doesn&apos;t exist) and upload the file. Or use FTP/SFTP. The plugin activates automatically — no wp-admin activation needed.</p>
+                <p className="text-xs text-muted-foreground">Use cPanel File Manager → navigate to <code className="bg-muted px-1 rounded text-[11px]">wp-content/mu-plugins/</code> (create folder if it doesn&apos;t exist) and upload the file. Or use FTP/SFTP. The plugin activates automatically: no wp-admin activation needed.</p>
               </div>
             </div>
           )}
@@ -671,9 +671,9 @@ function brightex_health_check(WP_REST_Request $req) {
               <Select value={form.integration_level} onValueChange={(value) => value && set("integration_level", value)}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="passive">Passive — HTTP ping + SSL only</SelectItem>
-                  <SelectItem value="active">Active — health endpoint (Next.js / Node)</SelectItem>
-                  <SelectItem value="wordpress">WordPress — mu-plugin integration</SelectItem>
+                  <SelectItem value="passive">Passive: HTTP ping + SSL only</SelectItem>
+                  <SelectItem value="active">Active: health endpoint (Next.js / Node)</SelectItem>
+                  <SelectItem value="wordpress">WordPress: mu-plugin integration</SelectItem>
                 </SelectContent>
               </Select>
               <p className="text-[11px] text-muted-foreground">
@@ -713,7 +713,7 @@ function brightex_health_check(WP_REST_Request $req) {
             )}
             <div className="space-y-1.5">
               <Label htmlFor="site-notes">Notes</Label>
-              <Textarea id="site-notes" rows={2} value={form.notes} onChange={(e) => set("notes", e.target.value)} placeholder="Optional — client name, login URLs, anything useful." />
+              <Textarea id="site-notes" rows={2} value={form.notes} onChange={(e) => set("notes", e.target.value)} placeholder="Optional: client name, login URLs, anything useful." />
             </div>
             {error && <p className="text-sm text-red-500">{error}</p>}
             <div className="flex justify-end gap-3 pt-2">

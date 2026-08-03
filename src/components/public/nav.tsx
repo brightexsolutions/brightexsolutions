@@ -15,7 +15,7 @@ const links = [
   { label: "Contact", href: "/contact", exact: true },
 ];
 
-// Routes where the top of the page is a full-width dark hero — nav starts transparent with white text
+// Routes where the top of the page is a full-width dark hero: nav starts transparent with white text
 const DARK_HERO_ROUTES = ["/", "/services", "/work", "/blog"];
 
 export function PublicNav() {

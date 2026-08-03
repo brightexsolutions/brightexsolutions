@@ -14,7 +14,7 @@ export interface StatCardProps {
   trend?: StatCardTrend;
   sub?: string;
   icon?: LucideIcon;
-  /** Navy background with white text — use for the primary/hero metric */
+  /** Navy background with white text: use for the primary/hero metric */
   featured?: boolean;
   /** Icon accent colours when not featured e.g. { bg: "bg-blue-400/10", text: "text-blue-400" } */
   accent?: { bg: string; text: string };

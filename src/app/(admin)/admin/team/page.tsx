@@ -206,7 +206,7 @@ export default function AdminTeamPage() {
       const json = await res.json();
       if (!res.ok) { alert(json.error ?? "Failed to generate login link."); return; }
       // Build the /auth/impersonate URL with token + email + destination portal.
-      // The page calls verifyOtp directly — no Supabase redirect URL whitelist required.
+      // The page calls verifyOtp directly: no Supabase redirect URL whitelist required.
       const params = new URLSearchParams({ token: json.token, next: json.next });
       window.open(`/auth/impersonate?${params.toString()}`, "_blank", "noopener,noreferrer");
     } finally {
@@ -447,14 +447,14 @@ export default function AdminTeamPage() {
               <DialogHeader>
                 <DialogTitle className="flex items-center gap-2">
                   <Shield size={16} className="text-brand-gold" />
-                  Permissions — {permMember.name}
+                  Permissions: {permMember.name}
                 </DialogTitle>
               </DialogHeader>
               <div className="mt-1 mb-3 flex items-center gap-2">
                 <span className={cn("text-xs font-semibold px-2.5 py-0.5 rounded-full capitalize", ROLE_PORTAL[permMember.role]?.bg, ROLE_PORTAL[permMember.role]?.colour)}>
                   {permMember.role}
                 </span>
-                <span className="text-xs text-muted-foreground">Portal: <code className="text-xs bg-muted px-1 py-0.5 rounded">{ROLE_PORTAL[permMember.role]?.path ?? "—"}</code></span>
+                <span className="text-xs text-muted-foreground">Portal: <code className="text-xs bg-muted px-1 py-0.5 rounded">{ROLE_PORTAL[permMember.role]?.path ?? "-"}</code></span>
               </div>
               {ROLE_PERMISSIONS[permMember.role] ? (
                 <>
@@ -534,7 +534,7 @@ function MemberRow({ member, menuOpen, impersonating, onMenu, onDetail, onPermis
         <p className="text-xs text-muted-foreground truncate">{member.email}{member.phone ? ` · ${member.phone}` : ""}</p>
       </button>
 
-      {/* Skill tags — hidden on small screens */}
+      {/* Skill tags: hidden on small screens */}
       <div className="hidden lg:flex items-center gap-1 flex-wrap max-w-[200px]">
         {(member.skill_tags ?? []).slice(0, 3).map((tag) => (
           <span key={tag} className="px-1.5 py-0.5 rounded-sm text-[10px] font-medium bg-muted text-muted-foreground">{tag}</span>
@@ -673,7 +673,7 @@ function MemberDetailPanel({ member, impersonating, onPermissions, onToggleActiv
               </div>
               <div>
                 <p className={cn("text-sm font-semibold capitalize", portal?.colour ?? "text-foreground")}>{member.role} Portal</p>
-                <code className="text-xs text-muted-foreground">{portal?.path ?? "—"}</code>
+                <code className="text-xs text-muted-foreground">{portal?.path ?? "-"}</code>
               </div>
             </div>
           ) : (
@@ -682,7 +682,7 @@ function MemberDetailPanel({ member, impersonating, onPermissions, onToggleActiv
                 <ExternalLink size={14} className="text-muted-foreground opacity-40" />
               </div>
               <div>
-                <p className="text-sm font-semibold text-muted-foreground">External — no portal login</p>
+                <p className="text-sm font-semibold text-muted-foreground">External: no portal login</p>
                 <p className="text-xs text-muted-foreground">Tracked for tasks &amp; payouts only</p>
               </div>
             </div>

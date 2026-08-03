@@ -57,7 +57,7 @@ export async function GET(request: NextRequest) {
       await supabase.from("system_alerts").insert({
         type: "subscription_renewal",
         severity: daysUntil <= 3 ? "critical" : "warning",
-        message: `${sub.name} renews in ${daysUntil} day${daysUntil !== 1 ? "s" : ""} — ${sub.currency} ${sub.amount}`,
+        message: `${sub.name} renews in ${daysUntil} day${daysUntil !== 1 ? "s" : ""}: ${sub.currency} ${sub.amount}`,
         entity_id: sub.id,
         entity_type: "subscription",
       });
@@ -75,7 +75,7 @@ export async function GET(request: NextRequest) {
         html: emailTemplate({
           title: "Subscription Renewal Reminder",
           subtitle: sub.name,
-          preheader: `${sub.name} renews in ${daysUntil} days — action may be required`,
+          preheader: `${sub.name} renews in ${daysUntil} days: action may be required`,
           body:
             emailAlert(
               `<strong>${sub.name}</strong> is due for renewal in <strong>${daysUntil} day${daysUntil !== 1 ? "s" : ""}</strong>`,
@@ -98,7 +98,7 @@ export async function GET(request: NextRequest) {
         entity_type: "subscription",
         entity_id: sub.id,
         entity_label: sub.name,
-        notes: `Automated renewal reminder — due in ${daysUntil} day${daysUntil !== 1 ? "s" : ""}`,
+        notes: `Automated renewal reminder: due in ${daysUntil} day${daysUntil !== 1 ? "s" : ""}`,
       });
     }
   }
@@ -133,7 +133,7 @@ export async function GET(request: NextRequest) {
         html: emailTemplate({
           title: "Subscription Overdue",
           subtitle: sub.name,
-          preheader: `${sub.name} renewal has passed — service may be inactive`,
+          preheader: `${sub.name} renewal has passed: service may be inactive`,
           body:
             emailAlert(
               `<strong>${sub.name}</strong> renewal date has passed and the service may be inactive.`,
@@ -154,7 +154,7 @@ export async function GET(request: NextRequest) {
         entity_type: "subscription",
         entity_id: sub.id,
         entity_label: sub.name,
-        notes: `Automated overdue alert — renewal date was ${sub.next_renewal_date}`,
+        notes: `Automated overdue alert: renewal date was ${sub.next_renewal_date}`,
       });
     }
   }

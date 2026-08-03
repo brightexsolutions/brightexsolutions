@@ -10,7 +10,7 @@ export default function MarketingLayout({ children }: { children: ReactNode }) {
           <span className="text-brand-navy font-bold text-xs font-display">B</span>
         </div>
         <span className="font-display font-semibold text-foreground text-sm">
-          Brightex — Marketing
+          Brightex: Marketing
         </span>
         <nav className="ml-4 flex items-center gap-1">
           <Link

@@ -27,7 +27,7 @@ function total(items: ProposalLineItem[]) {
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 /** A deliverable, with an optional "deep dive": the problem it solves, what
- * it actually does, and a scope-at-a-glance grid — matching the depth of a
+ * it actually does, and a scope-at-a-glance grid: matching the depth of a
  * hand-authored client proposal (e.g. the Magic Movers reference) rather
  * than a bare title + one-line description. All deep-dive fields are
  * optional so older/simpler documents still render fine. */
@@ -61,7 +61,7 @@ export type ProposalData = {
   cover_tagline?: string | null;        // short punchy cover headline, e.g. "Turning every enquiry into a booked move."
   intro?: string | null;
   client: { name: string; company?: string | null; email?: string | null; phone?: string | null };
-  // "Understanding the Brief" — problem framing before scope, optional.
+  // "Understanding the Brief": problem framing before scope, optional.
   problem_points?: string[] | null;
   solution_points?: string[] | null;
   scope_items: ScopeItem[];
@@ -201,7 +201,7 @@ export function ProposalPDFDocument({ data }: { data: ProposalData }) {
 
   return (
     <Document
-      title={`Proposal ${data.proposal_number} — ${data.project_title}`}
+      title={`Proposal ${data.proposal_number}: ${data.project_title}`}
       author="Brightex Solutions"
     >
       <Page size="A4" style={s.page}>
@@ -375,13 +375,13 @@ export function ProposalPDFDocument({ data }: { data: ProposalData }) {
                 </View>
                 <View style={s.termsRow}>
                   <Text style={s.termsKey}>
-                    Deposit ({data.payment_terms.deposit_percent}%) — due to commence work
+                    Deposit ({data.payment_terms.deposit_percent}%): due to commence work
                   </Text>
                   <Text style={s.termsVal}>{fmt(deposit)}</Text>
                 </View>
                 <View style={[s.termsRow, s.termsRowLast]}>
                   <Text style={s.termsKey}>
-                    Balance ({100 - data.payment_terms.deposit_percent}%) — due on delivery
+                    Balance ({100 - data.payment_terms.deposit_percent}%): due on delivery
                   </Text>
                   <Text style={s.termsVal}>{fmt(balance)}</Text>
                 </View>
@@ -398,8 +398,8 @@ export function ProposalPDFDocument({ data }: { data: ProposalData }) {
             <Text style={s.aboutTitle}>{SITE_NAME}</Text>
             <Text style={s.aboutText}>
               {SITE_NAME} is a Nairobi-based technology and business consulting firm. We
-              specialise in designing and building digital products — websites, web applications,
-              management systems, and business automation tools — for organisations across East
+              specialise in designing and building digital products: websites, web applications,
+              management systems, and business automation tools: for organisations across East
               Africa and beyond.{"\n\n"}
               Every project we take on is built to a professional standard: clean code, modern
               design, and practical systems that your team can actually use. We work closely with
@@ -452,7 +452,7 @@ export function ProposalPDFDocument({ data }: { data: ProposalData }) {
           <View>
             <Text style={s.footerContact}>{BUSINESS_WEBSITE} · {BUSINESS_CITY}, {BUSINESS_COUNTRY}</Text>
             <Text style={s.footerConfid}>
-              Confidential — prepared exclusively for {data.client.company ?? data.client.name}
+              Confidential: prepared exclusively for {data.client.company ?? data.client.name}
             </Text>
           </View>
         </View>

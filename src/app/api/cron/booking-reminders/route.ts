@@ -94,7 +94,7 @@ export async function GET(request: NextRequest) {
           action: "reminder_sent",
           entity_type: "booking",
           entity_id: booking.id,
-          entity_label: `${purposeLabel} — ${booking.booker_name}`,
+          entity_label: `${purposeLabel}: ${booking.booker_name}`,
           notes: `Automated 24h reminder sent to ${booking.booker_email}`,
         }),
       ]);

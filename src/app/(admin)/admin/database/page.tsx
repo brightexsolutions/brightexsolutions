@@ -184,7 +184,7 @@ export default function DatabasePage() {
     return sortAsc ? (aVal as number) - (bVal as number) : (bVal as number) - (aVal as number);
   });
 
-  // Chart data — top 10 by size
+  // Chart data: top 10 by size
   const sizeChartData  = (stats?.tables ?? []).slice(0, 10).map((t) => ({
     name: t.name.replace(/_/g, " "),
     size: parseFloat((t.total_size / 1024).toFixed(1)),
@@ -314,7 +314,7 @@ export default function DatabasePage() {
                     <div>
                       <p className="text-xs font-semibold text-red-700 dark:text-red-400">{t.name}</p>
                       <p className="text-[11px] text-red-600 dark:text-red-500 mt-0.5">
-                        {t.dead_pct > 0.3 && `${(t.dead_pct * 100).toFixed(0)}% dead rows (${prettyNum(t.dead_rows)}) — run VACUUM`}
+                        {t.dead_pct > 0.3 && `${(t.dead_pct * 100).toFixed(0)}% dead rows (${prettyNum(t.dead_rows)}): run VACUUM`}
                       </p>
                     </div>
                   </div>
@@ -396,7 +396,7 @@ export default function DatabasePage() {
               </div>
             </div>
 
-            {/* Fixed-height scrollable table — standard pattern for admin data tables */}
+            {/* Fixed-height scrollable table: standard pattern for admin data tables */}
             <div className="overflow-auto max-h-[420px]">
               <table className="w-full text-sm">
                 <thead className="border-b border-border bg-card sticky top-0 z-10 shadow-[0_1px_0_hsl(var(--border))]">
@@ -436,7 +436,7 @@ export default function DatabasePage() {
                             {prettyNum(t.dead_rows)} ({(t.dead_pct * 100).toFixed(0)}%)
                           </span>
                         ) : (
-                          <span className="text-xs text-muted-foreground">—</span>
+                          <span className="text-xs text-muted-foreground">-</span>
                         )}
                       </td>
                       <td className="px-3 py-3 text-xs text-muted-foreground whitespace-nowrap">
@@ -485,7 +485,7 @@ export default function DatabasePage() {
           <div className="bg-muted/30 border border-border rounded-xl p-5 space-y-2.5">
             <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-3">Quick Reference</p>
             {[
-              { icon: "🔄", text: "Dead rows above 10% indicate a table needs VACUUM — Supabase runs autovacuum automatically but it can lag on busy tables." },
+              { icon: "🔄", text: "Dead rows above 10% indicate a table needs VACUUM: Supabase runs autovacuum automatically but it can lag on busy tables." },
               { icon: "📊", text: "High sequential scans on large tables (low idx/seq ratio) may mean a missing index. Check the table's query patterns." },
               { icon: "⚡", text: "The database keepalive cron runs every 12h to prevent Supabase free tier from pausing after 7 days of inactivity." },
               { icon: "📈", text: "Supabase free tier: 500 MB database, 1 GB file storage. Upgrade to Pro ($25/mo) when you consistently reach 80%+" },

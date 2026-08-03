@@ -1,7 +1,7 @@
 import { FadeIn, FadeInStagger, StaggerChild } from "./fade-in";
 import { PROCESS_STAGES } from "@/lib/brightex-sop";
 
-// Sourced from PROCESS_STAGES (src/lib/brightex-sop.ts) — the same four
+// Sourced from PROCESS_STAGES (src/lib/brightex-sop.ts): the same four
 // stages back the internal Standard Operating Procedure, so what's promised
 // here is exactly what the team actually follows, not a separate claim.
 const steps = PROCESS_STAGES.map((s) => ({ number: s.number, title: s.title, description: s.clientDescription }));

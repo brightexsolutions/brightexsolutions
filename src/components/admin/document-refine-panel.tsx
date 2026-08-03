@@ -45,7 +45,7 @@ export function DocumentRefinePanel({ target }: { target: DocumentRefineTarget }
       if (!res.ok) throw new Error(payload.error ?? "Refinement failed");
       target.onUpdated(payload.data.data);
       setInstruction("");
-      setOk("Updated — preview refreshed.");
+      setOk("Updated: preview refreshed.");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Refinement failed");
     } finally {
@@ -66,7 +66,7 @@ export function DocumentRefinePanel({ target }: { target: DocumentRefineTarget }
       const payload = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(payload.error ?? "Save failed");
       target.onUpdated(payload.data.data);
-      setOk("Saved — preview refreshed.");
+      setOk("Saved: preview refreshed.");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Save failed");
     } finally {

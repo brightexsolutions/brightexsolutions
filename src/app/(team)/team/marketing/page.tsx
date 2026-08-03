@@ -268,7 +268,7 @@ export default function MarketingPage() {
                     })}
                   </div>
 
-                  {/* Caption preview — click to open detail */}
+                  {/* Caption preview: click to open detail */}
                   <button
                     onClick={() => setDetailPost(post)}
                     className="flex-1 min-w-0 text-left"

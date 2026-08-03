@@ -4,7 +4,7 @@
  * Unified read-only view across every document type the system produces or
  * stores: AI-generated proposals/agreements/SOPs, invoices, payment
  * receipts, uploaded project files, and uploaded finance documents. Each
- * source already has its own live view/download route — this just
+ * source already has its own live view/download route: this just
  * normalises them into one browsable, filterable list.
  */
 import { NextRequest, NextResponse } from "next/server";
@@ -74,7 +74,7 @@ export async function GET(request: NextRequest) {
     documents.push({
       id: p.id,
       type: "receipt",
-      title: `Receipt${invoice?.invoice_number ? ` — ${invoice.invoice_number}` : ""}`,
+      title: `Receipt${invoice?.invoice_number ? `: ${invoice.invoice_number}` : ""}`,
       subtitle: `KES ${Number(p.amount).toLocaleString()}`,
       client: client?.company?.trim() || client?.name || null,
       date: p.date,

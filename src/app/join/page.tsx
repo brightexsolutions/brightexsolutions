@@ -44,7 +44,7 @@ function JoinContent() {
     // Cookies are required for the Next.js middleware to see the session on
     // subsequent navigations and enforce role-based route protection.
     // We do NOT rely on detectSessionInUrl / flowType auto-detection (which was
-    // broken before) — instead we explicitly parse the hash and call setSession.
+    // broken before): instead we explicitly parse the hash and call setSession.
     const supabase = createBrowserClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
@@ -75,7 +75,7 @@ function JoinContent() {
     const refreshToken = params.get("refresh_token") ?? "";
 
     if (accessToken) {
-      // Clear the hash from the URL — prevents the one-time token being reused.
+      // Clear the hash from the URL: prevents the one-time token being reused.
       window.history.replaceState(null, "", window.location.pathname + window.location.search);
 
       supabase.auth.setSession({ access_token: accessToken, refresh_token: refreshToken })
@@ -90,7 +90,7 @@ function JoinContent() {
           }
         });
     } else {
-      // No hash — check for an existing session (e.g. page refresh after hash cleared).
+      // No hash: check for an existing session (e.g. page refresh after hash cleared).
       supabase.auth.getSession().then(({ data: { session } }) => {
         clearTimeout(fallbackTimer);
         if (session) {
@@ -112,7 +112,7 @@ function JoinContent() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!sessionReady) {
-      setError("Session not ready — please wait a moment and try again.");
+      setError("Session not ready: please wait a moment and try again.");
       return;
     }
     if (password !== confirmPassword) {

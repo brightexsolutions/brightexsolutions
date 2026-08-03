@@ -35,14 +35,14 @@ export default function ContactPage() {
           Tell us about your project.
         </h1>
         <p className="text-brand-muted text-base leading-relaxed">
-          Whether you know exactly what you need or you&apos;re still figuring it out — we&apos;d love to hear from you. We reply within 24 hours.
+          Whether you know exactly what you need or you&apos;re still figuring it out: we&apos;d love to hear from you. We reply within 24 hours.
         </p>
       </FadeIn>
 
       {/* ── Two-column content ── */}
       <div className="max-w-6xl mx-auto px-6 sm:px-8 pb-24 grid grid-cols-1 lg:grid-cols-[1fr_1.6fr] gap-10 lg:gap-16 items-start">
 
-        {/* Left — contact info */}
+        {/* Left: contact info */}
         <FadeIn className="space-y-8">
           {/* Contact details */}
           <div className="space-y-5">
@@ -93,7 +93,7 @@ export default function ContactPage() {
           <div className="space-y-2.5">
             {[
               "We reply within 24 hours",
-              "No sales pitch — just a conversation",
+              "No sales pitch: just a conversation",
               "Clear scope and honest timeline from day one",
             ].map((p) => (
               <div key={p} className="flex items-center gap-2.5 text-sm text-brand-muted">
@@ -104,7 +104,7 @@ export default function ContactPage() {
           </div>
         </FadeIn>
 
-        {/* Right — intent-based stepper */}
+        {/* Right: intent-based stepper */}
         <FadeIn direction="right">
           <div className="bg-white rounded-2xl border border-brand-border shadow-[0_2px_24px_-4px_rgba(15,25,45,0.08)] p-8 sm:p-10">
             <ContactExperience />

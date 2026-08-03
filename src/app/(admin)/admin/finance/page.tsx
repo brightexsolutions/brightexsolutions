@@ -339,7 +339,7 @@ export default function FinancePage() {
 
     const q = (v: string | number) => `"${String(v).replace(/"/g, '""')}"`;
 
-    rows.push(`BRIGHTEX SOLUTIONS — P&L REPORT`);
+    rows.push(`BRIGHTEX SOLUTIONS: P&L REPORT`);
     rows.push(`Generated,${q(dateStr)}`);
     rows.push(``);
 
@@ -593,7 +593,7 @@ export default function FinancePage() {
           {monthlyData.length > 0 && (
             <Card>
               <CardHeader className="pb-3">
-                <CardTitle className="text-base">Income vs Expenses — Monthly</CardTitle>
+                <CardTitle className="text-base">Income vs Expenses: Monthly</CardTitle>
               </CardHeader>
               <CardContent>
                 <ResponsiveContainer width="100%" height={260}>
@@ -698,7 +698,7 @@ export default function FinancePage() {
                   const doc = row as unknown as FinanceDoc;
                   return doc.amount
                     ? <span className="text-sm font-semibold text-foreground">KES {Number(doc.amount).toLocaleString()}</span>
-                    : <span className="text-xs text-muted-foreground">—</span>;
+                    : <span className="text-xs text-muted-foreground">-</span>;
                 },
               },
             ] as Column<Record<string, unknown>>[]}
@@ -824,7 +824,7 @@ export default function FinancePage() {
           <form onSubmit={handleIncomeSubmit} className="space-y-4 mt-2">
             <div className="space-y-1.5">
               <Label>Description *</Label>
-              <Input placeholder="e.g. Website project — Beco Interiors" value={incomeForm.description} onChange={(e) => setIncomeForm((f) => ({ ...f, description: e.target.value }))} required />
+              <Input placeholder="e.g. Website project: Beco Interiors" value={incomeForm.description} onChange={(e) => setIncomeForm((f) => ({ ...f, description: e.target.value }))} required />
             </div>
 
             <div className="space-y-1.5">
@@ -837,7 +837,7 @@ export default function FinancePage() {
               <Label>Withholding Tax (WHT)</Label>
               <select value={incomeForm.withholding_type} onChange={(e) => setIncomeForm((f) => ({ ...f, withholding_type: e.target.value, withholding_rate: "" }))}
                 className="w-full px-3 py-2 rounded-sm border border-input bg-background text-foreground text-sm focus:outline-none focus:ring-1 focus:ring-ring">
-                {WHT_TYPES.map((t) => <option key={t.value} value={t.value}>{t.label}{t.rate > 0 ? ` — ${t.rate}%` : ""}</option>)}
+                {WHT_TYPES.map((t) => <option key={t.value} value={t.value}>{t.label}{t.rate > 0 ? `: ${t.rate}%` : ""}</option>)}
               </select>
               {incomeForm.withholding_type === "custom" && (
                 <div className="flex items-center gap-2 mt-2">

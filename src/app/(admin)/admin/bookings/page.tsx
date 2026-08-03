@@ -242,7 +242,7 @@ export default function BookingsPage() {
               label: "Purpose",
               render: (row) => (
                 <span className="text-sm capitalize">
-                  {purposeLabels[String(row.purpose)] ?? String(row.purpose ?? "—").replace(/_/g, " ")}
+                  {purposeLabels[String(row.purpose)] ?? String(row.purpose ?? "-").replace(/_/g, " ")}
                 </span>
               ),
             },
@@ -338,7 +338,7 @@ export default function BookingsPage() {
       <Dialog open={!!editTarget} onOpenChange={(v) => !v && setEditTarget(null)}>
         <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle>Edit Booking — {editTarget?.booker_name}</DialogTitle>
+            <DialogTitle>Edit Booking: {editTarget?.booker_name}</DialogTitle>
           </DialogHeader>
           {editTarget && (
             <form onSubmit={handleEditSubmit} className="space-y-4 mt-2">

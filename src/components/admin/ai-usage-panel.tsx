@@ -120,7 +120,7 @@ export function AiUsagePanel() {
         <Coins size={14} className="text-muted-foreground shrink-0 mt-0.5" />
         <p className="text-xs text-muted-foreground">
           Token counts are exact (from the provider&apos;s own usage metadata). Cost estimates aren&apos;t shown since
-          Gemini&apos;s free tier has no per-token price — the call-budget bars above are what actually protects spend.
+          Gemini&apos;s free tier has no per-token price: the call-budget bars above are what actually protects spend.
         </p>
       </div>
     </div>

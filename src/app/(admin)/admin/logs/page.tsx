@@ -125,7 +125,7 @@ export default function ActivityLogPage() {
             Activity Log
           </h1>
           <p className="text-sm text-muted-foreground mt-0.5">
-            System-wide audit trail — {count.toLocaleString()} entries
+            System-wide audit trail: {count.toLocaleString()} entries
           </p>
         </div>
         <button
@@ -225,7 +225,7 @@ export default function ActivityLogPage() {
 
                     <span className="hidden sm:block">
                       <span className="inline-block px-2 py-0.5 rounded-sm bg-muted text-[10px] font-semibold text-muted-foreground capitalize">
-                        {log.entity_type ?? "—"}
+                        {log.entity_type ?? "-"}
                       </span>
                     </span>
 
@@ -234,7 +234,7 @@ export default function ActivityLogPage() {
                     </span>
 
                     <span className="hidden sm:block text-xs text-foreground truncate">
-                      {log.entity_label ?? log.entity_id ?? "—"}
+                      {log.entity_label ?? log.entity_id ?? "-"}
                     </span>
 
                     <span className="hidden sm:block text-[11px] text-muted-foreground">
@@ -247,7 +247,7 @@ export default function ActivityLogPage() {
                         {actionLabel(log.action)} · {log.entity_type}
                       </p>
                       <p className="text-[11px] text-muted-foreground">
-                        {log.entity_label ?? log.entity_id ?? "—"} · {formatTime(log.created_at)}
+                        {log.entity_label ?? log.entity_id ?? "-"} · {formatTime(log.created_at)}
                       </p>
                     </div>
                   </button>
@@ -267,9 +267,9 @@ export default function ActivityLogPage() {
                               <span className="font-semibold text-muted-foreground w-28 shrink-0 capitalize">
                                 {field.replace(/_/g, " ")}
                               </span>
-                              <span className="text-red-500 line-through">{String(diff.from ?? "—")}</span>
+                              <span className="text-red-500 line-through">{String(diff.from ?? "-")}</span>
                               <span className="text-muted-foreground">→</span>
-                              <span className="text-emerald-600 dark:text-emerald-400">{String(diff.to ?? "—")}</span>
+                              <span className="text-emerald-600 dark:text-emerald-400">{String(diff.to ?? "-")}</span>
                             </div>
                           ))}
                         </div>

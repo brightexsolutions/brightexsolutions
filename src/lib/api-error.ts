@@ -1,7 +1,7 @@
 /**
  * Standard API error classes.
  *
- * Throw these in any route handler — withRoute() catches them and converts
+ * Throw these in any route handler: withRoute() catches them and converts
  * them to safe JSON responses without leaking internal DB error messages.
  *
  * Usage:

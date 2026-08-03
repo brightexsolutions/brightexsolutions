@@ -10,7 +10,7 @@ interface DraftableAction {
 }
 
 /** Combines the read-only "what needs attention" surface with the
- * human-in-the-loop approval queue — one AI drafts, you approve, nothing
+ * human-in-the-loop approval queue: one AI drafts, you approve, nothing
  * sends on its own. */
 export function AiAssistantPanel() {
   const [refreshKey, setRefreshKey] = useState(0);

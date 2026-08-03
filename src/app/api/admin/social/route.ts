@@ -51,7 +51,7 @@ export async function POST(request: NextRequest) {
   if (!result.success) return NextResponse.json({ error: "Invalid input", details: result.error.flatten() }, { status: 400 });
 
   // social_posts.created_by references team_members(id), not auth.users(id)
-  // directly — resolve it, but the primary admin/owner has no team_members
+  // directly: resolve it, but the primary admin/owner has no team_members
   // row, so fall back to null rather than violating the foreign key.
   const { data: member } = await supabase
     .from("team_members")
@@ -71,7 +71,7 @@ export async function POST(request: NextRequest) {
   if (result.data.scheduled_at) {
     const platformList = result.data.platforms.join(", ");
     await supabase.from("calendar_events").insert({
-      title: `Post: ${platformList} — ${(result.data.caption ?? "").slice(0, 60)}${(result.data.caption?.length ?? 0) > 60 ? "…" : ""}`,
+      title: `Post: ${platformList}: ${(result.data.caption ?? "").slice(0, 60)}${(result.data.caption?.length ?? 0) > 60 ? "…" : ""}`,
       type: "social_post",
       start_at: new Date(result.data.scheduled_at).toISOString(),
       all_day: false,

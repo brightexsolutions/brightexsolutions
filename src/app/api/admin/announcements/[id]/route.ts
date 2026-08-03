@@ -76,7 +76,7 @@ export async function PATCH(
       entity_type: "announcement",
       entity_id: id,
       entity_label: data.title as string,
-      notes: `Announcement published — type: ${data.type ?? "info"}`,
+      notes: `Announcement published: type: ${data.type ?? "info"}`,
     });
   }
 

@@ -34,7 +34,7 @@ export async function POST(request: NextRequest) {
     });
   }
 
-  // Set app_metadata.app_role — this is the authoritative server-side claim
+  // Set app_metadata.app_role: this is the authoritative server-side claim
   // used by middleware for route protection. Only the service role can write this.
   await supabase.auth.admin.updateUserById(user.id, {
     app_metadata: { app_role: role },

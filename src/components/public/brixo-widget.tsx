@@ -102,7 +102,7 @@ export function BrixoWidget() {
           {
             role: "bot",
             content:
-              "I don't have a direct answer for that right now. Switch to WhatsApp to chat with the Brightex team — we'll respond within 2 hours.",
+              "I don't have a direct answer for that right now. Switch to WhatsApp to chat with the Brightex team: we'll respond within 2 hours.",
             source: "system",
           },
         ]);
@@ -143,7 +143,7 @@ export function BrixoWidget() {
               aria-label="Open Brixo chat"
             >
               <MessageCircle size={24} className="text-white" />
-              {/* Pulse ring — fires once on mount */}
+              {/* Pulse ring: fires once on mount */}
               <span className="absolute inset-0 rounded-full border-2 border-brand-gold animate-ping opacity-60 [animation-iteration-count:3]" />
             </motion.button>
           )}
@@ -248,7 +248,7 @@ export function BrixoWidget() {
                       </button>
                     )}
 
-                    {/* Book CTA — shown after booking-related bot responses */}
+                    {/* Book CTA: shown after booking-related bot responses */}
                     {showBookCTA && (
                       <Link
                         href="/contact?intent=book_call"
@@ -263,7 +263,7 @@ export function BrixoWidget() {
                     <div ref={bottomRef} />
                   </div>
 
-                  {/* Quick replies — shown after every bot response */}
+                  {/* Quick replies: shown after every bot response */}
                   {messages[messages.length - 1]?.role === "bot" && !loading && (
                     <div className="px-4 pb-3 flex flex-wrap gap-2 flex-shrink-0 border-t border-brand-border dark:border-white/8 pt-3">
                       <p className="w-full text-[10px] font-bold uppercase tracking-[0.15em] text-brand-muted mb-1">

@@ -133,8 +133,8 @@ export async function POST(request: NextRequest) {
       from: `${SITE_NAME} <${process.env.SMTP_USER}>`,
       to: booking.booker_email,
       subject: isConfirm
-        ? `Booking Confirmed — ${purposeLabel} on ${formattedDate}`
-        : `Booking Cancelled — ${purposeLabel}`,
+        ? `Booking Confirmed: ${purposeLabel} on ${formattedDate}`
+        : `Booking Cancelled: ${purposeLabel}`,
       html,
     }).catch((err) => console.error("[bookings] Email failed:", err));
   }
@@ -142,7 +142,7 @@ export async function POST(request: NextRequest) {
   // Add to calendar on confirm
   if (result.data.action === "confirm") {
     await supabase.from("calendar_events").insert({
-      title: `${purposeLabel} — ${booking.booker_name}`,
+      title: `${purposeLabel}: ${booking.booker_name}`,
       type: "booking",
       start_at: booking.scheduled_at,
       end_at: new Date(new Date(booking.scheduled_at).getTime() + (booking.duration_minutes as number) * 60000).toISOString(),

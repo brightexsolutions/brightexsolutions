@@ -47,7 +47,7 @@ export async function sendAdminPush(payload: PushPayload): Promise<void> {
       } catch (err: unknown) {
         const status = (err as { statusCode?: number }).statusCode;
         if (status === 410 || status === 404) {
-          // Subscription expired/unsubscribed — deactivate it
+          // Subscription expired/unsubscribed: deactivate it
           await supabase
             .from("push_subscriptions")
             .update({ active: false })

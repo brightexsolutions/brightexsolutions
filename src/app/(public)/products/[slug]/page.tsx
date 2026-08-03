@@ -98,7 +98,7 @@ export default async function ProductPage({
       <section className="py-24 bg-brand-bg dark:bg-brand-navy-dark">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 lg:grid-cols-[1fr_400px] gap-16">
-            {/* Left — features */}
+            {/* Left: features */}
             <FadeIn direction="left">
               <h2 className="font-display text-3xl font-bold text-brand-navy dark:text-white mb-8">
                 What&apos;s included
@@ -141,7 +141,7 @@ export default async function ProductPage({
               </div>
             </FadeIn>
 
-            {/* Right — trial form */}
+            {/* Right: trial form */}
             <FadeIn direction="right">
               <SectionErrorBoundary
                 fallback={
