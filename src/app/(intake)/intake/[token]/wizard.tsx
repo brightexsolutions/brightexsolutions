@@ -143,15 +143,30 @@ function FieldLabel({ label, note, required }: { label: string; note?: string; r
   );
 }
 
+/**
+ * Helper text under a typed input.
+ *
+ * Deliberately below the control rather than between the label and it. Two
+ * fields side by side in a grid row, only one of which has a note, put their
+ * inputs on different baselines when the note sits above, and the row reads as
+ * broken. Below the input, every label is one line, so inputs always align no
+ * matter what guidance each field carries.
+ */
+function FieldNote({ note }: { note?: string }) {
+  if (!note) return null;
+  return <p className="text-xs text-slate-400 leading-relaxed">{note}</p>;
+}
+
 function TextField({ label, note, required, value, onChange, placeholder, type = "text" }: {
   label: string; note?: string; required?: boolean;
   value: string; onChange: (v: string) => void; placeholder?: string; type?: string;
 }) {
   return (
     <div className="space-y-1.5">
-      <FieldLabel label={label} note={note} required={required} />
+      <FieldLabel label={label} required={required} />
       <input type={type} value={value} onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder} className={INPUT_CLASS} />
+      <FieldNote note={note} />
     </div>
   );
 }
@@ -162,9 +177,10 @@ function TextArea({ label, note, required, value, onChange, placeholder, rows = 
 }) {
   return (
     <div className="space-y-1.5">
-      <FieldLabel label={label} note={note} required={required} />
+      <FieldLabel label={label} required={required} />
       <textarea rows={rows} value={value} onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder} className={cn(INPUT_CLASS, "resize-none")} />
+      <FieldNote note={note} />
     </div>
   );
 }
@@ -278,16 +294,28 @@ function SchemaField({ field, answers, setAnswer }: {
 
   return (
     <div className="space-y-2">
-      <FieldLabel label={field.label} note={field.note} />
+      {/* Guidance for a choice belongs before it, since it frames the options.
+          Guidance for something typed reads better underneath, and keeps
+          labels to one line so inputs stay aligned across a row. */}
+      <FieldLabel
+        label={field.label}
+        note={field.kind === "chips" || field.kind === "yesno" ? field.note : undefined}
+      />
 
       {field.kind === "text" && (
-        <input type="text" value={(value as string) ?? ""} placeholder={field.placeholder}
-          onChange={(e) => setAnswer(field.key, e.target.value)} className={INPUT_CLASS} />
+        <>
+          <input type="text" value={(value as string) ?? ""} placeholder={field.placeholder}
+            onChange={(e) => setAnswer(field.key, e.target.value)} className={INPUT_CLASS} />
+          <FieldNote note={field.note} />
+        </>
       )}
 
       {field.kind === "textarea" && (
-        <textarea rows={field.rows ?? 3} value={(value as string) ?? ""} placeholder={field.placeholder}
-          onChange={(e) => setAnswer(field.key, e.target.value)} className={cn(INPUT_CLASS, "resize-none")} />
+        <>
+          <textarea rows={field.rows ?? 3} value={(value as string) ?? ""} placeholder={field.placeholder}
+            onChange={(e) => setAnswer(field.key, e.target.value)} className={cn(INPUT_CLASS, "resize-none")} />
+          <FieldNote note={field.note} />
+        </>
       )}
 
       {field.kind === "chips" && (
