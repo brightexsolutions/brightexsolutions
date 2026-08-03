@@ -1,7 +1,7 @@
 /**
  * POST /api/admin/clients/[id]/intakes/analyze?intakeId=xxx
  *
- * AI analysis of a client intake submission — sharpens "mark as reviewed"
+ * AI analysis of a client intake submission: sharpens "mark as reviewed"
  * into an actual read: what the client needs, what to clarify, and whether
  * a proposal is worth drafting now. Advisory only; nothing here writes
  * anything except the analysis result itself (human decides what to act on).
@@ -12,17 +12,8 @@ import { rateLimit } from "@/lib/rate-limit";
 import { callAI, ADMIN_SYSTEM_PROMPT, AI_MODELS, isAIAvailable, GeminiRateLimitedError } from "@/lib/ai";
 import { recordAiFailure, recordAiRecovery } from "@/lib/ai-monitor";
 import { getClientJourneySummary } from "@/lib/client-journey";
+import { buildIntakeBrief } from "@/lib/intake-schema";
 import type { AIProvider } from "@/types";
-
-const SERVICE_LABELS: Record<string, string> = {
-  website: "Website / Web App",
-  mobile: "Mobile App",
-  erp: "Software / ERP System",
-  design: "Design & Branding",
-  consultancy: "Business Consultancy",
-  ai_automation: "AI & Automation",
-  other: "General Enquiry",
-};
 
 export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const limited = await rateLimit(request, "admin");
@@ -58,18 +49,14 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   const aiModel: string = settingsMap.ai_model ?? AI_MODELS.haiku;
 
   if (!aiEnabled || !isAIAvailable(aiProvider)) {
-    return NextResponse.json({ error: "AI is currently unavailable — enable it in Admin → Settings → AI, or try again shortly." }, { status: 503 });
+    return NextResponse.json({ error: "AI is currently unavailable: enable it in Admin → Settings → AI, or try again shortly." }, { status: 503 });
   }
 
   const journeyContext = await getClientJourneySummary(supabase, clientId);
-  const serviceLabel = SERVICE_LABELS[intake.service_type] ?? intake.service_type;
 
-  const userPrompt = `You are a sharp business analyst for Brightex Solutions, a Nairobi web/software agency. Review this client intake submission and give the business owner a fast, useful read before he responds — not a summary of what's already visible, but an actual assessment.
+  const userPrompt = `You are a sharp business analyst for Brightex Solutions, a Nairobi web and software agency. Review this client intake submission and give the business owner a fast, useful read before he responds. Not a summary of what is already visible, but an actual assessment.
 
-Service requested: ${serviceLabel}
-Project title: ${intake.project_title ?? "(not given)"}
-Description: ${intake.description}
-${intake.problem_statement ? `Problem / challenge: ${intake.problem_statement}\n` : ""}${intake.specifics ? `Project specifics: ${JSON.stringify(intake.specifics)}\n` : ""}${intake.timeline ? `Desired timeline: ${intake.timeline}\n` : ""}${intake.budget_range ? `Budget range: ${intake.budget_range}\n` : ""}${intake.additional_notes ? `Additional notes: ${intake.additional_notes}\n` : ""}
+${buildIntakeBrief(intake)}
 ${journeyContext ? `\nThis client's existing history with Brightex:\n${journeyContext}\n` : "\nThis is this client's first submission on record.\n"}
 
 Return JSON in exactly this shape:
@@ -94,7 +81,7 @@ Return JSON in exactly this shape:
     const analysis = JSON.parse(clean);
 
     // Persist so the analysis survives closing/reopening the panel and isn't
-    // silently re-billed on every view — degrade gracefully if migration
+    // silently re-billed on every view: degrade gracefully if migration
     // 028_intake_ai_analysis.sql hasn't been applied yet.
     await supabase
       .from("client_intakes")
