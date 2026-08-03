@@ -3,7 +3,7 @@
  *
  * Cross-module "what should I do next" surface for the admin dashboard.
  * Candidates come from lib/ops-candidates.ts (deterministic, built from real
- * rows) — AI here is only ever used to prioritise and sharpen the wording of
+ * rows): AI here is only ever used to prioritise and sharpen the wording of
  * candidates that already exist; it never invents a candidate or a link, so
  * a hallucinated entity can't reach the UI.
  */
@@ -27,7 +27,7 @@ export async function GET(request: NextRequest) {
 
   if (candidates.length === 0) {
     return NextResponse.json({
-      headline: "Nothing urgent right now — no overdue invoices, stale leads, overdue tasks, quiet active clients, stuck projects, or unresolved alerts.",
+      headline: "Nothing urgent right now: no overdue invoices, stale leads, overdue tasks, quiet active clients, stuck projects, or unresolved alerts.",
       actions: [],
       source: "rule-based",
     });
@@ -56,20 +56,20 @@ export async function GET(request: NextRequest) {
   }
 
   const candidateList = candidates
-    .map((c) => `- id:"${c.id}" [${c.type}] ${c.title} — ${c.detail}`)
+    .map((c) => `- id:"${c.id}" [${c.type}] ${c.title}: ${c.detail}`)
     .join("\n");
 
-  const userPrompt = `Here is a grounded list of real, already-verified action candidates pulled directly from Brightex Solutions' database (clients, invoices, leads, tasks, projects, system alerts). Do NOT invent any new candidate, client, invoice, or link — only work with the ids listed below.
+  const userPrompt = `Here is a grounded list of real, already-verified action candidates pulled directly from Brightex Solutions' database (clients, invoices, leads, tasks, projects, system alerts). Do NOT invent any new candidate, client, invoice, or link: only work with the ids listed below.
 
 ${candidateList}
 
 Return JSON in exactly this shape:
 {
-  "headline": "<one direct sentence on the overall state — call out the single biggest concern, don't just say everything is fine unless it genuinely is>",
+  "headline": "<one direct sentence on the overall state: call out the single biggest concern, don't just say everything is fine unless it genuinely is>",
   "rankedIds": ["<id>", "<id>", ...up to 6, most important first],
   "notes": { "<id>": "<a sharper, more specific 1-sentence action recommendation for this item, referencing only the facts given>", ... }
 }
-"notes" is optional per id — only include it where you have something more specific to say than the given detail.`;
+"notes" is optional per id: only include it where you have something more specific to say than the given detail.`;
 
   try {
     const text = await callAI({

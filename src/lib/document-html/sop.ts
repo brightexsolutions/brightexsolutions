@@ -45,7 +45,7 @@ export function renderSopHtml(data: SopData): string {
   sections.push(`<section class="section">
     ${sectionHeader(num(), "If Something's Wrong", "Escalation")}
     ${clauseParagraph(data.escalation)}
-    ${noteBox("Internal document — not for external distribution. AI-assisted draft; confirm accuracy against actual practice before treating this as the definitive procedure.")}
+    ${noteBox("Internal document: not for external distribution. AI-assisted draft; confirm accuracy against actual practice before treating this as the definitive procedure.")}
   </section>`);
 
   const tocLabels = [
@@ -58,7 +58,7 @@ export function renderSopHtml(data: SopData): string {
   ].filter((x): x is string => !!x);
 
   return documentShell({
-    title: `${data.title} — SOP ${data.sop_number}`,
+    title: `${data.title}: SOP ${data.sop_number}`,
     dlBarLabel: `INTERNAL SOP · ${data.area.toUpperCase()}`,
     coverTag: `Internal · Standard Operating Procedure · Rev ${data.revision}`,
     coverTitleLines: splitTitleForCover(data.title),

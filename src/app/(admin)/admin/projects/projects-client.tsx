@@ -161,7 +161,7 @@ const defaultTaskForm = {
 
 function fmt(n: number) { return `KES ${Number(n).toLocaleString()}`; }
 function fmtDate(d?: string | null) {
-  if (!d) return "—";
+  if (!d) return "-";
   return new Date(d).toLocaleDateString("en-KE", { day: "numeric", month: "short", year: "numeric" });
 }
 function fmtBytes(b?: number | null) {
@@ -219,7 +219,7 @@ function Pipeline({ status, isRetainer }: { status: string; isRetainer?: boolean
       {isRetainer && status === "live" && (
         <div className="flex items-center justify-center gap-1.5 mt-1">
           <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-          <span className="text-xs text-emerald-500 font-medium">Active retainer — ongoing</span>
+          <span className="text-xs text-emerald-500 font-medium">Active retainer: ongoing</span>
         </div>
       )}
     </div>
@@ -936,7 +936,7 @@ export function ProjectsPageClient() {
                   <div className="grid grid-cols-2 gap-4">
                     {[
                       { label: "Budget", value: viewProject.budget ? fmt(viewProject.budget) : "TBD" },
-                      { label: "Type", value: viewProject.type ?? "—" },
+                      { label: "Type", value: viewProject.type ?? "-" },
                       { label: "Start", value: fmtDate(viewProject.start_date) },
                       { label: viewProject.is_retainer ? "First billing" : "End", value: fmtDate(viewProject.end_date) },
                     ].map(({ label, value }) => (
@@ -1263,7 +1263,7 @@ export function ProjectsPageClient() {
                     </div>
                   </div>
                   {(viewProject.generated_documents ?? []).length === 0 ? (
-                    <p className="text-xs text-muted-foreground">No proposal or agreement prepared for this project yet — generate one directly from what&apos;s already known about it.</p>
+                    <p className="text-xs text-muted-foreground">No proposal or agreement prepared for this project yet: generate one directly from what&apos;s already known about it.</p>
                   ) : (
                     <div className="space-y-2">
                       {(viewProject.generated_documents ?? []).map((doc) => {
@@ -1483,7 +1483,7 @@ export function ProjectsPageClient() {
                 </div>
               </div>
 
-              {/* Sticky footer — primary actions */}
+              {/* Sticky footer: primary actions */}
               <SheetFooter className="px-6 py-4 border-t border-border shrink-0 flex-row items-center gap-3">
                 {/* Status quick-change */}
                 <div className="flex-1">

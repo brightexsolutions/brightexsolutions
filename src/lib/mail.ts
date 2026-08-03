@@ -26,6 +26,15 @@ export interface MailOptions {
   /** Sender address. If omitted or using old Gmail format, defaults to info@ sender. */
   from?: string;
   to: string | string[];
+  /**
+   * Additional visible recipients. Resolve these through
+   * `resolveCc()` in lib/cc-recipients.ts rather than building the list by
+   * hand, so per-client routing rules apply consistently and nobody is
+   * copied on their own email.
+   */
+  cc?: string | string[];
+  /** Hidden recipients. Used for internal copies the client should not see. */
+  bcc?: string | string[];
   subject: string;
   html: string;
   text?: string;
@@ -38,8 +47,8 @@ export interface MailOptions {
 }
 
 // Resolve the from address:
-// — If caller passes a brightexsolutions.co.ke address, use it as-is.
-// — Otherwise fall back to the info@ sender so legacy callers (still using
+//: If caller passes a brightexsolutions.co.ke address, use it as-is.
+//: Otherwise fall back to the info@ sender so legacy callers (still using
 //   the Gmail address in SMTP_USER) get the correct Resend-verified sender
 //   without any change on their side.
 function resolveSender(from?: string): string {
@@ -49,11 +58,20 @@ function resolveSender(from?: string): string {
 
 // ─── Drop-in nodemailer transporter replacement ───────────────────────────────
 // Keeps the same .sendMail() interface so all existing callers work unchanged.
+/** Normalises an optional recipient field, dropping it entirely when empty. */
+function recipientList(value?: string | string[]): string[] | undefined {
+  if (!value) return undefined;
+  const list = (Array.isArray(value) ? value : [value]).map((v) => v.trim()).filter(Boolean);
+  return list.length > 0 ? list : undefined;
+}
+
 export const transporter = {
   sendMail: async (options: MailOptions) => {
     const result = await resend.emails.send({
       from:     resolveSender(options.from),
       to:       Array.isArray(options.to) ? options.to : [options.to],
+      cc:       recipientList(options.cc),
+      bcc:      recipientList(options.bcc),
       subject:  options.subject,
       html:     options.html,
       text:     options.text,
@@ -65,7 +83,7 @@ export const transporter = {
       })),
     });
     // The Resend SDK does NOT throw on API-level failures (rate limits,
-    // invalid domain, quota exceeded, etc.) — it returns { data: null, error }
+    // invalid domain, quota exceeded, etc.): it returns { data: null, error }
     // instead. Every caller of this wrapper (15+ routes) uses try/catch
     // around sendMail() expecting a throw on failure, so without this check
     // a rate-limited or rejected send silently reports success everywhere.

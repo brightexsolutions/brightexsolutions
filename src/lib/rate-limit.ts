@@ -11,7 +11,7 @@ const limiters = {
   admin:    new RateLimiterMemory({ points: 120, duration: 60 }),
   team:     new RateLimiterMemory({ points: 60,  duration: 60 }),
   public:   new RateLimiterMemory({ points: 60,  duration: 60 }),
-  // AI-specific limits — tighter to control API spend
+  // AI-specific limits: tighter to control API spend
   ai_chat:  new RateLimiterMemory({ points: 15,  duration: 60 }), // public Brixo AI
   ai_admin: new RateLimiterMemory({ points: 20,  duration: 60 }), // admin AI tools
 };
@@ -51,7 +51,7 @@ export async function rateLimit(
 
 // ─── Gemini call budget ────────────────────────────────────────────────────
 // Protects the shared Gemini API quota/credit across every caller (admin
-// dashboard tools + the public Brixo widget draw from one key/pool) — layered
+// dashboard tools + the public Brixo widget draw from one key/pool): layered
 // on top of the per-route IP limiters above, which guard against abuse rather
 // than total spend. Same three-window strategy as the Stride app.
 const geminiPerMinute = new RateLimiterMemory({ points: 10, duration: 60 });
@@ -64,7 +64,7 @@ export interface GeminiRateLimitResult {
 }
 
 export async function consumeGeminiCall(): Promise<GeminiRateLimitResult> {
-  const key = "gemini"; // single shared bucket — one API key/quota for the whole app
+  const key = "gemini"; // single shared bucket: one API key/quota for the whole app
   try {
     await geminiPerMinute.consume(key);
   } catch {
@@ -89,7 +89,7 @@ export interface GeminiBudgetStatus {
   day: { used: number; limit: number };
 }
 
-/** Read-only — does not consume a point. For the AI Usage dashboard. */
+/** Read-only: does not consume a point. For the AI Usage dashboard. */
 export async function getGeminiBudgetStatus(): Promise<GeminiBudgetStatus> {
   const key = "gemini";
   const [minuteRes, hourRes, dayRes] = await Promise.all([

@@ -15,7 +15,7 @@ import { getActionCandidates } from "@/lib/ops-candidates";
 import type { AIProvider } from "@/types";
 
 const FALLBACK_TOPICS = [
-  { topic: "Before/after of a recent website redesign", angle: "Visual proof of quality — strongest for engagement." },
+  { topic: "Before/after of a recent website redesign", angle: "Visual proof of quality: strongest for engagement." },
   { topic: "A common mistake Kenyan businesses make with their website", angle: "Positions Brightex as the expert, invites comments." },
   { topic: "Behind the scenes of how a project gets built at Brightex", angle: "Builds trust and shows process." },
   { topic: "Client win or testimonial spotlight", angle: "Social proof, drives DMs from similar businesses." },
@@ -46,7 +46,7 @@ export async function GET(request: NextRequest) {
     ? contentOpportunities.map((c) => `- ${c.detail}`).join("\n")
     : "No newly-launched projects on record right now.";
 
-  const userPrompt = `You are a senior social media and marketing manager with 10+ years running high-converting campaigns for service businesses, now working for Brightex Solutions, a Nairobi-based web/software agency. Suggest 5 concrete, specific social media post topics for the next two weeks — not generic "post about your services" advice, but ideas someone could act on today.
+  const userPrompt = `You are a senior social media and marketing manager with 10+ years running high-converting campaigns for service businesses, now working for Brightex Solutions, a Nairobi-based web/software agency. Suggest 5 concrete, specific social media post topics for the next two weeks: not generic "post about your services" advice, but ideas someone could act on today.
 
 Real recent business activity to draw from (use if relevant, don't force it):
 ${realActivity}

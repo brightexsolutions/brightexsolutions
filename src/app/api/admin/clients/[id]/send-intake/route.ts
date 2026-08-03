@@ -79,10 +79,10 @@ export async function POST(
                 Hi ${firstName}, welcome to ${SITE_NAME}! 👋
               </p>
               <p style="margin:0 0 20px 0;font-size:15px;color:#475569;line-height:1.6;">
-                We're excited to work with you. Before we dive in, we'd love to get a better understanding of what you have in mind — your vision, goals, and what you're hoping to achieve.
+                We're excited to work with you. Before we dive in, we'd love to get a better understanding of what you have in mind: your vision, goals, and what you're hoping to achieve.
               </p>
               <p style="margin:0 0 28px 0;font-size:15px;color:#475569;line-height:1.6;">
-                We've put together a short requirements form that walks you through a few simple questions. There are no right or wrong answers — just share your thoughts in your own words and we'll take it from there.
+                We've put together a short requirements form that walks you through a few simple questions. There are no right or wrong answers: just share your thoughts in your own words and we'll take it from there.
               </p>
 
               <!-- CTA button -->
@@ -138,7 +138,7 @@ export async function POST(
 
 Welcome to ${SITE_NAME}!
 
-We'd love to understand your project needs before we start. Please fill in this short requirements form — it only takes a few minutes:
+We'd love to understand your project needs before we start. Please fill in this short requirements form: it only takes a few minutes:
 
 ${intakeUrl}
 

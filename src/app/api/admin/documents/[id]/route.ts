@@ -11,7 +11,7 @@ const PatchSchema = z.object({
   data: z.record(z.string(), z.unknown()).optional(),
   title: z.string().max(200).trim().optional(),
   gated: z.boolean().optional(),
-  /** Manual admin override — the client agreed off-platform (call, email
+  /** Manual admin override: the client agreed off-platform (call, email
    * reply) instead of clicking Accept on the document's public link. */
   accepted_at: z.string().datetime().optional(),
 });
@@ -84,7 +84,7 @@ export async function DELETE(request: NextRequest, { params }: Params) {
       actor_name: user.email ?? user.id,
       action: "deleted_document",
       entity_type: "generated_document",
-      entity_label: `${doc.reference_code} — ${doc.title}`,
+      entity_label: `${doc.reference_code}: ${doc.title}`,
     });
   }
 

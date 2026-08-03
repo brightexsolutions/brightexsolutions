@@ -40,7 +40,7 @@ export function TeamInviteModal({ onInviteSent }: { onInviteSent?: () => void })
     setLoading(true);
     try {
       if (isExternal) {
-        // Create external member record directly — no invite email
+        // Create external member record directly: no invite email
         const res = await fetch("/api/admin/team", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -85,7 +85,7 @@ export function TeamInviteModal({ onInviteSent }: { onInviteSent?: () => void })
   }
 
   const successMsg = isExternal
-    ? `${name} has been added as an external ${role}. They won't receive an email — you can assign tasks to them directly.`
+    ? `${name} has been added as an external ${role}. They won't receive an email: you can assign tasks to them directly.`
     : `${name} will receive an email with a link to set their password and access their portal.`;
 
   return (
@@ -151,7 +151,7 @@ export function TeamInviteModal({ onInviteSent }: { onInviteSent?: () => void })
 
             {isExternal && (
               <p className="text-xs text-muted-foreground bg-muted/40 border border-border rounded-sm px-3 py-2 leading-relaxed">
-                External contractors are tracked in the system for task assignment, payout recording, and expense logging — but they don&apos;t get a portal login.
+                External contractors are tracked in the system for task assignment, payout recording, and expense logging: but they don&apos;t get a portal login.
               </p>
             )}
 
@@ -176,7 +176,7 @@ export function TeamInviteModal({ onInviteSent }: { onInviteSent?: () => void })
               />
             </div>
 
-            {/* Phone — external only */}
+            {/* Phone: external only */}
             {isExternal && (
               <div>
                 <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1.5">Phone (optional)</label>
@@ -200,7 +200,7 @@ export function TeamInviteModal({ onInviteSent }: { onInviteSent?: () => void })
               </div>
             </div>
 
-            {/* Rate — external subcontractor only */}
+            {/* Rate: external subcontractor only */}
             {isExternal && (
               <div className="grid grid-cols-2 gap-3">
                 <div>
@@ -221,7 +221,7 @@ export function TeamInviteModal({ onInviteSent }: { onInviteSent?: () => void })
             {/* Note */}
             <div>
               <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1.5">
-                Note {isExternal ? "(optional)" : "(optional — included in invite email)"}
+                Note {isExternal ? "(optional)" : "(optional: included in invite email)"}
               </label>
               <textarea
                 value={note}

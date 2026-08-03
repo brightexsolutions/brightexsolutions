@@ -1,5 +1,5 @@
 /** Structured content shapes for AI-generated documents. Rendered exclusively
- * through src/lib/document-html/* (the skill-compliant HTML system) —
+ * through src/lib/document-html/* (the skill-compliant HTML system) -
  * these types have no rendering dependency of their own. */
 
 export type PaymentMilestone = { label: string; amount: number; due: string };

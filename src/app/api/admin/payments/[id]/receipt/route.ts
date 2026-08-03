@@ -12,6 +12,7 @@ import {
   emailDivider,
   emailSignoff,
 } from "@/lib/email-templates";
+import { resolveCc } from "@/lib/cc-recipients";
 
 export async function POST(
   request: NextRequest,
@@ -86,9 +87,14 @@ export async function POST(
     await transporter.sendMail({
       from: SENDERS.payments,
       to: client.email,
+      cc: await resolveCc({
+        clientId: invoice?.client_id ?? null,
+        scope: "payments",
+        to: client.email,
+      }),
       subject: isPastPayment
-        ? `Payment Receipt${invoice?.invoice_number ? ` — ${invoice.invoice_number}` : ""}`
-        : `Payment Confirmation${invoice?.invoice_number ? ` — ${invoice.invoice_number}` : ""}`,
+        ? `Payment Receipt${invoice?.invoice_number ? `: ${invoice.invoice_number}` : ""}`
+        : `Payment Confirmation${invoice?.invoice_number ? `: ${invoice.invoice_number}` : ""}`,
       html,
     });
   } catch {
@@ -101,7 +107,7 @@ export async function POST(
     await supabase.from("communications").insert({
       client_id: invoice.client_id,
       type: "email",
-      subject: `Payment receipt sent — ${invoice.invoice_number ?? id}`,
+      subject: `Payment receipt sent: ${invoice.invoice_number ?? id}`,
       direction: "out",
       status: "sent",
     });

@@ -17,7 +17,7 @@ const FALLBACK_PROJECTS: PortfolioProject[] = [
   {
     name: "Beco Interiors",
     category: "E-Commerce Redesign",
-    description: "Full e-commerce redesign for a premium interiors brand — refined visual identity, product catalogue, and a seamless buying experience.",
+    description: "Full e-commerce redesign for a premium interiors brand: refined visual identity, product catalogue, and a seamless buying experience.",
     tags: ["WordPress", "E-Commerce", "UI Design"],
     url: "https://beco-interiors.netlify.app/",
     accent_color: "#f9a825",
@@ -25,7 +25,7 @@ const FALLBACK_PROJECTS: PortfolioProject[] = [
   {
     name: "Talkways Languages",
     category: "Education Website",
-    description: "Modern website for a language learning school — course listings, enquiry forms, and an SEO strategy that grew organic traffic significantly.",
+    description: "Modern website for a language learning school: course listings, enquiry forms, and an SEO strategy that grew organic traffic significantly.",
     tags: ["Web Design", "SEO", "Education"],
     url: "https://talkwayslanguages.com/",
     accent_color: "#3b82f6",
@@ -33,7 +33,7 @@ const FALLBACK_PROJECTS: PortfolioProject[] = [
   {
     name: "Greenhouse Worship",
     category: "Community Website",
-    description: "A warm, welcoming digital home for a worship community — events, sermons, and a clean UI that reflects their brand and values.",
+    description: "A warm, welcoming digital home for a worship community: events, sermons, and a clean UI that reflects their brand and values.",
     tags: ["Web Development", "UI Design"],
     url: "https://thegreenhouse-w-s.netlify.app/",
     accent_color: "#a78bfa",
@@ -41,7 +41,7 @@ const FALLBACK_PROJECTS: PortfolioProject[] = [
   {
     name: "Africa Feature Network",
     category: "Media Platform",
-    description: "A media and news platform built for scale — structured content architecture, editorial workflow, and strong on-page SEO across hundreds of articles.",
+    description: "A media and news platform built for scale: structured content architecture, editorial workflow, and strong on-page SEO across hundreds of articles.",
     tags: ["Media Platform", "SEO", "WordPress"],
     url: "https://africafeaturenetwork.com/",
     accent_color: "#10b981",
@@ -49,15 +49,15 @@ const FALLBACK_PROJECTS: PortfolioProject[] = [
   {
     name: "Amuches Oven",
     category: "Online Ordering System",
-    description: "Online ordering system for a bakery — digital menu, cart, order management, and an admin dashboard for the owner to track and fulfil orders daily.",
+    description: "Online ordering system for a bakery: digital menu, cart, order management, and an admin dashboard for the owner to track and fulfil orders daily.",
     tags: ["E-Commerce", "Web App", "Bakery"],
     url: "https://amuches-oven.netlify.app/",
     accent_color: "#fb923c",
   },
   {
-    name: "CBC App — Verb Education",
+    name: "CBC App: Verb Education",
     category: "Web Application",
-    description: "A Kenya CBC learning platform for students and teachers — curriculum-aligned content, progress tracking, and analytics built to Material Design 3 standards.",
+    description: "A Kenya CBC learning platform for students and teachers: curriculum-aligned content, progress tracking, and analytics built to Material Design 3 standards.",
     tags: ["SaaS", "EdTech", "Analytics"],
     url: "https://cbcapp.co.ke/",
     accent_color: "#818cf8",
@@ -116,7 +116,7 @@ function CardBackground({ accent, imageUrl }: { accent: string; imageUrl?: strin
         }}
       />
 
-      {/* Primary radial glow — bottom-left */}
+      {/* Primary radial glow: bottom-left */}
       <div
         className="absolute inset-0"
         style={{
@@ -124,7 +124,7 @@ function CardBackground({ accent, imageUrl }: { accent: string; imageUrl?: strin
         }}
       />
 
-      {/* Secondary radial glow — top-right (complementary) */}
+      {/* Secondary radial glow: top-right (complementary) */}
       <div
         className="absolute inset-0 opacity-50"
         style={{
@@ -164,7 +164,7 @@ export async function PortfolioSection() {
               Projects We&apos;re Proud Of
             </h2>
             <p className="text-brand-muted leading-relaxed">
-              From e-commerce platforms to mobile apps — a selection of what we&apos;ve shipped for clients across Kenya and East Africa.
+              From e-commerce platforms to mobile apps: a selection of what we&apos;ve shipped for clients across Kenya and East Africa.
             </p>
           </div>
           <Link

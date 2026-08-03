@@ -92,7 +92,7 @@ function PreviewPanel({
         <span className="w-2.5 h-2.5 rounded-full bg-amber-400" />
         <span className="w-2.5 h-2.5 rounded-full bg-emerald-400" />
         <span className="ml-3 text-xs text-muted-foreground font-mono truncate">
-          Preview — {item.label}
+          Preview: {item.label}
         </span>
         {item.kind === "doc" && (
           <a

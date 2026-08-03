@@ -8,7 +8,7 @@ async function getClientForToken(token: string) {
   const supabase = createAdminClient();
   const { data } = await supabase
     .from("clients")
-    .select("id, name, email, company, intake_token")
+    .select("id, name, email, company, phone, intake_token")
     .eq("intake_token", token)
     .is("deleted_at", null)
     .single();
@@ -28,6 +28,7 @@ export default async function IntakePage({ params }: { params: Promise<{ token: 
       clientName={client.name}
       clientEmail={client.email ?? ""}
       clientCompany={client.company ?? ""}
+      clientPhone={client.phone ?? ""}
     />
   );
 }

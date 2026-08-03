@@ -100,7 +100,7 @@ export async function POST(
     await transporter.sendMail({
       from: `${SITE_NAME} <${process.env.SMTP_USER}>`,
       to: ADMIN_EMAIL,
-      subject: `New trial request — ${product.name} — ${name}`,
+      subject: `New trial request: ${product.name}: ${name}`,
       html: emailTemplate({
         title: "New Trial Request",
         subtitle: product.name,

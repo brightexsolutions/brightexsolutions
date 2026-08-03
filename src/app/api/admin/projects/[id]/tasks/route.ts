@@ -21,7 +21,7 @@ const PatchTaskSchema = z.object({
   assigned_to: z.string().uuid().nullable().optional(),
 });
 
-// GET — all tasks for this project with assignee names
+// GET: all tasks for this project with assignee names
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const limited = await rateLimit(request, "admin");
   if (limited) return limited;
@@ -44,7 +44,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
   return NextResponse.json({ data: data ?? [] });
 }
 
-// POST — create a task on this project
+// POST: create a task on this project
 export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const limited = await rateLimit(request, "admin");
   if (limited) return limited;
@@ -98,7 +98,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   return NextResponse.json({ data: task }, { status: 201 });
 }
 
-// PATCH — update a task (by ?id=)
+// PATCH: update a task (by ?id=)
 export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const limited = await rateLimit(request, "admin");
   if (limited) return limited;
@@ -130,7 +130,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
   return NextResponse.json({ data: task });
 }
 
-// DELETE — remove a task (by ?task_id=)
+// DELETE: remove a task (by ?task_id=)
 export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const limited = await rateLimit(request, "admin");
   if (limited) return limited;

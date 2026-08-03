@@ -1,6 +1,6 @@
 import { createBrowserClient } from "@supabase/ssr";
 
-// Browser client — anon key only, used solely for reading auth session.
+// Browser client: anon key only, used solely for reading auth session.
 // Never use this for data queries.
 export function createClient() {
   return createBrowserClient(

@@ -1,5 +1,5 @@
 /**
- * Grounded "what needs attention" candidates — shared between
+ * Grounded "what needs attention" candidates: shared between
  * /api/admin/suggested-actions and the admin assistant chat, so both
  * surfaces reason about the exact same real data instead of drifting.
  * Every candidate is built deterministically from real rows; nothing here
@@ -18,7 +18,7 @@ export interface ActionCandidate {
   detail: string;
   href: string;
   urgency: Urgency;
-  /** Present when a client email is draftable for this candidate — see /api/admin/pending-actions. */
+  /** Present when a client email is draftable for this candidate: see /api/admin/pending-actions. */
   draft?: { kind: DraftKind; clientId: string; invoiceId?: string; saleId?: string };
 }
 
@@ -76,16 +76,16 @@ export async function getActionCandidates(supabase: SupabaseClient<any, any, any
     const client = Array.isArray(inv.clients) ? inv.clients[0] : inv.clients;
     const overdue = inv.status === "overdue" || (inv.due_date && new Date(inv.due_date).getTime() < now);
     if (!overdue) continue;
-    // Flag what's actually still owed, not the invoice's original total — a
+    // Flag what's actually still owed, not the invoice's original total: a
     // partially-paid invoice must never be reported as fully outstanding.
     const paidToDate = (inv.payments ?? []).reduce((sum: number, p: { amount: number }) => sum + Number(p.amount), 0);
     const outstanding = Math.max(0, Number(inv.total) - paidToDate);
-    if (outstanding <= 0) continue; // fully paid despite a stale status — nothing to chase
+    if (outstanding <= 0) continue; // fully paid despite a stale status: nothing to chase
     candidates.push({
       id: `invoice:${inv.id}`,
       type: "overdue_invoice",
       title: `Follow up on invoice ${inv.invoice_number}`,
-      detail: `${client?.name ?? "Client"} — KES ${outstanding.toLocaleString()} outstanding${paidToDate > 0 ? ` (of KES ${Number(inv.total).toLocaleString()} total)` : ""}${inv.due_date ? `, due ${new Date(inv.due_date).toLocaleDateString("en-KE", { day: "numeric", month: "short" })}` : ""}.`,
+      detail: `${client?.name ?? "Client"}: KES ${outstanding.toLocaleString()} outstanding${paidToDate > 0 ? ` (of KES ${Number(inv.total).toLocaleString()} total)` : ""}${inv.due_date ? `, due ${new Date(inv.due_date).toLocaleDateString("en-KE", { day: "numeric", month: "short" })}` : ""}.`,
       href: "/admin/invoices",
       urgency: "high",
       draft: client?.id ? { kind: "invoice_reminder", clientId: client.id, invoiceId: inv.id } : undefined,
@@ -113,7 +113,7 @@ export async function getActionCandidates(supabase: SupabaseClient<any, any, any
       id: `task:${task.id}`,
       type: "overdue_task",
       title: `Overdue task: ${task.title}`,
-      detail: `${project?.name ?? "Project"} — ${daysOverdue} day${daysOverdue === 1 ? "" : "s"} overdue (${task.priority} priority).`,
+      detail: `${project?.name ?? "Project"}: ${daysOverdue} day${daysOverdue === 1 ? "" : "s"} overdue (${task.priority} priority).`,
       href: "/admin/tasks",
       urgency: task.priority === "high" ? "high" : "medium",
     });
@@ -127,7 +127,7 @@ export async function getActionCandidates(supabase: SupabaseClient<any, any, any
       id: `client:${client.id}`,
       type: "quiet_client",
       title: `Check in with ${client.name}`,
-      detail: daysQuiet ? `No contact in ${daysQuiet} days — still marked active.` : "No contact on record — still marked active.",
+      detail: daysQuiet ? `No contact in ${daysQuiet} days: still marked active.` : "No contact on record: still marked active.",
       href: `/admin/clients?id=${client.id}`,
       urgency: "low",
       draft: { kind: "client_checkin", clientId: client.id },
@@ -141,7 +141,7 @@ export async function getActionCandidates(supabase: SupabaseClient<any, any, any
       id: `project:${project.id}`,
       type: "stuck_project",
       title: `Unblock project: ${project.name}`,
-      detail: `${client?.name ?? "Client"} — still "${project.status}"${daysInStatus ? ` after ${daysInStatus} days` : ""}.`,
+      detail: `${client?.name ?? "Client"}: still "${project.status}"${daysInStatus ? ` after ${daysInStatus} days` : ""}.`,
       href: "/admin/projects",
       urgency: "medium",
     });
@@ -164,7 +164,7 @@ export async function getActionCandidates(supabase: SupabaseClient<any, any, any
       id: `content:${project.id}`,
       type: "content_opportunity",
       title: `Post about newly launched: ${project.name}`,
-      detail: `${client?.name ?? "Client"} project went live ${new Date(project.end_date).toLocaleDateString("en-KE", { day: "numeric", month: "short" })} — worth a social post if not already covered.`,
+      detail: `${client?.name ?? "Client"} project went live ${new Date(project.end_date).toLocaleDateString("en-KE", { day: "numeric", month: "short" })}: worth a social post if not already covered.`,
       href: "/admin/social",
       urgency: "low",
     });

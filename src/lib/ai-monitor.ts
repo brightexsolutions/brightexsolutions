@@ -1,13 +1,13 @@
 /**
- * AI availability monitoring — surfaces provider outages (bad model, expired
+ * AI availability monitoring: surfaces provider outages (bad model, expired
  * key, Gemini/Claude down, quota exhausted with no paid key) that would
  * otherwise degrade silently to the rule-based template fallback with no
  * visible trace. Every genuine failure is written to activity_log; the first
  * one in an outage also raises a deduped system_alerts row and emails the
- * business inbox — mirrors the existing site-health up/down pattern.
+ * business inbox: mirrors the existing site-health up/down pattern.
  *
  * App-side Gemini call-budget throttling (GeminiRateLimitedError) is
- * deliberately NOT routed through here — that's expected, self-imposed
+ * deliberately NOT routed through here: that's expected, self-imposed
  * throttling, not a provider outage, so it shouldn't page anyone.
  */
 import { createAdminClient } from "@/lib/supabase/server";
@@ -39,14 +39,14 @@ export async function recordAiFailure(params: {
       .eq("type", ALERT_TYPE)
       .eq("acknowledged", false);
 
-    // Only the first failure of an outage raises the alert + email —
+    // Only the first failure of an outage raises the alert + email -
     // every call after that just adds to activity_log until it recovers.
     if ((count ?? 0) > 0) return;
 
     await supabase.from("system_alerts").insert({
       type: ALERT_TYPE,
       severity: "warning",
-      message: `AI (${params.provider}) is unavailable — falling back to templates. ${detail}`,
+      message: `AI (${params.provider}) is unavailable: falling back to templates. ${detail}`,
       entity_type: "ai",
     });
 
@@ -61,7 +61,7 @@ export async function recordAiFailure(params: {
         <p>This alert won't repeat until AI recovers and fails again. Check Admin → Settings → AI, and Admin → Activity Log for details.</p>
       </div>`,
     }).catch(() => {
-      // Email is best-effort — never let it break the request that triggered this
+      // Email is best-effort: never let it break the request that triggered this
     });
   } catch {
     // Monitoring must never break the actual AI call it's observing
@@ -91,7 +91,7 @@ export async function recordAiRecovery(): Promise<void> {
 }
 
 /** Logs one real (non-template, non-rule-based) AI call for the AI Usage
- * dashboard — call volume, free vs paid tier split, token consumption.
+ * dashboard: call volume, free vs paid tier split, token consumption.
  * Fire-and-forget: never let logging failures break the AI call it's
  * observing, and never await this from the calling code path. */
 export async function logAiUsage(params: {

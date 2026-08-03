@@ -12,6 +12,7 @@ import {
   emailParagraph,
   emailSignoff,
 } from "@/lib/email-templates";
+import { resolveCc } from "@/lib/cc-recipients";
 
 const NotifySchema = z.object({
   channel: z.enum(["email", "whatsapp"]),
@@ -66,7 +67,7 @@ export async function POST(
       title: isOverdue ? "Subscription Overdue" : "Subscription Renewal Reminder",
       subtitle: sub.name,
       preheader: isOverdue
-        ? `${sub.name} renewal has passed — action required`
+        ? `${sub.name} renewal has passed: action required`
         : `${sub.name} renews in ${daysUntil} day${daysUntil !== 1 ? "s" : ""}`,
       body:
         emailAlert(alertText, isOverdue ? "error" : daysUntil <= 3 ? "warning" : "info") +
@@ -90,6 +91,7 @@ export async function POST(
       await transporter.sendMail({
         from: SENDERS.info,
         to: client.email,
+        cc: await resolveCc({ clientId: client.id, scope: "invoices", to: client.email }),
         subject: isOverdue
           ? `OVERDUE: ${sub.name} renewal has passed`
           : `Renewal reminder: ${sub.name} in ${daysUntil} day${daysUntil !== 1 ? "s" : ""}`,
@@ -102,7 +104,7 @@ export async function POST(
     await supabase.from("communications").insert({
       client_id: client.id,
       type: "email",
-      subject: `Renewal reminder sent — ${sub.name}`,
+      subject: `Renewal reminder sent: ${sub.name}`,
       direction: "out",
       status: "sent",
     });
@@ -110,7 +112,7 @@ export async function POST(
     return NextResponse.json({ sent: true, channel: "email" });
   }
 
-  // WhatsApp — return a pre-filled wa.me link, let the admin open it
+  // WhatsApp: return a pre-filled wa.me link, let the admin open it
   const phone = (client.phone ?? "").replace(/\D/g, "");
   if (!phone) return NextResponse.json({ error: "Client has no phone number on file" }, { status: 422 });
 
@@ -119,8 +121,8 @@ export async function POST(
   });
 
   const message = isOverdue
-    ? `Hi ${client.name ?? "there"}, this is a reminder that the *${sub.name}* subscription renewal date (${renewalDateLabel}) has already passed. Please let us know how you'd like to proceed. — ${SITE_NAME}`
-    : `Hi ${client.name ?? "there"}, just a heads-up that *${sub.name}* is due for renewal on ${renewalDateLabel} (${daysUntil} day${daysUntil !== 1 ? "s" : ""}). Please let us know if you'd like to renew. — ${SITE_NAME}`;
+    ? `Hi ${client.name ?? "there"}, this is a reminder that the *${sub.name}* subscription renewal date (${renewalDateLabel}) has already passed. Please let us know how you'd like to proceed.: ${SITE_NAME}`
+    : `Hi ${client.name ?? "there"}, just a heads-up that *${sub.name}* is due for renewal on ${renewalDateLabel} (${daysUntil} day${daysUntil !== 1 ? "s" : ""}). Please let us know if you'd like to renew.: ${SITE_NAME}`;
 
   const waLink = `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
 

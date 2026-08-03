@@ -2,7 +2,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 
 /**
  * Compact, factual summary of a client's real state across projects,
- * invoices/payments, and open tasks — grounding for AI document generation
+ * invoices/payments, and open tasks: grounding for AI document generation
  * so a proposal/agreement never contradicts what's already true (an
  * existing active project, an outstanding balance, etc.). Deterministic:
  * every line comes straight from real rows, nothing here is AI-authored.

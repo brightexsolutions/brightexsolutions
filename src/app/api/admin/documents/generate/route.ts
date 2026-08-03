@@ -6,13 +6,13 @@
  *   - AI only ever fills in the CONTENT fields it's asked for (scope,
  *     pricing narrative, procedure steps, etc.) from Godwin's engagement
  *     summary.
- *   - Every deterministic field — reference numbers, dates, client contact
- *     details — is looked up/computed by this route, never invented by AI.
+ *   - Every deterministic field: reference numbers, dates, client contact
+ *     details: is looked up/computed by this route, never invented by AI.
  *   - Agreement legal clauses (IP, confidentiality, termination, liability,
  *     governing law) are FIXED text in document-html/agreement.ts, never
- *     AI-drafted — only the commercial specifics (scope/fees/timeline) are
+ *     AI-drafted: only the commercial specifics (scope/fees/timeline) are
  *     AI-assisted.
- * The document itself is rendered on demand from the saved `data` — see
+ * The document itself is rendered on demand from the saved `data`: see
  * /api/admin/documents/[id]/view and /api/public/documents/[id].
  */
 import { NextRequest, NextResponse } from "next/server";
@@ -36,7 +36,7 @@ const GenerateSchema = z.object({
   saleId: z.string().uuid().optional(),
   projectId: z.string().uuid().optional(),
   gated: z.boolean().optional(),
-  /** The proposal (or other document) this one was prepared from — e.g. an
+  /** The proposal (or other document) this one was prepared from: e.g. an
    * agreement generated from an accepted proposal. Purely a reference for
    * cross-navigation; content is always freshly drafted, never copied. */
   sourceDocumentId: z.string().uuid().optional(),
@@ -79,11 +79,11 @@ export async function POST(request: NextRequest) {
   }
 
   // Ground the draft in what's actually true about this client's history with
-  // Brightex — existing projects, outstanding balances, prior documents —
+  // Brightex - existing projects, outstanding balances, prior documents -
   // so a fresh proposal/agreement never contradicts known facts.
   const journeyContext = payload.clientId ? await getClientJourneySummary(supabase, payload.clientId) : "";
   const journeyBlock = journeyContext
-    ? `\n\nKnown context on this client's history with Brightex (factual, from real records — use to avoid contradicting it, don't restate unless relevant to the instruction):\n${journeyContext}`
+    ? `\n\nKnown context on this client's history with Brightex (factual, from real records: use to avoid contradicting it, don't restate unless relevant to the instruction):\n${journeyContext}`
     : "";
 
   const year = new Date().getFullYear();
@@ -107,7 +107,7 @@ export async function POST(request: NextRequest) {
   const aiModel: string = settingsMap.ai_model ?? AI_MODELS.haiku;
 
   if (!aiEnabled || !isAIAvailable(aiProvider)) {
-    return NextResponse.json({ error: "AI is currently unavailable — enable it in Admin → Settings → AI, or try again shortly." }, { status: 503 });
+    return NextResponse.json({ error: "AI is currently unavailable: enable it in Admin → Settings → AI, or try again shortly." }, { status: 503 });
   }
 
   let userPrompt: string;
@@ -125,35 +125,35 @@ Client: ${client!.company?.trim() || client!.name}${payload.totalBudget ? `\nTar
 Return JSON in exactly this shape:
 {
   "project_title": "<short, specific project name>",
-  "cover_tagline": "<optional: a short, punchy cover headline capturing the outcome, e.g. 'Turning every enquiry into a booked sale.' — omit if nothing better than the title fits>",
+  "cover_tagline": "<optional: a short, punchy cover headline capturing the outcome, e.g. 'Turning every enquiry into a booked sale.': omit if nothing better than the title fits>",
   "intro": "<2-4 sentence executive summary: what the client actually asked for, and what's broken or missing today>",
   "problem_points": ["<optional: 2-5 concrete, specific pain points named in the engagement summary>", ...] or omit entirely if the summary doesn't support it,
-  "solution_points": ["<optional: 2-4 points on what changes / what this fixes, paired with problem_points — omit if problem_points is omitted>", ...],
+  "solution_points": ["<optional: 2-4 points on what changes / what this fixes, paired with problem_points: omit if problem_points is omitted>", ...],
   "scope_items": [
     {
       "title": "<deliverable>",
-      "description": "<1-2 sentences — always include this>",
-      "tag": "<optional: only when this deliverable deserves its own full section, e.g. 'Part 1 · The website' — omit for a simple one-line deliverable>",
+      "description": "<1-2 sentences: always include this>",
+      "tag": "<optional: only when this deliverable deserves its own full section, e.g. 'Part 1 · The website': omit for a simple one-line deliverable>",
       "problem_points": ["<optional, only if tag is set: what's wrong today specific to this deliverable>"],
       "solution_points": ["<optional, only if tag is set: what this specifically does>"],
       "included": ["<optional, only if tag is set: what's included, be specific>"],
       "excluded": ["<optional, only if tag is set: what's explicitly out of scope>"],
       "needed_from_client": ["<optional, only if tag is set: what you need from the client to deliver this>"]
-    }, ... 3-6 items. Do not set "tag" (or any of the fields below it) on every item — only the ones that genuinely warrant a deep dive; the rest should just have title + description.
+    }, ... 3-6 items. Do not set "tag" (or any of the fields below it) on every item: only the ones that genuinely warrant a deep dive; the rest should just have title + description.
   ],
   "line_items": [{ "description": "<line item, matching a scope_items title where relevant>", "qty": <number>, "unit_price": <number, KES> }, ... amounts must sum sensibly toward the target budget if one was given],
-  "recommended_bundle": { "label": "<e.g. 'Recommended starting package'>", "item_titles": ["<line_items description(s) that make up this bundle>"], "amount": <number, sum of those line items>, "note": "<optional one-line reason>" } — ONLY include this if the line items naturally split into "core recommended now" vs "optional add later"; omit entirely if the whole list is meant to be delivered together,
+  "recommended_bundle": { "label": "<e.g. 'Recommended starting package'>", "item_titles": ["<line_items description(s) that make up this bundle>"], "amount": <number, sum of those line items>, "note": "<optional one-line reason>" }: ONLY include this if the line items naturally split into "core recommended now" vs "optional add later"; omit entirely if the whole list is meant to be delivered together,
   "payment_terms": { "deposit_percent": ${payload.depositPercent ?? 50}, "note": "<one sentence on what happens after deposit>" },
-  "timeline": "<short summary e.g. '4-6 weeks' — always include>",
-  "phased_timeline": [{ "period": "<e.g. 'Weeks 1-2'>", "title": "<phase name>", "description": "<what happens>", "is_launch": <true only on the final/launch phase> }, ...] — ONLY if the engagement summary gives enough to break the work into real phases; omit for a simple one-shot delivery,
-  "retainer_tiers": [{ "name": "<tier name>", "price": <number, KES/mo>, "features": ["<...>"], "featured": <true for the one you'd recommend> }, ... 2-3 tiers] — ONLY if an ongoing monthly plan makes sense for this engagement (e.g. a website, app, or system needing upkeep); omit for a one-off deliverable with no ongoing component,
-  "next_steps": [{ "title": "<step>", "description": "<what it involves>" }, ... 2-4 steps specific to this engagement] — omit to use a sensible default,
+  "timeline": "<short summary e.g. '4-6 weeks': always include>",
+  "phased_timeline": [{ "period": "<e.g. 'Weeks 1-2'>", "title": "<phase name>", "description": "<what happens>", "is_launch": <true only on the final/launch phase> }, ...]: ONLY if the engagement summary gives enough to break the work into real phases; omit for a simple one-shot delivery,
+  "retainer_tiers": [{ "name": "<tier name>", "price": <number, KES/mo>, "features": ["<...>"], "featured": <true for the one you'd recommend> }, ... 2-3 tiers]: ONLY if an ongoing monthly plan makes sense for this engagement (e.g. a website, app, or system needing upkeep); omit for a one-off deliverable with no ongoing component,
+  "next_steps": [{ "title": "<step>", "description": "<what it involves>" }, ... 2-4 steps specific to this engagement]: omit to use a sensible default,
   "notes": "<optional: anything else worth noting (what's explicitly not included, e.g. domain/hosting/ad spend if relevant), or omit this field>"
 }`;
   } else if (payload.type === "agreement") {
     userPrompt = `${COPY_RULES}
 
-Draft the commercial specifics for a Brightex Solutions services agreement, based on this engagement summary from the business owner. Do NOT draft any legal clauses (IP, confidentiality, termination, liability, governing law) — those are fixed and added separately. Only draft the scope and commercial terms below.
+Draft the commercial specifics for a Brightex Solutions services agreement, based on this engagement summary from the business owner. Do NOT draft any legal clauses (IP, confidentiality, termination, liability, governing law): those are fixed and added separately. Only draft the scope and commercial terms below.
 
 """
 ${payload.engagementSummary}
@@ -172,7 +172,7 @@ Return JSON in exactly this shape:
   "special_terms": "<optional: any unusual terms specific to this engagement, or omit this field>"
 }`;
   } else {
-    userPrompt = `You are drafting an internal Standard Operating Procedure for Brightex Solutions. This is an internal document, not client-facing, so be specific and practical rather than marketing-toned. Never invent steps, roles, or tools not implied by the description given — this is a factual internal reference, not a generic template.
+    userPrompt = `You are drafting an internal Standard Operating Procedure for Brightex Solutions. This is an internal document, not client-facing, so be specific and practical rather than marketing-toned. Never invent steps, roles, or tools not implied by the description given: this is a factual internal reference, not a generic template.
 
 Business owner's description of this process:
 """
@@ -187,7 +187,7 @@ Return JSON in exactly this shape:
   "scope": "<1-2 sentences on what this SOP covers and does not cover>",
   "responsibilities": [{ "role": "<role/person actually mentioned or clearly implied>", "responsibility": "<what they own>" }, ...],
   "procedure_steps": [{ "step": "<short step title>", "description": "<what to do>" }, ... in order],
-  "tools_systems": ["<only tools/systems explicitly named in the description above — leave this array empty if none are named, do NOT suggest generic examples like Salesforce, Jira, or DocuSign>"],
+  "tools_systems": ["<only tools/systems explicitly named in the description above: leave this array empty if none are named, do NOT suggest generic examples like Salesforce, Jira, or DocuSign>"],
   "escalation": "<what to do if something goes wrong or is unclear, grounded in what was described>"
 }`;
   }
@@ -265,7 +265,7 @@ Return JSON in exactly this shape:
       action: "generated_document",
       entity_type: "generated_document",
       entity_id: saved.id,
-      entity_label: `${referenceCode} — ${title}`,
+      entity_label: `${referenceCode}: ${title}`,
       notes: `Type: ${payload.type} · AI-drafted`,
     });
 

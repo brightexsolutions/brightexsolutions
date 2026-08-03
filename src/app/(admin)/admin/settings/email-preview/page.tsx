@@ -29,7 +29,7 @@ function invoiceEmail() {
   return emailTemplate({
     title: `Invoice ${SAMPLE_INVOICE_NUMBER}`,
     subtitle: SAMPLE_INVOICE_NUMBER,
-    preheader: `${SITE_NAME} invoice for ${SAMPLE_AMOUNT} — due ${SAMPLE_DUE}`,
+    preheader: `${SITE_NAME} invoice for ${SAMPLE_AMOUNT}: due ${SAMPLE_DUE}`,
     heroLabel: `Invoice · ${SAMPLE_INVOICE_NUMBER}`,
     heroTitle: `Here's your invoice,\n${SAMPLE_CLIENT.name.split(" ")[0]}.`,
     body:

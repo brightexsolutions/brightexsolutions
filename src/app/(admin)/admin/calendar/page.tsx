@@ -318,7 +318,7 @@ function EventForm({
         <Label htmlFor="all_day" className="font-normal">All-day event</Label>
       </div>
 
-      {/* Date / time inputs — adapt based on all_day */}
+      {/* Date / time inputs: adapt based on all_day */}
       {form.all_day ? (
         <div className="space-y-1.5">
           <Label>Date</Label>
@@ -619,7 +619,7 @@ export default function CalendarPage() {
       {/* Two-panel layout */}
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-6 items-start">
 
-        {/* LEFT — event list */}
+        {/* LEFT: event list */}
         <Card>
           <CardHeader className="pb-3">
             <CardTitle className="text-base flex items-center justify-between gap-2">
@@ -655,7 +655,7 @@ export default function CalendarPage() {
           </CardContent>
         </Card>
 
-        {/* RIGHT — visual calendar grid */}
+        {/* RIGHT: visual calendar grid */}
         <Card>
           <CardContent className="pt-5 pb-4 overflow-visible">
             <CalendarGrid

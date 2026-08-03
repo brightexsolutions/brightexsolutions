@@ -87,7 +87,7 @@ export async function checkSite(site: SiteCheckInput): Promise<SiteCheckResult> 
           if (healthData.wp_version) wp_version = healthData.wp_version;
           if (healthData.needs_core_update) requires_update = true;
         }
-      } catch { /* health endpoint unreachable — passive status stands */ }
+      } catch { /* health endpoint unreachable: passive status stands */ }
     }
   } catch {
     response_time_ms = Date.now() - start;

@@ -100,7 +100,7 @@ export function ReceiptPDFDocument({ data }: { data: ReceiptData }) {
     <Document title={`Receipt ${data.receipt_reference ?? ""}`} author="Brightex Solutions">
       <Page size="A4" style={s.page}>
 
-        {/* Green accent bar — distinguishes receipt from invoice at a glance */}
+        {/* Green accent bar: distinguishes receipt from invoice at a glance */}
         <View style={s.accentBar} />
 
         {/* Header */}
@@ -158,7 +158,7 @@ export function ReceiptPDFDocument({ data }: { data: ReceiptData }) {
           <View style={[s.summaryRow, s.summaryLast]}>
             <Text style={s.summaryKey}>Transaction Reference</Text>
             <Text style={[s.summaryVal, data.reference ? s.refVal : {}]}>
-              {data.reference ?? "—"}
+              {data.reference ?? "-"}
             </Text>
           </View>
         </View>
@@ -186,7 +186,7 @@ export function ReceiptPDFDocument({ data }: { data: ReceiptData }) {
             <View style={[s.settlRow, s.settlRowLast, fullyPaid ? s.settlRowGreen : {}]}>
               <Text style={s.settlKey}>Balance Remaining</Text>
               <Text style={[s.settlVal, fullyPaid ? s.settlValGreen : {}]}>
-                {fullyPaid ? "KES 0.00 — Fully Settled" : fmt(balance)}
+                {fullyPaid ? "KES 0.00: Fully Settled" : fmt(balance)}
               </Text>
             </View>
           </View>

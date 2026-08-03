@@ -9,10 +9,10 @@ import type { AgreementData, SopData } from "@/lib/document-types";
 
 type Params = { params: Promise<{ id: string }> };
 
-/** Serves the rich HTML document — the reference/skill-compliant design
+/** Serves the rich HTML document: the reference/skill-compliant design
  * system (see src/lib/document-html). This IS the document: view it
  * directly, or click "Download PDF" inside it (or load with ?print=1) to
- * get a true PDF via the browser's own print pipeline — same convention as
+ * get a true PDF via the browser's own print pipeline: same convention as
  * projects/magic-movers/proposal/brightex_magic-movers_proposal_2026-07.html. */
 export async function GET(request: NextRequest, { params }: Params) {
   const limited = await rateLimit(request, "admin");
@@ -27,7 +27,7 @@ export async function GET(request: NextRequest, { params }: Params) {
   if (error || !doc) return NextResponse.json({ error: "Document not found" }, { status: 404 });
 
   // Bespoke, already-authored documents (e.g. a real client proposal that
-  // exists as its own HTML file) are served verbatim — the generic *Data
+  // exists as its own HTML file) are served verbatim: the generic *Data
   // shapes below can't represent custom structure without flattening it.
   // Godwin (admin view) always sees the untouched full version regardless
   // of the public `gated` toggle.
@@ -37,7 +37,11 @@ export async function GET(request: NextRequest, { params }: Params) {
   } else if (doc.type === "proposal") {
     html = renderProposalHtml(doc.data as ProposalData);
   } else if (doc.type === "agreement") {
-    html = renderAgreementHtml(doc.data as AgreementData, { documentId: doc.id, acceptedAt: doc.accepted_at });
+    html = renderAgreementHtml(doc.data as AgreementData, {
+      documentId: doc.id,
+      acceptedAt: doc.accepted_at,
+      internal: true,
+    });
   } else if (doc.type === "sop") {
     html = renderSopHtml(doc.data as SopData);
   } else {

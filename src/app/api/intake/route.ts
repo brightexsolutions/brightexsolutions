@@ -1,23 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
-import { z } from "zod";
 import { createAdminClient } from "@/lib/supabase/server";
 import { rateLimit } from "@/lib/rate-limit";
 import { sendNewClientIntakeAck, sendExistingClientIntakeAck } from "@/lib/intake-mail";
 import { sendAdminPush } from "@/lib/push";
-
-const PostSchema = z.object({
-  service_type: z.enum(["website", "mobile", "erp", "design", "consultancy", "ai_automation", "other"]),
-  project_title: z.string().max(200).trim().optional(),
-  description: z.string().min(10).max(5000).trim(),
-  problem_statement: z.string().max(2000).trim().optional(),
-  specifics: z.record(z.string(), z.unknown()).optional(),
-  timeline: z.string().max(100).trim().optional(),
-  budget_range: z.string().max(100).trim().optional(),
-  additional_notes: z.string().max(2000).trim().optional(),
-  submitter_name: z.string().min(2).max(100).trim(),
-  submitter_email: z.string().email().max(200).trim(),
-  submitter_company: z.string().max(200).trim().optional(),
-});
+import {
+  IntakeSubmissionSchema, buildIntakeRow, insertIntake, summariseSubmission,
+} from "@/lib/intake-submission";
+import { resolveCc, normaliseEmail } from "@/lib/cc-recipients";
 
 export async function POST(request: NextRequest) {
   const limited = await rateLimit(request, "public");
@@ -30,7 +19,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
   }
 
-  const result = PostSchema.safeParse(body);
+  const result = IntakeSubmissionSchema.safeParse(body);
   if (!result.success) {
     return NextResponse.json(
       { error: "Invalid input", details: result.error.flatten() },
@@ -47,13 +36,20 @@ export async function POST(request: NextRequest) {
 
   const { data: existing } = await supabase
     .from("clients")
-    .select("id")
+    .select("id, phone, company")
     .eq("email", data.submitter_email)
     .is("deleted_at", null)
     .maybeSingle();
 
   if (existing) {
     clientId = existing.id;
+    // Fill gaps on the existing record without overwriting known values.
+    const updates: Record<string, string> = {};
+    if (data.submitter_phone && !existing.phone) updates.phone = data.submitter_phone;
+    if (data.submitter_company && !existing.company) updates.company = data.submitter_company;
+    if (Object.keys(updates).length > 0) {
+      await supabase.from("clients").update(updates).eq("id", existing.id);
+    }
   } else {
     isNewClient = true;
     const { data: created, error: createErr } = await supabase
@@ -62,6 +58,7 @@ export async function POST(request: NextRequest) {
         name: data.submitter_name,
         email: data.submitter_email,
         company: data.submitter_company ?? null,
+        phone: data.submitter_phone ?? null,
         classification: "lead",
         source: "contact_form",
       })
@@ -75,39 +72,60 @@ export async function POST(request: NextRequest) {
     clientId = created.id;
   }
 
-  const { error } = await supabase.from("client_intakes").insert({
-    client_id: clientId,
-    service_type: data.service_type,
-    project_title: data.project_title ?? null,
-    description: data.description,
-    problem_statement: data.problem_statement ?? null,
-    specifics: data.specifics ?? {},
-    timeline: data.timeline ?? null,
-    budget_range: data.budget_range ?? null,
-    additional_notes: data.additional_notes ?? null,
-    submitter_name: data.submitter_name,
-    submitter_email: data.submitter_email,
-    status: "new",
-  });
-
+  const { error } = await insertIntake(supabase, buildIntakeRow(data, clientId));
   if (error) {
     console.error("[intake/POST generic]", error);
     return NextResponse.json({ error: "Submission failed" }, { status: 500 });
   }
 
-  // Fire-and-forget: ack email + admin push notification
+  // Anyone the client asked us to copy becomes a real contact on the record,
+  // so future project correspondence reaches them without being re-entered.
+  if (data.contact_consent !== false && data.cc_emails?.length && clientId) {
+    await supabase
+      .from("client_contacts")
+      .upsert(
+        data.cc_emails.map((email) => ({
+          client_id: clientId,
+          name: email.split("@")[0],
+          // Lowercased to match the (client_id, email) unique constraint that
+          // this upsert's conflict target relies on. See migration 035.
+          email: normaliseEmail(email),
+          role: "Added from intake form",
+          cc_scopes: ["intake", "projects", "documents"],
+        })),
+        { onConflict: "client_id,email", ignoreDuplicates: true }
+      )
+      // Missing table means migration 033 has not run: the CC list is still
+      // stored on the intake row itself, so nothing is lost.
+      .then(({ error: ccError }) => {
+        if (ccError) console.error("[intake/POST generic] cc contacts:", ccError.message);
+      });
+  }
+
+  // Fire and forget: acknowledgement email plus admin push.
   const ackFn = isNewClient ? sendNewClientIntakeAck : sendExistingClientIntakeAck;
-  ackFn({
+  resolveCc({
+    clientId,
+    scope: "intake",
+    extra: data.contact_consent === false ? [] : (data.cc_emails ?? []),
     to: data.submitter_email,
-    name: data.submitter_name,
-    serviceType: data.service_type,
-    projectTitle: data.project_title,
-    description: data.description,
-  }).catch((err) => console.error("[intake/POST generic] ack email:", err));
+  })
+    .then((cc) =>
+      ackFn({
+        to: data.submitter_email,
+        cc,
+        name: data.submitter_name,
+        serviceType: data.service_type,
+        serviceTypes: data.service_types,
+        projectTitle: data.project_title,
+        description: data.description,
+      })
+    )
+    .catch((err) => console.error("[intake/POST generic] ack email:", err));
 
   sendAdminPush({
     title: "New intake submission",
-    body: `${data.submitter_name} submitted a ${data.service_type} requirement${data.project_title ? `: ${data.project_title}` : ""}${isNewClient ? " (new client)" : ""}`,
+    body: `${summariseSubmission(data)}${isNewClient ? " (new client)" : ""}`,
     url: "/admin/clients",
     tag: "new-intake",
   }).catch((err) => console.error("[intake/POST generic] push:", err));

@@ -13,6 +13,7 @@ import {
   emailDivider,
   emailSignoff,
 } from "@/lib/email-templates";
+import { resolveCc } from "@/lib/cc-recipients";
 
 const REMINDER_COOLDOWN_DAYS = 5;
 
@@ -159,7 +160,7 @@ export async function GET(request: NextRequest) {
       : emailRow("Amount Due", fmtKES(Number(invoice.total)));
 
     const subject = hasPartial
-      ? `Balance Reminder: Invoice ${invoice.invoice_number} — ${fmtKES(balance)} outstanding (${daysOverdue} day${daysOverdue !== 1 ? "s" : ""} overdue)`
+      ? `Balance Reminder: Invoice ${invoice.invoice_number}: ${fmtKES(balance)} outstanding (${daysOverdue} day${daysOverdue !== 1 ? "s" : ""} overdue)`
       : `Payment Reminder: Invoice ${invoice.invoice_number} is ${daysOverdue} day${daysOverdue !== 1 ? "s" : ""} overdue`;
 
     try {
@@ -175,7 +176,7 @@ export async function GET(request: NextRequest) {
         await supabase.from("system_alerts").insert({
           type: "invoice_overdue",
           severity: daysOverdue >= 14 ? "critical" : "warning",
-          message: `Invoice ${invoice.invoice_number} for ${client.name} is ${daysOverdue} day${daysOverdue !== 1 ? "s" : ""} overdue — ${hasPartial ? `${fmtKES(balance)} remaining` : fmtKES(Number(invoice.total))}`,
+          message: `Invoice ${invoice.invoice_number} for ${client.name} is ${daysOverdue} day${daysOverdue !== 1 ? "s" : ""} overdue: ${hasPartial ? `${fmtKES(balance)} remaining` : fmtKES(Number(invoice.total))}`,
           entity_id: invoice.id,
           entity_type: "invoice",
         });
@@ -184,6 +185,11 @@ export async function GET(request: NextRequest) {
       await transporter.sendMail({
         from: `${SITE_NAME} <${process.env.SMTP_USER}>`,
         to: client.email,
+        cc: await resolveCc({
+          clientId: invoice.client_id as string | null,
+          scope: "invoices",
+          to: client.email,
+        }),
         subject,
         html: emailTemplate({
           title: hasPartial ? "Balance Reminder" : "Payment Reminder",
@@ -195,7 +201,7 @@ export async function GET(request: NextRequest) {
             emailParagraph(`Dear <strong>${client.name}</strong>,`) +
             emailAlert(overdueText, "warning") +
             emailInfoTable(
-              emailRow("Invoice", invoice.invoice_number ?? "—") +
+              emailRow("Invoice", invoice.invoice_number ?? "-") +
               (projectName ? emailRow("Project", projectName) : "") +
               amountRows +
               emailRow("Was Due", new Date(invoice.due_date).toLocaleDateString("en-KE", { day: "2-digit", month: "long", year: "numeric" }))
@@ -230,8 +236,8 @@ export async function GET(request: NextRequest) {
           entity_id: invoice.id,
           entity_label: invoice.invoice_number ?? invoice.id,
           notes: hasPartial
-            ? `Automated balance reminder — ${fmtKES(balance)} outstanding (${daysOverdue}d overdue)`
-            : `Automated payment reminder — ${daysOverdue} day${daysOverdue !== 1 ? "s" : ""} overdue`,
+            ? `Automated balance reminder: ${fmtKES(balance)} outstanding (${daysOverdue}d overdue)`
+            : `Automated payment reminder: ${daysOverdue} day${daysOverdue !== 1 ? "s" : ""} overdue`,
         }),
       ]);
     } catch {

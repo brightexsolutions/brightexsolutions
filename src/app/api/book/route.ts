@@ -75,7 +75,7 @@ export async function POST(request: NextRequest) {
   await transporter.sendMail({
     from: `${SITE_NAME} <${process.env.SMTP_USER}>`,
     to: BUSINESS_EMAIL,
-    subject: `New Booking: ${data.booker_name} — ${purposeLabel}`,
+    subject: `New Booking: ${data.booker_name}: ${purposeLabel}`,
     html: emailTemplate({
       title: "New Booking Request",
       subtitle: purposeLabel,
@@ -101,11 +101,11 @@ export async function POST(request: NextRequest) {
   await transporter.sendMail({
     from: `${SITE_NAME} <${process.env.SMTP_USER}>`,
     to: data.booker_email,
-    subject: `Booking Received — ${SITE_NAME}`,
+    subject: `Booking Received: ${SITE_NAME}`,
     html: emailTemplate({
       title: "Booking Received",
       subtitle: purposeLabel,
-      preheader: `Your ${purposeLabel} request has been received — we'll confirm shortly`,
+      preheader: `Your ${purposeLabel} request has been received: we'll confirm shortly`,
       body:
         emailParagraph(`Hi ${firstName}, we've received your booking request and will confirm it shortly.`) +
         emailInfoTable(

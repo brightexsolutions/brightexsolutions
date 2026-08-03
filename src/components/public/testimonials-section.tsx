@@ -51,7 +51,7 @@ export function TestimonialsSection() {
         {/* Creative bento grid */}
         <FadeInStagger className="grid grid-cols-1 md:grid-cols-3 gap-4 auto-rows-auto">
 
-          {/* Card 1 — featured, navy, spans 2 cols */}
+          {/* Card 1: featured, navy, spans 2 cols */}
           <StaggerChild className="md:col-span-2">
             <div className="relative h-full p-10 rounded-sm bg-brand-navy overflow-hidden group">
               {/* Decorative oversized quote */}
@@ -77,7 +77,7 @@ export function TestimonialsSection() {
             </div>
           </StaggerChild>
 
-          {/* Card 2 — right side top */}
+          {/* Card 2: right side top */}
           <StaggerChild>
             <div className="h-full p-7 rounded-sm bg-brand-bg dark:bg-brand-navy-light border border-brand-border dark:border-white/10 flex flex-col justify-between">
               <div className="font-display text-3xl text-brand-gold/40 leading-none mb-3">&ldquo;</div>
@@ -91,7 +91,7 @@ export function TestimonialsSection() {
             </div>
           </StaggerChild>
 
-          {/* Card 3 — bottom left */}
+          {/* Card 3: bottom left */}
           <StaggerChild>
             <div className="h-full p-7 rounded-sm bg-brand-bg dark:bg-brand-navy-light border border-brand-border dark:border-white/10 border-l-4 border-l-brand-gold flex flex-col justify-between">
               <p className="text-brand-text dark:text-white/80 text-sm leading-relaxed flex-1 italic">
@@ -104,7 +104,7 @@ export function TestimonialsSection() {
             </div>
           </StaggerChild>
 
-          {/* Card 4 — bottom, spans 2 cols, gold-tinted */}
+          {/* Card 4: bottom, spans 2 cols, gold-tinted */}
           <StaggerChild className="md:col-span-2">
             <div className="relative h-full p-8 rounded-sm bg-brand-gold/8 dark:bg-brand-gold/5 border border-brand-gold/20 overflow-hidden">
               <div className="absolute top-4 right-6 font-display text-6xl text-brand-gold/15 leading-none select-none">

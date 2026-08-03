@@ -105,7 +105,7 @@ export function ClientProjectsList({ projects }: { projects: Project[] }) {
       {!hasMore && projects.length > BATCH && (
         <FadeIn className="mt-10 text-center">
           <p className="text-brand-muted text-sm">
-            That&apos;s all {projects.length} projects — more on the way.
+            That&apos;s all {projects.length} projects: more on the way.
           </p>
         </FadeIn>
       )}

@@ -140,7 +140,7 @@ export async function POST(request: NextRequest) {
     action: "uploaded_document",
     entity_type: "finance_document",
     entity_id: doc.id,
-    entity_label: `${doc_type} — ${party_name}${invoice_number ? ` (${invoice_number})` : ""}`,
+    entity_label: `${doc_type}: ${party_name}${invoice_number ? ` (${invoice_number})` : ""}`,
     notes: `Direction: ${direction}${amount ? ` · KES ${amount.toLocaleString()}` : ""}`,
   });
 

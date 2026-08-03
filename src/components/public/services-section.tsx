@@ -7,7 +7,7 @@ const services = [
     icon: Globe,
     title: "Web Development",
     description:
-      "Custom websites and web apps built with modern stacks — fast, secure, and built to scale with your business.",
+      "Custom websites and web apps built with modern stacks: fast, secure, and built to scale with your business.",
   },
   {
     icon: Palette,
@@ -25,7 +25,7 @@ const services = [
     icon: Lightbulb,
     title: "Branding & Identity",
     description:
-      "Strategy-led brand identity — logos, colour systems, typography, and guidelines that build recognition.",
+      "Strategy-led brand identity: logos, colour systems, typography, and guidelines that build recognition.",
   },
   {
     icon: Cpu,
@@ -37,7 +37,7 @@ const services = [
     icon: Database,
     title: "ERP Systems",
     description:
-      "Custom enterprise resource planning built for how your business actually operates — not a generic template.",
+      "Custom enterprise resource planning built for how your business actually operates: not a generic template.",
   },
   {
     icon: BarChart3,
@@ -60,7 +60,7 @@ export function ServicesSection() {
             End-to-End Digital Services
           </h2>
           <p className="text-brand-muted text-lg max-w-2xl mx-auto">
-            Everything your business needs to compete online — under one roof,
+            Everything your business needs to compete online: under one roof,
             with one team that knows your goals.
           </p>
         </FadeIn>

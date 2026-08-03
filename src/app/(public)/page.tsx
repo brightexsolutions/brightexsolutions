@@ -47,7 +47,7 @@ async function getHeroAnnouncement(): Promise<HeroAnnouncement> {
 }
 
 export const metadata: Metadata = {
-  title: `${SITE_NAME} — Digital Agency Nairobi`,
+  title: `${SITE_NAME}: Digital Agency Nairobi`,
   description:
     "Nairobi-based digital agency building custom websites, ERP systems, AI tools, and platforms for businesses across Kenya and East Africa.",
   alternates: {

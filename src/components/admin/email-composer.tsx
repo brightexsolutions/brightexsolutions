@@ -5,6 +5,7 @@ import { Send, Loader2, X, Paperclip, Sparkles, CheckCircle2, Bold, Underline as
 import { cn } from "@/lib/utils";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { compressImageClientSide } from "@/lib/compress-client";
+import { CC_SCOPE_ALL, isValidEmail, type CcScope } from "@/lib/cc-scopes";
 
 const SENDER_OPTIONS = [
   { value: "info", label: "Info (general)" },
@@ -22,6 +23,22 @@ const PURPOSE_OPTIONS = [
 ] as const;
 
 type Purpose = (typeof PURPOSE_OPTIONS)[number]["value"];
+
+/**
+ * Which CC routing scope each composer purpose maps to, so the suggested
+ * recipients match what is actually being sent: an invoice reminder proposes
+ * the finance contact, a project update proposes the ops contact.
+ */
+const PURPOSE_SCOPE: Record<Purpose, CcScope> = {
+  general: "general",
+  project_update: "projects",
+  invoice_reminder: "invoices",
+  payment_receipt: "payments",
+};
+
+type ClientContactOption = {
+  id: string; name: string; email: string; role: string | null; cc_scopes: string[];
+};
 
 type ClientOption = { id: string; name: string; email?: string | null; company?: string | null };
 type InvoiceOption = {
@@ -52,20 +69,20 @@ interface EmailComposerProps {
   onClose: () => void;
   /** Pre-filled recipient (client detail panel). Omit to show a client picker (Communications page). */
   recipient?: EmailComposerRecipient | null;
-  /** A generated document (proposal/agreement) to link on open — the body is
+  /** A generated document (proposal/agreement) to link on open: the body is
    * pre-filled with a public view link rather than a file attachment, so
    * the client always sees the same rich page you reviewed. */
   linkDocument?: { id: string; title: string } | null;
   /** Pre-fills the "General" purpose note (the context "Write with AI" drafts
-   * from) — e.g. a summary of the intake submission being replied to, so the
+   * from): e.g. a summary of the intake submission being replied to, so the
    * AI draft is grounded in what the client actually asked, not blank. */
   initialContext?: string;
-  /** Pre-fills the subject line — e.g. "Re: Your Website enquiry". */
+  /** Pre-fills the subject line: e.g. "Re: Your Website enquiry". */
   initialSubject?: string;
   onSent?: () => void;
 }
 
-// Combined attachment budget — comfortably under typical serverless request-body limits.
+// Combined attachment budget: comfortably under typical serverless request-body limits.
 const MAX_ATTACHMENT_BYTES = 6 * 1024 * 1024;
 
 function firstName(name: string): string {
@@ -80,6 +97,11 @@ export function EmailComposer({ open, onClose, recipient: initialRecipient, link
   const [customRecipient, setCustomRecipient] = useState(false);
   const [customName, setCustomName] = useState("");
   const [customEmail, setCustomEmail] = useState("");
+
+  const [contacts, setContacts] = useState<ClientContactOption[]>([]);
+  const [cc, setCc] = useState<string[]>([]);
+  const [ccDraft, setCcDraft] = useState("");
+  const [ccTouched, setCcTouched] = useState(false);
 
   const [sender, setSender] = useState<string>("info");
   const [subject, setSubject] = useState("");
@@ -114,13 +136,16 @@ export function EmailComposer({ open, onClose, recipient: initialRecipient, link
     setSelectedInvoiceId("");
     setSelectedDealId("");
     setProjectNameManual("");
+    setCc([]);
+    setCcDraft("");
+    setCcTouched(false);
     setAttachments([]);
     setDraftSource(null);
     setSent(false);
     setError("");
     setBody(
       initialRecipient
-        ? `Hi ${firstName(initialRecipient.name)},\n\n${linkDocument ? `Please find your ${linkDocument.title} below, or as a PDF attached for your records.\n\n` : ""}— The Brightex Team`
+        ? `Hi ${firstName(initialRecipient.name)},\n\n${linkDocument ? `Please find your ${linkDocument.title} below, or as a PDF attached for your records.\n\n` : ""}Best regards,\nThe Brightex Team`
         : ""
     );
   }, [open, initialRecipient, linkDocument, initialContext, initialSubject]);
@@ -133,10 +158,44 @@ export function EmailComposer({ open, onClose, recipient: initialRecipient, link
 
   // Whenever we have a client (pre-filled or picked), load their invoices/deals for AI context
   useEffect(() => {
-    if (!recipient?.clientId) { setInvoices([]); setDeals([]); return; }
+    if (!recipient?.clientId) { setInvoices([]); setDeals([]); setContacts([]); return; }
     fetch(`/api/admin/invoices?client_id=${recipient.clientId}`).then((r) => r.json()).then((j) => setInvoices(j.data ?? [])).catch(() => {});
     fetch(`/api/admin/sales?client_id=${recipient.clientId}`).then((r) => r.json()).then((j) => setDeals(j.data ?? [])).catch(() => {});
+    fetch(`/api/admin/clients/${recipient.clientId}/contacts`).then((r) => r.json()).then((j) => setContacts(j.data ?? [])).catch(() => {});
   }, [recipient?.clientId]);
+
+  /** Contacts configured to receive this kind of message. */
+  const suggestedCc = useMemo(() => {
+    // Sending a proposal or agreement is a documents send regardless of which
+    // AI purpose is selected for drafting the covering note.
+    const scope: CcScope = linkDocument ? "documents" : PURPOSE_SCOPE[purpose];
+    return contacts.filter(
+      (c) => c.cc_scopes?.includes(scope) || c.cc_scopes?.includes(CC_SCOPE_ALL)
+    );
+  }, [contacts, purpose, linkDocument]);
+
+  // Pre-fill from the client's routing rules, and follow the purpose as it
+  // changes, until the sender edits the list by hand. After that the manual
+  // list wins, so a deliberate choice is never silently overwritten.
+  useEffect(() => {
+    if (ccTouched) return;
+    setCc(suggestedCc.map((c) => c.email));
+  }, [suggestedCc, ccTouched]);
+
+  function addCc(value: string) {
+    const email = value.trim();
+    if (!email || !isValidEmail(email)) return;
+    if (email.toLowerCase() === recipient?.email?.toLowerCase()) return;
+    if (cc.some((e) => e.toLowerCase() === email.toLowerCase())) { setCcDraft(""); return; }
+    setCcTouched(true);
+    setCc((prev) => [...prev, email]);
+    setCcDraft("");
+  }
+
+  function removeCc(email: string) {
+    setCcTouched(true);
+    setCc((prev) => prev.filter((e) => e !== email));
+  }
 
   function pickClient(clientId: string) {
     if (clientId === "__custom__") {
@@ -148,7 +207,7 @@ export function EmailComposer({ open, onClose, recipient: initialRecipient, link
     if (!c || !c.email) return;
     setCustomRecipient(false);
     setRecipient({ clientId: c.id, name: c.name, email: c.email });
-    setBody(`Hi ${firstName(c.name)},\n\n\n\n— The Brightex Team`);
+    setBody(`Hi ${firstName(c.name)},\n\n\n\nBest regards,\nThe Brightex Team`);
   }
 
   function applyCustomRecipient(name: string, email: string) {
@@ -196,7 +255,7 @@ export function EmailComposer({ open, onClose, recipient: initialRecipient, link
         const inv = invoices.find((i) => i.id === selectedInvoiceId);
         if (!inv) { setError("No invoice found to remind about."); return; }
         const daysOverdue = inv.due_date ? Math.max(0, Math.floor((Date.now() - new Date(inv.due_date).getTime()) / 86400000)) : 0;
-        // Remind for what's actually still owed, not the invoice's original total — a
+        // Remind for what's actually still owed, not the invoice's original total: a
         // partially-paid invoice must never ask the client to pay the full amount again.
         payload = { intent: "draft_reminder", clientName: recipient.name, invoiceNumber: inv.invoice_number, total: `KES ${outstandingOf(inv).toLocaleString()}`, daysOverdue };
       } else if (purpose === "payment_receipt") {
@@ -227,8 +286,8 @@ export function EmailComposer({ open, onClose, recipient: initialRecipient, link
           const subjectByPurpose: Record<Purpose, string> = {
             general: "Following up",
             project_update: "Project update",
-            invoice_reminder: `Payment reminder — Invoice ${invoices.find((i) => i.id === selectedInvoiceId)?.invoice_number ?? ""}`,
-            payment_receipt: "Payment received — thank you",
+            invoice_reminder: `Payment reminder: Invoice ${invoices.find((i) => i.id === selectedInvoiceId)?.invoice_number ?? ""}`,
+            payment_receipt: "Payment received: thank you",
           };
           setSubject(subjectByPurpose[purpose]);
         }
@@ -251,7 +310,7 @@ export function EmailComposer({ open, onClose, recipient: initialRecipient, link
       const incoming = await Promise.all(Array.from(files).map((f) => compressImageClientSide(f)));
       const newTotal = currentTotal + incoming.reduce((sum, f) => sum + f.size, 0);
       if (newTotal > MAX_ATTACHMENT_BYTES) {
-        setError(`Attachments too large — max ${(MAX_ATTACHMENT_BYTES / 1024 / 1024).toFixed(0)}MB combined.`);
+        setError(`Attachments too large: max ${(MAX_ATTACHMENT_BYTES / 1024 / 1024).toFixed(0)}MB combined.`);
         return;
       }
       const encoded = await Promise.all(
@@ -340,6 +399,7 @@ export function EmailComposer({ open, onClose, recipient: initialRecipient, link
           send_email: true,
           to_email: recipient.email,
           to_name: recipient.name,
+          cc_emails: cc,
           sender,
           attachments: attachments.map((a) => ({
             filename: a.file.name,
@@ -429,7 +489,7 @@ export function EmailComposer({ open, onClose, recipient: initialRecipient, link
                       <option value="" disabled>Select a client…</option>
                       {clients.filter((c) => c.email).map((c) => (
                         <option key={c.id} value={c.id}>
-                          {c.name}{c.company ? ` — ${c.company}` : ""} ({c.email})
+                          {c.name}{c.company ? `: ${c.company}` : ""} ({c.email})
                         </option>
                       ))}
                       <option value="__custom__">Other / custom email…</option>
@@ -438,6 +498,71 @@ export function EmailComposer({ open, onClose, recipient: initialRecipient, link
                 ) : (
                   <div className="px-3 py-2 rounded-sm border border-input bg-muted/30 text-sm text-foreground">
                     {recipient?.name} <span className="text-muted-foreground">&lt;{recipient?.email}&gt;</span>
+                  </div>
+                )}
+              </div>
+
+              {/* CC. Pre-filled from the client's routing rules for this
+                  purpose, then freely editable for this one email. */}
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between gap-2">
+                  <label className="text-xs font-semibold text-muted-foreground uppercase tracking-widest">Cc</label>
+                  {ccTouched && suggestedCc.length > 0 && (
+                    <button type="button"
+                      onClick={() => { setCcTouched(false); setCc(suggestedCc.map((c) => c.email)); }}
+                      className="text-[10px] text-muted-foreground hover:text-foreground transition-colors">
+                      Reset to this client&apos;s rules
+                    </button>
+                  )}
+                </div>
+
+                {cc.length > 0 && (
+                  <div className="flex flex-wrap gap-1.5">
+                    {cc.map((email) => {
+                      const known = contacts.find((c) => c.email.toLowerCase() === email.toLowerCase());
+                      return (
+                        <span key={email}
+                          className="inline-flex items-center gap-1 pl-2 pr-1 py-0.5 rounded-full text-[11px] bg-muted text-foreground border border-border">
+                          {known ? `${known.name} <${email}>` : email}
+                          <button type="button" onClick={() => removeCc(email)}
+                            className="text-muted-foreground hover:text-red-500 transition-colors"
+                            aria-label={`Remove ${email}`}>
+                            <X size={10} />
+                          </button>
+                        </span>
+                      );
+                    })}
+                  </div>
+                )}
+
+                <div className="flex gap-2">
+                  <input
+                    type="email"
+                    value={ccDraft}
+                    onChange={(e) => setCcDraft(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === ",") { e.preventDefault(); addCc(ccDraft); }
+                    }}
+                    onBlur={() => addCc(ccDraft)}
+                    placeholder="Add someone else on this email"
+                    className="flex-1 px-3 py-2 rounded-sm border border-input bg-background text-sm focus:outline-none focus:ring-1 focus:ring-ring"
+                  />
+                  <button type="button" onClick={() => addCc(ccDraft)} disabled={!ccDraft.trim()}
+                    className="shrink-0 px-3 rounded-sm border border-input text-xs font-semibold text-muted-foreground hover:text-foreground hover:bg-muted transition-colors disabled:opacity-40">
+                    Add
+                  </button>
+                </div>
+
+                {contacts.length > 0 && (
+                  <div className="flex flex-wrap gap-1 pt-0.5">
+                    {contacts
+                      .filter((c) => !cc.some((e) => e.toLowerCase() === c.email.toLowerCase()))
+                      .map((c) => (
+                        <button key={c.id} type="button" onClick={() => addCc(c.email)}
+                          className="px-2 py-0.5 rounded-full text-[10px] border border-dashed border-border text-muted-foreground hover:text-foreground hover:border-foreground/40 transition-colors">
+                          + {c.name}{c.role ? ` (${c.role})` : ""}
+                        </button>
+                      ))}
                   </div>
                 )}
               </div>
@@ -502,7 +627,7 @@ export function EmailComposer({ open, onClose, recipient: initialRecipient, link
                     <option value="" disabled>Select an invoice…</option>
                     {(purpose === "invoice_reminder" ? reminderCandidates : receiptCandidates).map((inv) => (
                       <option key={inv.id} value={inv.id}>
-                        {inv.invoice_number} — KES {outstandingOf(inv).toLocaleString()} outstanding of {Number(inv.total).toLocaleString()} ({inv.status})
+                        {inv.invoice_number}: KES {outstandingOf(inv).toLocaleString()} outstanding of {Number(inv.total).toLocaleString()} ({inv.status})
                       </option>
                     ))}
                   </select>

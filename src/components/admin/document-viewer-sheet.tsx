@@ -11,7 +11,7 @@ export interface DocumentViewerTarget {
   client?: string | null;
   date?: string | null;
   viewUrl: string;
-  /** true for the rich HTML documents (proposal/agreement/SOP) — "Download"
+  /** true for the rich HTML documents (proposal/agreement/SOP): "Download"
    * opens the page with ?print=1 (triggers the browser's own print-to-PDF)
    * instead of using the `download` attribute, which would just save the
    * raw .html file. */
@@ -21,7 +21,7 @@ export interface DocumentViewerTarget {
   refine?: Omit<DocumentRefineTarget, "onUpdated"> & { onUpdated?: (newData: Record<string, unknown>) => void };
   /** When present, shows an "Email to Client" button in the footer. */
   onEmailClient?: () => void;
-  /** When present, shows a "Summary only" / "Full document" toggle — flips
+  /** When present, shows a "Summary only" / "Full document" toggle: flips
    * the `gated` flag the public link checks (see /api/public/documents/[id]). */
   gating?: { documentId: string; gated: boolean };
 }

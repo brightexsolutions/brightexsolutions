@@ -42,8 +42,8 @@ export async function GET(request: NextRequest) {
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
-  // Attach the proposal/agreement tied to each payment's invoice — same
-  // client, preferring one tied to the invoice's project — so a payment can
+  // Attach the proposal/agreement tied to each payment's invoice: same
+  // client, preferring one tied to the invoice's project: so a payment can
   // surface ("View" / "Resend") the document that led to it.
   const clientIds = [...new Set(
     (data ?? []).map((p) => (p.invoices as { client_id?: string } | null)?.client_id).filter(Boolean)
@@ -113,14 +113,14 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (invoice) {
-      // The new payment is already in the DB at this point — sum without double-counting
+      // The new payment is already in the DB at this point: sum without double-counting
       const totalPaid = (invoice.payments as Array<{ amount: number }>)
         .reduce((sum, p) => sum + Number(p.amount), 0);
 
       if (totalPaid >= Number(invoice.total)) {
         await supabase.from("invoices").update({ status: "paid" }).eq("id", paymentData.invoice_id);
       } else if (totalPaid > 0) {
-        // Partial payment — mark as 'partial' so the balance is clearly visible
+        // Partial payment: mark as 'partial' so the balance is clearly visible
         const { data: currentInvoice } = await supabase
           .from("invoices").select("status").eq("id", paymentData.invoice_id!).single();
         if (currentInvoice?.status === "draft" || currentInvoice?.status === "sent") {
@@ -129,7 +129,7 @@ export async function POST(request: NextRequest) {
       }
 
       // Auto-create income record so Finance module stays in sync
-      // Note: income_records has no added_by column — omit it
+      // Note: income_records has no added_by column: omit it
       await supabase.from("income_records").insert({
         source: "invoice_payment",
         description: `Payment for invoice ${invoice.invoice_number ?? paymentData.invoice_id}`,
@@ -147,7 +147,7 @@ export async function POST(request: NextRequest) {
         await supabase.from("communications").insert({
           client_id: invoice.client_id,
           type: "email",
-          subject: `Payment recorded — ${invoice.invoice_number} · KES ${Number(paymentData.amount).toLocaleString()} via ${paymentData.method}`,
+          subject: `Payment recorded: ${invoice.invoice_number} · KES ${Number(paymentData.amount).toLocaleString()} via ${paymentData.method}`,
           direction: "in",
           status: "received",
         });
@@ -184,7 +184,7 @@ export async function POST(request: NextRequest) {
             emailInfoCard("💳", "Payment Method", methodLabel) +
             emailInfoCard("📅", "Date", receiptDate) +
             (paymentData.reference ? emailInfoCard("🔖", "Reference", paymentData.reference) : "") +
-            emailReferenceBox(fullInvoice?.invoice_number ?? "—", "Invoice Reference") +
+            emailReferenceBox(fullInvoice?.invoice_number ?? "-", "Invoice Reference") +
             emailDivider() +
             emailParagraph(
               `For any queries, reply to this email or reach us on WhatsApp: <a href="${whatsappUrl()}" style="color:#f9a825;font-weight:600">${BUSINESS_PHONE}</a>`
@@ -195,7 +195,7 @@ export async function POST(request: NextRequest) {
         await transporter.sendMail({
           from: SENDERS.payments,
           to: client.email,
-          subject: `Payment Confirmation — ${fullInvoice?.invoice_number}`,
+          subject: `Payment Confirmation: ${fullInvoice?.invoice_number}`,
           html,
         }).then(() => {
           receiptSent = true;
@@ -217,7 +217,7 @@ export async function POST(request: NextRequest) {
       await supabase.from("communications").insert({
         client_id: linkedInvoice.client_id,
         type: "email",
-        subject: `Payment receipt sent — ${linkedInvoice.invoice_number}`,
+        subject: `Payment receipt sent: ${linkedInvoice.invoice_number}`,
         direction: "out",
         status: "sent",
       });

@@ -409,7 +409,7 @@ export default function InvoicesPage() {
               sortable: true,
               render: (row) => (
                 <span className="text-xs text-muted-foreground whitespace-nowrap">
-                  {row.due_date ? new Date(String(row.due_date)).toLocaleDateString("en-KE", { day: "numeric", month: "short", year: "numeric" }) : "—"}
+                  {row.due_date ? new Date(String(row.due_date)).toLocaleDateString("en-KE", { day: "numeric", month: "short", year: "numeric" }) : "-"}
                 </span>
               ),
             },
@@ -623,7 +623,7 @@ export default function InvoicesPage() {
               </div>
             ) : (
               <div className="px-3 py-2 rounded-sm bg-muted text-xs text-muted-foreground">
-                Client: <span className="font-medium text-foreground">{editTarget.clients?.name ?? "—"}</span>
+                Client: <span className="font-medium text-foreground">{editTarget.clients?.name ?? "-"}</span>
                 {editTarget.clients?.company && editTarget.clients.company !== editTarget.clients.name && <span className="text-foreground"> ({editTarget.clients.company})</span>}
                 {editTarget.clients?.email && <span> · {editTarget.clients.email}</span>}
               </div>
@@ -649,7 +649,7 @@ export default function InvoicesPage() {
                     <SelectItem value="none">No project</SelectItem>
                     {projects.map((p) => (
                       <SelectItem key={p.id} value={p.id}>
-                        {p.name}{p.clients?.name ? ` — ${p.clients.name}` : ""}
+                        {p.name}{p.clients?.name ? `: ${p.clients.name}` : ""}
                       </SelectItem>
                     ))}
                   </SelectContent>

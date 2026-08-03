@@ -26,7 +26,7 @@ const STAGE_CONFIG: Record<string, { label: string; colour: string; bg: string }
 const STAGES = ["lead", "qualified", "proposal", "negotiation", "won", "lost"] as const;
 
 const fmt = (n: number | null) =>
-  n == null ? "—" : `KES ${n.toLocaleString("en-KE")}`;
+  n == null ? "-" : `KES ${n.toLocaleString("en-KE")}`;
 
 export default function SupportPipelinePage() {
   const [sales, setSales] = useState<Sale[]>([]);
@@ -178,7 +178,7 @@ export default function SupportPipelinePage() {
             <div className="grid grid-cols-2 gap-3 text-xs">
               <div>
                 <p className="text-muted-foreground mb-0.5">Service</p>
-                <p className="font-semibold">{detail.service ?? "—"}</p>
+                <p className="font-semibold">{detail.service ?? "-"}</p>
               </div>
               <div>
                 <p className="text-muted-foreground mb-0.5">Estimated Value</p>

@@ -1,37 +1,65 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { SITE_NAME, BUSINESS_WHATSAPP } from "@/lib/constants";
+import {
+  SERVICE_TYPES, SERVICE_META, SERVICE_SECTIONS,
+  INDUSTRY_OPTIONS, TIMELINE_OPTIONS, BUDGET_OPTIONS,
+  BUDGET_CONFIDENCE_OPTIONS, DECISION_STAGE_OPTIONS,
+  PREFERRED_CONTACT_OPTIONS, HEARD_FROM_OPTIONS,
+  readAnswerGroups,
+  type ServiceType, type IntakeField, type IntakeSection,
+} from "@/lib/intake-schema";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-type ServiceType = "website" | "mobile" | "erp" | "design" | "consultancy" | "ai_automation" | "other";
-
 interface IntakeState {
-  // Step 1
-  service_type: ServiceType | "";
-  // Step 2
+  /**
+   * Step 1. Enquiries are regularly combined (a website, plus branding, plus
+   * an assistant on WhatsApp), so this is a list. The first entry is the
+   * primary service and drives the copy, the emails and the admin filters.
+   */
+  service_types: ServiceType[];
+  // Step 2: business context
+  submitter_company: string;
+  industry: string;
+  business_summary: string;
+  target_audience: string;
+  online_presence: string;
+  // Step 3: the project
   project_title: string;
   description: string;
   problem_statement: string;
-  // Step 3 – type-specific (stored as a flexible object)
-  specifics: Record<string, unknown>;
-  // Step 4
+  success_criteria: string;
+  reference_links: string;
+  /** Step 4. Answers nested per service, since keys collide across types. */
+  specifics: Record<string, Record<string, unknown>>;
+  // Step 5: timeline, budget, decision
   timeline: string;
+  hard_deadline: string;
   budget_range: string;
+  budget_confidence: string;
+  decision_stage: string;
   additional_notes: string;
-  // Step 5
+  // Step 6: contact
   submitter_name: string;
+  submitter_role: string;
   submitter_email: string;
-  submitter_company: string;
+  submitter_phone: string;
+  preferred_contact: string;
+  cc_emails: string[];
+  heard_from: string;
+  contact_consent: boolean;
 }
 
 const EMPTY: IntakeState = {
-  service_type: "",
-  project_title: "", description: "", problem_statement: "",
+  service_types: [],
+  submitter_company: "", industry: "", business_summary: "", target_audience: "", online_presence: "",
+  project_title: "", description: "", problem_statement: "", success_criteria: "", reference_links: "",
   specifics: {},
-  timeline: "", budget_range: "", additional_notes: "",
-  submitter_name: "", submitter_email: "", submitter_company: "",
+  timeline: "", hard_deadline: "", budget_range: "", budget_confidence: "", decision_stage: "", additional_notes: "",
+  submitter_name: "", submitter_role: "", submitter_email: "", submitter_phone: "",
+  preferred_contact: "", cc_emails: [], heard_from: "", contact_consent: true,
 };
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -39,38 +67,27 @@ const EMPTY: IntakeState = {
 const NAVY = "#152238";
 const GOLD = "#f9a825";
 
-const SERVICE_TYPES: { value: ServiceType; label: string; icon: string; sub: string }[] = [
-  { value: "website",      label: "Website / Web App",     icon: "🌐", sub: "New site, redesign, or web application" },
-  { value: "mobile",       label: "Mobile App",            icon: "📱", sub: "iOS, Android, or both" },
-  { value: "erp",          label: "Software / ERP System", icon: "⚙️",  sub: "Custom software or business management system" },
-  { value: "design",       label: "Design & Branding",     icon: "🎨", sub: "Logo, brand identity, graphics, or marketing materials" },
-  { value: "consultancy",  label: "Business Consultancy",  icon: "💼", sub: "Strategy, digital transformation, or advisory" },
-  { value: "ai_automation",label: "AI & Automation",       icon: "🤖", sub: "AI assistants, workflow automation, or integrations" },
-  { value: "other",        label: "Something Else",        icon: "🔧", sub: "Tell us what you have in mind" },
+const TOTAL_STEPS = 6;
+
+const STEP_LABELS = [
+  "What you need",
+  "Your business",
+  "The project",
+  "Requirements",
+  "Timeline & budget",
+  "Your details",
 ];
 
-const TIMELINE_OPTIONS = [
-  "ASAP — as soon as possible",
-  "Within a month",
-  "1 – 3 months",
-  "3 – 6 months",
-  "6+ months",
-  "Flexible — not sure yet",
-];
+/**
+ * Only these steps hold anything we genuinely cannot proceed without. Every
+ * other step can be skipped outright, and every field inside them is optional.
+ */
+const REQUIRED_STEPS = new Set([1, 3, 6]);
 
-const BUDGET_OPTIONS = [
-  "Under KES 50,000",
-  "KES 50,000 – 150,000",
-  "KES 100,000 – 300,000",
-  "KES 300,000 – 1,000,000",
-  "Over KES 1,000,000",
-  "Prefer to discuss",
-];
+const DRAFT_KEY_PREFIX = "brightex-intake-draft";
 
-const WEBSITE_PAGES = ["Home", "About Us", "Services", "Portfolio / Work", "Blog", "Contact", "Online Store / Shop", "Booking / Appointments", "Custom pages"];
-const DESIGN_TYPES  = ["Logo", "Business Card", "Flyer / Poster", "Social Media Kit", "Full Brand Identity", "Packaging Design", "Presentation / Pitch Deck", "Other"];
-const CONSULTANCY_AREAS = ["Business Strategy", "Digital Transformation", "Process Optimisation", "Market Entry / Expansion", "Tech / Software Advisory", "Other"];
-const AI_AUTOMATION_AREAS = ["AI Chat Assistant", "Workflow / Process Automation", "Data & Reporting Automation", "Integrations Between Systems", "Content / Document Generation", "Other"];
+// Options that mean "no answer" and should clear the rest of a multi-select.
+const EXCLUSIVE_OPTIONS = ["Not sure yet", "None", "None of these yet", "No payments in the app", "Just me"];
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -78,28 +95,87 @@ function cn(...classes: (string | boolean | undefined)[]) {
   return classes.filter(Boolean).join(" ");
 }
 
-function ChipGroup({ options, selected, onToggle, single }: {
-  options: string[];
-  selected: string[];
-  onToggle: (v: string) => void;
-  single?: boolean;
+const INPUT_CLASS =
+  "w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white text-sm text-slate-700 " +
+  "placeholder:text-slate-300 focus:outline-none focus:ring-2 focus:ring-[#f9a825]/40 focus:border-[#f9a825]";
+
+function isValidEmail(value: string) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim());
+}
+
+// ─── Primitives ───────────────────────────────────────────────────────────────
+
+function StepHeading({ title, subtitle, optional }: { title: string; subtitle?: string; optional?: boolean }) {
+  return (
+    <div>
+      <div className="flex items-start justify-between gap-3">
+        <h2 className="text-xl font-bold text-slate-800">{title}</h2>
+        {optional && (
+          <span className="shrink-0 mt-1 text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-slate-100 text-slate-400">
+            Optional
+          </span>
+        )}
+      </div>
+      {subtitle && <p className="text-sm text-slate-500 mt-1 leading-relaxed">{subtitle}</p>}
+    </div>
+  );
+}
+
+function FieldLabel({ label, note, required }: { label: string; note?: string; required?: boolean }) {
+  return (
+    <div className="space-y-0.5">
+      <p className="text-sm font-semibold text-slate-700">
+        {label}{" "}
+        {required
+          ? <span className="text-red-400">*</span>
+          : <span className="text-slate-300 font-normal text-xs">(optional)</span>}
+      </p>
+      {note && <p className="text-xs text-slate-400 leading-relaxed">{note}</p>}
+    </div>
+  );
+}
+
+function TextField({ label, note, required, value, onChange, placeholder, type = "text" }: {
+  label: string; note?: string; required?: boolean;
+  value: string; onChange: (v: string) => void; placeholder?: string; type?: string;
 }) {
   return (
-    <div className="flex flex-wrap gap-2 mt-2">
+    <div className="space-y-1.5">
+      <FieldLabel label={label} note={note} required={required} />
+      <input type={type} value={value} onChange={(e) => onChange(e.target.value)}
+        placeholder={placeholder} className={INPUT_CLASS} />
+    </div>
+  );
+}
+
+function TextArea({ label, note, required, value, onChange, placeholder, rows = 3 }: {
+  label: string; note?: string; required?: boolean;
+  value: string; onChange: (v: string) => void; placeholder?: string; rows?: number;
+}) {
+  return (
+    <div className="space-y-1.5">
+      <FieldLabel label={label} note={note} required={required} />
+      <textarea rows={rows} value={value} onChange={(e) => onChange(e.target.value)}
+        placeholder={placeholder} className={cn(INPUT_CLASS, "resize-none")} />
+    </div>
+  );
+}
+
+function Chips({ options, selected, onToggle }: {
+  options: string[]; selected: string[]; onToggle: (v: string) => void;
+}) {
+  return (
+    <div className="flex flex-wrap gap-2">
       {options.map((opt) => {
         const active = selected.includes(opt);
         return (
-          <button
-            key={opt}
-            type="button"
-            onClick={() => onToggle(opt)}
+          <button key={opt} type="button" onClick={() => onToggle(opt)}
             className={cn(
               "px-3 py-1.5 rounded-full text-sm border transition-all",
               active
                 ? "border-[#f9a825] bg-[#f9a825]/10 text-[#152238] font-semibold"
                 : "border-slate-200 bg-white text-slate-600 hover:border-slate-300"
-            )}
-          >
+            )}>
             {opt}
           </button>
         );
@@ -108,21 +184,50 @@ function ChipGroup({ options, selected, onToggle, single }: {
   );
 }
 
-function ToggleYesNo({ value, onChange }: { value: boolean | null; onChange: (v: boolean) => void }) {
+function RadioList({ options, value, onChange }: {
+  options: { value: string; label: string }[];
+  value: string;
+  onChange: (v: string) => void;
+}) {
   return (
-    <div className="flex gap-2 mt-2">
+    <div className="flex flex-col gap-2">
+      {options.map((opt) => {
+        const active = value === opt.value;
+        return (
+          <button key={opt.value} type="button"
+            onClick={() => onChange(active ? "" : opt.value)}
+            className={cn(
+              "flex items-center gap-3 px-4 py-3 rounded-xl border text-left text-sm transition-all",
+              active
+                ? "border-[#f9a825] bg-[#f9a825]/8 font-semibold text-[#152238]"
+                : "border-slate-200 bg-white text-slate-600 hover:border-slate-300"
+            )}>
+            <span className={cn(
+              "w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0",
+              active ? "border-[#f9a825] bg-[#f9a825]" : "border-slate-300"
+            )}>
+              {active && <span className="w-2 h-2 rounded-full bg-white" />}
+            </span>
+            {opt.label}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+function ToggleYesNo({ value, onChange }: { value: boolean | null; onChange: (v: boolean | null) => void }) {
+  return (
+    <div className="flex gap-2">
       {[true, false].map((v) => (
-        <button
-          key={String(v)}
-          type="button"
-          onClick={() => onChange(v)}
+        <button key={String(v)} type="button"
+          onClick={() => onChange(value === v ? null : v)}
           className={cn(
             "flex-1 py-2 rounded-lg text-sm border font-medium transition-all",
             value === v
               ? "border-[#f9a825] bg-[#f9a825]/10 text-[#152238]"
               : "border-slate-200 bg-white text-slate-500 hover:border-slate-300"
-          )}
-        >
+          )}>
           {v ? "Yes" : "No"}
         </button>
       ))}
@@ -130,527 +235,618 @@ function ToggleYesNo({ value, onChange }: { value: boolean | null; onChange: (v:
   );
 }
 
-// ─── Step components ──────────────────────────────────────────────────────────
+// ─── Schema-driven field renderer ─────────────────────────────────────────────
 
-function Step1({ state, update }: { state: IntakeState; update: (p: Partial<IntakeState>) => void }) {
+function SchemaField({ field, answers, setAnswer }: {
+  field: IntakeField;
+  answers: Record<string, unknown>;
+  setAnswer: (key: string, value: unknown) => void;
+}) {
+  if (field.showIf && !field.showIf(answers)) return null;
+
+  const value = answers[field.key];
+
+  function toggleChip(opt: string) {
+    const multi = field.multi !== false;
+    if (!multi) {
+      setAnswer(field.key, value === opt ? "" : opt);
+      return;
+    }
+    const current = Array.isArray(value) ? (value as string[]) : [];
+    let next: string[];
+    if (current.includes(opt)) {
+      next = current.filter((v) => v !== opt);
+    } else if (EXCLUSIVE_OPTIONS.includes(opt)) {
+      next = [opt];
+    } else {
+      next = [...current.filter((v) => !EXCLUSIVE_OPTIONS.includes(v)), opt];
+    }
+    setAnswer(field.key, next);
+  }
+
+  const selectedChips = field.multi === false
+    ? (typeof value === "string" && value ? [value] : [])
+    : (Array.isArray(value) ? (value as string[]) : []);
+
+  return (
+    <div className="space-y-2">
+      <FieldLabel label={field.label} note={field.note} />
+
+      {field.kind === "text" && (
+        <input type="text" value={(value as string) ?? ""} placeholder={field.placeholder}
+          onChange={(e) => setAnswer(field.key, e.target.value)} className={INPUT_CLASS} />
+      )}
+
+      {field.kind === "textarea" && (
+        <textarea rows={field.rows ?? 3} value={(value as string) ?? ""} placeholder={field.placeholder}
+          onChange={(e) => setAnswer(field.key, e.target.value)} className={cn(INPUT_CLASS, "resize-none")} />
+      )}
+
+      {field.kind === "chips" && (
+        <>
+          <Chips options={field.options ?? []} selected={selectedChips} onToggle={toggleChip} />
+          {field.allowOther && (
+            <input type="text" value={(answers[`${field.key}_other`] as string) ?? ""}
+              placeholder="Something else? Type it here"
+              onChange={(e) => setAnswer(`${field.key}_other`, e.target.value)}
+              className={cn(INPUT_CLASS, "mt-2")} />
+          )}
+        </>
+      )}
+
+      {field.kind === "yesno" && (
+        <>
+          <ToggleYesNo
+            value={typeof value === "boolean" ? value : null}
+            onChange={(v) => setAnswer(field.key, v)}
+          />
+          {value === true && field.followUp && (
+            <div className="mt-3 pl-3 border-l-2 border-[#f9a825]/30">
+              <SchemaField field={field.followUp} answers={answers} setAnswer={setAnswer} />
+            </div>
+          )}
+        </>
+      )}
+    </div>
+  );
+}
+
+function SchemaSection({ section, answers, setAnswer }: {
+  section: IntakeSection;
+  answers: Record<string, unknown>;
+  setAnswer: (key: string, value: unknown) => void;
+}) {
+  const visible = section.fields.filter((f) => !f.showIf || f.showIf(answers));
+  if (visible.length === 0) return null;
+
   return (
     <div className="space-y-4">
-      <div>
-        <h2 className="text-xl font-bold text-slate-800">What are you looking for?</h2>
-        <p className="text-sm text-slate-500 mt-1">Select the option that best describes what you need.</p>
+      <div className="pt-1">
+        <p className="text-[11px] font-bold uppercase tracking-widest text-[#f9a825]">{section.title}</p>
+        {section.intro && <p className="text-xs text-slate-400 mt-1 leading-relaxed">{section.intro}</p>}
       </div>
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        {SERVICE_TYPES.map((s) => (
-          <button
-            key={s.value}
-            type="button"
-            onClick={() => update({ service_type: s.value })}
-            className={cn(
-              "flex items-start gap-3 p-4 rounded-xl border text-left transition-all",
-              state.service_type === s.value
-                ? "border-[#f9a825] bg-[#f9a825]/8 shadow-sm"
-                : "border-slate-200 bg-white hover:border-slate-300 hover:shadow-sm"
-            )}
-          >
-            <span className="text-2xl shrink-0 mt-0.5">{s.icon}</span>
-            <div className="min-w-0">
-              <p className={cn("text-sm font-semibold", state.service_type === s.value ? "text-[#152238]" : "text-slate-700")}>
-                {s.label}
-              </p>
-              <p className="text-xs text-slate-400 mt-0.5 leading-relaxed">{s.sub}</p>
-            </div>
-            {state.service_type === s.value && (
-              <span className="ml-auto shrink-0 text-[#f9a825]">✓</span>
-            )}
-          </button>
+      <div className="space-y-5">
+        {visible.map((field) => (
+          <SchemaField key={field.key} field={field} answers={answers} setAnswer={setAnswer} />
         ))}
       </div>
     </div>
   );
 }
 
+// ─── Steps ────────────────────────────────────────────────────────────────────
+
+function Step1({ state, update }: { state: IntakeState; update: (p: Partial<IntakeState>) => void }) {
+  const selected = state.service_types;
+
+  function toggle(value: ServiceType) {
+    if (selected.includes(value)) {
+      // Dropping a service also drops the answers given for it, so a
+      // de-selected service cannot quietly submit stale requirements.
+      const nextSpecifics = { ...state.specifics };
+      delete nextSpecifics[value];
+      update({ service_types: selected.filter((v) => v !== value), specifics: nextSpecifics });
+    } else {
+      update({ service_types: [...selected, value] });
+    }
+  }
+
+  /** Promotes a service to primary, which drives our copy and follow-up. */
+  function makePrimary(value: ServiceType) {
+    update({ service_types: [value, ...selected.filter((v) => v !== value)] });
+  }
+
+  return (
+    <div className="space-y-4">
+      <StepHeading
+        title="What are you looking for?"
+        subtitle="Choose as many as apply. Plenty of projects combine a few, like a website with branding and an assistant to answer WhatsApp."
+      />
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        {SERVICE_TYPES.map((value) => {
+          const meta = SERVICE_META[value];
+          const active = selected.includes(value);
+          const isPrimary = selected[0] === value;
+          return (
+            <button key={value} type="button" onClick={() => toggle(value)}
+              className={cn(
+                "relative flex items-start gap-3 p-4 rounded-xl border text-left transition-all",
+                active
+                  ? "border-[#f9a825] bg-[#f9a825]/8 shadow-sm"
+                  : "border-slate-200 bg-white hover:border-slate-300 hover:shadow-sm"
+              )}>
+              <span className="text-2xl shrink-0 mt-0.5">{meta.icon}</span>
+              <div className="min-w-0">
+                <p className={cn("text-sm font-semibold", active ? "text-[#152238]" : "text-slate-700")}>
+                  {meta.label}
+                </p>
+                <p className="text-xs text-slate-400 mt-0.5 leading-relaxed">{meta.sub}</p>
+                {isPrimary && selected.length > 1 && (
+                  <span className="inline-block mt-1.5 text-[10px] font-bold uppercase tracking-wider text-[#f9a825]">
+                    Main focus
+                  </span>
+                )}
+              </div>
+              <span className={cn(
+                "ml-auto shrink-0 w-5 h-5 rounded-md border flex items-center justify-center text-xs",
+                active ? "border-[#f9a825] bg-[#f9a825] text-white" : "border-slate-200 text-transparent"
+              )}>
+                ✓
+              </span>
+            </button>
+          );
+        })}
+      </div>
+
+      {selected.length > 1 && (
+        <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 space-y-2">
+          <p className="text-xs font-semibold text-slate-600">
+            Which of these matters most?
+          </p>
+          <p className="text-[11px] text-slate-400 leading-relaxed">
+            We will lead with it when we come back to you. The next steps will ask about each one in turn.
+          </p>
+          <div className="flex flex-wrap gap-2 pt-0.5">
+            {selected.map((value) => (
+              <button key={value} type="button" onClick={() => makePrimary(value)}
+                className={cn(
+                  "px-3 py-1.5 rounded-full text-xs border transition-all",
+                  selected[0] === value
+                    ? "border-[#f9a825] bg-white text-[#152238] font-semibold"
+                    : "border-slate-200 bg-white text-slate-500 hover:border-slate-300"
+                )}>
+                {SERVICE_META[value].icon} {SERVICE_META[value].label}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function Step2({ state, update }: { state: IntakeState; update: (p: Partial<IntakeState>) => void }) {
-  const typeLabelMap: Record<string, string> = {
-    website: "website or web app", mobile: "mobile app", erp: "software or system",
-    design: "design project", consultancy: "consultancy engagement", ai_automation: "AI or automation project", other: "project",
+  return (
+    <div className="space-y-5">
+      <StepHeading
+        optional
+        title="A little about your business"
+        subtitle="Context helps us propose something that fits you rather than a generic package. Skip anything that does not apply."
+      />
+
+      <TextField label="Business or organisation name"
+        value={state.submitter_company} onChange={(v) => update({ submitter_company: v })}
+        placeholder="Your business name" />
+
+      <div className="space-y-2">
+        <FieldLabel label="What industry are you in?" />
+        <Chips options={INDUSTRY_OPTIONS} selected={state.industry ? [state.industry] : []}
+          onToggle={(v) => update({ industry: state.industry === v ? "" : v })} />
+      </div>
+
+      <TextArea label="What does your business actually do?"
+        note="One or two sentences, as if explaining to a new customer."
+        value={state.business_summary} onChange={(v) => update({ business_summary: v })}
+        placeholder="We supply and install solar water heaters for homes and small hotels across Nairobi."
+        rows={3} />
+
+      <TextArea label="Who are your customers?"
+        note="Knowing who this is for changes almost every decision we make."
+        value={state.target_audience} onChange={(v) => update({ target_audience: v })}
+        placeholder="Homeowners in Nairobi, plus small hotels and Airbnb hosts."
+        rows={2} />
+
+      <TextArea label="Where can you already be found online?"
+        note="Website, Facebook, Instagram, TikTok, a Google listing. Anything at all."
+        value={state.online_presence} onChange={(v) => update({ online_presence: v })}
+        placeholder="instagram.com/ourbrand, and a Facebook page"
+        rows={2} />
+    </div>
+  );
+}
+
+function Step3({ state, update }: { state: IntakeState; update: (p: Partial<IntakeState>) => void }) {
+  // With several services selected the work is one project made of parts, so
+  // the copy stays deliberately general rather than naming one of them.
+  const noun = state.service_types.length === 1
+    ? SERVICE_META[state.service_types[0]].noun
+    : "project";
+
+  return (
+    <div className="space-y-5">
+      <StepHeading
+        title="Tell us about the project"
+        subtitle={state.service_types.length > 1
+          ? "Describe the whole thing here, across everything you picked. We will ask about each part separately next."
+          : "In your own words. There are no wrong answers, and you do not need any technical language."}
+      />
+
+      <TextField label={`What would you call this ${noun}?`}
+        value={state.project_title} onChange={(v) => update({ project_title: v })}
+        placeholder={`e.g. "Our new online store"`} />
+
+      <TextArea label="Describe what you want" required
+        note="This is the one thing we really need. Write as much as you like."
+        value={state.description} onChange={(v) => update({ description: v })}
+        placeholder={`What do you have in mind for this ${noun}? Describe your vision as freely as you like...`}
+        rows={5} />
+
+      <TextArea label="What problem does this solve for you?"
+        note="What is happening today that made you start looking?"
+        value={state.problem_statement} onChange={(v) => update({ problem_statement: v })}
+        placeholder="Customers cannot find us online. We manage everything on paper. Our current system is too slow..."
+        rows={3} />
+
+      <TextArea label="How will you know it worked?"
+        note="What should be different once this is done and live?"
+        value={state.success_criteria} onChange={(v) => update({ success_criteria: v })}
+        placeholder="We get at least 10 enquiries a month through the site, and I stop writing orders by hand."
+        rows={3} />
+
+      <TextArea label="Anything you have seen that you like?"
+        note="Links, names, screenshots you can describe. Inspiration saves us both a lot of guessing."
+        value={state.reference_links} onChange={(v) => update({ reference_links: v })}
+        placeholder="I like how jumia.co.ke handles checkout, and the look of a brand called..."
+        rows={2} />
+    </div>
+  );
+}
+
+/** One collapsible service block on the requirements step. */
+function ServiceRequirements({ serviceType, answers, setAnswer, defaultOpen, index, total }: {
+  serviceType: ServiceType;
+  answers: Record<string, unknown>;
+  setAnswer: (key: string, value: unknown) => void;
+  defaultOpen: boolean;
+  index: number;
+  total: number;
+}) {
+  const [open, setOpen] = useState(defaultOpen);
+  const meta = SERVICE_META[serviceType];
+  const sections = SERVICE_SECTIONS[serviceType];
+  const answered = Object.values(answers).filter(
+    (v) => v !== "" && v !== null && v !== undefined && !(Array.isArray(v) && v.length === 0)
+  ).length;
+
+  // A single service needs no accordion chrome around it.
+  if (total === 1) {
+    return (
+      <div className="space-y-6">
+        {sections.map((section) => (
+          <SchemaSection key={section.title} section={section} answers={answers} setAnswer={setAnswer} />
+        ))}
+      </div>
+    );
+  }
+
+  return (
+    <div className="rounded-xl border border-slate-200 overflow-hidden">
+      <button type="button" onClick={() => setOpen((o) => !o)}
+        className={cn(
+          "w-full flex items-center gap-3 px-4 py-3.5 text-left transition-colors",
+          open ? "bg-[#f9a825]/8" : "bg-slate-50 hover:bg-slate-100"
+        )}>
+        <span className="text-xl shrink-0">{meta.icon}</span>
+        <div className="min-w-0 flex-1">
+          <p className="text-sm font-semibold text-[#152238] truncate">{meta.label}</p>
+          <p className="text-[11px] text-slate-400">
+            Part {index + 1} of {total}
+            {answered > 0 && ` · ${answered} answered`}
+          </p>
+        </div>
+        <span className={cn("shrink-0 text-slate-400 text-xs transition-transform", open && "rotate-180")}>▼</span>
+      </button>
+      {open && (
+        <div className="px-4 py-5 space-y-6 bg-white border-t border-slate-200">
+          {sections.map((section) => (
+            <SchemaSection key={section.title} section={section} answers={answers} setAnswer={setAnswer} />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function Step4({ state, setAnswer }: {
+  state: IntakeState;
+  setAnswer: (service: ServiceType, key: string, value: unknown) => void;
+}) {
+  const services = state.service_types;
+
+  if (services.length === 0) {
+    return (
+      <div className="space-y-4">
+        <StepHeading title="Requirements" subtitle="Go back a step and choose what you are looking for first." />
+      </div>
+    );
+  }
+
+  const title = services.length === 1
+    ? `Your ${SERVICE_META[services[0]].noun} in more detail`
+    : "Each part in more detail";
+
+  return (
+    <div className="space-y-6">
+      <StepHeading
+        optional
+        title={title}
+        subtitle={services.length === 1
+          ? "These are the questions we would otherwise ask on a call. Answer what you can and leave the rest, including any you are not sure about."
+          : "One set of questions per thing you picked. Open the ones you have answers for and skip the rest, including any you are not sure about."}
+      />
+      <div className={cn(services.length > 1 && "space-y-3")}>
+        {services.map((serviceType, i) => (
+          <ServiceRequirements
+            key={serviceType}
+            serviceType={serviceType}
+            answers={state.specifics[serviceType] ?? {}}
+            setAnswer={(key, value) => setAnswer(serviceType, key, value)}
+            defaultOpen={i === 0}
+            index={i}
+            total={services.length}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function Step5({ state, update }: { state: IntakeState; update: (p: Partial<IntakeState>) => void }) {
+  return (
+    <div className="space-y-6">
+      <StepHeading
+        optional
+        title="Timeline and budget"
+        subtitle="Nothing here is binding. It just helps us propose something realistic instead of guessing."
+      />
+
+      <div className="space-y-2">
+        <FieldLabel label="When would you like this ready?" />
+        <RadioList
+          options={TIMELINE_OPTIONS.map((t) => ({ value: t, label: t }))}
+          value={state.timeline}
+          onChange={(v) => update({ timeline: v })}
+        />
+      </div>
+
+      <TextField label="Is a fixed date driving this?"
+        note="A launch, an event, a tender, a new financial year."
+        value={state.hard_deadline} onChange={(v) => update({ hard_deadline: v })}
+        placeholder="We open the new branch on 1 December" />
+
+      <div className="space-y-2">
+        <FieldLabel label="What budget range are you working with?"
+          note="An honest range gets you an honest proposal. If you genuinely do not know, say so and we will guide you." />
+        <RadioList
+          options={BUDGET_OPTIONS.map((b) => ({ value: b, label: b }))}
+          value={state.budget_range}
+          onChange={(v) => update({ budget_range: v })}
+        />
+      </div>
+
+      {state.budget_range && (
+        <div className="space-y-2">
+          <FieldLabel label="How firm is that?" />
+          <RadioList options={BUDGET_CONFIDENCE_OPTIONS} value={state.budget_confidence}
+            onChange={(v) => update({ budget_confidence: v })} />
+        </div>
+      )}
+
+      <div className="space-y-2">
+        <FieldLabel label="Where are you in your decision?" />
+        <RadioList options={DECISION_STAGE_OPTIONS} value={state.decision_stage}
+          onChange={(v) => update({ decision_stage: v })} />
+      </div>
+
+      <TextArea label="Anything else we should know?"
+        note="Questions, concerns, constraints, or anything we have not thought to ask."
+        value={state.additional_notes} onChange={(v) => update({ additional_notes: v })}
+        placeholder="Anything at all..."
+        rows={3} />
+    </div>
+  );
+}
+
+function CcEditor({ emails, onChange }: { emails: string[]; onChange: (next: string[]) => void }) {
+  const [draft, setDraft] = useState("");
+  const [error, setError] = useState("");
+
+  function add() {
+    const value = draft.trim();
+    if (!value) return;
+    if (!isValidEmail(value)) { setError("That does not look like a valid email address."); return; }
+    if (emails.some((e) => e.toLowerCase() === value.toLowerCase())) { setDraft(""); return; }
+    if (emails.length >= 5) { setError("You can add up to 5 people here."); return; }
+    onChange([...emails, value]);
+    setDraft("");
+    setError("");
+  }
+
+  return (
+    <div className="space-y-2">
+      <FieldLabel
+        label="Should anyone else be copied on our emails?"
+        note="A colleague, your accountant, a business partner. They will be copied on correspondence about this project."
+      />
+      {emails.length > 0 && (
+        <div className="flex flex-wrap gap-2">
+          {emails.map((email) => (
+            <span key={email}
+              className="inline-flex items-center gap-1.5 pl-3 pr-1.5 py-1 rounded-full text-xs bg-slate-100 text-slate-600 border border-slate-200">
+              {email}
+              <button type="button" onClick={() => onChange(emails.filter((e) => e !== email))}
+                className="w-4 h-4 rounded-full flex items-center justify-center text-slate-400 hover:text-red-500 hover:bg-white transition-colors"
+                aria-label={`Remove ${email}`}>
+                ×
+              </button>
+            </span>
+          ))}
+        </div>
+      )}
+      <div className="flex gap-2">
+        <input type="email" value={draft}
+          onChange={(e) => { setDraft(e.target.value); setError(""); }}
+          onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); add(); } }}
+          placeholder="colleague@company.co.ke"
+          className={INPUT_CLASS} />
+        <button type="button" onClick={add}
+          className="shrink-0 px-4 rounded-xl border border-slate-200 text-sm font-semibold text-slate-600 hover:border-[#f9a825] hover:text-[#152238] transition-colors">
+          Add
+        </button>
+      </div>
+      {error && <p className="text-xs text-red-500">{error}</p>}
+    </div>
+  );
+}
+
+function ReviewBlock({ state }: { state: IntakeState }) {
+  const rows: { label: string; value: string }[] = [];
+
+  const push = (label: string, value?: string | null) => {
+    if (value && value.trim()) rows.push({ label, value: value.trim() });
   };
-  const typeLabel = state.service_type ? typeLabelMap[state.service_type] : "project";
+
+  push("What you need", state.service_types.map((s) => SERVICE_META[s].label).join(", "));
+  push("Business", state.submitter_company);
+  push("Industry", state.industry);
+  push("Project", state.project_title);
+  push("Description", state.description);
+  push("Problem to solve", state.problem_statement);
+  push("Success looks like", state.success_criteria);
+  push("Timeline", state.timeline);
+  push("Fixed date", state.hard_deadline);
+  push("Budget", state.budget_range);
+  push("Decision stage", DECISION_STAGE_OPTIONS.find((d) => d.value === state.decision_stage)?.label);
+
+  const groups = readAnswerGroups(state.service_types, state.specifics);
+  const isEmpty = rows.length === 0 && groups.length === 0;
 
   return (
-    <div className="space-y-5">
-      <div>
-        <h2 className="text-xl font-bold text-slate-800">Tell us about it</h2>
-        <p className="text-sm text-slate-500 mt-1">In your own words — there are no wrong answers.</p>
+    <div className="rounded-xl border border-slate-200 bg-slate-50 overflow-hidden">
+      <div className="px-4 py-2.5 border-b border-slate-200 bg-white">
+        <p className="text-[11px] font-bold uppercase tracking-widest text-slate-400">Everything you have told us</p>
       </div>
-
-      <div className="space-y-1.5">
-        <label className="text-sm font-semibold text-slate-700">
-          What would you call this {typeLabel}? <span className="text-slate-400 font-normal">(optional)</span>
-        </label>
-        <input
-          type="text"
-          value={state.project_title}
-          onChange={(e) => update({ project_title: e.target.value })}
-          placeholder={`e.g. "My Clothing Brand Website"`}
-          className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white text-sm text-slate-700 placeholder:text-slate-300 focus:outline-none focus:ring-2 focus:ring-[#f9a825]/40 focus:border-[#f9a825]"
-        />
-      </div>
-
-      <div className="space-y-1.5">
-        <label className="text-sm font-semibold text-slate-700">
-          Describe what you want <span className="text-red-400">*</span>
-        </label>
-        <textarea
-          rows={4}
-          value={state.description}
-          onChange={(e) => update({ description: e.target.value })}
-          placeholder={`What do you have in mind? Describe your vision for this ${typeLabel} as freely as you like…`}
-          className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white text-sm text-slate-700 placeholder:text-slate-300 focus:outline-none focus:ring-2 focus:ring-[#f9a825]/40 focus:border-[#f9a825] resize-none"
-        />
-      </div>
-
-      <div className="space-y-1.5">
-        <label className="text-sm font-semibold text-slate-700">
-          What problem does this solve for your business? <span className="text-slate-400 font-normal">(optional)</span>
-        </label>
-        <textarea
-          rows={3}
-          value={state.problem_statement}
-          onChange={(e) => update({ problem_statement: e.target.value })}
-          placeholder="e.g. Customers can't find us online / We manage everything on paper / Our current system is too slow…"
-          className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white text-sm text-slate-700 placeholder:text-slate-300 focus:outline-none focus:ring-2 focus:ring-[#f9a825]/40 focus:border-[#f9a825] resize-none"
-        />
+      <div className="px-4 py-1 max-h-72 overflow-y-auto">
+        {rows.map((row, i) => (
+          <div key={`${row.label}-${i}`} className="py-2 border-b border-slate-200/70 last:border-0">
+            <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">{row.label}</p>
+            <p className="text-xs text-slate-600 whitespace-pre-wrap leading-relaxed mt-0.5">{row.value}</p>
+          </div>
+        ))}
+        {groups.map((group) => (
+          <div key={group.serviceType} className="py-2">
+            <p className="text-[10px] font-bold uppercase tracking-wider text-[#f9a825] pt-1 pb-0.5">
+              {group.serviceLabel}
+            </p>
+            {group.rows.map((row) => (
+              <div key={row.key} className="py-2 border-b border-slate-200/70 last:border-0">
+                <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">{row.label}</p>
+                <p className="text-xs text-slate-600 whitespace-pre-wrap leading-relaxed mt-0.5">{row.value}</p>
+              </div>
+            ))}
+          </div>
+        ))}
+        {isEmpty && <p className="text-xs text-slate-400 py-3">Nothing captured yet.</p>}
       </div>
     </div>
   );
 }
 
-function SpecField({ label, note, children }: { label: string; note?: string; children: React.ReactNode }) {
-  return (
-    <div className="space-y-1">
-      <p className="text-sm font-semibold text-slate-700">{label}</p>
-      {note && <p className="text-xs text-slate-400">{note}</p>}
-      {children}
-    </div>
-  );
-}
-
-function Step3Website({ state, update }: { state: IntakeState; update: (p: Partial<IntakeState>) => void }) {
-  const sp = state.specifics as Record<string, unknown>;
-  function setSp(k: string, v: unknown) { update({ specifics: { ...sp, [k]: v } }); }
-  function togglePage(p: string) {
-    const cur = (sp.pages ?? []) as string[];
-    setSp("pages", cur.includes(p) ? cur.filter((x) => x !== p) : [...cur, p]);
-  }
-
-  return (
-    <div className="space-y-5">
-      <div>
-        <h2 className="text-xl font-bold text-slate-800">A few more details</h2>
-        <p className="text-sm text-slate-500 mt-1">Just a few quick questions about your website.</p>
-      </div>
-
-      <SpecField label="Do you have an existing website?">
-        <ToggleYesNo value={sp.has_existing_site as boolean ?? null} onChange={(v) => setSp("has_existing_site", v)} />
-        {!!sp.has_existing_site && (
-          <input type="url" value={(sp.existing_url as string) ?? ""} onChange={(e) => setSp("existing_url", e.target.value)}
-            placeholder="https://yourwebsite.com"
-            className="mt-2 w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white text-sm text-slate-700 placeholder:text-slate-300 focus:outline-none focus:ring-2 focus:ring-[#f9a825]/40 focus:border-[#f9a825]" />
-        )}
-      </SpecField>
-
-      <SpecField label="Will you need online sales (e-commerce)?">
-        <ToggleYesNo value={sp.needs_ecommerce as boolean ?? null} onChange={(v) => setSp("needs_ecommerce", v)} />
-      </SpecField>
-
-      <SpecField label="Do you have existing branding (logo, colors, fonts)?">
-        <ToggleYesNo value={sp.has_branding as boolean ?? null} onChange={(v) => setSp("has_branding", v)} />
-      </SpecField>
-
-      <SpecField label="Which pages will your site need?" note="Select all that apply — you can always add more later.">
-        <ChipGroup
-          options={WEBSITE_PAGES}
-          selected={(sp.pages ?? []) as string[]}
-          onToggle={togglePage}
-        />
-      </SpecField>
-
-      <SpecField label="Any websites you love the look of?" note="Drop links or names — inspiration is helpful.">
-        <textarea rows={2} value={(sp.references as string) ?? ""} onChange={(e) => setSp("references", e.target.value)}
-          placeholder="e.g. apple.com, or a Kenyan brand you admire…"
-          className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white text-sm text-slate-700 placeholder:text-slate-300 focus:outline-none focus:ring-2 focus:ring-[#f9a825]/40 focus:border-[#f9a825] resize-none" />
-      </SpecField>
-    </div>
-  );
-}
-
-function Step3Mobile({ state, update }: { state: IntakeState; update: (p: Partial<IntakeState>) => void }) {
-  const sp = state.specifics as Record<string, unknown>;
-  function setSp(k: string, v: unknown) { update({ specifics: { ...sp, [k]: v } }); }
-  function togglePlatform(p: string) {
-    const cur = (sp.platforms ?? []) as string[];
-    setSp("platforms", cur.includes(p) ? cur.filter((x) => x !== p) : [...cur, p]);
-  }
-
-  return (
-    <div className="space-y-5">
-      <div>
-        <h2 className="text-xl font-bold text-slate-800">About your mobile app</h2>
-        <p className="text-sm text-slate-500 mt-1">Help us understand what you need built.</p>
-      </div>
-
-      <SpecField label="Which platforms?">
-        <ChipGroup options={["iOS (iPhone)", "Android", "Both"]} selected={(sp.platforms ?? []) as string[]} onToggle={togglePlatform} />
-      </SpecField>
-
-      <SpecField label="Who is this app primarily for?">
-        <ChipGroup
-          options={["My customers / public", "Internal staff / team", "Both"]}
-          selected={sp.audience ? [sp.audience as string] : []}
-          onToggle={(v) => setSp("audience", v)}
-          single
-        />
-      </SpecField>
-
-      <SpecField label="Do you have a similar app as a reference or inspiration?">
-        <ToggleYesNo value={sp.has_reference as boolean ?? null} onChange={(v) => setSp("has_reference", v)} />
-        {!!sp.has_reference && (
-          <input type="text" value={(sp.reference_apps as string) ?? ""} onChange={(e) => setSp("reference_apps", e.target.value)}
-            placeholder="App name or link to the app store…"
-            className="mt-2 w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white text-sm text-slate-700 placeholder:text-slate-300 focus:outline-none focus:ring-2 focus:ring-[#f9a825]/40 focus:border-[#f9a825]" />
-        )}
-      </SpecField>
-
-      <SpecField label="List the key features your app must have" note="Don't worry about technical terms — just describe what it should do.">
-        <textarea rows={3} value={(sp.features as string) ?? ""} onChange={(e) => setSp("features", e.target.value)}
-          placeholder="e.g. User login, View products, Add to cart, Pay via M-Pesa, Get push notifications…"
-          className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white text-sm text-slate-700 placeholder:text-slate-300 focus:outline-none focus:ring-2 focus:ring-[#f9a825]/40 focus:border-[#f9a825] resize-none" />
-      </SpecField>
-    </div>
-  );
-}
-
-function Step3ERP({ state, update }: { state: IntakeState; update: (p: Partial<IntakeState>) => void }) {
-  const sp = state.specifics as Record<string, unknown>;
-  function setSp(k: string, v: unknown) { update({ specifics: { ...sp, [k]: v } }); }
-
-  return (
-    <div className="space-y-5">
-      <div>
-        <h2 className="text-xl font-bold text-slate-800">About your software</h2>
-        <p className="text-sm text-slate-500 mt-1">Tell us more about the system you need.</p>
-      </div>
-
-      <SpecField label="What business process does this software manage?">
-        <textarea rows={2} value={(sp.business_process as string) ?? ""} onChange={(e) => setSp("business_process", e.target.value)}
-          placeholder="e.g. School admissions and fee collection, Staff payroll and HR, Inventory and sales tracking…"
-          className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white text-sm text-slate-700 placeholder:text-slate-300 focus:outline-none focus:ring-2 focus:ring-[#f9a825]/40 focus:border-[#f9a825] resize-none" />
-      </SpecField>
-
-      <SpecField label="How many people will use this system?">
-        <ChipGroup
-          options={["Just me", "2 – 10 people", "11 – 50 people", "50+ people"]}
-          selected={sp.team_size ? [sp.team_size as string] : []}
-          onToggle={(v) => setSp("team_size", v)}
-          single
-        />
-      </SpecField>
-
-      <SpecField label="Do you currently use any system for this (even Excel or paper)?">
-        <ToggleYesNo value={sp.has_current_system as boolean ?? null} onChange={(v) => setSp("has_current_system", v)} />
-        {!!sp.has_current_system && (
-          <input type="text" value={(sp.current_system as string) ?? ""} onChange={(e) => setSp("current_system", e.target.value)}
-            placeholder="e.g. Excel spreadsheets, QuickBooks, a custom system…"
-            className="mt-2 w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white text-sm text-slate-700 placeholder:text-slate-300 focus:outline-none focus:ring-2 focus:ring-[#f9a825]/40 focus:border-[#f9a825]" />
-        )}
-      </SpecField>
-
-      <SpecField label="Any key integrations you'll need?" note="e.g. payments, M-Pesa, SMS alerts, other software.">
-        <textarea rows={2} value={(sp.integrations as string) ?? ""} onChange={(e) => setSp("integrations", e.target.value)}
-          placeholder="e.g. M-Pesa STK push for payments, SMS notifications, Payroll integration…"
-          className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white text-sm text-slate-700 placeholder:text-slate-300 focus:outline-none focus:ring-2 focus:ring-[#f9a825]/40 focus:border-[#f9a825] resize-none" />
-      </SpecField>
-    </div>
-  );
-}
-
-function Step3Design({ state, update }: { state: IntakeState; update: (p: Partial<IntakeState>) => void }) {
-  const sp = state.specifics as Record<string, unknown>;
-  function setSp(k: string, v: unknown) { update({ specifics: { ...sp, [k]: v } }); }
-  function toggleType(t: string) {
-    const cur = (sp.design_types ?? []) as string[];
-    setSp("design_types", cur.includes(t) ? cur.filter((x) => x !== t) : [...cur, t]);
-  }
-
-  return (
-    <div className="space-y-5">
-      <div>
-        <h2 className="text-xl font-bold text-slate-800">About your design project</h2>
-        <p className="text-sm text-slate-500 mt-1">Let us know what you need designed.</p>
-      </div>
-
-      <SpecField label="What needs designing?" note="Select everything that applies.">
-        <ChipGroup options={DESIGN_TYPES} selected={(sp.design_types ?? []) as string[]} onToggle={toggleType} />
-      </SpecField>
-
-      <SpecField label="Do you already have a logo or brand guidelines?">
-        <ToggleYesNo value={sp.has_existing_brand as boolean ?? null} onChange={(v) => setSp("has_existing_brand", v)} />
-      </SpecField>
-
-      <SpecField label="Describe the look and feel you want" note="Colors, mood, style — e.g. 'bold and modern' or 'clean and professional'.">
-        <textarea rows={3} value={(sp.style_notes as string) ?? ""} onChange={(e) => setSp("style_notes", e.target.value)}
-          placeholder="e.g. Navy and gold, professional and trustworthy. I admire the branding of KCB Bank…"
-          className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white text-sm text-slate-700 placeholder:text-slate-300 focus:outline-none focus:ring-2 focus:ring-[#f9a825]/40 focus:border-[#f9a825] resize-none" />
-      </SpecField>
-    </div>
-  );
-}
-
-function Step3Consultancy({ state, update }: { state: IntakeState; update: (p: Partial<IntakeState>) => void }) {
-  const sp = state.specifics as Record<string, unknown>;
-  function setSp(k: string, v: unknown) { update({ specifics: { ...sp, [k]: v } }); }
-  function toggleArea(a: string) {
-    const cur = (sp.focus_areas ?? []) as string[];
-    setSp("focus_areas", cur.includes(a) ? cur.filter((x) => x !== a) : [...cur, a]);
-  }
-
-  return (
-    <div className="space-y-5">
-      <div>
-        <h2 className="text-xl font-bold text-slate-800">Your consultancy needs</h2>
-        <p className="text-sm text-slate-500 mt-1">Help us understand the challenge you&apos;re facing.</p>
-      </div>
-
-      <SpecField label="Area of focus" note="Select all that apply.">
-        <ChipGroup options={CONSULTANCY_AREAS} selected={(sp.focus_areas ?? []) as string[]} onToggle={toggleArea} />
-      </SpecField>
-
-      <SpecField label="Describe the challenge in your own words">
-        <textarea rows={4} value={(sp.challenge as string) ?? ""} onChange={(e) => setSp("challenge", e.target.value)}
-          placeholder="What's the situation? What's not working? What outcome are you hoping for?…"
-          className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white text-sm text-slate-700 placeholder:text-slate-300 focus:outline-none focus:ring-2 focus:ring-[#f9a825]/40 focus:border-[#f9a825] resize-none" />
-      </SpecField>
-    </div>
-  );
-}
-
-function Step3AiAutomation({ state, update }: { state: IntakeState; update: (p: Partial<IntakeState>) => void }) {
-  const sp = state.specifics as Record<string, unknown>;
-  function setSp(k: string, v: unknown) { update({ specifics: { ...sp, [k]: v } }); }
-  function toggleArea(a: string) {
-    const cur = (sp.focus_areas ?? []) as string[];
-    setSp("focus_areas", cur.includes(a) ? cur.filter((x) => x !== a) : [...cur, a]);
-  }
-
-  return (
-    <div className="space-y-5">
-      <div>
-        <h2 className="text-xl font-bold text-slate-800">About your AI / automation need</h2>
-        <p className="text-sm text-slate-500 mt-1">Help us understand what you&apos;d like to automate or add AI to.</p>
-      </div>
-
-      <SpecField label="What kind of AI or automation?" note="Select all that apply.">
-        <ChipGroup options={AI_AUTOMATION_AREAS} selected={(sp.focus_areas ?? []) as string[]} onToggle={toggleArea} />
-      </SpecField>
-
-      <SpecField label="Do you currently do this manually or with another tool?">
-        <ToggleYesNo value={sp.has_current_process as boolean ?? null} onChange={(v) => setSp("has_current_process", v)} />
-        {!!sp.has_current_process && (
-          <input type="text" value={(sp.current_process as string) ?? ""} onChange={(e) => setSp("current_process", e.target.value)}
-            placeholder="e.g. Manually replying to WhatsApp messages, using spreadsheets…"
-            className="mt-2 w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white text-sm text-slate-700 placeholder:text-slate-300 focus:outline-none focus:ring-2 focus:ring-[#f9a825]/40 focus:border-[#f9a825]" />
-        )}
-      </SpecField>
-
-      <SpecField label="Describe what you'd like automated or AI-assisted" note="Be as specific as you can — the actual task, not the technology.">
-        <textarea rows={3} value={(sp.automation_goal as string) ?? ""} onChange={(e) => setSp("automation_goal", e.target.value)}
-          placeholder="e.g. Auto-reply to customer WhatsApp enquiries, generate weekly sales reports, sync orders between our website and accounting system…"
-          className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white text-sm text-slate-700 placeholder:text-slate-300 focus:outline-none focus:ring-2 focus:ring-[#f9a825]/40 focus:border-[#f9a825] resize-none" />
-      </SpecField>
-    </div>
-  );
-}
-
-function Step3Other({ state, update }: { state: IntakeState; update: (p: Partial<IntakeState>) => void }) {
-  const sp = state.specifics as Record<string, unknown>;
-  function setSp(k: string, v: unknown) { update({ specifics: { ...sp, [k]: v } }); }
-
-  return (
-    <div className="space-y-5">
-      <div>
-        <h2 className="text-xl font-bold text-slate-800">Tell us more</h2>
-        <p className="text-sm text-slate-500 mt-1">Share any extra details that would help us understand what you need.</p>
-      </div>
-      <div className="space-y-1.5">
-        <label className="text-sm font-semibold text-slate-700">Any additional context</label>
-        <textarea rows={5} value={(sp.extra as string) ?? ""} onChange={(e) => setSp("extra", e.target.value)}
-          placeholder="Describe your project, idea, or need in as much or as little detail as you like…"
-          className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white text-sm text-slate-700 placeholder:text-slate-300 focus:outline-none focus:ring-2 focus:ring-[#f9a825]/40 focus:border-[#f9a825] resize-none" />
-      </div>
-    </div>
-  );
-}
-
-function Step4({ state, update }: { state: IntakeState; update: (p: Partial<IntakeState>) => void }) {
-  return (
-    <div className="space-y-5">
-      <div>
-        <h2 className="text-xl font-bold text-slate-800">Timeline & Budget</h2>
-        <p className="text-sm text-slate-500 mt-1">This helps us plan and give you the right options. Both are optional.</p>
-      </div>
-
-      <div className="space-y-2">
-        <label className="text-sm font-semibold text-slate-700">When do you need this?</label>
-        <div className="flex flex-col gap-2">
-          {TIMELINE_OPTIONS.map((opt) => (
-            <button key={opt} type="button" onClick={() => update({ timeline: state.timeline === opt ? "" : opt })}
-              className={cn(
-                "flex items-center gap-3 px-4 py-3 rounded-xl border text-left text-sm transition-all",
-                state.timeline === opt
-                  ? "border-[#f9a825] bg-[#f9a825]/8 font-semibold text-[#152238]"
-                  : "border-slate-200 bg-white text-slate-600 hover:border-slate-300"
-              )}>
-              <span className={cn("w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0",
-                state.timeline === opt ? "border-[#f9a825] bg-[#f9a825]" : "border-slate-300")}>
-                {state.timeline === opt && <span className="w-2 h-2 rounded-full bg-white" />}
-              </span>
-              {opt}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      <div className="space-y-2">
-        <label className="text-sm font-semibold text-slate-700">Budget range</label>
-        <div className="flex flex-col gap-2">
-          {BUDGET_OPTIONS.map((opt) => (
-            <button key={opt} type="button" onClick={() => update({ budget_range: state.budget_range === opt ? "" : opt })}
-              className={cn(
-                "flex items-center gap-3 px-4 py-3 rounded-xl border text-left text-sm transition-all",
-                state.budget_range === opt
-                  ? "border-[#f9a825] bg-[#f9a825]/8 font-semibold text-[#152238]"
-                  : "border-slate-200 bg-white text-slate-600 hover:border-slate-300"
-              )}>
-              <span className={cn("w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0",
-                state.budget_range === opt ? "border-[#f9a825] bg-[#f9a825]" : "border-slate-300")}>
-                {state.budget_range === opt && <span className="w-2 h-2 rounded-full bg-white" />}
-              </span>
-              {opt}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      <div className="space-y-1.5">
-        <label className="text-sm font-semibold text-slate-700">
-          Anything else you&apos;d like us to know? <span className="text-slate-400 font-normal">(optional)</span>
-        </label>
-        <textarea rows={3} value={state.additional_notes} onChange={(e) => update({ additional_notes: e.target.value })}
-          placeholder="Any questions, concerns, constraints, or things we haven't asked about…"
-          className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white text-sm text-slate-700 placeholder:text-slate-300 focus:outline-none focus:ring-2 focus:ring-[#f9a825]/40 focus:border-[#f9a825] resize-none" />
-      </div>
-    </div>
-  );
-}
-
-function Step5({ state, update, clientName, clientEmail, clientCompany, isGeneric }: {
+function Step6({ state, update, isGeneric }: {
   state: IntakeState;
   update: (p: Partial<IntakeState>) => void;
-  clientName: string;
-  clientEmail: string;
-  clientCompany: string;
   isGeneric: boolean;
 }) {
-  const serviceLabel = SERVICE_TYPES.find((s) => s.value === state.service_type)?.label ?? state.service_type;
-
   return (
     <div className="space-y-5">
-      <div>
-        <h2 className="text-xl font-bold text-slate-800">Almost done — confirm your details</h2>
-        <p className="text-sm text-slate-500 mt-1">We&apos;ll use this to follow up with you.{!isGeneric && " Your details are pre-filled — update them if needed."}</p>
-      </div>
+      <StepHeading
+        title="How do we reach you?"
+        subtitle={isGeneric
+          ? "Almost done. We only need a name and an email to get back to you."
+          : "Almost done. Your details are pre-filled, so just correct anything that has changed."}
+      />
 
-      {/* Summary */}
-      <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 space-y-3 text-sm">
-        <p className="text-xs font-semibold uppercase tracking-wider text-slate-400">Your summary</p>
-        <div className="flex gap-2">
-          <span className="text-slate-400 w-20 shrink-0">Type</span>
-          <span className="font-medium text-slate-700">{serviceLabel}</span>
-        </div>
-        {state.project_title && (
-          <div className="flex gap-2">
-            <span className="text-slate-400 w-20 shrink-0">Title</span>
-            <span className="font-medium text-slate-700">{state.project_title}</span>
-          </div>
-        )}
-        <div className="flex gap-2">
-          <span className="text-slate-400 w-20 shrink-0">Description</span>
-          <span className="text-slate-600 line-clamp-3">{state.description}</span>
-        </div>
-        {state.timeline && (
-          <div className="flex gap-2">
-            <span className="text-slate-400 w-20 shrink-0">Timeline</span>
-            <span className="text-slate-600">{state.timeline}</span>
-          </div>
-        )}
-        {state.budget_range && (
-          <div className="flex gap-2">
-            <span className="text-slate-400 w-20 shrink-0">Budget</span>
-            <span className="text-slate-600">{state.budget_range}</span>
-          </div>
-        )}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <TextField label="Your name" required
+          value={state.submitter_name} onChange={(v) => update({ submitter_name: v })}
+          placeholder="Full name" />
+        <TextField label="Your role"
+          value={state.submitter_role} onChange={(v) => update({ submitter_role: v })}
+          placeholder="Owner, Manager, Director..." />
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <div className="space-y-1.5">
-          <label className="text-sm font-semibold text-slate-700">Your name <span className="text-red-400">*</span></label>
-          <input
-            type="text"
-            value={state.submitter_name !== "" ? state.submitter_name : clientName}
-            onChange={(e) => update({ submitter_name: e.target.value })}
-            placeholder="Full name"
-            className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white text-sm text-slate-700 placeholder:text-slate-300 focus:outline-none focus:ring-2 focus:ring-[#f9a825]/40 focus:border-[#f9a825]"
-          />
-        </div>
-        <div className="space-y-1.5">
-          <label className="text-sm font-semibold text-slate-700">Your email <span className="text-red-400">*</span></label>
-          <input
-            type="email"
-            value={state.submitter_email !== "" ? state.submitter_email : clientEmail}
-            onChange={(e) => update({ submitter_email: e.target.value })}
-            placeholder="you@example.com"
-            className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white text-sm text-slate-700 placeholder:text-slate-300 focus:outline-none focus:ring-2 focus:ring-[#f9a825]/40 focus:border-[#f9a825]"
-          />
-        </div>
+        <TextField label="Email" required type="email"
+          value={state.submitter_email} onChange={(v) => update({ submitter_email: v })}
+          placeholder="you@example.com" />
+        <TextField label="Phone or WhatsApp"
+          note="Often the fastest way for us to reach you."
+          value={state.submitter_phone} onChange={(v) => update({ submitter_phone: v })}
+          placeholder="07xx xxx xxx" />
       </div>
 
-      <div className="space-y-1.5">
-        <label className="text-sm font-semibold text-slate-700">
-          Company / Business <span className="text-slate-400 font-normal">(optional)</span>
-        </label>
-        <input
-          type="text"
-          value={state.submitter_company !== "" ? state.submitter_company : clientCompany}
-          onChange={(e) => update({ submitter_company: e.target.value })}
-          placeholder="Your business or organisation name"
-          className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white text-sm text-slate-700 placeholder:text-slate-300 focus:outline-none focus:ring-2 focus:ring-[#f9a825]/40 focus:border-[#f9a825]"
+      <div className="space-y-2">
+        <FieldLabel label="How would you prefer we get in touch?" />
+        <Chips
+          options={PREFERRED_CONTACT_OPTIONS.map((o) => o.label)}
+          selected={PREFERRED_CONTACT_OPTIONS.filter((o) => o.value === state.preferred_contact).map((o) => o.label)}
+          onToggle={(label) => {
+            const opt = PREFERRED_CONTACT_OPTIONS.find((o) => o.label === label);
+            update({ preferred_contact: opt && state.preferred_contact !== opt.value ? opt.value : "" });
+          }}
         />
       </div>
+
+      <CcEditor emails={state.cc_emails} onChange={(next) => update({ cc_emails: next })} />
+
+      <div className="space-y-2">
+        <FieldLabel label="How did you hear about us?" />
+        <Chips options={HEARD_FROM_OPTIONS} selected={state.heard_from ? [state.heard_from] : []}
+          onToggle={(v) => update({ heard_from: state.heard_from === v ? "" : v })} />
+      </div>
+
+      <ReviewBlock state={state} />
+
+      <label className="flex items-start gap-2.5 cursor-pointer">
+        <input type="checkbox" checked={state.contact_consent}
+          onChange={(e) => update({ contact_consent: e.target.checked })}
+          className="mt-0.5 w-4 h-4 accent-[#f9a825]" />
+        <span className="text-xs text-slate-500 leading-relaxed">
+          I am happy for {SITE_NAME} to contact me about this enquiry, and to copy in anyone I listed above.
+        </span>
+      </label>
     </div>
   );
 }
 
-// ─── Main Wizard ──────────────────────────────────────────────────────────────
-
-const TOTAL_STEPS = 5;
-
-const STEP_LABELS = ["Service type", "Your idea", "Details", "Timeline & Budget", "Confirm"];
+// ─── Main wizard ──────────────────────────────────────────────────────────────
 
 export function IntakeWizard({
   token = "",
   clientName = "",
   clientEmail = "",
   clientCompany = "",
+  clientPhone = "",
   isGeneric = false,
   defaultServiceType = "",
 }: {
@@ -658,26 +854,62 @@ export function IntakeWizard({
   clientName?: string;
   clientEmail?: string;
   clientCompany?: string;
+  clientPhone?: string;
   isGeneric?: boolean;
-  /** Pre-selects step 1 — e.g. arriving from /contact after picking a service. */
+  /** Pre-selects step 1, e.g. arriving from /contact after picking a service. */
   defaultServiceType?: string;
 }) {
-  const validDefaultService = SERVICE_TYPES.some((s) => s.value === defaultServiceType)
-    ? (defaultServiceType as ServiceType)
-    : "";
+  const defaultServices: ServiceType[] = (SERVICE_TYPES as readonly string[]).includes(defaultServiceType)
+    ? [defaultServiceType as ServiceType]
+    : [];
+
+  const draftKey = `${DRAFT_KEY_PREFIX}:${token || "generic"}`;
 
   const [step, setStep] = useState(1);
   const [state, setState] = useState<IntakeState>({
     ...EMPTY,
-    service_type: validDefaultService,
+    service_types: defaultServices,
     submitter_name: clientName,
     submitter_email: clientEmail,
     submitter_company: clientCompany,
+    submitter_phone: clientPhone,
   });
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState("");
   const [scrolled, setScrolled] = useState(false);
+  const [draftRestored, setDraftRestored] = useState(false);
+  const [hydrated, setHydrated] = useState(false);
+
+  // Restore an unfinished draft. A six-step form on a phone gets interrupted;
+  // losing everything on a dropped connection is the single biggest reason
+  // these forms get abandoned halfway.
+  useEffect(() => {
+    try {
+      const raw = window.localStorage.getItem(draftKey);
+      if (raw) {
+        const parsed = JSON.parse(raw) as { state: IntakeState; step: number };
+        if (parsed?.state) {
+          setState((prev) => ({ ...prev, ...parsed.state }));
+          setStep(Math.min(Math.max(parsed.step ?? 1, 1), TOTAL_STEPS));
+          setDraftRestored(true);
+        }
+      }
+    } catch {
+      // A corrupt draft must never block the form.
+    }
+    setHydrated(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    if (!hydrated || submitted) return;
+    try {
+      window.localStorage.setItem(draftKey, JSON.stringify({ state, step }));
+    } catch {
+      // Storage full or blocked (private mode): saving is best-effort only.
+    }
+  }, [state, step, hydrated, submitted, draftKey]);
 
   useEffect(() => {
     function onScroll() { setScrolled(window.scrollY > 60); }
@@ -685,82 +917,83 @@ export function IntakeWizard({
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  function update(patch: Partial<IntakeState>) {
+  // Moving between steps should always land at the top of the new step.
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }, [step]);
+
+  const update = useCallback((patch: Partial<IntakeState>) => {
     setState((prev) => ({ ...prev, ...patch }));
-  }
+    setError("");
+  }, []);
 
-  const resolvedName  = state.submitter_name  || clientName;
-  const resolvedEmail = state.submitter_email || clientEmail;
+  const setAnswer = useCallback((service: ServiceType, key: string, value: unknown) => {
+    setState((prev) => ({
+      ...prev,
+      specifics: {
+        ...prev.specifics,
+        [service]: { ...(prev.specifics[service] ?? {}), [key]: value },
+      },
+    }));
+  }, []);
 
-  function canAdvance(): boolean {
-    if (step === 1) return !!state.service_type;
-    if (step === 2) return !!state.description.trim();
-    if (step === 5) return !!resolvedName && !!resolvedEmail;
-    return true;
-  }
-
-  function validateBeforeSubmit(): string {
-    const name  = resolvedName.trim();
-    const email = resolvedEmail.trim();
-    const desc  = state.description.trim();
-
-    if (!name || name.length < 2)
-      return "Please enter your full name (at least 2 characters).";
-    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))
-      return "Please enter a valid email address.";
-    if (!desc || desc.length < 10)
-      return `Your project description is too short — please add a bit more detail (${desc.length}/10 characters minimum).`;
-    if (!state.service_type)
-      return "Please go back and select a service type.";
+  const stepError = useMemo(() => {
+    if (step === 1 && state.service_types.length === 0) {
+      return "Choose at least one thing you are looking for to continue.";
+    }
+    if (step === 3) {
+      const desc = state.description.trim();
+      if (!desc) return "A short description of what you want is the one thing we need.";
+      if (desc.length < 20) return `Please add a little more detail (${desc.length} of 20 characters).`;
+    }
+    if (step === 6) {
+      if (state.submitter_name.trim().length < 2) return "Please enter your name.";
+      if (!isValidEmail(state.submitter_email)) return "Please enter a valid email address.";
+      if (!state.contact_consent) return "Please confirm we may contact you about this enquiry.";
+    }
     return "";
-  }
+  }, [step, state]);
+
+  const canAdvance = stepError === "";
 
   async function handleSubmit() {
-    const validationError = validateBeforeSubmit();
-    if (validationError) { setError(validationError); return; }
+    if (stepError) { setError(stepError); return; }
 
     setSubmitting(true);
     setError("");
     try {
-      const url  = token ? `/api/intake/${token}` : "/api/intake";
-      const body = {
-        ...state,
-        submitter_name:    resolvedName,
-        submitter_email:   resolvedEmail,
-        submitter_company: state.submitter_company || clientCompany,
-      };
+      const url = token ? `/api/intake/${token}` : "/api/intake";
       const res = await fetch(url, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
+        body: JSON.stringify({
+          ...state,
+          // The primary service stays in service_type so the admin filters,
+          // acknowledgement emails and AI prompts keep a single lead service.
+          service_type: state.service_types[0],
+          completed_steps: TOTAL_STEPS,
+        }),
       });
       if (!res.ok) {
         const j = await res.json().catch(() => ({}));
-        // Try to surface a field-level error from the Zod details object
         const fieldErrors: string[] = [];
         if (j.details?.fieldErrors) {
           const FIELD_LABELS: Record<string, string> = {
-            description:      "Project description",
-            submitter_name:   "Your name",
-            submitter_email:  "Your email",
-            service_type:     "Service type",
-            timeline:         "Timeline",
-            budget_range:     "Budget",
+            description: "Project description",
+            submitter_name: "Your name",
+            submitter_email: "Your email",
+            service_type: "What you need",
           };
           for (const [field, msgs] of Object.entries(j.details.fieldErrors as Record<string, string[]>)) {
-            const label = FIELD_LABELS[field] ?? field;
-            fieldErrors.push(`${label}: ${(msgs as string[])[0]?.toLowerCase()}`);
+            fieldErrors.push(`${FIELD_LABELS[field] ?? field}: ${(msgs as string[])[0]?.toLowerCase()}`);
           }
         }
-        if (fieldErrors.length > 0) {
-          setError(`Please fix the following:\n• ${fieldErrors.join("\n• ")}`);
-        } else {
-          setError(j.error === "Invalid input"
-            ? "Some required fields are missing or too short. Please review your answers and try again."
-            : (j.error ?? "Submission failed. Please try again."));
-        }
+        setError(fieldErrors.length
+          ? `Please fix the following:\n• ${fieldErrors.join("\n• ")}`
+          : (j.error ?? "Submission failed. Please try again."));
         return;
       }
+      try { window.localStorage.removeItem(draftKey); } catch { /* best effort */ }
       setSubmitted(true);
     } catch {
       setError("Network error. Please check your connection and try again.");
@@ -769,37 +1002,54 @@ export function IntakeWizard({
     }
   }
 
+  function discardDraft() {
+    try { window.localStorage.removeItem(draftKey); } catch { /* best effort */ }
+    setState({
+      ...EMPTY,
+      service_types: defaultServices,
+      submitter_name: clientName,
+      submitter_email: clientEmail,
+      submitter_company: clientCompany,
+      submitter_phone: clientPhone,
+    });
+    setStep(1);
+    setDraftRestored(false);
+  }
+
   // ── Thank you screen ───────────────────────────────────────────────────────
 
   if (submitted) {
-    const firstName = resolvedName.split(" ")[0] || "there";
+    const firstName = state.submitter_name.trim().split(" ")[0] || "there";
     return (
       <div className="min-h-screen flex flex-col" style={{ background: "#f1f5f9" }}>
-        {/* Header */}
         <div style={{ background: NAVY }} className="px-4 pt-5 pb-6 shrink-0">
           <div className="max-w-lg mx-auto flex items-center gap-3">
-            <div className="w-9 h-9 rounded-lg flex items-center justify-center text-base font-extrabold shrink-0 shadow-sm" style={{ background: GOLD, color: NAVY }}>B</div>
+            <div className="w-9 h-9 rounded-lg flex items-center justify-center text-base font-extrabold shrink-0 shadow-sm"
+              style={{ background: GOLD, color: NAVY }}>B</div>
             <p className="text-white font-semibold text-sm tracking-wide">{SITE_NAME}</p>
           </div>
         </div>
         <div className="flex-1 flex items-center justify-center px-4 py-16">
           <div className="bg-white rounded-2xl shadow-sm border border-slate-200/60 p-8 sm:p-12 text-center max-w-md w-full">
             <div className="w-16 h-16 rounded-full bg-emerald-100 flex items-center justify-center mx-auto mb-6">
-              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#10b981" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#10b981"
+                strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                 <polyline points="20 6 9 17 4 12" />
               </svg>
             </div>
-            <h2 className="text-2xl font-bold text-slate-800 mb-3">We got your requirements!</h2>
-            <p className="text-slate-500 text-sm leading-relaxed mb-6">
-              Thank you, {firstName}. We&apos;ll review your submission and reach out to schedule a discovery call to go through the details together.
+            <h2 className="text-2xl font-bold text-slate-800 mb-3">We have your requirements</h2>
+            <p className="text-slate-500 text-sm leading-relaxed mb-2">
+              Thank you, {firstName}. We are reviewing what you sent and will reach out to arrange a
+              discovery call so we can go through it together.
             </p>
-            <a
-              href={`https://wa.me/${BUSINESS_WHATSAPP}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold text-white"
-              style={{ background: "#25D366" }}
-            >
+            {state.cc_emails.length > 0 && (
+              <p className="text-slate-400 text-xs leading-relaxed mb-4">
+                We have also copied {state.cc_emails.join(", ")} on the confirmation.
+              </p>
+            )}
+            <a href={`https://wa.me/${BUSINESS_WHATSAPP}`} target="_blank" rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold text-white mt-4"
+              style={{ background: "#25D366" }}>
               💬 Chat on WhatsApp
             </a>
           </div>
@@ -811,38 +1061,36 @@ export function IntakeWizard({
   // ── Wizard ─────────────────────────────────────────────────────────────────
 
   const progressPct = ((step - 1) / (TOTAL_STEPS - 1)) * 100;
+  const isOptionalStep = !REQUIRED_STEPS.has(step);
 
-  // Nav buttons — shared between card (desktop) and fixed bar (mobile)
   const navButtons = (
-    <div className="flex gap-3">
-      {step > 1 && (
-        <button
-          type="button"
-          onClick={() => setStep((s) => s - 1)}
-          className="flex-1 py-3 rounded-xl border border-slate-200 text-sm font-medium text-slate-600 hover:border-slate-300 hover:bg-slate-50 transition-all"
-        >
-          ← Back
-        </button>
-      )}
-      {step < TOTAL_STEPS ? (
-        <button
-          type="button"
-          onClick={() => setStep((s) => s + 1)}
-          disabled={!canAdvance()}
-          className="flex-1 py-3 rounded-xl text-sm font-semibold transition-all disabled:opacity-40 disabled:cursor-not-allowed"
-          style={canAdvance() ? { background: GOLD, color: NAVY } : { background: "#e2e8f0", color: "#94a3b8" }}
-        >
-          Continue →
-        </button>
-      ) : (
-        <button
-          type="button"
-          onClick={handleSubmit}
-          disabled={submitting || !canAdvance()}
-          className="flex-1 py-3 rounded-xl text-sm font-semibold transition-all disabled:opacity-40"
-          style={{ background: NAVY, color: "#ffffff" }}
-        >
-          {submitting ? "Submitting…" : "Submit Requirements →"}
+    <div className="space-y-2">
+      <div className="flex gap-3">
+        {step > 1 && (
+          <button type="button" onClick={() => setStep((s) => s - 1)}
+            className="flex-1 py-3 rounded-xl border border-slate-200 text-sm font-medium text-slate-600 hover:border-slate-300 hover:bg-slate-50 transition-all">
+            Back
+          </button>
+        )}
+        {step < TOTAL_STEPS ? (
+          <button type="button" onClick={() => canAdvance ? setStep((s) => s + 1) : setError(stepError)}
+            disabled={!canAdvance}
+            className="flex-1 py-3 rounded-xl text-sm font-semibold transition-all disabled:cursor-not-allowed"
+            style={canAdvance ? { background: GOLD, color: NAVY } : { background: "#e2e8f0", color: "#94a3b8" }}>
+            Continue
+          </button>
+        ) : (
+          <button type="button" onClick={handleSubmit} disabled={submitting || !canAdvance}
+            className="flex-1 py-3 rounded-xl text-sm font-semibold transition-all disabled:opacity-40"
+            style={{ background: NAVY, color: "#ffffff" }}>
+            {submitting ? "Submitting..." : "Submit requirements"}
+          </button>
+        )}
+      </div>
+      {isOptionalStep && step < TOTAL_STEPS && (
+        <button type="button" onClick={() => setStep((s) => s + 1)}
+          className="w-full py-1.5 text-xs font-medium text-slate-400 hover:text-slate-600 transition-colors">
+          Skip this step
         </button>
       )}
     </div>
@@ -851,35 +1099,41 @@ export function IntakeWizard({
   return (
     <div className="min-h-screen flex flex-col" style={{ background: "#f1f5f9" }}>
 
-      {/* ── Full header (visible when not scrolled) ── */}
+      {/* Full header */}
       <div style={{ background: NAVY }} className="shrink-0">
-        {/* Gold accent line */}
         <div style={{ height: 3, background: GOLD }} />
 
-        {/* Brand + title */}
         <div className="px-4 pt-6 pb-4 max-w-lg mx-auto">
           <div className="flex items-center gap-3 mb-4">
-            <div className="w-9 h-9 rounded-lg flex items-center justify-center text-base font-extrabold shrink-0 shadow-sm" style={{ background: GOLD, color: NAVY }}>B</div>
+            <div className="w-9 h-9 rounded-lg flex items-center justify-center text-base font-extrabold shrink-0 shadow-sm"
+              style={{ background: GOLD, color: NAVY }}>B</div>
             <p className="text-white font-semibold text-sm tracking-wide">{SITE_NAME}</p>
           </div>
           <h1 className="text-white text-xl font-bold leading-snug">Tell us about your project</h1>
           <p className="text-white/50 text-xs mt-1 leading-relaxed">
-            Answer a few quick questions — no tech knowledge needed. We&apos;ll do the rest.
+            Six short steps, and only three answers are actually required. Skip anything that does not apply,
+            and your progress saves as you go.
           </p>
         </div>
 
-        {/* Progress */}
+        {/* Progress. Completed steps are clickable so nothing feels like a trap. */}
         <div className="px-4 pb-5 max-w-lg mx-auto">
-          <div className="flex justify-between mb-2">
+          <div className="hidden sm:flex justify-between mb-2 gap-1">
             {STEP_LABELS.map((label, i) => (
-              <span key={label} className={cn(
-                "text-[10px] font-semibold hidden sm:block",
-                i + 1 === step ? "text-[#f9a825]" : i + 1 < step ? "text-white/50" : "text-white/20"
-              )}>{label}</span>
+              <button key={label} type="button"
+                onClick={() => i + 1 < step && setStep(i + 1)}
+                disabled={i + 1 >= step}
+                className={cn(
+                  "text-[10px] font-semibold transition-colors truncate",
+                  i + 1 === step ? "text-[#f9a825]" : i + 1 < step ? "text-white/50 hover:text-white cursor-pointer" : "text-white/20"
+                )}>
+                {label}
+              </button>
             ))}
           </div>
           <div className="h-1.5 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.1)" }}>
-            <div className="h-full rounded-full transition-all duration-500" style={{ width: `${progressPct}%`, background: GOLD }} />
+            <div className="h-full rounded-full transition-all duration-500"
+              style={{ width: `${progressPct}%`, background: GOLD }} />
           </div>
           <div className="flex justify-between mt-1.5">
             <span className="text-white/40 text-[11px]">Step {step} of {TOTAL_STEPS}</span>
@@ -888,48 +1142,51 @@ export function IntakeWizard({
         </div>
       </div>
 
-      {/* ── Sticky mini header (appears on scroll) ── */}
-      <div
-        className={cn(
-          "fixed top-0 left-0 right-0 z-50 transition-all duration-300",
-          scrolled ? "translate-y-0 opacity-100" : "-translate-y-full opacity-0 pointer-events-none"
-        )}
-        style={{ background: NAVY, borderBottom: `2px solid ${GOLD}` }}
-      >
+      {/* Sticky mini header */}
+      <div className={cn(
+        "fixed top-0 left-0 right-0 z-50 transition-all duration-300",
+        scrolled ? "translate-y-0 opacity-100" : "-translate-y-full opacity-0 pointer-events-none"
+      )} style={{ background: NAVY, borderBottom: `2px solid ${GOLD}` }}>
         <div className="max-w-lg mx-auto px-4 h-12 flex items-center justify-between gap-3">
           <div className="flex items-center gap-2.5 min-w-0">
-            <div className="w-6 h-6 rounded-md flex items-center justify-center text-xs font-extrabold shrink-0" style={{ background: GOLD, color: NAVY }}>B</div>
-            <span className="text-white font-semibold text-sm truncate">Tell us about your project</span>
+            <div className="w-6 h-6 rounded-md flex items-center justify-center text-xs font-extrabold shrink-0"
+              style={{ background: GOLD, color: NAVY }}>B</div>
+            <span className="text-white font-semibold text-sm truncate">{STEP_LABELS[step - 1]}</span>
           </div>
-          <span
-            className="shrink-0 text-[10px] font-bold px-2 py-0.5 rounded-full"
-            style={{ background: "rgba(249,168,37,0.15)", color: GOLD }}
-          >
+          <span className="shrink-0 text-[10px] font-bold px-2 py-0.5 rounded-full"
+            style={{ background: "rgba(249,168,37,0.15)", color: GOLD }}>
             {step}/{TOTAL_STEPS}
           </span>
         </div>
-        {/* Mini progress bar */}
         <div style={{ height: 2, background: "rgba(255,255,255,0.08)" }}>
           <div style={{ width: `${progressPct}%`, height: "100%", background: GOLD, transition: "width 0.4s ease" }} />
         </div>
       </div>
 
-      {/* Content — extra bottom padding on mobile so fixed nav doesn't overlap */}
-      <div className="flex-1 px-4 py-6 pb-36 sm:pb-6">
-        <div className="max-w-lg mx-auto">
-          <div className="bg-white rounded-2xl shadow-sm border border-slate-200/60 p-6 sm:p-8">
+      {/* Content */}
+      <div className="flex-1 px-4 py-6 pb-40 sm:pb-6">
+        <div className="max-w-lg mx-auto space-y-3">
 
+          {draftRestored && (
+            <div className="flex items-start gap-2 px-4 py-3 rounded-xl bg-white border border-slate-200 text-xs text-slate-500">
+              <span className="shrink-0 mt-0.5">💾</span>
+              <span className="flex-1 leading-relaxed">
+                We picked up where you left off.{" "}
+                <button type="button" onClick={discardDraft}
+                  className="font-semibold text-slate-700 underline hover:text-[#152238]">
+                  Start over
+                </button>
+              </span>
+            </div>
+          )}
+
+          <div className="bg-white rounded-2xl shadow-sm border border-slate-200/60 p-6 sm:p-8">
             {step === 1 && <Step1 state={state} update={update} />}
             {step === 2 && <Step2 state={state} update={update} />}
-            {step === 3 && state.service_type === "website"      && <Step3Website state={state} update={update} />}
-            {step === 3 && state.service_type === "mobile"       && <Step3Mobile state={state} update={update} />}
-            {step === 3 && state.service_type === "erp"          && <Step3ERP state={state} update={update} />}
-            {step === 3 && state.service_type === "design"       && <Step3Design state={state} update={update} />}
-            {step === 3 && state.service_type === "consultancy"  && <Step3Consultancy state={state} update={update} />}
-            {step === 3 && state.service_type === "ai_automation" && <Step3AiAutomation state={state} update={update} />}
-            {step === 3 && state.service_type === "other"        && <Step3Other state={state} update={update} />}
-            {step === 4 && <Step4 state={state} update={update} />}
-            {step === 5 && <Step5 state={state} update={update} clientName={clientName} clientEmail={clientEmail} clientCompany={clientCompany} isGeneric={isGeneric} />}
+            {step === 3 && <Step3 state={state} update={update} />}
+            {step === 4 && <Step4 state={state} setAnswer={setAnswer} />}
+            {step === 5 && <Step5 state={state} update={update} />}
+            {step === 6 && <Step6 state={state} update={update} isGeneric={isGeneric} />}
 
             {error && (
               <div className="mt-4 px-4 py-3 rounded-xl bg-red-50 border border-red-200 text-sm text-red-700 whitespace-pre-line leading-relaxed">
@@ -937,17 +1194,13 @@ export function IntakeWizard({
               </div>
             )}
 
-            {/* Navigation — visible on desktop; hidden on mobile (fixed bar used instead) */}
-            <div className="hidden sm:block mt-8">
-              {navButtons}
-            </div>
+            <div className="hidden sm:block mt-8">{navButtons}</div>
           </div>
         </div>
       </div>
 
-      {/* ── Fixed bottom nav bar — mobile only ── */}
-      <div
-        className="sm:hidden fixed bottom-0 left-0 right-0 z-40 px-4 pt-3"
+      {/* Fixed bottom nav, mobile only */}
+      <div className="sm:hidden fixed bottom-0 left-0 right-0 z-40 px-4 pt-3"
         style={{
           background: "rgba(255,255,255,0.97)",
           WebkitBackdropFilter: "blur(12px)",
@@ -955,8 +1208,7 @@ export function IntakeWizard({
           borderTop: "1px solid #e2e8f0",
           boxShadow: "0 -4px 16px rgba(0,0,0,0.06)",
           paddingBottom: "max(12px, env(safe-area-inset-bottom))",
-        }}
-      >
+        }}>
         {navButtons}
       </div>
     </div>

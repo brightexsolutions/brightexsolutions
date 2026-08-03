@@ -19,6 +19,7 @@ import {
   emailDivider,
   emailSignoff,
 } from "@/lib/email-templates";
+import { resolveCc } from "@/lib/cc-recipients";
 
 const purposeLabels: Record<string, string> = {
   intro_call: "Intro Call",
@@ -76,7 +77,7 @@ export async function POST(
     await supabase.from("communications").insert({
       client_id: matchedClient?.id ?? null,
       type: "whatsapp",
-      subject: `WhatsApp booking confirmation — ${purposeLabel} on ${formattedDate}`,
+      subject: `WhatsApp booking confirmation: ${purposeLabel} on ${formattedDate}`,
       body: waMessage,
       direction: "out",
       status: "sent",
@@ -124,17 +125,31 @@ export async function POST(
       emailSignoff(),
   });
 
+  // A booking confirmation is often the first thing a client forwards to a
+  // colleague, so copy anyone already set up to receive bookings for them.
+  const { data: bookingClient } = await supabase
+    .from("clients")
+    .select("id")
+    .eq("email", booking.booker_email)
+    .is("deleted_at", null)
+    .maybeSingle();
+
   let emailSent = false;
   try {
     await transporter.sendMail({
       from: `"${SITE_NAME}" <${process.env.SMTP_USER}>`,
       to: booking.booker_email,
-      subject: `Booking Confirmed — ${purposeLabel} on ${formattedDate}`,
+      cc: await resolveCc({
+        clientId: bookingClient?.id ?? null,
+        scope: "bookings",
+        to: booking.booker_email,
+      }),
+      subject: `Booking confirmed: ${purposeLabel} on ${formattedDate}`,
       html,
     });
     emailSent = true;
   } catch {
-    // Email failed — caller can fall back to WhatsApp
+    // Email failed: caller can fall back to WhatsApp
   }
 
   if (emailSent) {
@@ -149,7 +164,7 @@ export async function POST(
     await supabase.from("communications").insert({
       client_id: matchedClient?.id ?? null,
       type: "email",
-      subject: `Booking confirmation sent — ${purposeLabel} on ${formattedDate}`,
+      subject: `Booking confirmation sent: ${purposeLabel} on ${formattedDate}`,
       body: `Sent to ${booking.booker_email}`,
       direction: "out",
       status: "sent",

@@ -53,7 +53,7 @@ export async function GET(request: NextRequest) {
           html: emailTemplate({
             title: "Your Trial Has Ended",
             subtitle: productName,
-            preheader: `Your ${productName} trial has ended — subscribe to continue`,
+            preheader: `Your ${productName} trial has ended: subscribe to continue`,
             body:
               emailAlert(`Your ${productName} trial has ended.`, "warning") +
               emailParagraph(`Hi ${firstName}, your free trial of <strong>${productName}</strong> has come to an end.`) +
@@ -75,7 +75,7 @@ export async function GET(request: NextRequest) {
           action: "trial_expiry_sent",
           entity_type: "trial",
           entity_id: trial.id,
-          entity_label: `${productName} — ${trial.requester_name ?? trial.requester_email}`,
+          entity_label: `${productName}: ${trial.requester_name ?? trial.requester_email}`,
           notes: `Automated trial expiry notification sent to ${trial.requester_email}`,
         });
       } catch {

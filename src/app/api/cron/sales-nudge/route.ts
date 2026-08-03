@@ -43,12 +43,12 @@ export async function GET(request: NextRequest) {
 
     if ((count ?? 0) === 0) {
       const daysStale = Math.floor((Date.now() - new Date(sale.created_at as string).getTime()) / 86400000);
-      const label = `${sale.service ?? "Service"} — ${client?.name ?? "Unknown client"}`;
+      const label = `${sale.service ?? "Service"}: ${client?.name ?? "Unknown client"}`;
 
       await supabase.from("system_alerts").insert({
         type: "sales_stale",
         severity: daysStale >= 30 ? "warning" : "info",
-        message: `Sales lead "${label}" has been in "${sale.status}" for ${daysStale} day${daysStale !== 1 ? "s" : ""} — needs follow-up${sale.estimated_value ? ` (KES ${Number(sale.estimated_value).toLocaleString("en-KE")})` : ""}`,
+        message: `Sales lead "${label}" has been in "${sale.status}" for ${daysStale} day${daysStale !== 1 ? "s" : ""}: needs follow-up${sale.estimated_value ? ` (KES ${Number(sale.estimated_value).toLocaleString("en-KE")})` : ""}`,
         entity_id: sale.id,
         entity_type: "sale",
       });

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
 // Auth for machine-to-machine consumers outside this app (e.g. Stride pulling a
-// summary) — distinct from CRON_SECRET (internal Vercel/cron-job.org triggers) and
+// summary): distinct from CRON_SECRET (internal Vercel/cron-job.org triggers) and
 // from admin session cookies (human users). Same bearer-token shape as cron-auth.ts.
 export function verifyExternalApiKey(request: NextRequest): NextResponse | null {
   const authHeader = request.headers.get("authorization");

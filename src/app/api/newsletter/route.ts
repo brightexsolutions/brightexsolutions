@@ -47,7 +47,7 @@ export async function POST(request: NextRequest) {
 
       if (existing) {
         return NextResponse.json(
-          { message: "You're already subscribed — we'll keep you posted!" },
+          { message: "You're already subscribed: we'll keep you posted!" },
           { status: 200 }
         );
       }
@@ -72,12 +72,12 @@ export async function POST(request: NextRequest) {
       subject: "You're subscribed to the Brightex Journal",
       html: emailTemplate({
         title: "You're subscribed!",
-        preheader: "Welcome to the Brightex Journal — thanks for subscribing",
+        preheader: "Welcome to the Brightex Journal: thanks for subscribing",
         body:
           emailParagraph(
             "You're now subscribed to the <strong>Brightex Journal</strong>. We'll send you practical insights on web technology, digital strategy, and building businesses in Kenya and East Africa."
           ) +
-          emailParagraph("Expect articles on web development, AI & automation, SEO, ERP systems, and more — no spam, ever.") +
+          emailParagraph("Expect articles on web development, AI & automation, SEO, ERP systems, and more: no spam, ever.") +
           emailSignoff(),
       }),
     });

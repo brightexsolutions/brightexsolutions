@@ -28,7 +28,7 @@ const InviteSchema = z.object({
   note: z.string().max(500).trim().optional(),
 });
 
-// GET — list all pending invitations (no matching team_members record yet)
+// GET: list all pending invitations (no matching team_members record yet)
 export async function GET(request: NextRequest) {
   const limited = await rateLimit(request, "admin");
   if (limited) return limited;
@@ -53,7 +53,7 @@ export async function GET(request: NextRequest) {
   return NextResponse.json({ data: pending });
 }
 
-// POST — send a new or resend invite
+// POST: send a new or resend invite
 export async function POST(request: NextRequest) {
   const limited = await rateLimit(request, "admin");
   if (limited) return limited;
@@ -111,7 +111,7 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: inviteError.message }, { status: 500 });
       }
 
-      // User exists — send a password recovery link so they can complete setup
+      // User exists: send a password recovery link so they can complete setup
       const { data: recoveryData, error: recoveryError } = await supabase.auth.admin.generateLink({
         type: "recovery",
         email,
@@ -136,7 +136,7 @@ export async function POST(request: NextRequest) {
 
     const subject = isResend
       ? `Complete your ${SITE_NAME} account setup`
-      : `You're invited to join ${SITE_NAME} — ${roleLabel} Portal`;
+      : `You're invited to join ${SITE_NAME}: ${roleLabel} Portal`;
 
     const html = emailTemplate({
       title: isResend ? "Complete Your Account Setup" : `You're Invited to ${SITE_NAME}`,
@@ -175,7 +175,7 @@ export async function POST(request: NextRequest) {
       `If you weren't expecting this invitation, you can safely ignore this email.`,
       `Questions? Contact us at ${BUSINESS_EMAIL}`,
       "",
-      `— The ${SITE_NAME} Team`,
+      `The ${SITE_NAME} Team`,
     ].filter((l) => l !== undefined).join("\n");
 
     await transporter.sendMail({
@@ -208,7 +208,7 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// DELETE — revoke a pending invitation
+// DELETE: revoke a pending invitation
 export async function DELETE(request: NextRequest) {
   const limited = await rateLimit(request, "admin");
   if (limited) return limited;

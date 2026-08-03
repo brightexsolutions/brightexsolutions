@@ -9,7 +9,7 @@ const ALLOWED_TYPES = [
   "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
   "image/jpeg", "image/png", "image/webp",
 ];
-const MAX_BYTES = 10 * 1024 * 1024; // 10 MB raw — images will be much smaller after compression
+const MAX_BYTES = 10 * 1024 * 1024; // 10 MB raw: images will be much smaller after compression
 const BUCKET = "project-docs";
 
 type Params = { params: Promise<{ id: string }> };

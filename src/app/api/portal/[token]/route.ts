@@ -36,7 +36,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     .order("sent_at", { ascending: false })
     .limit(20);
 
-  // Strip internal data — only expose what's safe for client view
+  // Strip internal data: only expose what's safe for client view
   const tasks = (project.tasks as Array<{
     id: string;
     title: string;

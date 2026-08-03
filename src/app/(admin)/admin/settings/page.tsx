@@ -63,7 +63,7 @@ const defaults = {
   logo_light_url: "",
   logo_dark_placements: JSON.stringify(["site_header", "invoices", "reports", "documents"]),
   logo_light_placements: JSON.stringify(["site_footer"]),
-  // Invoice payment details — M-Pesa Send Money
+  // Invoice payment details: M-Pesa Send Money
   invoice_mpesa_number: "",
   invoice_mpesa_name: "",
   // M-Pesa Till / Buy Goods
@@ -85,7 +85,7 @@ const defaults = {
 
 type SettingsForm = typeof defaults;
 
-// Keys that belong to each section — used for per-section dirty tracking
+// Keys that belong to each section: used for per-section dirty tracking
 const SECTION_KEYS: Record<Section, (keyof SettingsForm)[]> = {
   business:     ["business_name", "tagline", "address"],
   contact:      ["email", "phone", "whatsapp", "booking_url"],
@@ -247,7 +247,7 @@ export default function SettingsPage() {
               <ChevronRight size={14} className={cn("shrink-0 transition-colors", active === s.id ? "text-brand-gold" : "text-muted-foreground/40 group-hover:text-muted-foreground")} />
             </button>
           ))}
-          {/* Email Templates — separate page link */}
+          {/* Email Templates: separate page link */}
           <Link
             href="/admin/settings/email-preview"
             className="w-full flex items-center gap-4 px-5 py-4 text-left transition-colors group border-t border-border hover:bg-muted border-l-2 border-l-transparent"
@@ -312,7 +312,7 @@ export default function SettingsPage() {
                       <Input className="pl-9" value={form.phone} onChange={(e) => update("phone", e.target.value)} />
                     </div>
                   </SettingRow>
-                  <SettingRow label="WhatsApp Number" hint="Digits only with country code — e.g. 254741980127. Used in wa.me links.">
+                  <SettingRow label="WhatsApp Number" hint="Digits only with country code: e.g. 254741980127. Used in wa.me links.">
                     <Input placeholder="254741980127" value={form.whatsapp} onChange={(e) => update("whatsapp", e.target.value)} />
                   </SettingRow>
                   <SettingRow label="Public Booking URL" hint="The URL visitors use to book a call. Default: /contact?intent=book_call">
@@ -349,8 +349,8 @@ export default function SettingsPage() {
                             </p>
                             <p className="text-xs text-muted-foreground mb-3">
                               {variant === "dark"
-                                ? "For light backgrounds — site header, documents, invoices."
-                                : "For dark/navy backgrounds — site footer, dark mode."}
+                                ? "For light backgrounds: site header, documents, invoices."
+                                : "For dark/navy backgrounds: site footer, dark mode."}
                             </p>
                             <label className={cn(
                               "flex flex-col items-center justify-center w-full h-32 rounded-sm border-2 border-dashed cursor-pointer transition-colors",
@@ -375,7 +375,7 @@ export default function SettingsPage() {
                                 <div className="flex flex-col items-center gap-2 text-muted-foreground">
                                   <Upload size={20} />
                                   <span className="text-xs">Click to upload logo</span>
-                                  <span className="text-[11px] opacity-60">PNG, SVG, WebP — max 2 MB</span>
+                                  <span className="text-[11px] opacity-60">PNG, SVG, WebP: max 2 MB</span>
                                 </div>
                               )}
                               <input

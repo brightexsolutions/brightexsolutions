@@ -42,7 +42,7 @@ export async function GET(request: NextRequest) {
       await supabase.from("system_alerts").insert({
         type: "subcontractor_payout_pending",
         severity: daysPending >= 30 ? "critical" : "warning",
-        message: `Subcontractor expense "${expense.description ?? expense.id}" has been awaiting payout for ${daysPending} day${daysPending !== 1 ? "s" : ""} — ${expense.currency ?? "KES"} ${Number(expense.amount).toLocaleString("en-KE")}`,
+        message: `Subcontractor expense "${expense.description ?? expense.id}" has been awaiting payout for ${daysPending} day${daysPending !== 1 ? "s" : ""}: ${expense.currency ?? "KES"} ${Number(expense.amount).toLocaleString("en-KE")}`,
         entity_id: expense.id,
         entity_type: "subcontractor_expense",
       });

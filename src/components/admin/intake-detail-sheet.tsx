@@ -4,8 +4,18 @@ import { useState } from "react";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { CheckCircle, Clock, User, Mail, Briefcase, Calendar, DollarSign, FileText, Tag, Sparkles, Loader2, FileSignature, Archive, Download } from "lucide-react";
+import { CheckCircle, User, Mail, Phone, Building2, Briefcase, Calendar, FileText, Tag, Sparkles, Loader2, FileSignature, Archive, Download, Users, ClipboardList } from "lucide-react";
+import { sopsForServices } from "@/lib/sop-library";
 import { cn } from "@/lib/utils";
+import {
+  SERVICE_LABELS as SCHEMA_SERVICE_LABELS,
+  readAnswerGroups,
+  serviceTypesOf,
+  buildIntakeBrief,
+  DECISION_STAGE_OPTIONS,
+  BUDGET_CONFIDENCE_OPTIONS,
+  PREFERRED_CONTACT_OPTIONS,
+} from "@/lib/intake-schema";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -17,16 +27,36 @@ export type IntakeAnalysis = {
 
 export type IntakeDetail = {
   id: string;
+  /** Primary service. Always present, including on v1 records. */
   service_type: string;
+  /** Every service asked for. Absent on v1 records. */
+  service_types?: string[] | null;
   project_title?: string | null;
   description: string;
   problem_statement?: string | null;
+  success_criteria?: string | null;
+  reference_links?: string | null;
   specifics?: Record<string, unknown> | null;
   timeline?: string | null;
+  hard_deadline?: string | null;
   budget_range?: string | null;
+  budget_confidence?: string | null;
+  decision_stage?: string | null;
   additional_notes?: string | null;
+  // Business context
+  industry?: string | null;
+  business_summary?: string | null;
+  target_audience?: string | null;
+  online_presence?: string | null;
+  // Submitter
   submitter_name: string;
   submitter_email: string;
+  submitter_role?: string | null;
+  submitter_phone?: string | null;
+  submitter_company?: string | null;
+  preferred_contact?: string | null;
+  cc_emails?: string[] | null;
+  heard_from?: string | null;
   status: string;
   submitted_at: string;
   reviewed_at?: string | null;
@@ -36,107 +66,20 @@ export type IntakeDetail = {
 
 // ─── Label maps ───────────────────────────────────────────────────────────────
 
-export const SERVICE_LABELS: Record<string, string> = {
-  website:       "Website / Web App",
-  mobile:        "Mobile App",
-  erp:           "Software / ERP System",
-  design:        "Design & Branding",
-  consultancy:   "Business Consultancy",
-  ai_automation: "AI & Automation",
-  other:         "General Enquiry",
-};
+/** Re-exported so existing importers keep working from one source of truth. */
+export const SERVICE_LABELS = SCHEMA_SERVICE_LABELS;
 
 const STATUS_COLOUR: Record<string, string> = {
   new:      "bg-amber-50 text-amber-700 border-amber-200",
   reviewed: "bg-emerald-50 text-emerald-700 border-emerald-200",
 };
 
-// ─── Specifics renderers per service type ────────────────────────────────────
-
-function WebsiteSpecifics({ sp }: { sp: Record<string, unknown> }) {
-  return (
-    <>
-      <SpecRow label="Has existing website" value={boolVal(sp.has_existing_site)} />
-      {sp.existing_url && <SpecRow label="Current site URL" value={sp.existing_url as string} link />}
-      <SpecRow label="Needs e-commerce" value={boolVal(sp.needs_ecommerce)} />
-      <SpecRow label="Has existing branding" value={boolVal(sp.has_branding)} />
-      {arrVal(sp.pages).length > 0 && <SpecRow label="Pages needed" value={arrVal(sp.pages).join(", ")} />}
-      {sp.references && <SpecRow label="Reference sites" value={sp.references as string} />}
-    </>
-  );
-}
-
-function MobileSpecifics({ sp }: { sp: Record<string, unknown> }) {
-  return (
-    <>
-      {arrVal(sp.platforms).length > 0 && <SpecRow label="Platforms" value={arrVal(sp.platforms).join(", ")} />}
-      {sp.audience && <SpecRow label="Primary audience" value={sp.audience as string} />}
-      <SpecRow label="Has reference app" value={boolVal(sp.has_reference)} />
-      {sp.reference_apps && <SpecRow label="Reference apps" value={sp.reference_apps as string} />}
-      {sp.features && <SpecRow label="Key features" value={sp.features as string} multiline />}
-    </>
-  );
-}
-
-function ERPSpecifics({ sp }: { sp: Record<string, unknown> }) {
-  return (
-    <>
-      {sp.business_process && <SpecRow label="Business process" value={sp.business_process as string} multiline />}
-      {sp.team_size && <SpecRow label="Number of users" value={sp.team_size as string} />}
-      <SpecRow label="Has current system" value={boolVal(sp.has_current_system)} />
-      {sp.current_system && <SpecRow label="Current system" value={sp.current_system as string} />}
-      {sp.integrations && <SpecRow label="Required integrations" value={sp.integrations as string} multiline />}
-    </>
-  );
-}
-
-function DesignSpecifics({ sp }: { sp: Record<string, unknown> }) {
-  return (
-    <>
-      {arrVal(sp.design_types).length > 0 && <SpecRow label="What needs designing" value={arrVal(sp.design_types).join(", ")} />}
-      <SpecRow label="Has existing brand" value={boolVal(sp.has_existing_brand)} />
-      {sp.style_notes && <SpecRow label="Style & look" value={sp.style_notes as string} multiline />}
-    </>
-  );
-}
-
-function ConsultancySpecifics({ sp }: { sp: Record<string, unknown> }) {
-  return (
-    <>
-      {arrVal(sp.focus_areas).length > 0 && <SpecRow label="Focus areas" value={arrVal(sp.focus_areas).join(", ")} />}
-      {sp.challenge && <SpecRow label="Challenge / context" value={sp.challenge as string} multiline />}
-    </>
-  );
-}
-
-function AiAutomationSpecifics({ sp }: { sp: Record<string, unknown> }) {
-  return (
-    <>
-      {arrVal(sp.focus_areas).length > 0 && <SpecRow label="Type of automation" value={arrVal(sp.focus_areas).join(", ")} />}
-      <SpecRow label="Currently done manually / with another tool" value={boolVal(sp.has_current_process)} />
-      {sp.current_process && <SpecRow label="Current process" value={sp.current_process as string} />}
-      {sp.automation_goal && <SpecRow label="What to automate" value={sp.automation_goal as string} multiline />}
-    </>
-  );
-}
-
-function OtherSpecifics({ sp }: { sp: Record<string, unknown> }) {
-  if (sp.extra) return <SpecRow label="Additional context" value={sp.extra as string} multiline />;
-  return null;
+function optionLabel(options: { value: string; label: string }[], value?: string | null): string {
+  if (!value) return "";
+  return options.find((o) => o.value === value)?.label ?? value;
 }
 
 // ─── Utility components ───────────────────────────────────────────────────────
-
-function boolVal(v: unknown): string {
-  if (v === true) return "Yes";
-  if (v === false) return "No";
-  return "—";
-}
-
-function arrVal(v: unknown): string[] {
-  if (Array.isArray(v)) return v as string[];
-  return [];
-}
 
 function SpecRow({ label, value, multiline, link }: {
   label: string;
@@ -144,7 +87,7 @@ function SpecRow({ label, value, multiline, link }: {
   multiline?: boolean;
   link?: boolean;
 }) {
-  if (!value || value === "—") return null;
+  if (!value) return null;
   return (
     <div className="py-2 border-b border-border/50 last:border-0">
       <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-0.5">{label}</p>
@@ -176,24 +119,13 @@ function Section({ title, icon: Icon, children }: {
 
 // ─── Main component ───────────────────────────────────────────────────────────
 
-function buildEngagementSummary(intake: IntakeDetail, sp: Record<string, unknown>, serviceLabel: string): string {
-  return [
-    `Service requested: ${serviceLabel}`,
-    intake.project_title && `Project title: ${intake.project_title}`,
-    `Description: ${intake.description}`,
-    intake.problem_statement && `Problem / challenge: ${intake.problem_statement}`,
-    Object.keys(sp).length > 0 && `Project specifics: ${JSON.stringify(sp)}`,
-    intake.budget_range && `Client's stated budget range: ${intake.budget_range}`,
-    intake.additional_notes && `Additional notes: ${intake.additional_notes}`,
-  ].filter(Boolean).join("\n");
-}
 
 function IntakeAiPanel({
   intake, clientId, onAnalysisSaved,
 }: {
   intake: IntakeDetail;
   clientId: string;
-  /** Bubbles the fresh analysis up to the parent's cached intake list —
+  /** Bubbles the fresh analysis up to the parent's cached intake list -
    * without this, reopening the panel later re-reads stale pre-analysis
    * data that was fetched before this analyze call ever ran. */
   onAnalysisSaved?: (analysis: IntakeAnalysis, analyzedAt: string) => void;
@@ -287,12 +219,10 @@ function IntakeAiPanel({
 }
 
 function IntakeProposalPanel({
-  intake, clientId, sp, serviceLabel, onReady,
+  intake, clientId, onReady,
 }: {
   intake: IntakeDetail;
   clientId: string;
-  sp: Record<string, unknown>;
-  serviceLabel: string;
   onReady?: (doc: { id: string; title: string; data: Record<string, unknown> }) => void;
 }) {
   const [generating, setGenerating] = useState(false);
@@ -309,7 +239,7 @@ function IntakeProposalPanel({
         body: JSON.stringify({
           type: "proposal",
           clientId,
-          engagementSummary: buildEngagementSummary(intake, sp, serviceLabel),
+          engagementSummary: buildIntakeBrief(intake),
           timeline: intake.timeline || undefined,
         }),
       });
@@ -366,21 +296,19 @@ interface Props {
 export function IntakeDetailSheet({ intake, clientId, onClose, onMarkReviewed, marking, onEmailClient, onArchive, archiving, onAnalysisSaved, onProposalReady }: Props) {
   if (!intake) return null;
 
-  const sp = (intake.specifics ?? {}) as Record<string, unknown>;
-  const serviceLabel = SERVICE_LABELS[intake.service_type] ?? intake.service_type;
+  const services = serviceTypesOf(intake);
+  const serviceLabel = services.map((s) => SERVICE_LABELS[s] ?? s).join(" + ");
+  const answerGroups = readAnswerGroups(services, intake.specifics);
 
-  function renderSpecifics() {
-    switch (intake!.service_type) {
-      case "website":     return <WebsiteSpecifics sp={sp} />;
-      case "mobile":      return <MobileSpecifics sp={sp} />;
-      case "erp":         return <ERPSpecifics sp={sp} />;
-      case "design":      return <DesignSpecifics sp={sp} />;
-      case "consultancy": return <ConsultancySpecifics sp={sp} />;
-      case "ai_automation": return <AiAutomationSpecifics sp={sp} />;
-      case "other":       return <OtherSpecifics sp={sp} />;
-      default:            return null;
-    }
-  }
+  const hasBusinessContext = !!(
+    intake.submitter_company || intake.industry || intake.business_summary ||
+    intake.target_audience || intake.online_presence
+  );
+  const hasCommercials = !!(
+    intake.timeline || intake.hard_deadline || intake.budget_range ||
+    intake.budget_confidence || intake.decision_stage
+  );
+  const relevantSops = sopsForServices(services);
 
   return (
     <Sheet open={!!intake} onOpenChange={(v) => !v && onClose()}>
@@ -427,40 +355,99 @@ export function IntakeDetailSheet({ intake, clientId, onClose, onMarkReviewed, m
               <div className="flex items-center gap-2">
                 <User size={12} className="text-muted-foreground" />
                 <span className="text-sm font-medium text-foreground">{intake.submitter_name}</span>
+                {intake.submitter_role && (
+                  <span className="text-[11px] text-muted-foreground">{intake.submitter_role}</span>
+                )}
               </div>
               <div className="flex items-center gap-2">
                 <Mail size={12} className="text-muted-foreground" />
                 <a href={`mailto:${intake.submitter_email}`}
                   className="text-xs text-primary underline">{intake.submitter_email}</a>
               </div>
+              {intake.submitter_phone && (
+                <div className="flex items-center gap-2">
+                  <Phone size={12} className="text-muted-foreground" />
+                  <a href={`tel:${intake.submitter_phone}`}
+                    className="text-xs text-primary underline">{intake.submitter_phone}</a>
+                </div>
+              )}
+              {intake.preferred_contact && (
+                <p className="text-[11px] text-muted-foreground pl-5">
+                  Prefers {optionLabel(PREFERRED_CONTACT_OPTIONS, intake.preferred_contact).toLowerCase()}
+                </p>
+              )}
+              {!!intake.cc_emails?.length && (
+                <div className="flex items-start gap-2 pt-1">
+                  <Users size={12} className="text-muted-foreground mt-0.5 shrink-0" />
+                  <div className="min-w-0">
+                    <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                      Asked us to copy
+                    </p>
+                    <p className="text-xs text-foreground break-all">{intake.cc_emails.join(", ")}</p>
+                  </div>
+                </div>
+              )}
+              {intake.heard_from && (
+                <p className="text-[11px] text-muted-foreground pl-5 pt-0.5">
+                  Found us via {intake.heard_from.toLowerCase()}
+                </p>
+              )}
             </div>
           </Section>
+
+          {/* Business context */}
+          {hasBusinessContext && (
+            <Section title="Their business" icon={Building2}>
+              <div className="space-y-0">
+                <SpecRow label="Business" value={intake.submitter_company ?? ""} />
+                <SpecRow label="Industry" value={intake.industry ?? ""} />
+                <SpecRow label="What they do" value={intake.business_summary ?? ""} multiline />
+                <SpecRow label="Their customers" value={intake.target_audience ?? ""} multiline />
+                <SpecRow label="Online presence" value={intake.online_presence ?? ""} multiline />
+              </div>
+            </Section>
+          )}
 
           {/* Project overview */}
           <Section title="Project overview" icon={Briefcase}>
             <div className="space-y-0">
               <SpecRow label="Description" value={intake.description} multiline />
-              {intake.problem_statement && (
-                <SpecRow label="Problem / challenge" value={intake.problem_statement} multiline />
-              )}
+              <SpecRow label="Problem to solve" value={intake.problem_statement ?? ""} multiline />
+              <SpecRow label="How they will judge success" value={intake.success_criteria ?? ""} multiline />
+              <SpecRow label="References and inspiration" value={intake.reference_links ?? ""} multiline />
             </div>
           </Section>
 
-          {/* Type-specific details */}
-          {Object.keys(sp).length > 0 && (
-            <Section title="Project details" icon={Tag}>
+          {/* Requirements, grouped per service asked for */}
+          {answerGroups.map((group) => (
+            <Section
+              key={group.serviceType}
+              title={services.length > 1 ? `${group.serviceLabel} details` : "Project details"}
+              icon={Tag}
+            >
               <div className="space-y-0">
-                {renderSpecifics()}
+                {group.rows.map((row) => (
+                  <SpecRow
+                    key={row.key}
+                    label={row.label}
+                    value={row.value}
+                    multiline={row.multiline}
+                    link={/^https?:\/\//.test(row.value)}
+                  />
+                ))}
               </div>
             </Section>
-          )}
+          ))}
 
-          {/* Timeline & Budget */}
-          {(intake.timeline || intake.budget_range) && (
+          {/* Timeline, budget and where the decision sits */}
+          {hasCommercials && (
             <Section title="Timeline & budget" icon={Calendar}>
               <div className="space-y-0">
-                {intake.timeline && <SpecRow label="Desired timeline" value={intake.timeline} />}
-                {intake.budget_range && <SpecRow label="Budget range" value={intake.budget_range} />}
+                <SpecRow label="Desired timeline" value={intake.timeline ?? ""} />
+                <SpecRow label="Fixed deadline" value={intake.hard_deadline ?? ""} />
+                <SpecRow label="Budget range" value={intake.budget_range ?? ""} />
+                <SpecRow label="Budget position" value={optionLabel(BUDGET_CONFIDENCE_OPTIONS, intake.budget_confidence)} />
+                <SpecRow label="Decision stage" value={optionLabel(DECISION_STAGE_OPTIONS, intake.decision_stage)} />
               </div>
             </Section>
           )}
@@ -474,6 +461,31 @@ export function IntakeDetailSheet({ intake, clientId, onClose, onMarkReviewed, m
             </Section>
           )}
 
+          {/* The procedures that apply to what this client actually asked
+              for, so the right SOP is one click away at the moment it is
+              relevant rather than something to go hunting for. */}
+          {relevantSops.length > 0 && (
+            <Section title="How we run this" icon={ClipboardList}>
+              <div className="space-y-1.5">
+                {relevantSops.map((sop) => (
+                  <a
+                    key={sop.key}
+                    href={`/api/admin/sops/${sop.key}/view`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-start gap-2 px-2.5 py-2 rounded-sm border border-border hover:border-brand-gold/40 hover:bg-muted/30 transition-colors"
+                  >
+                    <ClipboardList size={12} className="text-brand-gold mt-0.5 shrink-0" />
+                    <div className="min-w-0">
+                      <p className="text-xs font-medium text-foreground leading-snug">{sop.label}</p>
+                      <p className="text-[10px] text-muted-foreground leading-relaxed mt-0.5">{sop.summary}</p>
+                    </div>
+                  </a>
+                ))}
+              </div>
+            </Section>
+          )}
+
           {/* AI analysis & action items */}
           {clientId && (
             <IntakeAiPanel
@@ -484,14 +496,12 @@ export function IntakeDetailSheet({ intake, clientId, onClose, onMarkReviewed, m
             />
           )}
 
-          {/* Generate proposal — always available, not just when AI suggests it */}
+          {/* Generate proposal: always available, not just when AI suggests it */}
           {clientId && (
             <IntakeProposalPanel
               key={`proposal-${intake.id}`}
               intake={intake}
               clientId={clientId}
-              sp={sp}
-              serviceLabel={serviceLabel}
               onReady={(doc) => onProposalReady?.(intake, doc)}
             />
           )}

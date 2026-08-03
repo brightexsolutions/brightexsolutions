@@ -145,7 +145,7 @@ export function BlogList({ posts }: { posts: BlogPost[] }) {
               <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <FadeIn className="mb-6">
                   <span className="text-[11px] font-black uppercase tracking-[0.18em] text-brand-muted">
-                    {activeCategory === "All" ? "Featured Article" : `${activeCategory} — Latest`}
+                    {activeCategory === "All" ? "Featured Article" : `${activeCategory}: Latest`}
                   </span>
                 </FadeIn>
                 <FadeIn>
@@ -280,7 +280,7 @@ export function BlogList({ posts }: { posts: BlogPost[] }) {
               Get new articles in your inbox
             </h2>
             <p className="text-white/45 text-sm mb-8 max-w-sm mx-auto leading-relaxed">
-              Practical insights on web technology, digital strategy, and growing your business — from the Brightex team. No spam, ever.
+              Practical insights on web technology, digital strategy, and growing your business: from the Brightex team. No spam, ever.
             </p>
             <NewsletterForm />
           </FadeIn>

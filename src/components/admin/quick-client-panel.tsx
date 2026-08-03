@@ -5,13 +5,14 @@ import {
   X, Mail, Phone, MessageSquare, Send, AlertCircle,
   FileText, TrendingUp, Clock, CheckCircle2, Loader2,
   ExternalLink, ClipboardList, Copy, ClipboardCheck, Eye,
-  RefreshCw, CheckCircle, Briefcase, ScrollText,
+  RefreshCw, CheckCircle, Briefcase, ScrollText, Download,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { whatsappUrl } from "@/lib/constants";
 import { IntakeDetailSheet, type IntakeDetail, type IntakeAnalysis, SERVICE_LABELS } from "@/components/admin/intake-detail-sheet";
 import { EmailComposer } from "@/components/admin/email-composer";
+import { ClientContactsPanel } from "@/components/admin/client-contacts-panel";
 import { DocumentViewerSheet, type DocumentViewerTarget } from "@/components/admin/document-viewer-sheet";
 
 type Client = {
@@ -67,6 +68,10 @@ type ClientDoc = {
   status: string;
   gated?: boolean | null;
   accepted_at?: string | null;
+  accepted_by_name?: string | null;
+  accepted_by_email?: string | null;
+  first_viewed_at?: string | null;
+  view_count?: number | null;
   created_at: string;
 };
 
@@ -182,7 +187,7 @@ export function QuickClientPanel({
     }
   }
 
-  // Without this, an analysis generated in the panel is lost on reopen — the
+  // Without this, an analysis generated in the panel is lost on reopen: the
   // sheet only ever re-reads the intake list fetched on load, before the
   // analysis existed.
   function onIntakeAnalysisSaved(intakeId: string, analysis: IntakeAnalysis, analyzedAt: string) {
@@ -381,6 +386,11 @@ export function QuickClientPanel({
                 </div>
               </section>
 
+              {/* Who else gets copied on this client's email */}
+              <section className="px-5 py-4">
+                <ClientContactsPanel clientId={client.id} />
+              </section>
+
               {/* Pending actions */}
               {(overdueInvoices.length > 0 || openDeals.length > 0) && (
                 <section className="px-5 py-4">
@@ -406,7 +416,7 @@ export function QuickClientPanel({
                         <TrendingUp size={13} className="text-amber-500 mt-0.5 shrink-0" />
                         <div className="min-w-0">
                           <p className="text-xs font-medium text-amber-700 dark:text-amber-400">
-                            Open deal: {deal.service ?? "—"}
+                            Open deal: {deal.service ?? "-"}
                           </p>
                           <p className="text-[11px] text-amber-500 capitalize">{deal.status}</p>
                         </div>
@@ -648,20 +658,51 @@ export function QuickClientPanel({
                             </div>
                             {doc.accepted_at ? (
                               <span className="shrink-0 flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-emerald-400/10 text-emerald-600">
-                                <CheckCircle2 size={10} />Accepted
+                                <CheckCircle2 size={10} />Signed
+                              </span>
+                            ) : doc.first_viewed_at ? (
+                              <span className="shrink-0 text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-amber-400/10 text-amber-600">
+                                Read, not signed
                               </span>
                             ) : (
                               <span className="shrink-0 text-[10px] font-semibold px-1.5 py-0.5 rounded-full capitalize text-muted-foreground bg-muted">
-                                {doc.status}
+                                {doc.status === "sent" ? "Sent, unopened" : doc.status}
                               </span>
                             )}
                           </div>
+
+                          {/* Signature record: who signed and when, so the
+                              agreement's status is answerable from here
+                              without opening the document. */}
+                          {doc.accepted_at && (
+                            <p className="text-[10px] text-emerald-600/90 leading-relaxed">
+                              Signed by {doc.accepted_by_name ?? "the client"}
+                              {doc.accepted_by_email ? ` (${doc.accepted_by_email})` : ""}
+                              {" on "}
+                              {new Date(doc.accepted_at).toLocaleDateString("en-KE", { day: "numeric", month: "short", year: "numeric" })}
+                            </p>
+                          )}
+                          {!doc.accepted_at && doc.first_viewed_at && (
+                            <p className="text-[10px] text-muted-foreground">
+                              Opened {new Date(doc.first_viewed_at).toLocaleDateString("en-KE", { day: "numeric", month: "short" })}
+                              {doc.view_count && doc.view_count > 1 ? ` · ${doc.view_count} views` : ""}
+                            </p>
+                          )}
+
                           <div className="flex items-center gap-3 pt-0.5">
                             <button
                               onClick={() => viewClientDoc(doc)}
                               className="flex items-center gap-1 text-[10px] text-primary hover:text-primary/80 transition-colors font-medium"
                             >
                               <Eye size={10} />View
+                            </button>
+                            {/* Opens the document with ?print=1, which triggers
+                                the browser's own print-to-PDF pipeline. */}
+                            <button
+                              onClick={() => window.open(`/api/admin/documents/${doc.id}/view?print=1`, "_blank")}
+                              className="flex items-center gap-1 text-[10px] text-muted-foreground hover:text-foreground transition-colors font-medium"
+                            >
+                              <Download size={10} />Download
                             </button>
                             {doc.type !== "sop" && (
                               <button

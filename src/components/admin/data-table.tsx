@@ -108,11 +108,11 @@ interface DataTableProps<T extends Record<string, unknown>> {
   /** Enable client-side search across all string values */
   searchable?: boolean;
   searchPlaceholder?: string;
-  /** Searchable keys — if omitted all string values are searched */
+  /** Searchable keys: if omitted all string values are searched */
   searchKeys?: string[];
   /** Filter chip configs */
   filters?: FilterConfig[];
-  /** Active filter value — one per filter key */
+  /** Active filter value: one per filter key */
   activeFilters?: Record<string, string>;
   onFilterChange?: (key: string, value: string) => void;
   /** Fixed height container height, e.g. "420px" */
@@ -279,7 +279,7 @@ export function DataTable<T extends Record<string, unknown>>({
                     <td key={col.key} className={cn("px-3 sm:px-4 py-2.5 sm:py-3 align-middle", col.className)}>
                       {col.render ? col.render(row) : (
                         <span className="text-sm text-foreground">
-                          {String(row[col.key] ?? "—")}
+                          {String(row[col.key] ?? "-")}
                         </span>
                       )}
                     </td>

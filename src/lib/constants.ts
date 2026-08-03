@@ -1,7 +1,7 @@
 /**
  * Site-wide business constants.
  *
- * SERVER-SIDE values come from environment variables — change in Vercel dashboard.
+ * SERVER-SIDE values come from environment variables: change in Vercel dashboard.
  * CLIENT-SIDE values are exported as plain strings so they can be imported anywhere.
  *
  * Runtime-editable values (phone, email, WhatsApp, tagline, etc.) should use the
@@ -17,10 +17,10 @@ export const SITE_TAGLINE = process.env.NEXT_PUBLIC_SITE_TAGLINE ?? "We build di
 export const BUSINESS_DESCRIPTOR = process.env.NEXT_PUBLIC_BUSINESS_DESCRIPTOR ?? "Technology & Business Consulting";
 export const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://www.brightexsolutions.co.ke";
 
-/** Google Search Console verification token — set GOOGLE_SITE_VERIFICATION in Vercel env vars */
+/** Google Search Console verification token: set GOOGLE_SITE_VERIFICATION in Vercel env vars */
 export const GOOGLE_SITE_VERIFICATION = process.env.GOOGLE_SITE_VERIFICATION ?? "";
 
-/** Display URL without protocol — used in invoices, PDFs, and printed materials */
+/** Display URL without protocol: used in invoices, PDFs, and printed materials */
 export const BUSINESS_WEBSITE = "www.brightexsolutions.co.ke";
 
 // ─── Contact details ─────────────────────────────────────────────────────────

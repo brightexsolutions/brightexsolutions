@@ -51,7 +51,7 @@ export function AnnouncementDialog({ announcement }: { announcement: Announcemen
             onClick={close}
           />
 
-          {/* Card wrapper — decorative rings sit outside the card's overflow clip */}
+          {/* Card wrapper: decorative rings sit outside the card's overflow clip */}
           <motion.div
             initial={{ opacity: 0, scale: 0.88, y: 28 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}

@@ -394,10 +394,10 @@ export default function FinancePage() {
                   <div key={inv.id} className="grid grid-cols-1 sm:grid-cols-[1fr_160px_120px_100px_120px] gap-2 sm:gap-3 px-5 py-3.5 items-center">
                     <div>
                       <p className="text-sm font-semibold text-foreground">{inv.invoice_number}</p>
-                      <p className="text-xs text-muted-foreground">{inv.clients?.name ?? "—"}</p>
+                      <p className="text-xs text-muted-foreground">{inv.clients?.name ?? "-"}</p>
                     </div>
                     <p className="text-sm font-medium text-foreground">{fmt(inv.total)}</p>
-                    <p className="text-xs text-muted-foreground">{inv.due_date ? fmtDate(inv.due_date) : "—"}</p>
+                    <p className="text-xs text-muted-foreground">{inv.due_date ? fmtDate(inv.due_date) : "-"}</p>
                     <span className={cn("inline-block px-2 py-0.5 rounded-full text-[10px] font-semibold capitalize w-fit",
                       INVOICE_STATUS_STYLE[inv.status] ?? "bg-muted text-muted-foreground")}>
                       {inv.status}
@@ -578,7 +578,7 @@ export default function FinancePage() {
             </div>
             <div>
               <p className="text-sm font-semibold text-foreground">Export CSV</p>
-              <p className="text-xs text-muted-foreground">All income and expenses — for accountant or KRA</p>
+              <p className="text-xs text-muted-foreground">All income and expenses: for accountant or KRA</p>
             </div>
           </button>
         </div>

@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback } from "react";
 import {
   FileSignature, Plus, Trash2, Eye, Send, Sparkles, Loader2, ScrollText, Briefcase, ClipboardList,
-  Receipt, FolderOpen, Wallet, Library, CheckCircle2,
+  Receipt, FolderOpen, Wallet, Library, CheckCircle2, Upload,
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { StatCard } from "@/components/admin/stat-card";
@@ -110,6 +110,67 @@ export function DocumentsPageClient() {
   const [emailDoc, setEmailDoc] = useState<{ id: string; title: string; client: ClientOption } | null>(null);
   const [viewerDoc, setViewerDoc] = useState<DocumentViewerTarget | null>(null);
   const [preparingId, setPreparingId] = useState<string | null>(null);
+
+  // Upload of a locally-authored document
+  const [uploadOpen, setUploadOpen] = useState(false);
+  const [uploadForm, setUploadForm] = useState({
+    type: "proposal" as "proposal" | "agreement",
+    title: "",
+    clientId: "",
+    gated: false,
+  });
+  const [uploadHtml, setUploadHtml] = useState("");
+  const [uploadFilename, setUploadFilename] = useState("");
+  const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState("");
+
+  async function readUploadFile(file: File | null | undefined) {
+    if (!file) return;
+    setUploadError("");
+    if (!/\.html?$/i.test(file.name)) {
+      setUploadError("Upload the document as an HTML file. Export from your editor as HTML, or use the Brightex proposal template.");
+      return;
+    }
+    const text = await file.text();
+    setUploadHtml(text);
+    setUploadFilename(file.name);
+    // A sensible default title from the <title> tag, still editable.
+    if (!uploadForm.title) {
+      const match = /<title>([^<]+)<\/title>/i.exec(text);
+      if (match) setUploadForm((f) => ({ ...f, title: match[1].trim() }));
+    }
+  }
+
+  async function handleUpload(e: React.FormEvent) {
+    e.preventDefault();
+    setUploading(true);
+    setUploadError("");
+    try {
+      const res = await fetch("/api/admin/documents/upload", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          type: uploadForm.type,
+          title: uploadForm.title,
+          clientId: uploadForm.clientId || undefined,
+          gated: uploadForm.gated,
+          html: uploadHtml,
+          originalFilename: uploadFilename || undefined,
+        }),
+      });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) { setUploadError(json.error ?? "Upload failed."); return; }
+      setDocuments((prev) => [json.data, ...prev]);
+      setUploadOpen(false);
+      setUploadForm({ type: "proposal", title: "", clientId: "", gated: false });
+      setUploadHtml("");
+      setUploadFilename("");
+    } catch {
+      setUploadError("Network error.");
+    } finally {
+      setUploading(false);
+    }
+  }
 
   function set<K extends keyof typeof defaultForm>(field: K, value: (typeof defaultForm)[K]) {
     setForm((current) => ({ ...current, [field]: value }));
@@ -251,14 +312,36 @@ export function DocumentsPageClient() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="font-display text-2xl font-bold text-foreground">Documents</h1>
-          <p className="text-sm text-muted-foreground mt-1">AI-assisted proposals, agreements, and internal SOPs — plus a hub for every document the system holds.</p>
+          <p className="text-sm text-muted-foreground mt-1">Proposals, agreements, and internal SOPs, drafted with AI or uploaded, plus a hub for every document the system holds.</p>
         </div>
         {tab === "generated" && (
-          <button onClick={openCreate} className="inline-flex items-center gap-2 px-4 py-2.5 rounded-sm bg-brand-gold text-brand-navy font-semibold text-sm hover:bg-brand-gold-hover transition-colors">
-            <Sparkles size={15} />Generate Document
-          </button>
+          <div className="flex items-center gap-2">
+            {/* Uploading a finished document is an equal path to generating
+                one, not a fallback: bespoke engagements should not be forced
+                through a generator that flattens their structure. */}
+            <button onClick={() => setUploadOpen(true)} className="inline-flex items-center gap-2 px-4 py-2.5 rounded-sm border border-border text-foreground font-semibold text-sm hover:bg-muted transition-colors">
+              <Upload size={15} />Upload
+            </button>
+            <button onClick={openCreate} className="inline-flex items-center gap-2 px-4 py-2.5 rounded-sm bg-brand-gold text-brand-navy font-semibold text-sm hover:bg-brand-gold-hover transition-colors">
+              <Sparkles size={15} />Generate Document
+            </button>
+          </div>
         )}
       </div>
+
+      {tab === "generated" && (
+        <div className="flex items-start gap-2.5 px-3.5 py-2.5 rounded-sm border border-dashed border-border bg-muted/20">
+          <ClipboardList size={13} className="text-brand-gold mt-0.5 shrink-0" />
+          <p className="text-xs text-muted-foreground leading-relaxed">
+            Not sure whether this enquiry has earned a proposal yet? Read{" "}
+            <a href="/api/admin/sops/proposal-policy/view" target="_blank" rel="noopener noreferrer"
+              className="text-primary underline font-medium">When to Send a Proposal</a>
+            {" "}before drafting. Agreements follow{" "}
+            <a href="/api/admin/sops/agreement-signing/view" target="_blank" rel="noopener noreferrer"
+              className="text-primary underline font-medium">Working Agreement and Sign-off</a>.
+          </p>
+        </div>
+      )}
 
       <div className="flex border-b border-border">
         {([
@@ -295,7 +378,7 @@ export function DocumentsPageClient() {
           <div className="min-w-0">
             <p className="text-sm font-semibold text-foreground">Brightex Standard Operating Procedure</p>
             <p className="text-xs text-muted-foreground truncate">
-              The default, always-current process — same four stages promised on the public &quot;How We Work&quot; page.
+              The default, always-current process: same four stages promised on the public &quot;How We Work&quot; page.
             </p>
           </div>
         </div>
@@ -486,12 +569,96 @@ export function DocumentsPageClient() {
       <div className="flex items-start gap-2 p-3 rounded-sm border border-dashed border-border bg-muted/10">
         <Wallet size={14} className="text-muted-foreground shrink-0 mt-0.5" />
         <p className="text-xs text-muted-foreground">
-          The hub is read-only — invoices, receipts, and uploaded files are managed from their own pages
+          The hub is read-only: invoices, receipts, and uploaded files are managed from their own pages
           (Invoices, Payments, Projects, Finance). Only AI-generated documents live under &quot;My Documents&quot;.
         </p>
       </div>
       </>
       )}
+
+      {/* Upload a locally-authored document */}
+      <Dialog open={uploadOpen} onOpenChange={setUploadOpen}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Upload a finished document</DialogTitle>
+          </DialogHeader>
+          <form onSubmit={handleUpload} className="space-y-4 mt-2">
+            <p className="text-xs text-muted-foreground leading-relaxed">
+              For engagements that do not fit the standard shape. The uploaded document gets its own reference code,
+              public link, gating and digital signing, exactly like a generated one.
+            </p>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-1.5">
+                <Label>Type</Label>
+                <Select value={uploadForm.type} onValueChange={(v) => v && setUploadForm((f) => ({ ...f, type: v as "proposal" | "agreement" }))}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="proposal">Proposal</SelectItem>
+                    <SelectItem value="agreement">Agreement</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1.5">
+                <Label>Client</Label>
+                <Select value={uploadForm.clientId} onValueChange={(v) => v && setUploadForm((f) => ({ ...f, clientId: v }))}>
+                  <SelectTrigger><SelectValue placeholder="Select a client" /></SelectTrigger>
+                  <SelectContent>
+                    {clients.map((c) => (
+                      <SelectItem key={c.id} value={c.id}>{c.company || c.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div className="space-y-1.5">
+              <Label>Title *</Label>
+              <input
+                value={uploadForm.title}
+                onChange={(e) => setUploadForm((f) => ({ ...f, title: e.target.value }))}
+                required
+                placeholder="e.g. Magic Movers Website Redesign Proposal"
+                className="w-full px-3 py-2 rounded-sm border border-input bg-background text-sm focus:outline-none focus:ring-1 focus:ring-ring"
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <Label>Document file *</Label>
+              <label className="flex items-center gap-2 px-3 py-2.5 rounded-sm border border-dashed border-border cursor-pointer hover:border-foreground/40 transition-colors">
+                <Upload size={14} className="text-muted-foreground shrink-0" />
+                <span className="text-sm text-muted-foreground truncate">
+                  {uploadFilename || "Choose an HTML file"}
+                </span>
+                <input type="file" accept=".html,.htm" className="hidden"
+                  onChange={(e) => readUploadFile(e.target.files?.[0])} />
+              </label>
+              <p className="text-[11px] text-muted-foreground">
+                HTML only, under 2MB. Scripts are stripped before the document is served.
+              </p>
+            </div>
+
+            <label className="flex items-start gap-2 cursor-pointer">
+              <input type="checkbox" checked={uploadForm.gated}
+                onChange={(e) => setUploadForm((f) => ({ ...f, gated: e.target.checked }))}
+                className="mt-0.5 accent-brand-gold" />
+              <span className="text-xs text-muted-foreground leading-relaxed">
+                Gate the public link until the walkthrough call has happened.
+              </span>
+            </label>
+
+            {uploadError && <p className="text-sm text-red-500">{uploadError}</p>}
+
+            <div className="flex justify-end gap-3 pt-2">
+              <Button type="button" variant="outline" onClick={() => setUploadOpen(false)}>Cancel</Button>
+              <Button type="submit" disabled={uploading || !uploadForm.title || !uploadHtml}
+                className="bg-brand-gold text-brand-navy hover:bg-brand-gold-hover">
+                {uploading ? "Uploading..." : "Upload document"}
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="max-w-lg">
@@ -519,12 +686,12 @@ export function DocumentsPageClient() {
                     <SelectValue placeholder="Select client…">
                       {(id: string) => {
                         const c = clients.find((x) => x.id === id);
-                        return c ? (c.company ? `${c.name} — ${c.company}` : c.name) : "Select client…";
+                        return c ? (c.company ? `${c.name}: ${c.company}` : c.name) : "Select client…";
                       }}
                     </SelectValue>
                   </SelectTrigger>
                   <SelectContent>
-                    {clients.map((c) => <SelectItem key={c.id} value={c.id}>{c.company ? `${c.name} — ${c.company}` : c.name}</SelectItem>)}
+                    {clients.map((c) => <SelectItem key={c.id} value={c.id}>{c.company ? `${c.name}: ${c.company}` : c.name}</SelectItem>)}
                   </SelectContent>
                 </Select>
               </div>
@@ -587,7 +754,7 @@ export function DocumentsPageClient() {
                     onChange={(e) => set("depositPercent", e.target.value)}
                     className="w-24 h-9 px-3 rounded-md border border-input bg-background text-sm focus:outline-none focus:ring-1 focus:ring-ring"
                   />
-                  <span className="text-sm text-muted-foreground">% upfront, balance on delivery — adjust per client&apos;s agreed plan.</span>
+                  <span className="text-sm text-muted-foreground">% upfront, balance on delivery: adjust per client&apos;s agreed plan.</span>
                 </div>
               </div>
             )}
@@ -603,8 +770,8 @@ export function DocumentsPageClient() {
                 <span className="text-sm text-foreground">
                   Show a summary first
                   <span className="block text-xs text-muted-foreground font-normal">
-                    The client sees the full write-up, deliverables, timeline, and total price — but not the itemised
-                    breakdown — until you open it up after your call with them. Toggle this per document; most don&apos;t need it.
+                    The client sees the full write-up, deliverables, timeline, and total price: but not the itemised
+                    breakdown: until you open it up after your call with them. Toggle this per document; most don&apos;t need it.
                   </span>
                 </span>
               </label>
@@ -612,7 +779,7 @@ export function DocumentsPageClient() {
 
             {form.type === "agreement" && (
               <p className="text-xs text-muted-foreground">
-                Legal clauses (IP, confidentiality, termination, liability, governing law) are fixed standard text — only
+                Legal clauses (IP, confidentiality, termination, liability, governing law) are fixed standard text: only
                 scope and fees are AI-drafted. Have this reviewed before it&apos;s treated as binding.
               </p>
             )}

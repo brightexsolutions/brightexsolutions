@@ -14,6 +14,7 @@ import {
   emailSignoff,
 } from "@/lib/email-templates";
 import { generateInvoicePdf, type InvoicePaymentSettings } from "@/lib/invoice-pdf-helper";
+import { resolveCc } from "@/lib/cc-recipients";
 
 type PaymentSettings = Record<string, string>;
 
@@ -106,7 +107,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   const firstName = client.name.split(" ")[0];
   const dueDateLabel = invoice.due_date
     ? new Date(invoice.due_date).toLocaleDateString("en-KE", { day: "2-digit", month: "long", year: "numeric" })
-    : "—";
+    : "-";
 
   const paidAmount = (payments ?? []).reduce((s: number, p: { amount: unknown }) => s + Number(p.amount), 0);
   const balance = Number(invoice.total) - paidAmount;
@@ -134,7 +135,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     heroTitle: `A gentle reminder,\n${firstName}.`,
     body:
       emailAlert(overdueText, daysOverdue > 0 ? "warning" : "info") +
-      emailInfoCard("📄", "Invoice Number", invoice.invoice_number ?? "—") +
+      emailInfoCard("📄", "Invoice Number", invoice.invoice_number ?? "-") +
       ((invoice.projects as { name?: string } | null)?.name
         ? emailInfoCard("📁", "Project", (invoice.projects as { name: string }).name)
         : "") +
@@ -143,7 +144,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
           emailInfoCard("✅", "Amount Paid So Far", fmtKES(paidAmount))
         : emailInfoCard("💰", "Amount Due", fmtKES(Number(invoice.total)))) +
       emailInfoCard("📅", "Due Date", dueDateLabel) +
-      emailReferenceBox(invoice.invoice_number ?? "—", "Invoice Reference") +
+      emailReferenceBox(invoice.invoice_number ?? "-", "Invoice Reference") +
       buildPaymentDetailsBlock(ps) +
       emailDivider() +
       emailParagraph(
@@ -159,7 +160,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       invoice as Record<string, unknown>,
       ps as InvoicePaymentSettings
     );
-  } catch { /* silent — email still sends without attachment */ }
+  } catch { /* silent: email still sends without attachment */ }
 
   const filename = `invoice-${invoice.invoice_number ?? invoice.id}.pdf`;
 
@@ -167,6 +168,11 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     await transporter.sendMail({
       from: SENDERS.payments,
       to: client.email,
+      cc: await resolveCc({
+        clientId: invoice.client_id as string | null,
+        scope: "invoices",
+        to: client.email,
+      }),
       subject: hasPartial
         ? `Balance Reminder: Invoice ${invoice.invoice_number} (${fmtKES(balance)} outstanding)`
         : `Payment Reminder: Invoice ${invoice.invoice_number}`,

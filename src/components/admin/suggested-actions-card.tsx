@@ -105,7 +105,7 @@ export function SuggestedActionsCard({ onDraft }: { onDraft?: (action: Suggested
                     type="button"
                     onClick={() => handleDraft(a)}
                     disabled={drafting === a.id}
-                    title="Have AI draft an email for this — you'll review before it sends"
+                    title="Have AI draft an email for this: you'll review before it sends"
                     className="shrink-0 flex items-center gap-1 text-[10px] font-medium text-brand-gold hover:text-brand-gold-hover border border-brand-gold/30 rounded-sm px-2 py-1 hover:bg-brand-gold/10 transition-colors disabled:opacity-50"
                   >
                     {drafting === a.id ? <Loader2 size={10} className="animate-spin" /> : <FileEdit size={10} />}

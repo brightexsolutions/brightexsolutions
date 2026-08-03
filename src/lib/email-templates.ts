@@ -70,7 +70,7 @@ export function emailInfoCard(icon: string, label: string, value: string): strin
     </table>`;
 }
 
-/** Prominent reference/number box — like Greenhouse's ticket reference. */
+/** Prominent reference/number box: like Greenhouse's ticket reference. */
 export function emailReferenceBox(ref: string, label = "Reference"): string {
   return `
     <div style="background:#fafaf7;border:1px solid #e5ddc8;border-radius:10px;
@@ -98,7 +98,7 @@ export function emailAlert(message: string, type: "success" | "warning" | "error
     </div>`;
 }
 
-/** CTA button — full width on mobile via MSO fallback. */
+/** CTA button: full width on mobile via MSO fallback. */
 export function emailButton(text: string, href: string, variant: "primary" | "secondary" = "primary"): string {
   const bg    = variant === "primary" ? NAVY : GOLD;
   const color = variant === "primary" ? "#ffffff" : NAVY;
@@ -129,7 +129,7 @@ export function emailParagraph(html: string): string {
 }
 
 /** Escapes HTML special characters. Use before interpolating user-typed text
- * into an email — otherwise a client's own plain-text input becomes live
+ * into an email: otherwise a client's own plain-text input becomes live
  * markup in the outgoing email. */
 export function escapeHtml(text: string): string {
   return text
@@ -211,7 +211,9 @@ export function emailSectionLabel(text: string): string {
 
 /** Standard sign-off line. */
 export function emailSignoff(): string {
-  return `<p style="color:${MUTED};font-size:14px;margin:28px 0 0">— The ${SITE_NAME} Team</p>`;
+  return `<p style="color:${MUTED};font-size:14px;margin:28px 0 0;line-height:1.6">
+    Best regards,<br>The ${SITE_NAME} Team
+  </p>`;
 }
 
 // ─── Master wrapper ────────────────────────────────────────────────────────────

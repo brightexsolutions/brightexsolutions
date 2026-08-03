@@ -38,7 +38,7 @@ export function AnnouncementBanner({ announcement }: Props) {
       <span className="font-semibold">{announcement.title}</span>
       {announcement.body && (
         <span className="hidden sm:inline text-brand-navy/80">
-          — {announcement.body}
+         : {announcement.body}
         </span>
       )}
       {announcement.cta_label && announcement.cta_url && (

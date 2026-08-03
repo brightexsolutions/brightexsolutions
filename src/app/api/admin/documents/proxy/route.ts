@@ -25,7 +25,7 @@ export async function GET(request: NextRequest) {
   const supabase = createAdminClient();
   const { data: signed, error } = await supabase.storage
     .from(bucket)
-    .createSignedUrl(path, 60); // 60-second TTL — only used for this one fetch
+    .createSignedUrl(path, 60); // 60-second TTL: only used for this one fetch
 
   if (error || !signed?.signedUrl) {
     return NextResponse.json({ error: "Document not found" }, { status: 404 });

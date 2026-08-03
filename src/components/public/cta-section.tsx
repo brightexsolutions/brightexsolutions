@@ -5,7 +5,7 @@ import { FadeIn } from "./fade-in";
 export function CtaSection() {
   return (
     <section className="relative pt-16 pb-0 bg-brand-bg dark:bg-brand-navy-dark">
-      {/* Floating cinematic card — negative bottom margin overlaps into footer */}
+      {/* Floating cinematic card: negative bottom margin overlaps into footer */}
       <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 -mb-12">
         <FadeIn>
           <div className="relative rounded-lg overflow-hidden shadow-[0_32px_80px_-12px_rgba(15,25,45,0.6)]">

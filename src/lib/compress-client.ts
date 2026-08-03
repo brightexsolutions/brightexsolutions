@@ -1,4 +1,4 @@
-// Browser-side counterpart to src/lib/compress.ts — sharp only runs server
+// Browser-side counterpart to src/lib/compress.ts: sharp only runs server
 // side, so large images (a phone photo can be 8-12MB) need shrinking here
 // too, before they're base64-encoded into a JSON request body. Server-side
 // compressFile() still runs afterwards as the source of truth; this just

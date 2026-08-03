@@ -12,7 +12,7 @@ function fmtDate(d: string): string {
   return new Date(d).toLocaleDateString("en-KE", { day: "2-digit", month: "long", year: "numeric" });
 }
 
-// Fixed legal clauses — never AI-generated, edit here only after legal review.
+// Fixed legal clauses: never AI-generated, edit here only after legal review.
 const CLAUSES = {
   ip: "Upon receipt of full payment, all custom deliverables produced specifically for the Client under this Agreement (source code, designs, and content created by Brightex Solutions for this project) transfer to the Client. Brightex Solutions retains the right to use pre-existing tools, frameworks, libraries, and general know-how, and may reference the completed project in its own portfolio unless the Client requests otherwise in writing.",
   confidentiality: "Both parties agree to keep confidential any non-public business, technical, or financial information disclosed during the course of this engagement, and to use such information solely for the purposes of this Agreement. This obligation survives the completion or termination of this Agreement.",
@@ -22,8 +22,23 @@ const CLAUSES = {
   governingLaw: "This Agreement is governed by and construed in accordance with the laws of the Republic of Kenya. Any dispute arising from this Agreement will first be addressed through good-faith negotiation between the parties before pursuing formal legal action.",
 };
 
-export function renderAgreementHtml(data: AgreementData, opts?: { documentId?: string; acceptedAt?: string | null; allowPublicAccept?: boolean }): string {
+export function renderAgreementHtml(
+  data: AgreementData,
+  opts?: {
+    documentId?: string;
+    acceptedAt?: string | null;
+    allowPublicAccept?: boolean;
+    /** Admin view. Never gates the download: Godwin needs the file at any
+     * stage, including to review a draft before it is sent. */
+    internal?: boolean;
+  }
+): string {
   const clientLabel = data.client.company?.trim() || data.client.name;
+
+  // On the client-facing link the PDF is released by signing. An unsigned
+  // draft downloaded and forwarded looks indistinguishable from an executed
+  // agreement, which is exactly the confusion worth preventing.
+  const downloadLocked = !opts?.internal && !opts?.acceptedAt;
 
   const sections: string[] = [];
   let n = 1;
@@ -81,12 +96,12 @@ export function renderAgreementHtml(data: AgreementData, opts?: { documentId?: s
     ${opts?.acceptedAt
       ? acceptedBox(clientLabel, opts.acceptedAt)
       : opts?.allowPublicAccept && opts?.documentId
-        ? acceptButton(opts.documentId)
+        ? acceptButton(opts.documentId, { clientName: data.client.name, clientEmail: data.client.email })
         : signatureBlock(SITE_NAME, clientLabel)}
   </section>`);
 
   return documentShell({
-    title: `${data.project_title} — Services Agreement ${data.agreement_number}`,
+    title: `${data.project_title}: Services Agreement ${data.agreement_number}`,
     dlBarLabel: `SERVICES AGREEMENT · ${clientLabel.toUpperCase()}`,
     coverTag: "Services Agreement",
     coverTitleLines: splitTitleForCover(data.project_title),
@@ -98,6 +113,8 @@ export function renderAgreementHtml(data: AgreementData, opts?: { documentId?: s
       { label: "Timeline", value: data.timeline },
     ],
     badges: [{ label: "Total Fees", value: fmt(data.total_fees) }],
+    dlLocked: downloadLocked,
+    dlLockedReason: "Sign the agreement below to unlock the PDF copy",
     confidentialFor: clientLabel,
     tocItems: [
       { num: "01", label: "Parties" },
@@ -116,7 +133,7 @@ export function renderAgreementHtml(data: AgreementData, opts?: { documentId?: s
 }
 
 /**
- * Gated preview — see renderProposalTeaserHtml for the reasoning. Shows the
+ * Gated preview: see renderProposalTeaserHtml for the reasoning. Shows the
  * real scope and total fees (trust through specificity, price anchoring)
  * but withholds the payment milestone breakdown and every legal clause,
  * released after the walkthrough call.
@@ -162,7 +179,7 @@ export function renderAgreementTeaserHtml(data: AgreementData): string {
   tocLabels.push("Fees & Payment Schedule");
 
   return documentShell({
-    title: `${data.project_title} — Services Agreement ${data.agreement_number}`,
+    title: `${data.project_title}: Services Agreement ${data.agreement_number}`,
     dlBarLabel: `SERVICES AGREEMENT · ${clientLabel.toUpperCase()}`,
     coverTag: "Services Agreement",
     coverTitleLines: splitTitleForCover(data.project_title),

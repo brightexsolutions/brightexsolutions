@@ -15,12 +15,24 @@ export interface AuditParams {
 export async function logAction(params: AuditParams): Promise<void> {
   try {
     const supabase = createAdminClient();
-    await supabase.from("activity_log").insert({
+    const { error } = await supabase.from("activity_log").insert({
       source: "user",
       ...params,
     });
-  } catch {
-    // Never let audit logging block the main operation
+
+    // Supabase returns { error } rather than throwing, so without this check a
+    // rejected insert looks exactly like a successful one. That is precisely
+    // how a missing `source` column silently discarded a month of audit
+    // history: the writes failed, nothing was logged about the logging, and
+    // the gap only showed up when someone went looking for a record.
+    //
+    // Audit logging still must never block the operation it is recording, so
+    // this reports and returns rather than throwing.
+    if (error) {
+      console.error("[audit] Failed to record action:", params.action, error.message);
+    }
+  } catch (err) {
+    console.error("[audit] Unexpected failure recording action:", params.action, err);
   }
 }
 

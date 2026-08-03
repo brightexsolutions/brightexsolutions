@@ -31,7 +31,7 @@ export async function GET(request: NextRequest) {
   for (const invoice of staleInvoices) {
     const client = invoice.clients as { name?: string } | null;
 
-    // Deduplicate — only create alert if none exists for this invoice
+    // Deduplicate: only create alert if none exists for this invoice
     const { count } = await supabase
       .from("system_alerts")
       .select("*", { count: "exact", head: true })
@@ -46,7 +46,7 @@ export async function GET(request: NextRequest) {
       await supabase.from("system_alerts").insert({
         type: "stale_invoice",
         severity: daysStale >= 14 ? "warning" : "info",
-        message: `Invoice ${invoice.invoice_number ?? invoice.id} for ${client?.name ?? "unknown client"} has been in draft for ${daysStale} day${daysStale !== 1 ? "s" : ""} — KES ${Number(invoice.total).toLocaleString("en-KE")}`,
+        message: `Invoice ${invoice.invoice_number ?? invoice.id} for ${client?.name ?? "unknown client"} has been in draft for ${daysStale} day${daysStale !== 1 ? "s" : ""}: KES ${Number(invoice.total).toLocaleString("en-KE")}`,
         entity_id: invoice.id,
         entity_type: "invoice",
       });

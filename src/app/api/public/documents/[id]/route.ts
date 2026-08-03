@@ -8,10 +8,10 @@ import type { AgreementData } from "@/lib/document-types";
 
 type Params = { params: Promise<{ id: string }> };
 
-/** Public, unauthenticated document view — the link sent to clients.
+/** Public, unauthenticated document view: the link sent to clients.
  * The document's own uuid is the access token (unguessable, same security
  * posture as this app's other bare-uuid share links). SOPs are internal and
- * deliberately excluded — never reachable through this public route. */
+ * deliberately excluded: never reachable through this public route. */
 export async function GET(request: NextRequest, { params }: Params) {
   const limited = await rateLimit(request, "public");
   if (limited) return limited;
@@ -38,6 +38,23 @@ export async function GET(request: NextRequest, { params }: Params) {
   } else {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
+
+  // Read receipts: "sent but never opened" and "read and ignored" call for
+  // completely different follow-ups. Fire and forget, and never let a
+  // tracking failure block the document itself.
+  void supabase
+    .from("generated_documents")
+    .update({
+      first_viewed_at: doc.first_viewed_at ?? new Date().toISOString(),
+      view_count: (doc.view_count ?? 0) + 1,
+    })
+    .eq("id", id)
+    .then(({ error: trackError }) => {
+      // Columns need migration 034.
+      if (trackError && !/column|schema cache/i.test(trackError.message)) {
+        console.error("[public-document-view] tracking:", trackError.message);
+      }
+    });
 
   return new NextResponse(html, {
     status: 200,

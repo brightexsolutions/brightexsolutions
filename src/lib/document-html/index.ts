@@ -1,21 +1,21 @@
 /**
- * Brightex document HTML system — matches the brightex-proposals skill and
+ * Brightex document HTML system: matches the brightex-proposals skill and
  * its reference implementation exactly (projects/magic-movers/proposal/
  * brightex_magic-movers_proposal_2026-07.html): cover, table of contents,
  * numbered sections, KPI rows, feature cards, investment tables, timeline,
  * retainer tiers, steps, and a navy/orange footer. Same CSS class names, so
  * any document generated through this file looks exactly like that
- * reference — not an approximation of it.
+ * reference: not an approximation of it.
  *
  * Every document is a single self-contained HTML page. It IS the artifact:
  * viewed directly (in an iframe or a new tab) or turned into a PDF via the
  * browser's own print dialog (the "Download PDF" button just calls
- * window.print() — no separate server-side PDF pipeline, same as the
+ * window.print(): no separate server-side PDF pipeline, same as the
  * reference proposal).
  */
 import { SITE_NAME, BUSINESS_WEBSITE, BUSINESS_EMAIL, BUSINESS_PHONE } from "@/lib/constants";
 
-// ─── Shared CSS — copied 1:1 from the reference implementation ───────────────
+// ─── Shared CSS: copied 1:1 from the reference implementation ───────────────
 const DOCUMENT_CSS = `
   :root{
     --navy:#0d1f4e; --navy-mid:#1a3066; --navy-light:#e8edf8;
@@ -88,7 +88,7 @@ const DOCUMENT_CSS = `
   .fcard h4{font-family:var(--font);color:var(--navy);font-size:16px;margin:0 0 8px}
   .arrow-list{list-style:none;padding:0;margin:0}
   .arrow-list li{position:relative;padding-left:20px;margin-bottom:7px;font-size:13.5px;color:var(--gray-600)}
-  .arrow-list li::before{content:"→";position:absolute;left:0;color:var(--orange);font-weight:700}
+  .arrow-list li:before{content:"→";position:absolute;left:0;color:var(--orange);font-weight:700}
   .arrow-list li strong{color:var(--navy)}
 
   table{width:100%;border-collapse:collapse;margin-top:16px;font-size:14px}
@@ -119,7 +119,7 @@ const DOCUMENT_CSS = `
   .tier .body{padding:16px;display:flex;flex-direction:column;flex:1}
   .tier .body ul{list-style:none;padding:0;margin:0 0 14px}
   .tier .body li{position:relative;padding-left:20px;margin-bottom:7px;font-size:13px;color:var(--gray-600)}
-  .tier .body li::before{content:"✓";position:absolute;left:0;color:var(--orange);font-weight:700}
+  .tier .body li:before{content:"✓";position:absolute;left:0;color:var(--orange);font-weight:700}
   .tier .price{margin-top:auto;font-family:var(--font);font-size:20px;font-weight:700;color:var(--navy)}
   .tier .price span{font-size:12px;color:var(--gray-600);font-weight:400}
 
@@ -142,7 +142,7 @@ const DOCUMENT_CSS = `
   .scope3 .col.out h5{color:#b23b3b}
   .scope3 ul{list-style:none;padding:0;margin:0}
   .scope3 li{font-size:12px;color:var(--gray-600);margin-bottom:6px;padding-left:14px;position:relative;line-height:1.45}
-  .scope3 li::before{content:"·";position:absolute;left:2px;color:var(--orange);font-weight:700}
+  .scope3 li:before{content:"·";position:absolute;left:2px;color:var(--orange);font-weight:700}
   .scope-label{font-family:var(--sans);font-size:10px;letter-spacing:.14em;text-transform:uppercase;
     color:var(--gray-600);margin:22px 0 0}
   @media(max-width:720px){.scope3{grid-template-columns:1fr}}
@@ -157,7 +157,7 @@ const DOCUMENT_CSS = `
   .tier .body{padding:16px;display:flex;flex-direction:column;flex:1}
   .tier .body ul{list-style:none;padding:0;margin:0 0 14px}
   .tier .body li{position:relative;padding-left:20px;margin-bottom:7px;font-size:13px;color:var(--gray-600)}
-  .tier .body li::before{content:"✓";position:absolute;left:0;color:var(--orange);font-weight:700}
+  .tier .body li:before{content:"✓";position:absolute;left:0;color:var(--orange);font-weight:700}
   .tier .price{margin-top:auto;font-family:var(--font);font-size:20px;font-weight:700;color:var(--navy)}
   .tier .price span{font-size:12px;color:var(--gray-600);font-weight:400}
   @media(max-width:720px){.tiers{grid-template-columns:1fr}}
@@ -174,7 +174,7 @@ const DOCUMENT_CSS = `
   .gate-fade{position:relative;max-height:190px;overflow:hidden;border:1px solid var(--gray-200);
     border-bottom:none;border-radius:8px 8px 0 0}
   .gate-fade-content{filter:blur(5px);-webkit-filter:blur(5px);user-select:none;-webkit-user-select:none;pointer-events:none}
-  .gate-fade::after{content:"";position:absolute;inset:0;
+  .gate-fade:after{content:"";position:absolute;inset:0;
     background:linear-gradient(180deg,rgba(255,255,255,0) 0%,rgba(255,255,255,.75) 60%,#fff 100%)}
   .gate-card{border:1px solid var(--gray-200);border-top:none;border-radius:0 0 8px 8px;
     background:var(--gray-50);text-align:center;padding:8px 32px 32px}
@@ -202,6 +202,24 @@ const DOCUMENT_CSS = `
     display:flex;align-items:center;justify-content:center;font-size:17px}
   .accepted-box h4{font-family:var(--font);color:#155d28;font-size:15px;margin:0 0 3px}
   .accepted-box p{color:#2f6b3f;font-size:12.5px;margin:0}
+
+  /* Read gate and signature capture */
+  .accept-progress{height:4px;border-radius:2px;background:rgba(255,255,255,.14);margin:0 auto 18px;max-width:32rem;overflow:hidden}
+  .accept-progress span{display:block;height:100%;width:0;background:var(--orange);transition:width .25s ease}
+  .accept-gate{color:rgba(255,255,255,.6);font-size:12.5px;margin:0 auto 18px;max-width:32rem}
+  .accept-fields{max-width:26rem;margin:0 auto 18px;text-align:left}
+  .accept-fields label{display:block;color:rgba(255,255,255,.72);font-size:11.5px;font-weight:700;
+    text-transform:uppercase;letter-spacing:.06em;margin:0 0 5px}
+  .accept-fields input[type=text],.accept-fields input[type=email]{width:100%;box-sizing:border-box;padding:11px 13px;
+    border-radius:6px;border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.06);
+    color:#fff;font-size:14px;font-family:var(--sans);margin:0 0 14px}
+  .accept-fields input::placeholder{color:rgba(255,255,255,.35)}
+  .accept-fields input:focus{outline:none;border-color:var(--orange)}
+  .accept-check{display:flex;align-items:flex-start;gap:9px;cursor:pointer;margin:0 0 4px}
+  .accept-check input{margin-top:3px;flex:none;width:15px;height:15px;accent-color:var(--orange)}
+  .accept-check span{color:rgba(255,255,255,.78);font-size:12.5px;line-height:1.6;text-transform:none;
+    letter-spacing:0;font-weight:400}
+  .accept-legal{color:rgba(255,255,255,.42);font-size:11.5px;line-height:1.6;margin:16px auto 0;max-width:32rem}
 
   .resp-table thead th:first-child{width:160px}
   .clause p{font-size:14px;color:var(--gray-600);line-height:1.75}
@@ -248,7 +266,7 @@ const LOGO_SVG_LIGHT = `<svg viewBox="0 0 220 65" width="190" xmlns="http://www.
 </svg>`;
 
 /** Padlock icon (stroke = currentColor, so it picks up the surrounding
- * text color) — used on gated documents instead of a 🔒 emoji, which
+ * text color): used on gated documents instead of a 🔒 emoji, which
  * renders inconsistently across mail clients and platforms. */
 function lockIconSvg(size: number): string {
   return `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>`;
@@ -256,7 +274,7 @@ function lockIconSvg(size: number): string {
 
 /** Escapes for safe HTML interpolation. Accepts unknown, not just string:
  * AI JSON output isn't guaranteed to match the requested shape exactly (a
- * field can come back as a number, an array, or missing) — coercing here
+ * field can come back as a number, an array, or missing): coercing here
  * means one AI hiccup produces an odd-looking line instead of a crashed
  * document generation. */
 export function esc(text: unknown): string {
@@ -267,14 +285,14 @@ export function esc(text: unknown): string {
 }
 
 /** Escaped body-copy paragraph for legal/procedural clause text (AI-drafted
- * or fixed) — every AI-sourced string reaching an HTML document must go
+ * or fixed): every AI-sourced string reaching an HTML document must go
  * through esc() before interpolation, never inserted raw. */
 export function clauseParagraph(text: string): string {
   return `<div class="clause"><p>${esc(text)}</p></div>`;
 }
 
 /** Splits a title into [normal-weight line, bold line] for the cover, always
- * on a word boundary — a plain char-count split can cut mid-word (e.g.
+ * on a word boundary: a plain char-count split can cut mid-word (e.g.
  * "Servic" / "e Showcase"). The bold line is the last 1-3 words for
  * emphasis, unless the title is short enough to fit on one line already. */
 export function splitTitleForCover(title: string): [string, string] {
@@ -297,10 +315,14 @@ export interface DocShellOptions {
   confidentialFor?: string | null;
   tocItems: { num: string; label: string }[];
   bodyHtml: string;
-  /** Disables the "Download PDF" button — used on gated teasers, where a
+  /** Disables the "Download PDF" button. Used on gated teasers, where a
    * downloadable copy would let the full (blurred-but-present) content be
-   * captured regardless of the visual gate. */
+   * captured regardless of the visual gate, and on unsigned agreements,
+   * where a downloadable copy could circulate as if it were executed. */
   dlLocked?: boolean;
+  /** Tooltip explaining why the download is locked, so the client knows what
+   * unlocks it rather than just finding a dead button. */
+  dlLockedReason?: string;
 }
 
 export function documentShell(opts: DocShellOptions): string {
@@ -322,8 +344,8 @@ export function documentShell(opts: DocShellOptions): string {
 <div class="dl-bar">
   <span>${esc(opts.dlBarLabel)}</span>
   ${opts.dlLocked
-    ? `<button class="dl-btn dl-btn-locked" disabled title="Available after your walkthrough call">${lockIconSvg(13)} Download PDF</button>`
-    : `<button class="dl-btn" onclick="window.print()">Download PDF</button>`}
+    ? `<button class="dl-btn dl-btn-locked" id="dlBtn" disabled title="${esc(opts.dlLockedReason ?? "Available after your walkthrough call")}">${lockIconSvg(13)} Download PDF</button>`
+    : `<button class="dl-btn" id="dlBtn" onclick="window.print()">Download PDF</button>`}
 </div>
 
 <div class="doc-wrap">
@@ -340,7 +362,7 @@ export function documentShell(opts: DocShellOptions): string {
         ${opts.metaFields.map((f) => `<div><div class="lbl">${esc(f.label)}</div><div class="val">${esc(f.value)}</div></div>`).join("")}
       </div>
       ${badgesHtml}
-      ${opts.confidentialFor ? `<div class="confid">CONFIDENTIAL: prepared exclusively for ${esc(opts.confidentialFor)}. Not for redistribution.</div>` : `<div class="confid">INTERNAL DOCUMENT — not for external distribution.</div>`}
+      ${opts.confidentialFor ? `<div class="confid">CONFIDENTIAL: prepared exclusively for ${esc(opts.confidentialFor)}. Not for redistribution.</div>` : `<div class="confid">INTERNAL DOCUMENT: not for external distribution.</div>`}
     </div>
   </section>
 
@@ -358,7 +380,7 @@ export function documentShell(opts: DocShellOptions): string {
     <div class="footer-info">
       <strong>${BUSINESS_WEBSITE}</strong><br/>
       ${BUSINESS_PHONE} &nbsp;|&nbsp; ${BUSINESS_EMAIL}<br/>
-      ${opts.confidentialFor ? `This document is confidential and prepared exclusively for ${esc(opts.confidentialFor)}.` : "Internal use only — not for external distribution."}
+      ${opts.confidentialFor ? `This document is confidential and prepared exclusively for ${esc(opts.confidentialFor)}.` : "Internal use only: not for external distribution."}
     </div>
   </div>
 
@@ -390,11 +412,11 @@ export function arrowList(items: string[]): string {
 }
 
 /** Arrow-list where each item has a bold lead-in (e.g. "Deposit (50%)")
- * followed by plain detail text — label and detail are escaped separately,
+ * followed by plain detail text: label and detail are escaped separately,
  * then wrapped in a real <strong>, so callers never need to hand-write
  * inline HTML (which would otherwise show as literal tags once esc() runs). */
 export function arrowListKeyValue(items: { label: string; detail: string }[]): string {
-  return `<ul class="arrow-list">${items.map((i) => `<li><strong>${esc(i.label)}</strong> — ${esc(i.detail)}</li>`).join("")}</ul>`;
+  return `<ul class="arrow-list">${items.map((i) => `<li><strong>${esc(i.label)}</strong>: ${esc(i.detail)}</li>`).join("")}</ul>`;
 }
 
 export function investmentTable(rows: { desc: string; sub?: string; amount: string }[], total: { label: string; amount: string }): string {
@@ -429,7 +451,7 @@ export function aboutBox(text: string): string {
   return `<div class="about-box"><p style="margin:0">${esc(text)}</p></div>`;
 }
 
-/** Warm, human next-step prompt — used on teaser (gated) documents instead
+/** Warm, human next-step prompt: used on teaser (gated) documents instead
  * of pricing detail. Never mentions payment; frames the next step as
  * getting the full plan and locking in a timeline, not a transaction. */
 export function ctaBox(opts: {
@@ -452,7 +474,7 @@ export function ctaBox(opts: {
  * Medium-style paywall: the content sits at full size but blurred, fading
  * to the page background toward the bottom instead of sitting under a
  * heavy tinted scrim, followed by a clean, minimal gate card below it in
- * normal document flow — not stacked on top. `contentHtml` should be
+ * normal document flow: not stacked on top. `contentHtml` should be
  * genuine content (built from the same data as the full document), not a
  * fake sample. */
 export function blurredSection(contentHtml: string, overlay: {
@@ -493,7 +515,7 @@ export function signatureBlock(leftLabel: string, rightLabel: string): string {
   </div>`;
 }
 
-/** Already-accepted status — shown in place of the accept button once a
+/** Already-accepted status: shown in place of the accept button once a
  * client has confirmed, on both the public link and Godwin's own view. */
 export function acceptedBox(clientLabel: string, acceptedAt: string): string {
   const when = new Date(acceptedAt).toLocaleDateString("en-KE", { day: "numeric", month: "long", year: "numeric" });
@@ -503,45 +525,139 @@ export function acceptedBox(clientLabel: string, acceptedAt: string): string {
   </div>`;
 }
 
-/** Live "I Agree" button — only ever shown on the public link for a full
+/** Live "I Agree" button: only ever shown on the public link for a full
  * (ungated) agreement that hasn't been accepted yet. Posts to
  * /api/public/documents/[id]/accept and swaps itself for the accepted
  * state in place, no page reload. */
-export function acceptButton(documentId: string): string {
+/**
+ * Digital sign-off block for an agreement.
+ *
+ * A signature is only worth anything if the signer actually saw what they
+ * signed, so the button unlocks on three conditions rather than one:
+ *   1. the reader has scrolled to the end of the agreement,
+ *   2. they have ticked a confirmation that they read and accept it,
+ *   3. they have typed their full name, which is the signature itself.
+ *
+ * Name, email, timestamp and request metadata are recorded server side (see
+ * /api/public/documents/[id]/accept), which is what turns a button click into
+ * a defensible record if the scope is ever disputed.
+ */
+export function acceptButton(documentId: string, opts?: { clientName?: string | null; clientEmail?: string | null }): string {
   return `<div class="accept-box" id="acceptBox">
     <h4>Ready to proceed?</h4>
-    <p>Confirming below is your agreement to the scope, fees, and terms set out in this document. This is what starts the project.</p>
-    <button class="accept-btn" id="acceptBtn" onclick="brxAcceptAgreement()">I Agree — Accept This Agreement</button>
+    <p>Signing below confirms your agreement to the scope, fees, and terms set out in this document. This is what starts the project.</p>
+
+    <div class="accept-progress"><span id="acceptProgressBar"></span></div>
+    <p class="accept-gate" id="acceptGate">Please read to the end of the agreement to enable signing.</p>
+
+    <div class="accept-fields">
+      <label for="acceptName">Your full name (this is your signature)</label>
+      <input type="text" id="acceptName" autocomplete="name" placeholder="e.g. Jane Wanjiru Mwangi"
+        value="${esc(opts?.clientName ?? "")}" oninput="brxAcceptSync()">
+
+      <label for="acceptEmail">Your email</label>
+      <input type="email" id="acceptEmail" autocomplete="email" placeholder="you@company.co.ke"
+        value="${esc(opts?.clientEmail ?? "")}" oninput="brxAcceptSync()">
+
+      <label class="accept-check">
+        <input type="checkbox" id="acceptConfirm" onchange="brxAcceptSync()">
+        <span>I have read this agreement in full, I understand the scope, fees and terms, and I have the authority to accept it on behalf of my business.</span>
+      </label>
+    </div>
+
+    <button class="accept-btn" id="acceptBtn" disabled onclick="brxAcceptAgreement()">Sign and accept this agreement</button>
     <p class="accept-error" id="acceptError"></p>
+    <p class="accept-legal">Your name, email, the time of signing and your device details are recorded as evidence of acceptance. A copy is emailed to you automatically.</p>
   </div>
   <script>
-    function brxAcceptAgreement(){
-      var btn = document.getElementById('acceptBtn');
-      var err = document.getElementById('acceptError');
-      btn.disabled = true; btn.textContent = 'Confirming…'; err.style.display = 'none';
-      fetch('/api/public/documents/${esc(documentId)}/accept', { method: 'POST' })
-        .then(function(r){ return r.json(); })
-        .then(function(data){
-          if (data.ok) {
-            document.getElementById('acceptBox').outerHTML =
-              '<div class="accepted-box"><div class="ic">\\u2713</div><div><h4>Agreement accepted</h4><p>Thank you — we will be in touch to schedule the next steps.</p></div></div>';
-          } else {
-            err.textContent = data.error || 'Something went wrong. Please try again or contact us directly.';
-            err.style.display = 'block';
-            btn.disabled = false; btn.textContent = 'I Agree — Accept This Agreement';
-          }
+    (function(){
+      var readToEnd = false;
+
+      // Tracks how far through the document the reader has actually got.
+      // The end marker is the sign-off block itself, so reaching it means
+      // every clause above has passed through the viewport.
+      function updateProgress(){
+        var box = document.getElementById('acceptBox');
+        if (!box) return;
+        var docHeight = document.documentElement.scrollHeight - window.innerHeight;
+        var pct = docHeight > 0 ? Math.min(100, (window.scrollY / docHeight) * 100) : 100;
+        var bar = document.getElementById('acceptProgressBar');
+        if (bar) bar.style.width = pct + '%';
+
+        var rect = box.getBoundingClientRect();
+        if (!readToEnd && rect.top < window.innerHeight) {
+          readToEnd = true;
+          var gate = document.getElementById('acceptGate');
+          if (gate) gate.textContent = 'Thank you for reading it through. Complete the details below to sign.';
+          brxAcceptSync();
+        }
+      }
+
+      window.brxAcceptSync = function(){
+        var name  = (document.getElementById('acceptName')  || {}).value || '';
+        var email = (document.getElementById('acceptEmail') || {}).value || '';
+        var ok    = (document.getElementById('acceptConfirm') || {}).checked;
+        var btn   = document.getElementById('acceptBtn');
+        if (!btn) return;
+        var valid = readToEnd && ok
+          && name.trim().length >= 3
+          && /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(email.trim());
+        btn.disabled = !valid;
+      };
+
+      window.brxAcceptAgreement = function(){
+        var btn = document.getElementById('acceptBtn');
+        var err = document.getElementById('acceptError');
+        var name  = document.getElementById('acceptName').value.trim();
+        var email = document.getElementById('acceptEmail').value.trim();
+
+        btn.disabled = true; btn.textContent = 'Signing...'; err.style.display = 'none';
+        fetch('/api/public/documents/${esc(documentId)}/accept', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name: name, email: email, confirmed_read: true })
         })
-        .catch(function(){
-          err.textContent = 'Network error. Please try again.';
-          err.style.display = 'block';
-          btn.disabled = false; btn.textContent = 'I Agree — Accept This Agreement';
-        });
-    }
+          .then(function(r){ return r.json(); })
+          .then(function(data){
+            if (data.ok) {
+              document.getElementById('acceptBox').outerHTML =
+                '<div class="accepted-box"><div class="ic">\\u2713</div><div><h4>Agreement signed</h4>' +
+                '<p>Signed by ' + name.replace(/[<>&]/g,'') + '. Thank you, we will be in touch to schedule the next steps. ' +
+                'You can now download a PDF copy for your records.</p></div></div>';
+
+              // The PDF is deliberately withheld until signing, so that an
+              // unsigned draft cannot circulate looking like an executed one.
+              // Signing is what releases it, without needing a page reload.
+              var dl = document.getElementById('dlBtn');
+              if (dl) {
+                dl.disabled = false;
+                dl.className = 'dl-btn';
+                dl.title = 'Download your signed copy';
+                dl.textContent = 'Download PDF';
+                dl.onclick = function(){ window.print(); };
+              }
+            } else {
+              err.textContent = data.error || 'Something went wrong. Please try again or contact us directly.';
+              err.style.display = 'block';
+              btn.disabled = false; btn.textContent = 'Sign and accept this agreement';
+            }
+          })
+          .catch(function(){
+            err.textContent = 'Network error. Please try again.';
+            err.style.display = 'block';
+            btn.disabled = false; btn.textContent = 'Sign and accept this agreement';
+          });
+      };
+
+      window.addEventListener('scroll', updateProgress, { passive: true });
+      window.addEventListener('resize', updateProgress);
+      updateProgress();
+    })();
   </script>`;
 }
 
 /** Scope-at-a-glance grid: what's included, what's out of scope, and what's
- * needed from the client — makes a deliverable's boundaries explicit instead
+ * needed from the client: makes a deliverable's boundaries explicit instead
  * of leaving them implied by a one-line description. */
 export function scope3Grid(included: string[], excluded: string[], neededFromClient: string[]): string {
   return `<div class="scope3">
@@ -556,12 +672,12 @@ export function scopeLabel(text: string): string {
 }
 
 /** Small orange tag appended inline to a table cell, e.g. next to a
- * recommended line item — "YOUR FOCUS" / "RECOMMENDED". */
+ * recommended line item: "YOUR FOCUS" / "RECOMMENDED". */
 export function recTag(text: string): string {
   return `<span class="rec-tag">${esc(text)}</span>`;
 }
 
-/** 3-tier pricing cards — e.g. a monthly care/growth/scale retainer plan.
+/** 3-tier pricing cards: e.g. a monthly care/growth/scale retainer plan.
  * `featured` highlights one tier (orange header) as the recommended choice. */
 export function tiersGrid(tiers: { name: string; price: number; priceSuffix?: string; features: string[]; featured?: boolean }[]): string {
   return `<div class="tiers">${tiers.map((t) => `<div class="tier${t.featured ? " feat" : ""}">

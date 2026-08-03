@@ -18,6 +18,7 @@ import {
   emailSignoff,
 } from "@/lib/email-templates";
 import { generateInvoicePdf, type InvoicePaymentSettings } from "@/lib/invoice-pdf-helper";
+import { resolveCc } from "@/lib/cc-recipients";
 
 function fmtKES(n: number) {
   return `KES ${n.toLocaleString("en-KE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
@@ -188,8 +189,8 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     title: `Invoice ${invoice.invoice_number ?? ""}`,
     subtitle: invoice.invoice_number ?? undefined,
     preheader: hasPartial
-      ? `Balance of ${fmtKES(balance)} remaining on invoice ${invoice.invoice_number} — due ${dueLabel}`
-      : `${SITE_NAME} invoice for ${fmtKES(Number(invoice.total))} — due ${dueLabel}`,
+      ? `Balance of ${fmtKES(balance)} remaining on invoice ${invoice.invoice_number}: due ${dueLabel}`
+      : `${SITE_NAME} invoice for ${fmtKES(Number(invoice.total))}: due ${dueLabel}`,
     heroLabel: `Invoice · ${invoice.invoice_number ?? ""}`,
     heroTitle: `Here's your invoice,\n${firstName}.`,
     body:
@@ -200,14 +201,14 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
           )
         : "") +
       emailParagraph("Please find your invoice details below. Kindly process payment by the due date shown.") +
-      emailInfoCard("📄", "Invoice Number", invoice.invoice_number ?? "—") +
+      emailInfoCard("📄", "Invoice Number", invoice.invoice_number ?? "-") +
       (invoice.projects?.name ? emailInfoCard("📁", "Project", invoice.projects.name) : "") +
       (hasPartial
         ? emailInfoCard("💰", "Balance Remaining", fmtKES(balance)) +
           emailInfoCard("✅", "Amount Paid So Far", fmtKES(paidAmount))
         : emailInfoCard("💰", "Amount Due", fmtKES(Number(invoice.total)))) +
       emailInfoCard("📅", "Due Date", dueLabel) +
-      emailReferenceBox(invoice.invoice_number ?? "—", "Invoice Reference") +
+      emailReferenceBox(invoice.invoice_number ?? "-", "Invoice Reference") +
       buildItemsTable(items) +
       buildTotalsBlock(
         Number(invoice.subtotal ?? items.reduce((s, i) => s + i.qty * i.unit_price, 0)),
@@ -234,16 +235,25 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       { ...invoice, paid_amount: paidAmount } as Record<string, unknown>,
       ps as InvoicePaymentSettings
     );
-  } catch { /* attach silently fails — email still sends */ }
+  } catch { /* attach silently fails: email still sends */ }
 
   const filename = `invoice-${invoice.invoice_number ?? invoice.id}.pdf`;
+
+  // Finance contacts configured on the client record are copied, so an
+  // invoice reaches whoever actually pays it without being forwarded by hand.
+  const ccEmails = await resolveCc({
+    clientId: invoice.client_id as string | null,
+    scope: "invoices",
+    to: client.email,
+  });
 
   try {
     await transporter.sendMail({
       from: SENDERS.payments,
       to: client.email,
+      cc: ccEmails,
       subject: hasPartial
-        ? `Invoice ${invoice.invoice_number} from ${SITE_NAME} — ${fmtKES(balance)} balance remaining`
+        ? `Invoice ${invoice.invoice_number} from ${SITE_NAME}: ${fmtKES(balance)} balance remaining`
         : `Invoice ${invoice.invoice_number} from ${SITE_NAME}`,
       html,
       attachments: pdfBuffer
@@ -262,7 +272,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     invoice_id: id,
     type: "email",
     subject: hasPartial
-        ? `Invoice ${invoice.invoice_number} sent — ${fmtKES(balance)} balance remaining`
+        ? `Invoice ${invoice.invoice_number} sent: ${fmtKES(balance)} balance remaining`
         : `Invoice ${invoice.invoice_number} sent`,
     direction: "out",
     status: "sent",

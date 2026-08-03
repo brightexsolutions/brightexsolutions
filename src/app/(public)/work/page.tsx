@@ -11,7 +11,7 @@ export const revalidate = 3600;
 
 export const metadata: Metadata = {
   title: "Our Work",
-  description: "Software we've built and client projects we've shipped — Brightex Solutions. From ready-to-deploy business tools to custom websites and platforms across East Africa.",
+  description: "Software we've built and client projects we've shipped: Brightex Solutions. From ready-to-deploy business tools to custom websites and platforms across East Africa.",
   alternates: { canonical: "/work" },
 };
 
@@ -19,7 +19,7 @@ const FALLBACK_PROJECTS = [
   {
     name: "Beco Interiors",
     category: "E-Commerce Redesign",
-    description: "Full e-commerce redesign for a premium interiors brand — refined visual identity, product catalogue, and a seamless buying experience.",
+    description: "Full e-commerce redesign for a premium interiors brand: refined visual identity, product catalogue, and a seamless buying experience.",
     tags: ["WordPress", "E-Commerce", "UI Design"],
     url: "https://beco-interiors.netlify.app/",
     accent_color: "#f9a825",
@@ -27,7 +27,7 @@ const FALLBACK_PROJECTS = [
   {
     name: "Talkways Languages",
     category: "Education Website",
-    description: "Modern website for a language learning school — course listings, enquiry forms, and an SEO strategy that grew organic traffic significantly.",
+    description: "Modern website for a language learning school: course listings, enquiry forms, and an SEO strategy that grew organic traffic significantly.",
     tags: ["Web Design", "SEO", "Education"],
     url: "https://talkwayslanguages.com/",
     accent_color: "#3b82f6",
@@ -35,7 +35,7 @@ const FALLBACK_PROJECTS = [
   {
     name: "Greenhouse Worship",
     category: "Community Website",
-    description: "A warm, welcoming digital home for a worship community — events, sermons, and a clean UI that reflects their brand and values.",
+    description: "A warm, welcoming digital home for a worship community: events, sermons, and a clean UI that reflects their brand and values.",
     tags: ["Web Development", "UI Design"],
     url: "https://thegreenhouse-w-s.netlify.app/",
     accent_color: "#a78bfa",
@@ -43,7 +43,7 @@ const FALLBACK_PROJECTS = [
   {
     name: "Africa Feature Network",
     category: "Media Platform",
-    description: "A media and news platform built for scale — structured content architecture, editorial workflow, and strong on-page SEO across hundreds of articles.",
+    description: "A media and news platform built for scale: structured content architecture, editorial workflow, and strong on-page SEO across hundreds of articles.",
     tags: ["Media Platform", "SEO", "WordPress"],
     url: "https://africafeaturenetwork.com/",
     accent_color: "#10b981",
@@ -51,15 +51,15 @@ const FALLBACK_PROJECTS = [
   {
     name: "Amuches Oven",
     category: "Online Ordering System",
-    description: "Online ordering system for a bakery — digital menu, cart, order management, and an admin dashboard for the owner to track and fulfil orders daily.",
+    description: "Online ordering system for a bakery: digital menu, cart, order management, and an admin dashboard for the owner to track and fulfil orders daily.",
     tags: ["E-Commerce", "Web App", "Bakery"],
     url: "https://amuches-oven.netlify.app/",
     accent_color: "#fb923c",
   },
   {
-    name: "CBC App — Verb Education",
+    name: "CBC App: Verb Education",
     category: "Web Application",
-    description: "A Kenya CBC learning platform for students and teachers — curriculum-aligned content, progress tracking, and analytics built to Material Design 3 standards.",
+    description: "A Kenya CBC learning platform for students and teachers: curriculum-aligned content, progress tracking, and analytics built to Material Design 3 standards.",
     tags: ["SaaS", "EdTech", "Analytics"],
     url: "https://cbcapp.co.ke/",
     accent_color: "#818cf8",
@@ -106,7 +106,7 @@ export default async function WorkPage() {
               Our Work
             </h1>
             <p className="text-white/60 text-lg leading-relaxed mb-10">
-              Software we build for businesses to license — and custom projects we ship for clients across Kenya and East Africa.
+              Software we build for businesses to license: and custom projects we ship for clients across Kenya and East Africa.
             </p>
 
             {/* Jump links */}
@@ -162,7 +162,7 @@ export default async function WorkPage() {
               Business Software
             </h2>
             <p className="text-brand-muted text-lg leading-relaxed max-w-xl">
-              Built by Brightex for specific industries — licensed to businesses and continuously improved. Try any product free for 7 days.
+              Built by Brightex for specific industries: licensed to businesses and continuously improved. Try any product free for 7 days.
             </p>
           </FadeIn>
 
@@ -244,7 +244,7 @@ export default async function WorkPage() {
                   <span className="text-brand-gold">Right now.</span>
                 </h2>
                 <p className="text-white/55 text-base max-w-xl mx-auto mb-10 leading-relaxed">
-                  Every product we ship starts as a real client problem — something solved so well it became software. The first wave is in active development.
+                  Every product we ship starts as a real client problem: something solved so well it became software. The first wave is in active development.
                 </p>
                 <div className="flex flex-col sm:flex-row gap-4 justify-center">
                   <a

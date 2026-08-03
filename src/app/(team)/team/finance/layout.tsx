@@ -11,7 +11,7 @@ export default function FinanceLayout({ children }: { children: ReactNode }) {
           <span className="text-brand-navy font-bold text-xs font-display">B</span>
         </div>
         <span className="font-display font-semibold text-foreground text-sm">
-          Brightex — Finance
+          Brightex: Finance
         </span>
         <nav className="ml-4 flex items-center gap-1">
           <Link
