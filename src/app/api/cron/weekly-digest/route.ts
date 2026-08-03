@@ -75,25 +75,67 @@ export async function GET(request: NextRequest) {
   ]);
 
   // ── Invoice section ───────────────────────────────────────────────────────────
-  const invoiceTotal = (openInvoices ?? []).reduce((s, inv) => s + Number(inv.total), 0);
-  const overdueCount = (openInvoices ?? []).filter((i) => i.status === "overdue").length;
-  const invoiceRows = (openInvoices ?? []).slice(0, 8).map((inv) => {
+  // The digest reports what is still owed, never the invoice's original value.
+  // Showing a 30,000 total against an invoice with 4,000 already paid made the
+  // summary disagree with the invoices page and overstated the money at stake.
+  const invoiceIds = (openInvoices ?? []).map((inv) => inv.id);
+  const { data: invoicePayments } = invoiceIds.length
+    ? await supabase
+        .from("payments")
+        .select("invoice_id, amount")
+        .in("invoice_id", invoiceIds)
+        .is("deleted_at", null)
+    : { data: [] };
+
+  const paidByInvoice: Record<string, number> = {};
+  for (const p of (invoicePayments ?? []) as { invoice_id: string; amount: unknown }[]) {
+    paidByInvoice[p.invoice_id] = (paidByInvoice[p.invoice_id] ?? 0) + Number(p.amount);
+  }
+
+  const todayMs = new Date(today).getTime();
+
+  const openInvoiceLines = (openInvoices ?? [])
+    .map((inv) => {
+      const total = Number(inv.total);
+      const paid = paidByInvoice[inv.id] ?? 0;
+      return {
+        inv,
+        total,
+        paid,
+        balance: total - paid,
+        // A "sent" invoice past its due date is overdue in every sense that
+        // matters, even if no job has relabelled its status yet.
+        isOverdue: !!inv.due_date && new Date(inv.due_date).getTime() < todayMs,
+      };
+    })
+    // An invoice settled in full is not open, whatever its status still says.
+    .filter((line) => line.balance > 0);
+
+  const invoiceTotal = openInvoiceLines.reduce((s, line) => s + line.balance, 0);
+  const overdueCount = openInvoiceLines.filter((line) => line.isOverdue).length;
+
+  const invoiceRows = openInvoiceLines.slice(0, 8).map(({ inv, total, paid, balance, isOverdue }) => {
     const client = inv.clients as { name?: string } | null;
     const dueLabel = inv.due_date
       ? new Date(inv.due_date).toLocaleDateString("en-KE", { day: "2-digit", month: "short" })
-      : "—";
-    const statusBadge = inv.status === "overdue" ? " ⚠️" : inv.status === "partial" ? " (partial)" : "";
+      : "-";
+    const statusBadge = isOverdue ? " ⚠️" : "";
+    // Where part of it is already paid, show both numbers so the balance is
+    // never mistaken for the invoice being smaller than it was.
+    const amountLabel = paid > 0
+      ? `${fmtKES(balance)} of ${fmtKES(total)}`
+      : fmtKES(balance);
     return emailRow(
-      `${inv.invoice_number ?? "—"}${statusBadge}`,
-      `${fmtKES(Number(inv.total))} · ${client?.name ?? "—"} · due ${dueLabel}`
+      `${inv.invoice_number ?? "-"}${statusBadge}`,
+      `${amountLabel} · ${client?.name ?? "-"} · due ${dueLabel}`
     );
   }).join("");
 
-  const invoiceSection = (openInvoices ?? []).length > 0
-    ? emailSectionLabel(`Open Invoices (${(openInvoices ?? []).length})`) +
+  const invoiceSection = openInvoiceLines.length > 0
+    ? emailSectionLabel(`Open Invoices (${openInvoiceLines.length})`) +
       emailInfoTable(
         invoiceRows +
-        emailRow("Total outstanding", `<strong>${fmtKES(invoiceTotal)}</strong>${overdueCount > 0 ? ` — ${overdueCount} overdue` : ""}`)
+        emailRow("Still owed", `<strong>${fmtKES(invoiceTotal)}</strong>${overdueCount > 0 ? `: ${overdueCount} overdue` : ""}`)
       )
     : emailSectionLabel("Open Invoices") + emailParagraph("No open invoices. 🎉");
 
@@ -110,7 +152,7 @@ export async function GET(request: NextRequest) {
   }).join("");
 
   const bookingsSection = (upcomingBookings ?? []).length > 0
-    ? emailSectionLabel(`Upcoming Bookings — Next 7 Days (${(upcomingBookings ?? []).length})`) +
+    ? emailSectionLabel(`Upcoming Bookings: Next 7 Days (${(upcomingBookings ?? []).length})`) +
       emailInfoTable(bookingRows)
     : emailSectionLabel("Upcoming Bookings") + emailParagraph("No bookings in the next 7 days.");
 
@@ -148,8 +190,8 @@ export async function GET(request: NextRequest) {
   const weekOf = new Date().toLocaleDateString("en-KE", { day: "numeric", month: "long", year: "numeric" });
 
   const html = emailTemplate({
-    title: `Weekly Digest — ${weekOf}`,
-    preheader: `${(openInvoices ?? []).length} open invoices · ${(upcomingBookings ?? []).length} upcoming bookings · ${(openSales ?? []).length} active leads`,
+    title: `Weekly Digest: ${weekOf}`,
+    preheader: `${openInvoiceLines.length} open invoices · ${(upcomingBookings ?? []).length} upcoming bookings · ${(openSales ?? []).length} active leads`,
     heroLabel: "Weekly Business Digest",
     heroTitle: `Here's your\nweek ahead.`,
     body:
@@ -168,7 +210,7 @@ export async function GET(request: NextRequest) {
     await transporter.sendMail({
       from: `${SITE_NAME} <${process.env.SMTP_USER}>`,
       to: BUSINESS_EMAIL,
-      subject: `Weekly Digest — ${weekOf}`,
+      subject: `Weekly Digest: ${weekOf}`,
       html,
     });
   } catch {
@@ -178,8 +220,8 @@ export async function GET(request: NextRequest) {
   await logSystemAction({
     action: "digest_sent",
     entity_type: "system",
-    entity_label: `Weekly digest — ${weekOf}`,
-    notes: `${(openInvoices ?? []).length} invoices · ${(upcomingBookings ?? []).length} bookings · ${(openSales ?? []).length} sales leads`,
+    entity_label: `Weekly digest: ${weekOf}`,
+    notes: `${openInvoiceLines.length} invoices · ${(upcomingBookings ?? []).length} bookings · ${(openSales ?? []).length} sales leads`,
   });
 
   return NextResponse.json({ status: "ok", sent: true, timestamp: new Date().toISOString() });
