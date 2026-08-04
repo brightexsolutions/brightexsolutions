@@ -19,6 +19,7 @@ import {
 } from "@/lib/email-templates";
 import { generateInvoicePdf, type InvoicePaymentSettings } from "@/lib/invoice-pdf-helper";
 import { resolveCc } from "@/lib/cc-recipients";
+import { greetingName } from "@/lib/greeting";
 
 function fmtKES(n: number) {
   return `KES ${n.toLocaleString("en-KE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
@@ -154,7 +155,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   const { id } = await params;
 
   const [{ data: invoice, error }, { data: settingsRows }, { data: payments }] = await Promise.all([
-    supabase.from("invoices").select("*, clients(id, name, email), projects(id, name)").eq("id", id).single(),
+    supabase.from("invoices").select("*, clients(id, name, company, email), projects(id, name)").eq("id", id).single(),
     supabase.from("settings").select("key, value").in("key", [
       "invoice_mpesa_number", "invoice_mpesa_name",
       "invoice_till_number", "invoice_till_name",
@@ -173,10 +174,10 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     (settingsRows ?? []).map((r: { key: string; value: string }) => [r.key, r.value])
   );
 
-  const client = invoice.clients as { name: string; email: string };
+  const client = invoice.clients as { name: string; company?: string | null; email: string };
   const items = invoice.items as Array<{ description: string; qty: number; unit_price: number; total?: number }>;
 
-  const firstName = client.name.split(" ")[0];
+  const firstName = greetingName(client.name, client.company);
   const dueLabel = invoice.due_date
     ? new Date(invoice.due_date).toLocaleDateString("en-KE", { day: "2-digit", month: "long", year: "numeric" })
     : "On receipt";

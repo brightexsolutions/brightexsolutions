@@ -1,6 +1,7 @@
 import { transporter, SENDERS, SITE_NAME, SITE_URL } from "@/lib/mail";
 import { BUSINESS_WHATSAPP } from "@/lib/constants";
 import { SERVICE_LABELS } from "@/lib/intake-schema";
+import { greetingName } from "@/lib/greeting";
 
 const WA_URL = `https://wa.me/${BUSINESS_WHATSAPP}`;
 
@@ -147,7 +148,7 @@ function signOff() {
 // ─── New client (submitted via generic /intake link) ──────────────────────────
 
 export async function sendNewClientIntakeAck(opts: IntakeAckOptions) {
-  const firstName = opts.name.split(" ")[0];
+  const firstName = greetingName(opts.name);
   const services  = describeServices(opts.serviceType, opts.serviceTypes);
 
   const html = baseHtml(`
@@ -217,7 +218,7 @@ interface IntakeReviewedOptions {
  * thing and the proposal is next.
  */
 export async function sendIntakeReviewedNotice(opts: IntakeReviewedOptions) {
-  const firstName = opts.name.split(" ")[0];
+  const firstName = greetingName(opts.name);
   const services  = describeServices(opts.serviceType, opts.serviceTypes);
 
   const html = baseHtml(`
@@ -275,7 +276,7 @@ The ${SITE_NAME} Team`;
 // ─── Existing client (submitted via personal /intake/[token] link) ────────────
 
 export async function sendExistingClientIntakeAck(opts: IntakeAckOptions) {
-  const firstName = opts.name.split(" ")[0];
+  const firstName = greetingName(opts.name);
   const services  = describeServices(opts.serviceType, opts.serviceTypes);
   const subject   = opts.projectTitle
     ? `Got your requirements for "${opts.projectTitle}", ${firstName}`

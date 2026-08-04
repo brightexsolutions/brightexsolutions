@@ -4,6 +4,7 @@ import { verifyCronSecret } from "@/lib/cron-auth";
 import { transporter, SITE_NAME } from "@/lib/mail";
 import { BUSINESS_EMAIL } from "@/lib/constants";
 import { logSystemAction } from "@/lib/audit";
+import { greetingName } from "@/lib/greeting";
 import {
   emailTemplate,
   emailRow,
@@ -28,13 +29,13 @@ export async function GET(request: NextRequest) {
   const [{ data: renewingSoon }, { data: overdue }] = await Promise.all([
     supabase
       .from("subscriptions")
-      .select("id, name, next_renewal_date, amount, currency, ownership, clients(id, name, email)")
+      .select("id, name, next_renewal_date, amount, currency, ownership, clients(id, name, company, email)")
       .eq("active", true)
       .lte("next_renewal_date", in14days)
       .gte("next_renewal_date", today),
     supabase
       .from("subscriptions")
-      .select("id, name, next_renewal_date, ownership, clients(id, name, email)")
+      .select("id, name, next_renewal_date, ownership, clients(id, name, company, email)")
       .eq("active", true)
       .lt("next_renewal_date", today),
   ]);
@@ -63,8 +64,8 @@ export async function GET(request: NextRequest) {
       });
       alertsCreated++;
 
-      const linkedClient = (sub as unknown as { clients?: { name?: string | null; email?: string | null } | null }).clients;
-      const greeting = linkedClient?.name ? `Hi ${linkedClient.name.split(" ")[0]},` : "Hi,";
+      const linkedClient = (sub as unknown as { clients?: { name?: string | null; company?: string | null; email?: string | null } | null }).clients;
+      const greeting = `Hi ${greetingName(linkedClient?.name, linkedClient?.company)},`;
       const recipients = [BUSINESS_EMAIL];
       if (linkedClient?.email) recipients.push(linkedClient.email);
 
@@ -121,8 +122,8 @@ export async function GET(request: NextRequest) {
       });
       alertsCreated++;
 
-      const linkedClient = (sub as unknown as { clients?: { name?: string | null; email?: string | null } | null }).clients;
-      const greeting = linkedClient?.name ? `Hi ${linkedClient.name.split(" ")[0]},` : "Hi,";
+      const linkedClient = (sub as unknown as { clients?: { name?: string | null; company?: string | null; email?: string | null } | null }).clients;
+      const greeting = `Hi ${greetingName(linkedClient?.name, linkedClient?.company)},`;
       const recipients = [BUSINESS_EMAIL];
       if (linkedClient?.email) recipients.push(linkedClient.email);
 

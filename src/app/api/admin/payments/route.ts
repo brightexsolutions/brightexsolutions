@@ -15,6 +15,7 @@ import {
   emailSignoff,
 } from "@/lib/email-templates";
 import { SENDERS } from "@/lib/mail";
+import { greetingName } from "@/lib/greeting";
 
 const PaymentSchema = z.object({
   invoice_id: z.string().uuid().optional(),
@@ -36,7 +37,7 @@ export async function GET(request: NextRequest) {
 
   const { data, error } = await supabase
     .from("payments")
-    .select("*, invoices(id, invoice_number, total, client_id, project_id, clients(name, email))")
+    .select("*, invoices(id, invoice_number, total, client_id, project_id, clients(name, company, email))")
     .is("deleted_at", null)
     .order("created_at", { ascending: false });
 
@@ -99,7 +100,7 @@ export async function POST(request: NextRequest) {
   const { data: payment, error } = await supabase
     .from("payments")
     .insert({ ...paymentData, confirmation_sent: false })
-    .select("*, invoices(id, invoice_number, total, client_id, clients(name, email))")
+    .select("*, invoices(id, invoice_number, total, client_id, clients(name, company, email))")
     .single();
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
@@ -108,7 +109,7 @@ export async function POST(request: NextRequest) {
   if (paymentData.invoice_id) {
     const { data: invoice } = await supabase
       .from("invoices")
-      .select("total, client_id, invoice_number, clients(name, email), payments(amount)")
+      .select("total, client_id, invoice_number, clients(name, company, email), payments(amount)")
       .eq("id", paymentData.invoice_id)
       .single();
 
@@ -158,13 +159,13 @@ export async function POST(request: NextRequest) {
     if (send_receipt) {
       const { data: fullInvoice } = await supabase
         .from("invoices")
-        .select("invoice_number, total, client_id, clients(name, email)")
+        .select("invoice_number, total, client_id, clients(name, company, email)")
         .eq("id", paymentData.invoice_id)
         .single();
 
-      const client = fullInvoice?.clients as { name: string; email: string } | undefined;
+      const client = fullInvoice?.clients as { name: string; company?: string | null; email: string } | undefined;
       if (client?.email) {
-        const firstName = client.name.split(" ")[0];
+        const firstName = greetingName(client.name, client.company);
         const receiptDate = paymentData.date
           ? new Date(paymentData.date).toLocaleDateString("en-KE", { day: "2-digit", month: "long", year: "numeric" })
           : new Date().toLocaleDateString("en-KE", { day: "2-digit", month: "long", year: "numeric" });

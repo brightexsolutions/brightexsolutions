@@ -13,6 +13,7 @@ import {
   emailSignoff,
 } from "@/lib/email-templates";
 import { resolveCc } from "@/lib/cc-recipients";
+import { greetingName } from "@/lib/greeting";
 
 const STAGE_INFO: Record<string, { heading: string; detail: string }> = {
   discovery:   { heading: "We're in discovery",       detail: "We're gathering all the details about your project and aligning on goals. Expect to hear from us soon with next steps." },
@@ -153,12 +154,12 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     if (stage) {
       const { data: clientData } = await supabase
         .from("clients")
-        .select("name, email")
+        .select("name, company, email")
         .eq("id", data.client_id as string)
         .single();
 
       if (clientData?.email) {
-        const firstName = (clientData.name as string).split(" ")[0];
+        const firstName = greetingName(clientData.name as string, clientData.company as string | null);
         const html = emailTemplate({
           title: `Project Update: ${data.name}`,
           subtitle: data.name as string,
