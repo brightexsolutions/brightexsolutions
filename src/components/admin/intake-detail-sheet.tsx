@@ -289,8 +289,11 @@ interface Props {
   intake: IntakeDetail | null;
   clientId?: string | null;
   onClose: () => void;
-  onMarkReviewed?: (id: string) => Promise<void>;
+  onMarkReviewed?: (id: string, notifyClient: boolean) => Promise<void>;
   marking?: boolean;
+  /** Puts a reviewed intake back to "new", which reopens client editing. */
+  onReopen?: (id: string) => Promise<void>;
+  reopening?: boolean;
   onEmailClient?: () => void;
   onArchive?: (id: string) => Promise<void>;
   archiving?: boolean;
@@ -298,7 +301,54 @@ interface Props {
   onProposalReady?: (intake: IntakeDetail, doc: { id: string; title: string; data: Record<string, unknown> }) => void;
 }
 
-export function IntakeDetailSheet({ intake, clientId, onClose, onMarkReviewed, marking, onEmailClient, onArchive, archiving, onAnalysisSaved, onProposalReady }: Props) {
+/**
+ * Marking reviewed is no longer a private bookkeeping flag: it closes the
+ * client's edit window and emails them to say so. The button therefore has to
+ * state both consequences before it is pressed, and offer the quiet version for
+ * tidying up old submissions.
+ *
+ * Its own component because IntakeDetailSheet returns early when there is no
+ * intake, so state cannot be held above that line.
+ */
+function MarkReviewedAction({
+  intakeId,
+  onMarkReviewed,
+  marking,
+}: {
+  intakeId: string;
+  onMarkReviewed: (id: string, notifyClient: boolean) => Promise<void>;
+  marking?: boolean;
+}) {
+  const [notify, setNotify] = useState(true);
+
+  return (
+    <div className="space-y-2">
+      <Button
+        className="w-full gap-2"
+        onClick={() => onMarkReviewed(intakeId, notify)}
+        disabled={marking}
+        size="sm"
+      >
+        <CheckCircle size={14} />
+        {marking ? "Marking…" : "Mark as reviewed"}
+      </Button>
+      <label className="flex items-start gap-2 cursor-pointer select-none">
+        <input
+          type="checkbox"
+          checked={notify}
+          onChange={(e) => setNotify(e.target.checked)}
+          className="mt-0.5 accent-brand-gold"
+        />
+        <span className="text-[11px] text-muted-foreground leading-relaxed">
+          Email the client to say we have read it. Either way this locks their form, so leaving it
+          off means they find a closed link with no warning.
+        </span>
+      </label>
+    </div>
+  );
+}
+
+export function IntakeDetailSheet({ intake, clientId, onClose, onMarkReviewed, marking, onReopen, reopening, onEmailClient, onArchive, archiving, onAnalysisSaved, onProposalReady }: Props) {
   if (!intake) return null;
 
   const services = serviceTypesOf(intake);
@@ -559,36 +609,50 @@ export function IntakeDetailSheet({ intake, clientId, onClose, onMarkReviewed, m
 
           {/* Reviewed info */}
           {intake.status === "reviewed" && intake.reviewed_at && (
-            <div className="flex items-center gap-2 text-xs text-emerald-600 bg-emerald-50 rounded-lg px-3 py-2">
-              <CheckCircle size={13} />
-              Reviewed on {new Date(intake.reviewed_at).toLocaleDateString("en-KE", {
-                day: "numeric", month: "short", year: "numeric",
-              })}
+            <div className="flex items-start gap-2 text-xs text-emerald-700 bg-emerald-50 dark:bg-emerald-950/20 rounded-lg px-3 py-2">
+              <CheckCircle size={13} className="mt-0.5 shrink-0" />
+              <div>
+                <p>
+                  Reviewed on {new Date(intake.reviewed_at).toLocaleDateString("en-KE", {
+                    day: "numeric", month: "short", year: "numeric",
+                  })}
+                </p>
+                <p className="text-emerald-600/80 leading-relaxed mt-0.5">
+                  The client can no longer edit this. To let them change something, set it back to
+                  new, then review it again once they are done.
+                </p>
+              </div>
             </div>
           )}
         </div>
 
         {/* Footer actions */}
-        {(onMarkReviewed || onEmailClient || onArchive) && intake.status !== "archived" && (
+        {(onMarkReviewed || onReopen || onEmailClient || onArchive) && intake.status !== "archived" && (
           <div className="flex-shrink-0 border-t border-border px-5 py-4 space-y-2">
-            <div className="flex gap-2">
-              {intake.status === "new" && onMarkReviewed && (
-                <Button
-                  className="flex-1 gap-2"
-                  onClick={() => onMarkReviewed(intake.id)}
-                  disabled={marking}
-                  size="sm"
-                >
-                  <CheckCircle size={14} />
-                  {marking ? "Marking…" : "Mark as reviewed"}
-                </Button>
-              )}
-              {onEmailClient && (
-                <Button className="flex-1 gap-2" variant="outline" onClick={onEmailClient} size="sm">
-                  <Mail size={14} /> Reply by Email
-                </Button>
-              )}
-            </div>
+            {intake.status === "new" && onMarkReviewed && (
+              <MarkReviewedAction
+                intakeId={intake.id}
+                onMarkReviewed={onMarkReviewed}
+                marking={marking}
+              />
+            )}
+            {intake.status === "reviewed" && onReopen && (
+              <Button
+                className="w-full gap-2"
+                variant="outline"
+                onClick={() => onReopen(intake.id)}
+                disabled={reopening}
+                size="sm"
+              >
+                <Pencil size={14} />
+                {reopening ? "Reopening…" : "Reopen for client edits"}
+              </Button>
+            )}
+            {onEmailClient && (
+              <Button className="w-full gap-2" variant="outline" onClick={onEmailClient} size="sm">
+                <Mail size={14} /> Reply by Email
+              </Button>
+            )}
             {onArchive && (
               <button
                 type="button"

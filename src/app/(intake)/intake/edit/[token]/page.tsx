@@ -1,7 +1,8 @@
 import { notFound } from "next/navigation";
 import { createAdminClient } from "@/lib/supabase/server";
-import { intakeRowToFormState, MAX_INTAKE_EDITS } from "@/lib/intake-submission";
+import { intakeRowToFormState, intakeEditLock, MAX_INTAKE_EDITS } from "@/lib/intake-submission";
 import { IntakeWizard } from "../../[token]/wizard";
+import { IntakeLockedNotice } from "../../[token]/locked-notice";
 
 export const dynamic = "force-dynamic";
 
@@ -27,6 +28,26 @@ export default async function EditIntakePage({ params }: { params: Promise<{ tok
 
   const intake = await getIntakeForEditing(token);
   if (!intake) notFound();
+
+  // Opening a form we would refuse to save is a worse experience than being
+  // told up front, so the lock is checked before the wizard is ever rendered.
+  const lock = intakeEditLock(intake);
+  if (lock.locked) {
+    return (
+      <IntakeLockedNotice
+        clientName={intake.submitter_name ?? ""}
+        reason={lock.reason!}
+        message={lock.message}
+        intake={{
+          projectTitle: intake.project_title,
+          serviceType: intake.service_type,
+          serviceTypes: intake.service_types,
+          submittedAt: intake.submitted_at,
+          reviewedAt: intake.reviewed_at,
+        }}
+      />
+    );
+  }
 
   const editsUsed = Number(intake.edit_count ?? 0);
 

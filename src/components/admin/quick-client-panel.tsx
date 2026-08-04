@@ -167,7 +167,16 @@ export function QuickClientPanel({
     setTimeout(() => setIntakeLinkCopied(false), 2000);
   }
 
-  async function updateIntakeStatus(intakeId: string, status: "reviewed" | "archived") {
+  /**
+   * Reviewing is not a private flag: it locks the client out of editing their
+   * own submission and, unless suppressed, emails them to say so. Reopening
+   * ("new") hands editing back with whatever edit allowance was left.
+   */
+  async function updateIntakeStatus(
+    intakeId: string,
+    status: "new" | "reviewed" | "archived",
+    notifyClient = true
+  ) {
     if (!clientId) return;
     const setBusy = status === "archived" ? setArchivingIntakeId : setMarkingIntakeId;
     setBusy(intakeId);
@@ -175,13 +184,16 @@ export function QuickClientPanel({
       await fetch(`/api/admin/clients/${clientId}/intakes?intakeId=${intakeId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status }),
+        body: JSON.stringify({ status, notifyClient }),
       });
+      const reviewedAt = status === "reviewed" ? new Date().toISOString() : null;
       setDetail((prev) => prev ? {
         ...prev,
-        intakes: prev.intakes.map((i) => i.id === intakeId ? { ...i, status } : i),
+        intakes: prev.intakes.map((i) => i.id === intakeId ? { ...i, status, reviewed_at: reviewedAt } : i),
       } : prev);
-      setSelectedIntake((prev) => prev && prev.id === intakeId ? { ...prev, status } : prev);
+      setSelectedIntake((prev) =>
+        prev && prev.id === intakeId ? { ...prev, status, reviewed_at: reviewedAt } : prev
+      );
     } finally {
       setBusy(null);
     }
@@ -618,6 +630,7 @@ export function QuickClientPanel({
                             <button
                               onClick={() => updateIntakeStatus(intake.id, "reviewed")}
                               disabled={markingIntakeId === intake.id}
+                              title="Locks the client out of editing and emails them to say we have read it. Open the details to review without emailing."
                               className="flex items-center gap-1 text-[10px] text-emerald-600 hover:text-emerald-700 transition-colors disabled:opacity-50"
                             >
                               {markingIntakeId === intake.id
@@ -773,8 +786,10 @@ export function QuickClientPanel({
       intake={selectedIntake}
       clientId={clientId}
       onClose={() => setSelectedIntake(null)}
-      onMarkReviewed={async (id) => { await updateIntakeStatus(id, "reviewed"); }}
+      onMarkReviewed={async (id, notifyClient) => { await updateIntakeStatus(id, "reviewed", notifyClient); }}
       marking={!!markingIntakeId}
+      onReopen={async (id) => { await updateIntakeStatus(id, "new"); }}
+      reopening={!!markingIntakeId}
       onArchive={async (id) => { await updateIntakeStatus(id, "archived"); }}
       archiving={!!archivingIntakeId}
       onEmailClient={() => { if (selectedIntake) replyToIntake(selectedIntake); }}
