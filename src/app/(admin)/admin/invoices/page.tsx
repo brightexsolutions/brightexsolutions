@@ -16,6 +16,7 @@ import { cn } from "@/lib/utils";
 import { useConfirm } from "@/components/admin/confirm-dialog";
 import { EmailComposer, type EmailComposerRecipient } from "@/components/admin/email-composer";
 import { DocumentViewerSheet, type DocumentViewerTarget } from "@/components/admin/document-viewer-sheet";
+import { RecipientHint, useClientContacts } from "@/components/admin/recipient-hint";
 
 const statusColors: Record<string, string> = {
   draft: "bg-slate-400/10 text-slate-400",
@@ -75,6 +76,8 @@ const defaultForm = { client_id: "", client_name: "", client_company: "", client
 
 export default function InvoicesPage() {
   const confirm = useConfirm();
+  // Fetched once for the page so each row can show who its send will reach.
+  const { contacts: ccContacts, state: ccState } = useClientContacts();
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeFilter, setActiveFilter] = useState("All");
@@ -428,14 +431,23 @@ export default function InvoicesPage() {
                       <Eye size={11} />PDF
                     </button>
                     {inv.status !== "cancelled" && (
-                      <button
-                        onClick={() => sendInvoice(inv.id)}
-                        disabled={busyIds.has(inv.id)}
-                        className="flex items-center gap-1 px-2 py-1 rounded-md text-[11px] font-medium bg-brand-navy text-white hover:bg-brand-navy/90 transition-colors disabled:opacity-60"
-                      >
-                        {busyIds.has(inv.id) ? <Loader2 size={10} className="animate-spin" /> : <Send size={10} />}
-                        {inv.status === "draft" ? "Send" : "Resend"}
-                      </button>
+                      <>
+                        <button
+                          onClick={() => sendInvoice(inv.id)}
+                          disabled={busyIds.has(inv.id)}
+                          className="flex items-center gap-1 px-2 py-1 rounded-md text-[11px] font-medium bg-brand-navy text-white hover:bg-brand-navy/90 transition-colors disabled:opacity-60"
+                        >
+                          {busyIds.has(inv.id) ? <Loader2 size={10} className="animate-spin" /> : <Send size={10} />}
+                          {inv.status === "draft" ? "Send" : "Resend"}
+                        </button>
+                        <RecipientHint
+                          contacts={ccContacts}
+                          state={ccState}
+                          clientId={inv.clients?.id}
+                          scope="invoices"
+                          to={inv.clients?.email}
+                        />
+                      </>
                     )}
                   </div>
                 );

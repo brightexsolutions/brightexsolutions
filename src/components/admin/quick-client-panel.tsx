@@ -14,6 +14,7 @@ import { IntakeDetailSheet, type IntakeDetail, type IntakeAnalysis, SERVICE_LABE
 import { EmailComposer } from "@/components/admin/email-composer";
 import { ClientContactsPanel } from "@/components/admin/client-contacts-panel";
 import { DocumentViewerSheet, type DocumentViewerTarget } from "@/components/admin/document-viewer-sheet";
+import { RecipientHint, useClientContacts } from "@/components/admin/recipient-hint";
 
 type Client = {
   id: string;
@@ -113,6 +114,7 @@ export function QuickClientPanel({
   clientId: string | null;
   onClose: () => void;
 }) {
+  const { contacts: ccContacts, state: ccState } = useClientContacts();
   const [detail, setDetail] = useState<ClientDetail | null>(null);
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<"overview" | "comms">("overview");
@@ -538,6 +540,15 @@ export function QuickClientPanel({
                                   )}
                                   {isSending ? "Sending…" : justSent ? "Sent!" : isSent ? "Resend" : "Send"}
                                 </button>
+                              )}
+                              {inv.status !== "paid" && client.email && (
+                                <RecipientHint
+                                  contacts={ccContacts}
+                                  state={ccState}
+                                  clientId={clientId}
+                                  scope="invoices"
+                                  to={client.email}
+                                />
                               )}
                               {!client.email && inv.status !== "paid" && (
                                 <span className="text-[10px] text-muted-foreground/50">No email</span>
