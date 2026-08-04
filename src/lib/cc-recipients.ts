@@ -19,7 +19,7 @@ import { CC_SCOPE_ALL, dedupeCc, type CcScope } from "@/lib/cc-scopes";
 
 export {
   CC_SCOPES, CC_SCOPE_LABELS, CC_SCOPE_ALL,
-  isValidEmail, dedupeCc, describeCc, normaliseEmail,
+  isValidEmail, dedupeCc, describeCc, normaliseEmail, contactLabel,
   type CcScope,
 } from "@/lib/cc-scopes";
 

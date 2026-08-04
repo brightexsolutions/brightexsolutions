@@ -307,7 +307,10 @@ export function QuickClientPanel({
   return (
     <>
     <Sheet open={!!clientId} onOpenChange={(v) => !v && onClose()}>
-      <SheetContent className="w-full sm:max-w-md flex flex-col overflow-hidden p-0" side="right">
+      {/* Wider than the default sheet: this panel carries dense rows (contacts
+          with their scope chips, invoices, documents) that wrap badly at md.
+          Stepped rather than fixed so it does not dominate a small laptop. */}
+      <SheetContent className="w-full sm:max-w-lg lg:max-w-xl flex flex-col overflow-hidden p-0" side="right">
         {loading ? (
           <div className="flex-1 flex items-center justify-center">
             <Loader2 size={24} className="animate-spin text-muted-foreground" />

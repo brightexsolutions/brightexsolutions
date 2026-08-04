@@ -8,14 +8,17 @@ import { z } from "zod";
 import { createClient, createAdminClient } from "@/lib/supabase/server";
 import { rateLimit } from "@/lib/rate-limit";
 import { logAction } from "@/lib/audit";
-import { CC_SCOPES, CC_SCOPE_ALL, normaliseEmail } from "@/lib/cc-recipients";
+import { CC_SCOPES, CC_SCOPE_ALL, normaliseEmail, contactLabel } from "@/lib/cc-recipients";
 
 export const dynamic = "force-dynamic";
 
 const ScopeEnum = z.enum([...CC_SCOPES, CC_SCOPE_ALL] as [string, ...string[]]);
 
 const ContactSchema = z.object({
-  name: z.string().min(1).max(200).trim(),
+  // Optional: a shared inbox like accounts@ has no person behind it. Stored as
+  // an empty string rather than null because the column is NOT NULL, which
+  // keeps this a code change with no migration attached.
+  name: z.string().max(200).trim().default(""),
   email: z.string().email().max(200).trim(),
   role: z.string().max(120).trim().optional(),
   cc_scopes: z.array(ScopeEnum).max(CC_SCOPES.length + 1).default([]),
@@ -122,7 +125,7 @@ export async function POST(
     action: "created",
     entity_type: "client_contact",
     entity_id: data.id,
-    entity_label: `${data.name} <${data.email}>`,
+    entity_label: contactLabel(data),
     notes: `CC contact for ${client.name} · scopes: ${data.cc_scopes?.join(", ") || "none"}`,
   });
 

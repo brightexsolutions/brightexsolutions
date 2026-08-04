@@ -10,7 +10,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { Loader2, Plus, Trash2, Users, X } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { CC_SCOPES, CC_SCOPE_LABELS, CC_SCOPE_ALL, type CcScope } from "@/lib/cc-scopes";
+import { CC_SCOPES, CC_SCOPE_LABELS, CC_SCOPE_ALL, contactLabel, type CcScope } from "@/lib/cc-scopes";
 
 export interface ClientContact {
   id: string;
@@ -158,16 +158,20 @@ export function ClientContactsPanel({ clientId }: { clientId: string }) {
         {contacts.map((contact) => (
           <div key={contact.id} className="rounded-sm border border-border p-2.5 space-y-2">
             <div className="flex items-start justify-between gap-2">
+              {/* Unnamed contacts lead with the address instead of repeating
+                  it under a blank line. */}
               <div className="min-w-0">
                 <p className="text-xs font-semibold text-foreground truncate">
-                  {contact.name}
+                  {contactLabel(contact)}
                   {contact.role && <span className="font-normal text-muted-foreground"> · {contact.role}</span>}
                 </p>
-                <p className="text-[11px] text-muted-foreground truncate">{contact.email}</p>
+                {!!contact.name?.trim() && (
+                  <p className="text-[11px] text-muted-foreground truncate">{contact.email}</p>
+                )}
               </div>
               <button type="button" onClick={() => removeContact(contact)} disabled={busyId === contact.id}
                 className="shrink-0 text-muted-foreground hover:text-red-500 transition-colors disabled:opacity-50"
-                aria-label={`Remove ${contact.name}`}>
+                aria-label={`Remove ${contactLabel(contact)}`}>
                 {busyId === contact.id ? <Loader2 size={12} className="animate-spin" /> : <Trash2 size={12} />}
               </button>
             </div>
@@ -203,17 +207,19 @@ export function ClientContactsPanel({ clientId }: { clientId: string }) {
               <X size={12} />
             </button>
           </div>
+          {/* The address is the only thing actually required, so it leads.
+              Shared inboxes like accounts@ often have no person to name. */}
+          <input type="email" value={form.email} onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
+            placeholder="email@company.co.ke" required
+            className="w-full px-2.5 py-1.5 rounded-sm border border-input bg-background text-xs focus:outline-none focus:ring-1 focus:ring-ring" />
           <div className="grid grid-cols-2 gap-2">
             <input value={form.name} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
-              placeholder="Name" required
+              placeholder="Name (optional)"
               className="px-2.5 py-1.5 rounded-sm border border-input bg-background text-xs focus:outline-none focus:ring-1 focus:ring-ring" />
             <input value={form.role} onChange={(e) => setForm((f) => ({ ...f, role: e.target.value }))}
               placeholder="Role (optional)"
               className="px-2.5 py-1.5 rounded-sm border border-input bg-background text-xs focus:outline-none focus:ring-1 focus:ring-ring" />
           </div>
-          <input type="email" value={form.email} onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
-            placeholder="email@company.co.ke" required
-            className="w-full px-2.5 py-1.5 rounded-sm border border-input bg-background text-xs focus:outline-none focus:ring-1 focus:ring-ring" />
 
           <div className="space-y-1">
             <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Copy them on</p>
@@ -237,7 +243,7 @@ export function ClientContactsPanel({ clientId }: { clientId: string }) {
 
           {error && <p className="text-[11px] text-red-500">{error}</p>}
 
-          <button type="submit" disabled={saving || !form.name || !form.email || form.cc_scopes.length === 0}
+          <button type="submit" disabled={saving || !form.email || form.cc_scopes.length === 0}
             className="w-full flex items-center justify-center gap-1.5 py-1.5 rounded-sm bg-brand-gold text-brand-navy text-xs font-semibold hover:bg-brand-gold-hover transition-colors disabled:opacity-50">
             {saving ? <Loader2 size={12} className="animate-spin" /> : <Plus size={12} />}
             {saving ? "Adding..." : "Add contact"}

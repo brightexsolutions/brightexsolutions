@@ -368,7 +368,9 @@ export function IntakeDetailSheet({ intake, clientId, onClose, onMarkReviewed, m
   return (
     <Sheet open={!!intake} onOpenChange={(v) => !v && onClose()}>
       <SheetContent
-        className="w-full sm:max-w-lg flex flex-col overflow-hidden p-0"
+        // Matches the client panel it opens over, so the one in front is never
+        // the narrower of the two.
+        className="w-full sm:max-w-lg lg:max-w-xl flex flex-col overflow-hidden p-0"
         side="right"
       >
         {/* Header */}
