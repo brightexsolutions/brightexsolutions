@@ -37,7 +37,7 @@ import {
   investmentTable, phasedInvestmentTable, cardsGrid, phaseList, dataTable,
   scopeOut, noteBox, noteBoxTitled, aboutBox, chipRow, timeline, stepsList,
   tiersGrid, scope3Grid, clauseParagraph, signatureBlock, blurredSection,
-  indicativeNote, splitTitleForCover, esc,
+  indicativeNote, splitTitleForCover, executedSignatures, esc,
 } from "./index";
 
 // ─── Block kinds ────────────────────────────────────────────────────────────
@@ -62,7 +62,8 @@ export type BlockKind =
   | "note"
   | "about"
   | "clauses"
-  | "signature";
+  | "signature"
+  | "signed_by";
 
 /** Content shapes, one per kind. Kept as a discriminated union so a malformed
  * block is a type error at the point it is built, not a blank section at the
@@ -87,7 +88,21 @@ export type BlockContent =
   | { kind: "note"; heading?: string; text: string; items?: string[]; mono?: string; solid?: boolean }
   | { kind: "about"; text: string; paragraphs?: string[] }
   | { kind: "clauses"; clauses: { heading?: string; text: string }[] }
-  | { kind: "signature"; leftLabel: string; rightLabel: string };
+  | { kind: "signature"; leftLabel: string; rightLabel: string }
+  /**
+   * The execution block, with whoever has already signed filled in.
+   *
+   * Distinct from `signature`, which draws empty ruled lines for a printed
+   * document. This one carries real names, marks and dates: Brightex's side is
+   * present from the moment the agreement is created, so a client never opens a
+   * contract that is blank where we should be. `awaiting` is the other party's
+   * space, shown until they sign.
+   */
+  | {
+      kind: "signed_by";
+      parties: { role: string; name: string; title?: string | null; entity?: string | null; imageUrl?: string | null; signedAt: string }[];
+      awaiting?: { role: string; label: string } | null;
+    };
 
 /** One block of content inside a section. A section can hold several. */
 export type Block = BlockContent & {
@@ -293,6 +308,8 @@ function renderBlock(block: Block): string {
         .join("");
     case "signature":
       return signatureBlock(block.leftLabel, block.rightLabel);
+    case "signed_by":
+      return executedSignatures(block.parties, undefined, block.awaiting ?? undefined);
   }
 }
 

@@ -96,6 +96,13 @@ const BlockSchema = z.discriminatedUnion("kind", [
     heading: z.string().optional(), text: nonEmpty,
   })).min(1) }),
   z.object({ id: nonEmpty, kind: z.literal("signature"), leftLabel: nonEmpty, rightLabel: nonEmpty }),
+  z.object({ id: nonEmpty, kind: z.literal("signed_by"),
+    parties: z.array(z.object({
+      role: nonEmpty, name: nonEmpty,
+      title: z.string().nullish(), entity: z.string().nullish(),
+      imageUrl: z.string().nullish(), signedAt: nonEmpty,
+    })).min(1).max(3),
+    awaiting: z.object({ role: nonEmpty, label: nonEmpty }).nullish() }),
 ]);
 
 const ScheduleStageSchema = z.object({

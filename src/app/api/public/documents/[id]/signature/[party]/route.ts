@@ -40,7 +40,16 @@ export async function GET(request: NextRequest, { params }: Params) {
     .eq("id", id)
     .maybeSingle();
 
-  if (!doc || doc.type === "sop" || !doc.accepted_at) {
+  if (!doc || doc.type === "sop") {
+    return NextResponse.json({ error: "Not found" }, { status: 404 });
+  }
+
+  // Brightex's countersignature is on the document from the moment it is
+  // created, and showing it is the point: a client should see the contract is
+  // not blank on our side before they commit to it. A CLIENT's signature only
+  // exists once they have signed, and must not be retrievable before then, or
+  // it would be a signature that could be lifted from an unsigned agreement.
+  if (party !== "brightex" && !doc.accepted_at) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
 

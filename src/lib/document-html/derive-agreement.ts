@@ -149,8 +149,9 @@ export interface DeriveOptions {
   schedule: PaymentSchedule;
   locked?: LockedFigure[];
   /** Countersignature, stamped at creation so the client never receives an
-   * agreement that is unsigned on our side. */
-  brightexSignatory: { name: string; title: string };
+   * agreement that is unsigned on our side. `imageUrl` is the stored signature
+   * where one is on file; without it the name renders as a typed signature. */
+  brightexSignatory: { name: string; title: string; imageUrl?: string | null };
   createdAt?: string;
   specialTerms?: string | null;
 }
@@ -325,6 +326,10 @@ export function deriveAgreement(proposal: BlockDocument, opts: DeriveOptions): D
     });
   }
 
+  // Our side is signed at creation, with the name, mark and date all present,
+  // so a client never opens a contract that is blank where we should be. The
+  // client's half is filled in when they sign; until then it is the space they
+  // are being asked to fill.
   sections.push({
     id: "signatures",
     tag: "Execution",
@@ -339,6 +344,20 @@ export function deriveAgreement(proposal: BlockDocument, opts: DeriveOptions): D
           // already carries it ("Lead at Brightex Solutions").
           `${opts.brightexSignatory.name}, ${opts.brightexSignatory.title}, signed this Agreement on ${fmtDate(createdAt)}. The Client's signature below completes it and starts the engagement.`,
         ],
+      },
+      {
+        id: "sig-parties",
+        kind: "signed_by",
+        parties: [
+          {
+            role: "For Brightex Solutions",
+            name: opts.brightexSignatory.name,
+            title: opts.brightexSignatory.title,
+            imageUrl: opts.brightexSignatory.imageUrl ?? null,
+            signedAt: createdAt,
+          },
+        ],
+        awaiting: { role: "For the Client", label: clientLabel },
       },
     ],
   });

@@ -45,6 +45,58 @@ export function describeSchedule(schedule: PaymentSchedule): string {
     .join(", then ");
 }
 
+
+/**
+ * The request-changes submitter, shared by the full accept box and the
+ * gated-only box. One implementation, so the two cannot diverge.
+ */
+function changesScript(documentId: string): string {
+  return `<script>
+    (function(){
+      window.brxChangeSync = function(){
+        var v = function(id){ return (document.getElementById(id) || {}).value || ''; };
+        var btn = document.getElementById('propChangeBtn');
+        if (!btn) return;
+        btn.disabled = !(v('propChangeMsg').trim().length >= 10
+          && v('propName').trim().split(/\\s+/).length >= 2
+          && /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(v('propEmail').trim()));
+      };
+
+      window.brxRequestChanges = function(){
+        var btn = document.getElementById('propChangeBtn');
+        var err = document.getElementById('propError');
+        if (btn) { btn.disabled = true; btn.textContent = 'Sending...'; }
+        if (err) err.style.display = 'none';
+
+        fetch('/api/public/documents/${esc(documentId)}/request-changes', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name:    (document.getElementById('propName')     || {}).value || '',
+            email:   (document.getElementById('propEmail')    || {}).value || '',
+            message: (document.getElementById('propChangeMsg')|| {}).value || ''
+          })
+        }).then(function(r){ return r.json().then(function(j){ return { ok: r.ok, body: j }; }); })
+          .then(function(res){
+            if (!res.ok) throw new Error((res.body && res.body.error) || 'Something went wrong.');
+            var box = document.getElementById('propAcceptBox');
+            if (box) {
+              box.innerHTML = '<h4>Thank you. We have it.</h4>'
+                + '<p>Your notes are with us and we will be in touch to arrange a call and talk them through.'
+                + ' A copy is on its way to your inbox.</p>';
+            }
+          })
+          .catch(function(e){
+            if (btn) { btn.disabled = false; btn.textContent = 'Send this to Brightex'; }
+            if (err) { err.textContent = e.message; err.style.display = 'block'; }
+          });
+      };
+
+      brxChangeSync();
+    })();
+  </script>`;
+}
+
 export interface ProposalAcceptOptions {
   documentId: string;
   clientName?: string | null;
@@ -203,6 +255,45 @@ export function proposalAcceptBox(opts: ProposalAcceptOptions): string {
       brxChangeSync();
     })();
   </script>`;
+}
+
+
+/**
+ * Request-changes only, with no accept button.
+ *
+ * Used on a GATED proposal. A client who has been shown the plan but not the
+ * pricing must not be able to accept, for the obvious reason. But they can
+ * still have something to say about the timeline or the scope, and the previous
+ * behaviour gave them no route at all: a document with no reply mechanism
+ * pushes the conversation into a WhatsApp thread nobody links back.
+ */
+export function requestChangesOnlyBox(opts: {
+  documentId: string;
+  clientName?: string | null;
+  clientEmail?: string | null;
+}): string {
+  return `<div class="accept-box" id="propAcceptBox">
+    <h4>Questions, or something to change?</h4>
+    <p>We are walking through the detail with you on a call, so the full costings are not on this page yet. If anything in the plan needs changing, tell us now and we will factor it in before we do.</p>
+
+    <div class="accept-fields">
+      <label for="propName">Your full name</label>
+      <input type="text" id="propName" autocomplete="name" placeholder="e.g. Jacinta Nduta"
+        value="${esc(opts.clientName ?? "")}" oninput="brxChangeSync()">
+
+      <label for="propEmail">Your email</label>
+      <input type="email" id="propEmail" autocomplete="email" placeholder="you@company.co.ke"
+        value="${esc(opts.clientEmail ?? "")}" oninput="brxChangeSync()">
+
+      <label class="accept-label" for="propChangeMsg">What would you like changed?</label>
+      <textarea id="propChangeMsg" rows="4" placeholder="e.g. we would like to start after the November intake" oninput="brxChangeSync()"></textarea>
+    </div>
+
+    <button class="accept-btn" id="propChangeBtn" disabled onclick="brxRequestChanges()">Send this to Brightex</button>
+    <p class="accept-error" id="propError"></p>
+    <p class="accept-legal">Nothing is committed by sending this. We will read it and come back to you.</p>
+  </div>
+  ${changesScript(opts.documentId)}`;
 }
 
 // ─── Agreement signing ──────────────────────────────────────────────────────

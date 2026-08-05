@@ -46,15 +46,21 @@ const DeriveSchema = z.object({
 
 /** Countersignatory, from settings, with a sane fallback so a missing setting
  * never blocks an agreement: it is a name on a contract, not a secret. */
-async function brightexSignatory(supabase: ReturnType<typeof createAdminClient>) {
+async function brightexSignatory(supabase: ReturnType<typeof createAdminClient>, documentId: string) {
   const { data } = await supabase
     .from("settings")
     .select("key, value")
-    .in("key", ["signatory_name", "signatory_title"]);
+    .in("key", ["signatory_name", "signatory_title", "signature_path"]);
   const map = Object.fromEntries((data ?? []).map((r: { key: string; value: string }) => [r.key, r.value]));
+
+  // The image is served through the document's own signature route, which only
+  // works once a signature row exists for it. The row is written below, so the
+  // URL is valid by the time a client can open the document.
   return {
-    name: map.signatory_name || "Godwin Ochieng",
+    name: map.signatory_name || "Godwin",
     title: map.signatory_title || "Lead at Brightex Solutions",
+    imageUrl: map.signature_path ? `/api/public/documents/${documentId}/signature/brightex` : null,
+    imagePath: map.signature_path || null,
   };
 }
 
@@ -127,7 +133,9 @@ export async function POST(request: NextRequest, { params }: Params) {
     .gte("created_at", `${year}-01-01`);
   const referenceCode = `AGR-${year}-${String((count ?? 0) + 1).padStart(3, "0")}`;
 
-  const signatory = await brightexSignatory(supabase);
+  // The document id does not exist yet, so the signature URL is patched in
+  // after the insert, below.
+  const signatory = await brightexSignatory(supabase, "PENDING");
 
   const result = deriveAgreement(proposal.data, {
     referenceCode,
@@ -186,15 +194,28 @@ export async function POST(request: NextRequest, { params }: Params) {
       .eq("id", id);
   }
 
-  // Countersignature, stamped now rather than when the client signs.
+  // Countersignature, stamped now rather than when the client signs, with the
+  // stored signature image attached where one is on file.
   const { error: sigError } = await supabase.from("document_signatures").insert({
     document_id: created.id,
     party: "brightex",
     signer_name: signatory.name,
     signer_title: signatory.title,
-    method: "typed",
+    method: signatory.imagePath ? "drawn" : "typed",
+    image_path: signatory.imagePath,
     signed_at: new Date().toISOString(),
   });
+
+  // Now the id exists, point the in-document signature at it.
+  if (signatory.imagePath) {
+    const withUrl = JSON.parse(
+      JSON.stringify(validated.doc).replaceAll(
+        "/api/public/documents/PENDING/signature/brightex",
+        `/api/public/documents/${created.id}/signature/brightex`
+      )
+    );
+    await supabase.from("generated_documents").update({ data: withUrl }).eq("id", created.id);
+  }
   // Needs migration 039. An agreement without its countersignature row is
   // still a valid agreement, so this never blocks creation.
   if (sigError && !/relation|column|schema cache/i.test(sigError.message)) {

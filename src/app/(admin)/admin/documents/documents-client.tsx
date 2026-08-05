@@ -14,7 +14,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { useConfirm } from "@/components/admin/confirm-dialog";
+import { useConfirm, useNotice } from "@/components/admin/confirm-dialog";
 import { EmailComposer } from "@/components/admin/email-composer";
 import { DocumentViewerSheet, type DocumentViewerTarget } from "@/components/admin/document-viewer-sheet";
 
@@ -96,6 +96,7 @@ const defaultForm = {
 
 export function DocumentsPageClient() {
   const confirm = useConfirm();
+  const notice = useNotice();
   const [tab, setTab] = useState<"generated" | "hub">("generated");
   const [documents, setDocuments] = useState<GeneratedDocument[]>([]);
   const [hubDocuments, setHubDocuments] = useState<HubDocument[]>([]);
@@ -245,13 +246,22 @@ export function DocumentsPageClient() {
   }
 
   async function prepareAgreement(doc: GeneratedDocument) {
-    if (!doc.client_id) { alert("This document has no client on file."); return; }
+    if (!doc.client_id) {
+      await notice({
+        title: "No client on this document",
+        message: "An agreement needs a client to be addressed to. Attach one to the proposal first.",
+      });
+      return;
+    }
     setPreparingId(doc.id);
     try {
       const res = await fetch(`/api/admin/documents/${doc.id}`);
       const json = await res.json().catch(() => ({}));
       const proposalData = json?.data?.data;
-      if (!res.ok || !proposalData) { alert(json?.error ?? "Could not load the proposal."); return; }
+      if (!res.ok || !proposalData) {
+        await notice(json?.error ?? "Could not load the proposal.");
+        return;
+      }
 
       // A section-based (v2) proposal holds its pricing in investment blocks,
       // not in a flat line_items array, and may quote ranges rather than fixed
@@ -260,9 +270,11 @@ export function DocumentsPageClient() {
       // KES 0. Refuse instead: the derived-agreement flow handles this properly
       // by copying the accepted figures rather than re-drafting from a summary.
       if (proposalData.version === 2) {
-        alert(
-          "This proposal uses sections. Prepare its agreement from the proposal itself once the client has accepted it, so the scope, figures and payment schedule carry across exactly rather than being re-drafted."
-        );
+        await notice({
+          title: "Prepare this from the proposal itself",
+          message:
+            "This proposal is section based. Once the client accepts it, the agreement is derived from it directly, so the scope, figures and payment terms carry across exactly rather than being re-drafted.",
+        });
         return;
       }
 
@@ -287,7 +299,10 @@ export function DocumentsPageClient() {
         }),
       });
       const genJson = await genRes.json().catch(() => ({}));
-      if (!genRes.ok) { alert(genJson.error ?? "Failed to prepare the agreement."); return; }
+      if (!genRes.ok) {
+        await notice(genJson.error ?? "The agreement could not be prepared.");
+        return;
+      }
       setDocuments((prev) => [genJson.data, ...prev]);
     } finally {
       setPreparingId(null);
@@ -307,9 +322,21 @@ export function DocumentsPageClient() {
   }
 
   function openEmail(doc: GeneratedDocument) {
-    if (doc.type === "sop") { alert("SOPs are internal documents and can't be emailed to a client."); return; }
+    if (doc.type === "sop") {
+      void notice({
+        title: "SOPs stay internal",
+        message: "A standard operating procedure describes how we work and is not sent to clients.",
+      });
+      return;
+    }
     const client = clients.find((c) => c.id === doc.client_id);
-    if (!client?.email) { alert("This client has no email on file."); return; }
+    if (!client?.email) {
+      void notice({
+        title: "No email on file",
+        message: "Add an email address to this client record, then send the document from here.",
+      });
+      return;
+    }
     setEmailDoc({ id: doc.id, title: doc.title, client });
   }
 

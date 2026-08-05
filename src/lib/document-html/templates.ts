@@ -97,6 +97,9 @@ function blankBlock(block: Block): Block {
       return block;
     case "signature":
       return block;
+    // Real names and dates: never carried into a template.
+    case "signed_by":
+      return { ...block, parties: [], awaiting: block.awaiting } as Block;
   }
 }
 

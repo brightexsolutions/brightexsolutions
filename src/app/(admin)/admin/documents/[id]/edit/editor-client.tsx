@@ -15,7 +15,7 @@
  *     of what was agreed, and editing it would make every signature worthless
  */
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import {
   DndContext, closestCenter, PointerSensor, useSensor, useSensors,
@@ -547,8 +547,57 @@ export function DocumentEditor({ documentId }: { documentId: string }) {
   const [notice, setNotice] = useState("");
   const [viewport, setViewport] = useState<Viewport>("desktop");
   const [previewKey, setPreviewKey] = useState(0);
+  // Width of the editing column. The forms need more room than the preview on
+  // some sections (an investment table, a phase list) and less on others, and
+  // which is which depends on the document, so it is a drag rather than a
+  // breakpoint.
+  const [midWidth, setMidWidth] = useState(360);
+  const [dragging, setDragging] = useState(false);
+
+  const frameRef = useRef<HTMLIFrameElement | null>(null);
+
+  /**
+   * Scrolls the preview to a section.
+   *
+   * The renderer gives every section an id of `s-<sectionId>`, so this is a
+   * lookup rather than a guess. Same-origin, so reaching into the frame is
+   * allowed; wrapped anyway because the frame may not have finished loading.
+   */
+  const scrollPreviewTo = useCallback((sectionId: string | null) => {
+    if (!sectionId) return;
+    try {
+      const el = frameRef.current?.contentDocument?.getElementById(`s-${sectionId}`);
+      el?.scrollIntoView({ behavior: "smooth", block: "start" });
+    } catch {
+      // Cross-origin or not yet loaded: not worth surfacing.
+    }
+  }, []);
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
+
+  // Drag on window rather than the handle, so the pointer leaving the 6px strip
+  // mid-drag does not drop it. Clamped so neither pane can be dragged away.
+  useEffect(() => {
+    if (!dragging) return;
+    const onMove = (e: MouseEvent) => {
+      setMidWidth((w) => {
+        const next = w + e.movementX;
+        return Math.min(Math.max(next, 280), Math.min(760, window.innerWidth - 520));
+      });
+    };
+    const onUp = () => setDragging(false);
+    window.addEventListener("mousemove", onMove);
+    window.addEventListener("mouseup", onUp);
+    // Stops the iframe swallowing the drag and the page selecting text under it.
+    document.body.style.userSelect = "none";
+    document.body.style.cursor = "col-resize";
+    return () => {
+      window.removeEventListener("mousemove", onMove);
+      window.removeEventListener("mouseup", onUp);
+      document.body.style.userSelect = "";
+      document.body.style.cursor = "";
+    };
+  }, [dragging]);
 
   // Loading is a subscription to an external system (the API), so it belongs in
   // an effect, but the state updates happen in the promise callback rather than
@@ -680,7 +729,10 @@ export function DocumentEditor({ documentId }: { documentId: string }) {
       {error && <div className="px-5 py-2 bg-destructive/10 text-destructive text-xs shrink-0">{error}</div>}
       {notice && <div className="px-5 py-2 bg-primary/10 text-primary text-xs shrink-0">{notice}</div>}
 
-      <div className="flex-1 min-h-0 grid grid-cols-1 lg:grid-cols-[240px_minmax(0,340px)_1fr]">
+      <div
+        className="flex-1 min-h-0 grid grid-cols-1 lg:grid-cols-[240px_var(--mid)_6px_1fr]"
+        style={{ ["--mid" as string]: `${midWidth}px` }}
+      >
         {/* Sections */}
         <div className="border-r border-border overflow-y-auto p-2">
           <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground px-2 py-1.5">Sections</p>
@@ -693,7 +745,7 @@ export function DocumentEditor({ documentId }: { documentId: string }) {
                   index={sections.filter((s, j) => !s.hidden && j < i).length}
                   active={section.id === activeId}
                   disabled={readOnly || !!section.locked}
-                  onSelect={() => setActiveId(section.id)}
+                  onSelect={() => { setActiveId(section.id); scrollPreviewTo(section.id); }}
                   onToggle={(flags) => void patch({ flags: { [section.id]: flags } }, "Updated.")}
                 />
               ))}
@@ -774,10 +826,30 @@ export function DocumentEditor({ documentId }: { documentId: string }) {
           )}
         </div>
 
+        {/* Drag handle */}
+        <div
+          role="separator"
+          aria-orientation="vertical"
+          aria-label="Resize the editing column"
+          onMouseDown={() => setDragging(true)}
+          onDoubleClick={() => setMidWidth(360)}
+          title="Drag to resize, double-click to reset"
+          className={`hidden lg:block cursor-col-resize border-r border-border transition-colors ${
+            dragging ? "bg-primary/40" : "bg-transparent hover:bg-primary/20"
+          }`}
+        />
+
         {/* Preview */}
         <div className="bg-muted/20 overflow-hidden relative">
           <div className={`h-full mx-auto transition-all ${viewport === "phone" ? "max-w-[390px] border-x border-border" : ""}`}>
-            <iframe key={previewKey} src={previewSrc} title="Preview" className="w-full h-full border-0" />
+            <iframe
+              ref={frameRef}
+              key={previewKey}
+              src={previewSrc}
+              title="Preview"
+              className="w-full h-full border-0"
+              onLoad={() => scrollPreviewTo(activeId)}
+            />
           </div>
           {viewport === "print" && (
             <div className="absolute top-3 left-1/2 -translate-x-1/2 px-2.5 py-1 rounded-full bg-brand-navy/90 text-white text-[10px] font-semibold shadow-lg">

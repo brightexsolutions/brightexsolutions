@@ -345,8 +345,14 @@ const DOCUMENT_CSS = `
   .exec-party .when{font-size:11.5px;color:var(--gray-600);margin:10px 0 0;
     border-top:1px dotted var(--gray-200);padding-top:9px}
   .exec-party .when b{color:var(--navy);font-weight:700}
+  .exec-party.awaiting{border-style:dashed;background:var(--gray-50)}
+  .exec-party.awaiting .exec-mark{border-bottom-color:var(--gray-200)}
+  .exec-party.awaiting .who{color:var(--gray-600)}
   .exec-note{margin-top:16px;border:1px solid #b7e6c4;background:#f0fdf4;border-radius:8px;
     padding:11px 15px;display:flex;align-items:center;gap:10px}
+  .exec-note.pending{border-color:var(--gray-200);background:var(--gray-50)}
+  .exec-note.pending .ic{background:var(--orange)}
+  .exec-note.pending p{color:var(--gray-600)}
   .exec-note .ic{width:20px;height:20px;border-radius:50%;background:#1a7a34;color:#fff;flex:none;
     display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700}
   .exec-note p{margin:0;font-size:12px;color:#2f6b3f;line-height:1.55}
@@ -818,7 +824,13 @@ export interface ExecutedParty {
  */
 export function executedSignatures(
   parties: ExecutedParty[],
-  evidence?: { ip?: string | null; method?: string | null; termsCount?: number }
+  evidence?: { ip?: string | null; method?: string | null; termsCount?: number },
+  /**
+   * The party who has not signed yet, shown as their space rather than omitted.
+   * An agreement with one signature and no second column reads as complete when
+   * it is not; the empty box is the ask.
+   */
+  awaiting?: { role: string; label: string }
 ): string {
   const fmt = (iso: string) =>
     new Date(iso).toLocaleString("en-KE", {
@@ -845,11 +857,31 @@ export function executedSignatures(
   if (evidence?.termsCount) parts.push(`${evidence.termsCount} terms confirmed individually`);
   if (evidence?.ip) parts.push(`recorded from ${evidence.ip}`);
 
-  return `<div class="exec-sig">${cards}</div>
-  <div class="exec-note">
-    <span class="ic">✓</span>
-    <p>This agreement is fully executed. Both parties hold an identical copy, and this page is the record.</p>
-  </div>
+  const awaitingCard = awaiting
+    ? `<div class="exec-party awaiting">
+        <p class="role">${esc(awaiting.role)}</p>
+        <div class="exec-mark"></div>
+        <p class="who">${esc(awaiting.label)}</p>
+        <p class="title">Name, signature and date</p>
+        <p class="when">Awaiting signature</p>
+      </div>`
+    : "";
+
+  // Fully executed only when nobody is still awaited. Saying "fully executed"
+  // on a half-signed contract would be the single most misleading line the
+  // system could print.
+  const note = awaiting
+    ? `<div class="exec-note pending">
+        <span class="ic">✎</span>
+        <p>Signed by ${esc(parties.map((p) => p.name).join(" and "))}. This becomes binding once ${esc(awaiting.label)} signs.</p>
+      </div>`
+    : `<div class="exec-note">
+        <span class="ic">✓</span>
+        <p>This agreement is fully executed. Both parties hold an identical copy, and this page is the record.</p>
+      </div>`;
+
+  return `<div class="exec-sig">${cards}${awaitingCard}</div>
+  ${note}
   ${parts.length ? `<p class="exec-evidence">${esc(parts.join(" &middot; ").replace(/&middot;/g, "·"))}</p>` : ""}`;
 }
 

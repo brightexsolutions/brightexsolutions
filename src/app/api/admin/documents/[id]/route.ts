@@ -56,6 +56,14 @@ export async function PATCH(request: NextRequest, { params }: Params) {
   const updates: Record<string, unknown> = { ...result.data, updated_at: new Date().toISOString() };
   if (result.data.status === "sent") updates.sent_at = new Date().toISOString();
 
+  // `gated` and `gate_mode` must move together. This route predates gate_mode
+  // and set `gated` alone, so the two drifted: a document could read gated=true
+  // with gate_mode='off', which is not a state anything knows how to interpret.
+  // Toggling the simple flag here means the manual gate, so say so explicitly.
+  if (result.data.gated !== undefined) {
+    updates.gate_mode = result.data.gated ? "manual" : "off";
+  }
+
   const { data, error } = await supabase
     .from("generated_documents")
     .update(updates)

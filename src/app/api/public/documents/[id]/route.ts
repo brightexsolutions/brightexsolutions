@@ -6,7 +6,9 @@ import { renderProposalHtml, renderProposalTeaserHtml } from "@/lib/document-htm
 import { renderAgreementHtml, renderAgreementTeaserHtml } from "@/lib/document-html/agreement";
 import { renderBlockDocument, isBlockDocument, needsFigureLock, scheduleOf } from "@/lib/document-html/blocks";
 import { acceptedBox, executedSignatures } from "@/lib/document-html";
-import { proposalAcceptBox, proposalAcceptedBox, agreementSignBox } from "@/lib/document-html/accept";
+import {
+  proposalAcceptBox, proposalAcceptedBox, agreementSignBox, requestChangesOnlyBox,
+} from "@/lib/document-html/accept";
 import type { ProposalData } from "@/components/admin/proposal-pdf";
 import type { AgreementData } from "@/lib/document-types";
 
@@ -94,9 +96,19 @@ export async function GET(request: NextRequest, { params }: Params) {
       } else {
         trailingHtml = proposalAcceptedBox(doc.accepted_by_name || clientRow?.name || "the client", doc.accepted_at);
       }
-    } else if (!gated) {
-      // Never offer acceptance on a gated document: a client must not be able
-      // to commit to terms whose pricing was withheld from them.
+    } else if (gated) {
+      // A gated proposal still needs a way to reply. Accepting is refused (a
+      // client must not commit to terms whose pricing was withheld) but "the
+      // timeline will not work for us" is exactly the thing worth hearing
+      // before the walkthrough call, and previously there was no route for it.
+      trailingHtml = isAgreement
+        ? ""
+        : requestChangesOnlyBox({
+            documentId: doc.id,
+            clientName: clientRow?.name,
+            clientEmail: clientRow?.email,
+          });
+    } else {
       trailingHtml = isAgreement
         ? agreementSignBox({
             documentId: doc.id,
