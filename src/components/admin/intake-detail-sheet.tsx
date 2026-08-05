@@ -348,6 +348,93 @@ function MarkReviewedAction({
   );
 }
 
+/**
+ * Sends the client their own submission back, in full.
+ *
+ * It goes automatically on submission, so this is for the cases that follow:
+ * "we never got it", the person who filled the form is not the person who
+ * signs, or a new contact has joined and needs the same picture as everyone
+ * else. The alternative is retyping a questionnaire into an email by hand.
+ *
+ * Recipients follow the client's normal CC routing rather than being typed
+ * here, so whoever is set to receive onboarding correspondence gets it without
+ * anyone remembering they exist. The extra field is for the one-off.
+ */
+function SendRecapAction({ intakeId, submitterEmail }: { intakeId: string; submitterEmail: string }) {
+  const [sending, setSending] = useState(false);
+  const [open, setOpen] = useState(false);
+  const [extra, setExtra] = useState("");
+  const [result, setResult] = useState<{ ok: boolean; text: string } | null>(null);
+
+  async function send() {
+    setSending(true);
+    setResult(null);
+    try {
+      const extraCc = extra
+        .split(/[,;\s]+/)
+        .map((e) => e.trim())
+        .filter((e) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e));
+
+      const res = await fetch(`/api/admin/intakes/${intakeId}/recap`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ extraCc }),
+      });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(json.error ?? "Could not send it");
+      setResult({
+        ok: true,
+        text: `Sent to ${json.to}${json.cc?.length ? `, copied to ${json.cc.join(", ")}` : ""}.`,
+      });
+      setExtra("");
+      setOpen(false);
+    } catch (err) {
+      setResult({ ok: false, text: err instanceof Error ? err.message : "Could not send it" });
+    } finally {
+      setSending(false);
+    }
+  }
+
+  return (
+    <div className="space-y-2">
+      <Button className="w-full gap-2" variant="outline" size="sm" disabled={sending} onClick={() => void send()}>
+        {sending ? <Loader2 size={14} className="animate-spin" /> : <ClipboardList size={14} />}
+        {sending ? "Sending…" : "Send this summary to the client"}
+      </Button>
+
+      {!open ? (
+        <button
+          type="button"
+          onClick={() => setOpen(true)}
+          className="w-full text-[11px] text-muted-foreground hover:text-foreground transition-colors"
+        >
+          Copy someone else in as well
+        </button>
+      ) : (
+        <div className="space-y-1.5">
+          <input
+            type="text"
+            value={extra}
+            onChange={(e) => setExtra(e.target.value)}
+            placeholder="director@company.co.ke"
+            className="w-full px-2.5 py-1.5 text-xs rounded border border-input bg-background"
+          />
+          <p className="text-[10px] text-muted-foreground leading-relaxed">
+            Added on top of {submitterEmail} and anyone already set to receive onboarding
+            correspondence for this client. Separate several with commas.
+          </p>
+        </div>
+      )}
+
+      {result && (
+        <p className={cn("text-[11px] leading-relaxed", result.ok ? "text-emerald-600" : "text-destructive")}>
+          {result.text}
+        </p>
+      )}
+    </div>
+  );
+}
+
 export function IntakeDetailSheet({ intake, clientId, onClose, onMarkReviewed, marking, onReopen, reopening, onEmailClient, onArchive, archiving, onAnalysisSaved, onProposalReady }: Props) {
   if (!intake) return null;
 
@@ -629,7 +716,7 @@ export function IntakeDetailSheet({ intake, clientId, onClose, onMarkReviewed, m
         </div>
 
         {/* Footer actions */}
-        {(onMarkReviewed || onReopen || onEmailClient || onArchive) && intake.status !== "archived" && (
+        {intake.status !== "archived" && (
           <div className="flex-shrink-0 border-t border-border px-5 py-4 space-y-2">
             {intake.status === "new" && onMarkReviewed && (
               <MarkReviewedAction
@@ -650,6 +737,8 @@ export function IntakeDetailSheet({ intake, clientId, onClose, onMarkReviewed, m
                 {reopening ? "Reopening…" : "Reopen for client edits"}
               </Button>
             )}
+            <SendRecapAction intakeId={intake.id} submitterEmail={intake.submitter_email} />
+
             {onEmailClient && (
               <Button className="w-full gap-2" variant="outline" onClick={onEmailClient} size="sm">
                 <Mail size={14} /> Reply by Email

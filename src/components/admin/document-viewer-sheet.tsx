@@ -17,7 +17,7 @@
 import { useState } from "react";
 import {
   ExternalLink, Download, Send, X, Loader2, Eye, EyeOff,
-  ChevronDown, SlidersHorizontal, CheckCircle2, MessageSquareWarning, Maximize2, Minimize2,
+  ChevronDown, SlidersHorizontal, CheckCircle2, MessageSquareWarning, Maximize2, Minimize2, Pencil,
 } from "lucide-react";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { DocumentRefinePanel, type DocumentRefineTarget } from "@/components/admin/document-refine-panel";
@@ -48,6 +48,8 @@ export interface DocumentViewerTarget {
   changesRequestedAt?: string | null;
   changesRequestedBy?: string | null;
   changesRequestedNote?: string | null;
+  /** Present for section-based, unaccepted documents: links to the editor. */
+  editHref?: string | null;
 }
 
 function GatingToggle({
@@ -249,6 +251,14 @@ export function DocumentViewerSheet({ doc, onClose }: { doc: DocumentViewerTarge
               >
                 <Download size={13} />{doc.isHtmlDocument ? "Save PDF" : "Download"}
               </a>
+              {doc.editHref && (
+                <a
+                  href={doc.editHref}
+                  className="flex-1 min-w-[110px] py-2 rounded border border-input text-sm text-foreground hover:bg-muted transition-colors flex items-center justify-center gap-1.5"
+                >
+                  <Pencil size={13} />Edit
+                </a>
+              )}
               {doc.onEmailClient && (
                 <button
                   type="button"

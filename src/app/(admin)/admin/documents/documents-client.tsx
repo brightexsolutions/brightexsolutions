@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback } from "react";
 import {
   FileSignature, Plus, Trash2, Eye, Send, Sparkles, Loader2, ScrollText, Briefcase, ClipboardList,
-  Receipt, FolderOpen, Wallet, Library, CheckCircle2, Upload,
+  Receipt, FolderOpen, Wallet, Library, CheckCircle2, Upload, Pencil,
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { StatCard } from "@/components/admin/stat-card";
@@ -31,6 +31,9 @@ type GeneratedDocument = {
   client_id: string | null;
   accepted_at?: string | null;
   source_document_id?: string | null;
+  /** Section-based documents are version 2. Only those can be edited by
+   * section; legacy shapes still render through the old path. */
+  data?: { version?: number } | null;
   clients?: { id: string; name: string; company: string | null } | null;
 };
 
@@ -479,9 +482,28 @@ export function DocumentsPageClient() {
                   changesRequestedAt: res.data.changes_requested_at ?? null,
                   changesRequestedBy: res.data.changes_requested_by ?? null,
                   changesRequestedNote: res.data.changes_requested_note ?? null,
+                  editHref:
+                    res.data.data?.version === 2 && !res.data.accepted_at
+                      ? `/admin/documents/${d.id}/edit`
+                      : null,
                 });
               }
             } },
+            {
+              label: "Edit sections",
+              icon: <Pencil size={13} />,
+              // Only section-based documents can be edited here, and only until
+              // a client accepts one: after that it is a record of what was
+              // agreed, not a draft.
+              hidden: (row) => {
+                const d = row as unknown as GeneratedDocument;
+                return d.data?.version !== 2 || !!d.accepted_at;
+              },
+              onClick: (row) => {
+                const d = row as unknown as GeneratedDocument;
+                window.location.href = `/admin/documents/${d.id}/edit`;
+              },
+            },
             { label: "Email to client", icon: <Send size={13} />, onClick: (row) => openEmail(row as unknown as GeneratedDocument) },
             {
               label: (row) => preparingId === (row as unknown as GeneratedDocument).id ? "Preparing…" : "Prepare Agreement",
