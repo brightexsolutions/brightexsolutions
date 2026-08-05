@@ -28,12 +28,30 @@ const DOCUMENT_CSS = `
   html{-webkit-print-color-adjust:exact;print-color-adjust:exact}
   body{margin:0;background:#e9edf4;font-family:var(--sans);color:var(--gray-800);line-height:1.65;font-size:15px}
 
+  /* Sticky bar. The title is allowed to shrink and truncate; the button never
+     is. A wrapped "Download / PDF" over two lines was the previous behaviour on
+     a phone, because the title was free to push the button until its own text
+     broke. min-width:0 is what actually permits the flex item to shrink below
+     its content width, and is the fix. */
   .dl-bar{position:sticky;top:0;z-index:50;background:var(--navy);color:#fff;display:flex;
-    align-items:center;justify-content:space-between;padding:12px 22px;font-size:13px;letter-spacing:.04em}
-  .dl-bar span{font-weight:600;opacity:.9}
+    align-items:center;justify-content:space-between;gap:14px;padding:12px 22px;
+    font-size:13px;letter-spacing:.04em}
+  .dl-bar span{font-weight:600;opacity:.9;min-width:0;flex:1 1 auto;
+    overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .dl-btn{background:var(--orange);color:#fff;border:none;font-weight:700;font-size:13px;
-    padding:9px 18px;border-radius:4px;cursor:pointer;font-family:var(--sans)}
+    padding:9px 18px;border-radius:4px;cursor:pointer;font-family:var(--sans);
+    flex:0 0 auto;white-space:nowrap}
   .dl-btn:hover{background:#cf8009}
+  /* On a phone the document title is already on the cover a scroll away; the
+     bar's job there is the button, so the label steps aside for it. */
+  @media screen and (max-width:560px){
+    .dl-bar{padding:10px 14px;gap:10px;font-size:12px}
+    .dl-btn{padding:8px 14px;font-size:12px}
+  }
+  @media screen and (max-width:380px){
+    .dl-bar span{display:none}
+    .dl-bar{justify-content:flex-end}
+  }
 
   .doc-wrap{max-width:900px;margin:24px auto;background:#fff;box-shadow:0 20px 60px rgba(13,31,78,.18)}
 
@@ -76,7 +94,9 @@ const DOCUMENT_CSS = `
   .exec-lede{font-family:var(--font);font-size:17px;color:var(--navy);border-left:4px solid var(--orange);
     padding:4px 0 4px 18px;margin:20px 0}
 
-  .kpi-row{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin:22px 0}
+  /* auto-fit, not repeat(3): real documents run 3 or 4 KPIs and a hardcoded
+     column count silently wraps the fourth onto a row of its own. */
+  .kpi-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px;margin:22px 0}
   .kpi{background:var(--navy);color:#fff;border-radius:6px;padding:20px 18px}
   .kpi .v{font-family:var(--font);font-size:24px;font-weight:700}
   .kpi .l{color:var(--orange);font-size:11px;letter-spacing:.1em;text-transform:uppercase;margin-top:4px}
@@ -131,7 +151,40 @@ const DOCUMENT_CSS = `
   .step p{margin:0;font-size:13.5px;color:var(--gray-600)}
 
   .note{border:1px dashed var(--gray-200);border-radius:6px;padding:12px 14px;color:var(--gray-600);font-size:12px;margin-top:16px}
+  .note.solid{border-style:solid;border-color:var(--navy)}
+  .note h5{font-family:var(--font);color:var(--navy);font-size:13px;margin:0 0 8px}
+  .note .mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11.5px;color:var(--gray-800);
+    background:var(--gray-50);border:1px solid var(--gray-200);border-radius:4px;padding:12px 14px;
+    white-space:pre-wrap;line-height:1.8;margin:10px 0 0}
   .about-box{background:var(--gray-50);border-radius:8px;padding:22px 24px}
+
+  /* Delivery phases: a named, time-boxed block with its own deliverable list.
+     Distinct from the timeline, which is the schedule view of the same work. */
+  .phase{border:1px solid var(--gray-200);border-radius:8px;overflow:hidden;margin-top:14px}
+  .phase-head{background:var(--navy-light);padding:12px 18px;display:flex;justify-content:space-between;
+    align-items:baseline;gap:14px;flex-wrap:wrap}
+  .phase-head .p-name{font-family:var(--font);color:var(--navy);font-size:15px;font-weight:700}
+  .phase-head .p-len{font-size:11.5px;color:var(--gray-600);font-weight:600;white-space:nowrap}
+  .phase-body{padding:14px 18px}
+  .phase-body .arrow-list li{margin-bottom:6px}
+
+  /* Out of scope: available separately, priced separately. Orange so it reads
+     as a boundary rather than as part of what is being bought. */
+  .scope-out{border:1px solid var(--orange);background:var(--orange-light);border-radius:8px;
+    padding:18px 20px;margin-top:20px}
+  .scope-out h5{font-family:var(--font);color:var(--navy);font-size:14px;margin:0 0 10px}
+  .scope-out dl{margin:0}
+  .scope-out .row{display:grid;grid-template-columns:230px 1fr;gap:16px;padding:9px 0;
+    border-bottom:1px solid rgba(13,31,78,.08)}
+  .scope-out .row:last-child{border-bottom:none}
+  .scope-out dt{color:var(--navy);font-weight:700;font-size:12.5px}
+  .scope-out dd{margin:0;font-size:12.5px;color:var(--gray-600);line-height:1.7}
+
+  /* Indicative content: present in the document, deliberately not part of the
+     contracted total (future enhancements, post-launch retainers). */
+  .indicative-note{display:inline-block;background:var(--gray-50);border:1px solid var(--gray-200);
+    border-radius:4px;padding:5px 11px;font-size:11px;font-weight:700;letter-spacing:.06em;
+    text-transform:uppercase;color:var(--gray-600);margin-bottom:4px}
 
   /* Scope-at-a-glance: included / out of scope / needed from client */
   .scope3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:16px;
@@ -145,7 +198,8 @@ const DOCUMENT_CSS = `
   .scope3 li:before{content:"·";position:absolute;left:2px;color:var(--orange);font-weight:700}
   .scope-label{font-family:var(--sans);font-size:10px;letter-spacing:.14em;text-transform:uppercase;
     color:var(--gray-600);margin:22px 0 0}
-  @media(max-width:720px){.scope3{grid-template-columns:1fr}}
+  /* screen-scoped: see the note on the main breakpoint at the end of this file */
+  @media screen and (max-width:720px){.scope3{grid-template-columns:1fr}}
 
   /* Recommended bundle tag + retainer tiers */
   .rec-tag{background:var(--orange);color:#fff;font-size:9px;font-weight:700;padding:2px 7px;border-radius:4px;
@@ -160,7 +214,7 @@ const DOCUMENT_CSS = `
   .tier .body li:before{content:"✓";position:absolute;left:0;color:var(--orange);font-weight:700}
   .tier .price{margin-top:auto;font-family:var(--font);font-size:20px;font-weight:700;color:var(--navy)}
   .tier .price span{font-size:12px;color:var(--gray-600);font-weight:400}
-  @media(max-width:720px){.tiers{grid-template-columns:1fr}}
+  @media screen and (max-width:720px){.tiers{grid-template-columns:1fr}}
 
   .cta-box{background:var(--navy);border-radius:8px;padding:36px;text-align:center;margin-top:8px}
   .cta-box h4{font-family:var(--font);color:#fff;font-size:21px;margin:0 0 10px}
@@ -220,6 +274,93 @@ const DOCUMENT_CSS = `
   .accept-check span{color:rgba(255,255,255,.78);font-size:12.5px;line-height:1.6;text-transform:none;
     letter-spacing:0;font-weight:400}
   .accept-legal{color:rgba(255,255,255,.42);font-size:11.5px;line-height:1.6;margin:16px auto 0;max-width:32rem}
+  /* Standalone field label outside .accept-fields (the schedule picker's). */
+  .accept-label{display:block;max-width:26rem;margin:0 auto 8px;text-align:left;
+    color:rgba(255,255,255,.72);font-size:11.5px;font-weight:700;text-transform:uppercase;letter-spacing:.06em}
+
+  /* Proposal acceptance: payment schedule picker and multi-column fields.
+     Lives here, not in accept.ts, because documentShell() emits the document's
+     only <style> block: CSS defined next to the markup that uses it would be
+     dropped silently and the control would ship unstyled. */
+  .sched-list{display:grid;gap:10px;max-width:26rem;margin:0 auto 18px}
+  .sched-opt{display:flex;gap:11px;align-items:flex-start;text-align:left;cursor:pointer;
+    border:1px solid rgba(255,255,255,.18);border-radius:8px;padding:13px 15px;
+    background:rgba(255,255,255,.04);transition:border-color .15s ease,background .15s ease}
+  .sched-opt:hover{border-color:rgba(255,255,255,.34)}
+  .sched-opt.on{border-color:var(--orange);background:rgba(232,146,10,.1)}
+  .sched-opt input{margin-top:3px;flex:none;width:15px;height:15px;accent-color:var(--orange)}
+  .sched-opt .sd-name{display:block;color:#fff;font-size:13.5px;font-weight:700;margin-bottom:3px}
+  .sched-opt .sd-detail{display:block;color:rgba(255,255,255,.62);font-size:12px;line-height:1.6}
+  .sched-fixed{border:1px solid rgba(255,255,255,.16);border-radius:8px;padding:13px 15px;
+    background:rgba(255,255,255,.04);text-align:left;max-width:26rem;margin:0 auto 18px}
+  .sched-fixed .sd-name{color:#fff;font-size:13px;font-weight:700;margin-bottom:4px}
+  .sched-fixed .sd-detail{color:rgba(255,255,255,.62);font-size:12px;line-height:1.6}
+  .accept-fields .field-row{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  @media screen and (max-width:560px){.accept-fields .field-row{grid-template-columns:1fr}}
+
+  /* "Something needs changing first": collapsed until asked for, so the
+     default path stays a single clear action rather than two competing ones. */
+  .accept-btn.secondary{background:rgba(255,255,255,.12);color:#fff}
+  .accept-btn.secondary:hover{background:rgba(255,255,255,.2)}
+  .changes-panel{display:none;max-width:26rem;margin:20px auto 0;padding-top:20px;
+    border-top:1px solid rgba(255,255,255,.14);text-align:left}
+  .changes-panel.open{display:block}
+  .changes-panel textarea{width:100%;box-sizing:border-box;padding:11px 13px;border-radius:6px;
+    border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.06);color:#fff;
+    font-size:14px;font-family:var(--sans);line-height:1.6;resize:vertical;margin:0 0 14px}
+  .changes-panel textarea::placeholder{color:rgba(255,255,255,.35)}
+  .changes-panel textarea:focus{outline:none;border-color:var(--orange)}
+  .changes-panel .accept-legal{margin-top:12px;text-align:left}
+
+  /* Signature capture: draw or upload. */
+  .sig-tabs{display:flex;gap:8px;max-width:26rem;margin:0 auto 12px}
+  .sig-tab{flex:1;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.18);color:rgba(255,255,255,.7);
+    border-radius:6px;padding:9px 12px;font-size:13px;font-weight:600;font-family:var(--sans);cursor:pointer}
+  .sig-tab.on{background:rgba(232,146,10,.14);border-color:var(--orange);color:#fff}
+  .sig-pane{max-width:26rem;margin:0 auto 6px}
+  .sig-canvas{width:100%;height:150px;background:#fff;border:1px solid rgba(255,255,255,.2);border-radius:8px;
+    touch-action:none;cursor:crosshair;display:block}
+  .sig-actions{display:flex;justify-content:space-between;align-items:center;margin-top:8px}
+  .sig-hint{color:rgba(255,255,255,.5);font-size:11.5px;line-height:1.6;text-align:left;display:block}
+  .sig-clear{background:none;border:none;color:rgba(255,255,255,.62);font-size:12px;text-decoration:underline;
+    cursor:pointer;font-family:var(--sans);padding:0}
+  .sig-pane input[type=file]{width:100%;color:rgba(255,255,255,.7);font-size:12.5px;margin:10px 0;
+    font-family:var(--sans)}
+  .sig-preview{background:#fff;border-radius:8px;padding:14px;margin-top:8px;text-align:center}
+  .sig-preview img{max-width:100%;max-height:110px;display:block;margin:0 auto 8px}
+  .sig-preview .sig-hint{color:var(--gray-600)}
+
+  /* Acceptance controls are interactive: they have no place on paper. */
+  @media print{
+    .accept-box,.sched-list,.sched-fixed,.changes-panel,.sig-tabs,.sig-pane{display:none}
+  }
+
+  /* Executed signature block: what a signed contract actually ends with.
+     Both parties side by side, each with their mark, who they are, and when.
+     The acknowledgement that used to sit here on its own is now a small note
+     below it, because a status pill is not an execution record. */
+  .exec-sig{display:grid;grid-template-columns:1fr 1fr;gap:26px;margin-top:22px}
+  .exec-party{border:1px solid var(--gray-200);border-radius:8px;padding:18px 20px;background:#fff}
+  .exec-party .role{font-size:10px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;
+    color:var(--orange);margin:0 0 14px}
+  .exec-mark{height:74px;display:flex;align-items:flex-end;border-bottom:1px solid var(--navy);
+    margin-bottom:10px;padding-bottom:6px}
+  .exec-mark img{max-height:70px;max-width:100%;display:block}
+  .exec-mark .typed{font-family:"Segoe Script","Bradley Hand","Snell Roundhand",cursive;
+    font-size:27px;color:var(--navy);line-height:1.1;padding-bottom:2px}
+  .exec-party .who{font-size:14px;font-weight:700;color:var(--navy);margin:0}
+  .exec-party .title{font-size:12px;color:var(--gray-600);margin:2px 0 0}
+  .exec-party .entity{font-size:12px;color:var(--gray-600);margin:2px 0 0}
+  .exec-party .when{font-size:11.5px;color:var(--gray-600);margin:10px 0 0;
+    border-top:1px dotted var(--gray-200);padding-top:9px}
+  .exec-party .when b{color:var(--navy);font-weight:700}
+  .exec-note{margin-top:16px;border:1px solid #b7e6c4;background:#f0fdf4;border-radius:8px;
+    padding:11px 15px;display:flex;align-items:center;gap:10px}
+  .exec-note .ic{width:20px;height:20px;border-radius:50%;background:#1a7a34;color:#fff;flex:none;
+    display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700}
+  .exec-note p{margin:0;font-size:12px;color:#2f6b3f;line-height:1.55}
+  .exec-evidence{margin-top:10px;font-size:11px;color:var(--gray-600);line-height:1.65}
+  @media screen and (max-width:720px){.exec-sig{grid-template-columns:1fr;gap:16px}}
 
   .resp-table thead th:first-child{width:160px}
   .clause p{font-size:14px;color:var(--gray-600);line-height:1.75}
@@ -237,23 +378,56 @@ const DOCUMENT_CSS = `
   .footer-info{font-size:12px;line-height:1.8}
   .footer-info strong{color:#fff}
 
+  @page{size:A4;margin:14mm}
+
   @media print{
     body{background:#fff}
     .dl-bar{display:none}
     .doc-wrap{margin:0;box-shadow:none;max-width:none}
     .section,.cover,.toc-page{page-break-inside:avoid}
     .cover{page-break-after:always}
-    .fcard,.tier,.kpi,table,.tl-row,.step{break-inside:avoid}
+    .fcard,.tier,.kpi,table,.tl-row,.step,.phase,.scope-out{break-inside:avoid}
   }
-  @page{size:A4;margin:14mm}
 
-  @media(max-width:720px){
+  /* ── Responsive: SCREEN ONLY ──────────────────────────────────────────────
+     'screen and' is load-bearing, not decoration. A4 at 14mm margins leaves
+     182mm of content, which is 688px at 96dpi, so a bare (max-width:720px)
+     query MATCHES WHILE PRINTING and every PDF comes out in the phone layout.
+     The printed document must be identical whatever device produced it, so
+     every collapse rule below stays scoped to screen. */
+  @media screen and (max-width:720px){
     .cover{padding:40px 26px;min-height:auto}
     .cover-title{font-size:30px}
     .section,.toc-page,.footer{padding:30px 26px}
-    .toc-grid,.cards,.kpi-row,.tiers{grid-template-columns:1fr}
+    .toc-grid,.cards,.kpi-row,.tiers,.scope3{grid-template-columns:1fr}
     .tl-row{grid-template-columns:90px 26px 1fr}
     .sig-row{flex-direction:column}
+    .scope-out .row{grid-template-columns:1fr;gap:3px}
+
+    /* Data becomes stacked cards, never a horizontally scrolling table.
+       Column headings are carried per cell in data-label by the builders. */
+    table.stack thead{display:none}
+    table.stack tbody tr{display:block;background:#fff;border:1px solid var(--gray-200);
+      border-radius:8px;margin-bottom:12px;overflow:hidden}
+    table.stack tbody tr:nth-child(even){background:#fff}
+    table.stack tbody td{display:flex;justify-content:space-between;align-items:baseline;gap:16px;
+      padding:10px 14px;border-bottom:1px solid var(--gray-100);text-align:left}
+    table.stack tbody td:last-child{border-bottom:none}
+    table.stack tbody td:before{content:attr(data-label);flex:none;font-size:10px;font-weight:700;
+      letter-spacing:.1em;text-transform:uppercase;color:var(--gray-600)}
+    table.stack tbody td:not([data-label]):before{content:none}
+    table.stack td.amt{text-align:right}
+    table.stack tr.total{background:var(--navy);border-color:var(--navy)}
+    table.stack tr.total td{color:#fff;border-bottom-color:rgba(255,255,255,.16)}
+    table.stack tr.total td:before{color:rgba(255,255,255,.6)}
+  }
+
+  /* Small phones: the timeline's fixed week column stops fitting. */
+  @media screen and (max-width:420px){
+    .tl-row{grid-template-columns:1fr}
+    .tl-mid{display:none}
+    .tl-week{align-self:stretch;text-align:left;margin-bottom:8px}
+    .tl-content{padding:0 0 20px}
   }
 `;
 
@@ -420,13 +594,129 @@ export function arrowListKeyValue(items: { label: string; detail: string }[]): s
 }
 
 export function investmentTable(rows: { desc: string; sub?: string; amount: string }[], total: { label: string; amount: string }): string {
-  return `<table>
+  return `<table class="stack">
     <thead><tr><th>Description</th><th style="text-align:right">Amount</th></tr></thead>
     <tbody>
-      ${rows.map((r) => `<tr><td><strong>${esc(r.desc)}</strong>${r.sub ? `<br/><span style="font-size:12px;color:var(--gray-600)">${esc(r.sub)}</span>` : ""}</td><td class="amt">${esc(r.amount)}</td></tr>`).join("")}
-      <tr class="total"><td>${esc(total.label)}</td><td class="amt">${esc(total.amount)}</td></tr>
+      ${rows.map((r) => `<tr><td><strong>${esc(r.desc)}</strong>${r.sub ? `<br/><span style="font-size:12px;color:var(--gray-600)">${esc(r.sub)}</span>` : ""}</td><td class="amt" data-label="Amount">${esc(r.amount)}</td></tr>`).join("")}
+      <tr class="total"><td>${esc(total.label)}</td><td class="amt" data-label="Total">${esc(total.amount)}</td></tr>
     </tbody>
   </table>`;
+}
+
+/**
+ * Investment table with an explicit phase or stage column: the shape real
+ * phased proposals use. Kept separate from investmentTable() rather than
+ * bolting an optional column onto it, because the two have different mobile
+ * collapses (the phase becomes the card's heading, not one of its rows).
+ */
+export function phasedInvestmentTable(
+  rows: { phase: string; desc: string; amount: string }[],
+  total: { label: string; amount: string }
+): string {
+  return `<table class="stack">
+    <thead><tr><th>Phase</th><th>Deliverable</th><th style="text-align:right">Investment (KES)</th></tr></thead>
+    <tbody>
+      ${rows.map((r) => `<tr>
+        <td><strong>${esc(r.phase)}</strong></td>
+        <td data-label="Deliverable">${esc(r.desc)}</td>
+        <td class="amt" data-label="Investment">${esc(r.amount)}</td>
+      </tr>`).join("")}
+      <tr class="total"><td colspan="2">${esc(total.label)}</td><td class="amt" data-label="Total">${esc(total.amount)}</td></tr>
+    </tbody>
+  </table>`;
+}
+
+/**
+ * Feature or problem card grid, any number of cards.
+ *
+ * The house CSS has always had `.cards`/`.fcard`/`.ficon`, but the only
+ * callers were hardcoded problem/solution pairs, so a document needing four
+ * framing cards had no way to say so and had to be hand-written outside the
+ * system. Each card takes either prose or an arrow list, because both occur:
+ * a problem card explains, a capability card enumerates.
+ */
+export function cardsGrid(
+  cards: { icon?: string; title: string; body?: string; points?: string[] }[]
+): string {
+  return `<div class="cards">${cards.map((c, i) => `<div class="fcard">
+    <div class="ficon">${esc(c.icon ?? String(i + 1))}</div>
+    <h4>${esc(c.title)}</h4>
+    ${c.body ? `<p style="margin:0;font-size:13.5px;color:var(--gray-600)">${esc(c.body)}</p>` : ""}
+    ${c.points?.length ? arrowList(c.points) : ""}
+  </div>`).join("")}</div>`;
+}
+
+/**
+ * Delivery phases: what happens in each stage of the work, with its duration.
+ *
+ * This is the scope view of the work; timeline() is the schedule view of the
+ * same phases. Both earn their place: a client reads the phase list to
+ * understand what they are buying and the timeline to understand when.
+ */
+export function phaseList(
+  phases: { name: string; duration: string; items: string[] }[]
+): string {
+  return phases.map((p) => `<div class="phase">
+    <div class="phase-head">
+      <div class="p-name">${esc(p.name)}</div>
+      <div class="p-len">${esc(p.duration)}</div>
+    </div>
+    <div class="phase-body">${arrowList(p.items)}</div>
+  </div>`).join("");
+}
+
+/**
+ * Generic tabular data that is not pricing: tracked metrics, comparisons,
+ * anything with headings and rows. Collapses to stacked cards on a phone,
+ * where the first column becomes the card heading and the rest become
+ * labelled rows.
+ */
+export function dataTable(headers: string[], rows: string[][]): string {
+  return `<table class="stack">
+    <thead><tr>${headers.map((h, i) => `<th${i === headers.length - 1 && headers.length > 2 ? ' style="text-align:right"' : ""}>${esc(h)}</th>`).join("")}</tr></thead>
+    <tbody>
+      ${rows.map((cells) => `<tr>${cells.map((cell, i) => i === 0
+        ? `<td><strong>${esc(cell)}</strong></td>`
+        : `<td data-label="${esc(headers[i] ?? "")}"${i === cells.length - 1 && cells.length > 2 ? ' style="text-align:right"' : ""}>${esc(cell)}</td>`
+      ).join("")}</tr>`).join("")}
+    </tbody>
+  </table>`;
+}
+
+/**
+ * Out of scope, available separately.
+ *
+ * Stating boundaries plainly is what stops "can you also just..." arriving
+ * mid-build as an assumption rather than a request. Orange, so it reads as a
+ * boundary rather than as part of what is being bought.
+ */
+export function scopeOut(heading: string, rows: { label: string; detail: string }[]): string {
+  return `<div class="scope-out">
+    <h5>${esc(heading)}</h5>
+    <dl>${rows.map((r) => `<div class="row">
+      <dt>${esc(r.label)}</dt>
+      <dd>${esc(r.detail)}</dd>
+    </div>`).join("")}</dl>
+  </div>`;
+}
+
+/**
+ * Note box with a heading, and optionally a monospace block (a folder
+ * structure, a naming convention: things where the shape carries meaning and
+ * reflowing it as prose destroys it).
+ */
+export function noteBoxTitled(heading: string, body: string, opts?: { items?: string[]; mono?: string; solid?: boolean }): string {
+  return `<div class="note${opts?.solid ? " solid" : ""}">
+    <h5>${esc(heading)}</h5>
+    ${body ? `<p style="margin:0">${esc(body)}</p>` : ""}
+    ${opts?.items?.length ? arrowList(opts.items) : ""}
+    ${opts?.mono ? `<p class="mono">${esc(opts.mono)}</p>` : ""}
+  </div>`;
+}
+
+/** Marks a section as present but deliberately outside the contracted total. */
+export function indicativeNote(text: string): string {
+  return `<p><span class="indicative-note">${esc(text)}</span></p>`;
 }
 
 export function timeline(rows: { week: string; title: string; desc: string; launch?: boolean }[]): string {
@@ -498,9 +788,9 @@ export function blurredSection(contentHtml: string, overlay: {
 }
 
 export function respTable(rows: { role: string; responsibility: string }[]): string {
-  return `<table class="resp-table">
+  return `<table class="resp-table stack">
     <thead><tr><th>Role</th><th>Responsibility</th></tr></thead>
-    <tbody>${rows.map((r) => `<tr><td><strong>${esc(r.role)}</strong></td><td>${esc(r.responsibility)}</td></tr>`).join("")}</tbody>
+    <tbody>${rows.map((r) => `<tr><td><strong>${esc(r.role)}</strong></td><td data-label="Responsibility">${esc(r.responsibility)}</td></tr>`).join("")}</tbody>
   </table>`;
 }
 
@@ -513,6 +803,63 @@ export function signatureBlock(leftLabel: string, rightLabel: string): string {
     <div class="sig-box"><div class="sig-line"><div class="label">${esc(leftLabel)}</div><div class="sub">Name, signature &amp; date</div></div></div>
     <div class="sig-box"><div class="sig-line"><div class="label">${esc(rightLabel)}</div><div class="sub">Name, signature &amp; date</div></div></div>
   </div>`;
+}
+
+export interface ExecutedParty {
+  /** "Brightex Solutions" / the client's registered name. */
+  role: string;
+  name: string;
+  title?: string | null;
+  entity?: string | null;
+  /** URL to the signature image, or null for a typed signature. */
+  imageUrl?: string | null;
+  signedAt: string;
+}
+
+/**
+ * The execution block of a signed agreement: both parties, their marks, and
+ * when each signed.
+ *
+ * This is what a contract ends with, and it was missing: a signed agreement
+ * showed only a green "accepted by" pill, which records the fact of acceptance
+ * without evidencing it. The block below is the record; the acknowledgement
+ * note beneath is the reassurance, in that order of prominence.
+ */
+export function executedSignatures(
+  parties: ExecutedParty[],
+  evidence?: { ip?: string | null; method?: string | null; termsCount?: number }
+): string {
+  const fmt = (iso: string) =>
+    new Date(iso).toLocaleString("en-KE", {
+      dateStyle: "long", timeStyle: "short", timeZone: "Africa/Nairobi",
+    });
+
+  const cards = parties.map((p) => `<div class="exec-party">
+    <p class="role">${esc(p.role)}</p>
+    <div class="exec-mark">
+      ${p.imageUrl
+        ? `<img src="${esc(p.imageUrl)}" alt="Signature of ${esc(p.name)}" />`
+        : `<span class="typed">${esc(p.name)}</span>`}
+    </div>
+    <p class="who">${esc(p.name)}</p>
+    ${p.title ? `<p class="title">${esc(p.title)}</p>` : ""}
+    ${p.entity ? `<p class="entity">for and on behalf of ${esc(p.entity)}</p>` : ""}
+    <p class="when">Signed <b>${esc(fmt(p.signedAt))}</b></p>
+  </div>`).join("");
+
+  const parts: string[] = [];
+  if (evidence?.method) {
+    parts.push(evidence.method === "drawn" ? "signed on screen" : evidence.method === "upload" ? "signature uploaded" : "typed signature");
+  }
+  if (evidence?.termsCount) parts.push(`${evidence.termsCount} terms confirmed individually`);
+  if (evidence?.ip) parts.push(`recorded from ${evidence.ip}`);
+
+  return `<div class="exec-sig">${cards}</div>
+  <div class="exec-note">
+    <span class="ic">✓</span>
+    <p>This agreement is fully executed. Both parties hold an identical copy, and this page is the record.</p>
+  </div>
+  ${parts.length ? `<p class="exec-evidence">${esc(parts.join(" &middot; ").replace(/&middot;/g, "·"))}</p>` : ""}`;
 }
 
 /** Already-accepted status: shown in place of the accept button once a
@@ -679,12 +1026,24 @@ export function recTag(text: string): string {
 
 /** 3-tier pricing cards: e.g. a monthly care/growth/scale retainer plan.
  * `featured` highlights one tier (orange header) as the recommended choice. */
-export function tiersGrid(tiers: { name: string; price: number; priceSuffix?: string; features: string[]; featured?: boolean }[]): string {
+export function tiersGrid(tiers: {
+  name: string;
+  /** A number formats as KES with thousands separators. A string passes
+   * through verbatim, which is what a real retainer quote needs: tiers are
+   * routinely offered as a range ("8,000 to 15,000") until scope is pinned,
+   * and a number type cannot say that without inventing a figure. */
+  price: number | string;
+  priceSuffix?: string;
+  desc?: string;
+  features: string[];
+  featured?: boolean;
+}[]): string {
   return `<div class="tiers">${tiers.map((t) => `<div class="tier${t.featured ? " feat" : ""}">
     <div class="head">${esc(t.name)}</div>
     <div class="body">
+      ${t.desc ? `<p style="font-size:12.5px;color:var(--gray-600);margin:0 0 10px">${esc(t.desc)}</p>` : ""}
       <ul>${t.features.map((f) => `<li>${esc(f)}</li>`).join("")}</ul>
-      <div class="price">KES ${t.price.toLocaleString("en-KE")}<span> ${esc(t.priceSuffix ?? "/ mo")}</span></div>
+      <div class="price">${typeof t.price === "number" ? `KES ${t.price.toLocaleString("en-KE")}` : esc(t.price)}<span> ${esc(t.priceSuffix ?? "/ mo")}</span></div>
     </div>
   </div>`).join("")}</div>`;
 }

@@ -7,6 +7,7 @@ import { transporter, SENDERS } from "@/lib/mail";
 import { emailTemplate, emailParagraph, emailInfoCard, emailButton, emailDivider, emailSignoff } from "@/lib/email-templates";
 import { resolveCc } from "@/lib/cc-recipients";
 import { SITE_URL } from "@/lib/constants";
+import { logClientAction } from "@/lib/audit";
 
 type Params = { params: Promise<{ id: string }> };
 
@@ -148,6 +149,15 @@ export async function POST(request: NextRequest, { params }: Params) {
       document_id: doc.id,
     });
   }
+
+  await logClientAction({
+    actor_name: parsed.data.name,
+    action: "accepted_agreement",
+    entity_type: "generated_document",
+    entity_id: doc.id,
+    entity_label: `${doc.title} (${doc.reference_code})`,
+    notes: `Accepted by ${parsed.data.name} <${parsed.data.email}> for ${clientLabel}.`,
+  });
 
   return NextResponse.json({ ok: true, accepted_at: acceptedAt });
 }

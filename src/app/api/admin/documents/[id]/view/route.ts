@@ -4,6 +4,8 @@ import { rateLimit } from "@/lib/rate-limit";
 import { renderProposalHtml } from "@/lib/document-html/proposal";
 import { renderAgreementHtml } from "@/lib/document-html/agreement";
 import { renderSopHtml } from "@/lib/document-html/sop";
+import { renderBlockDocument, isBlockDocument } from "@/lib/document-html/blocks";
+import { acceptedBox, executedSignatures } from "@/lib/document-html";
 import type { ProposalData } from "@/components/admin/proposal-pdf";
 import type { AgreementData, SopData } from "@/lib/document-types";
 
@@ -34,6 +36,47 @@ export async function GET(request: NextRequest, { params }: Params) {
   let html: string;
   if (doc.raw_html) {
     html = doc.raw_html;
+  } else if (isBlockDocument(doc.data)) {
+    // Never gated, and no acceptance control: this is Godwin's own view of the
+    // document, so it shows the real content and nothing a client would click.
+    // Use ?preview=client to see the gated teaser exactly as a client would.
+    const asClient = request.nextUrl.searchParams.get("preview") === "client";
+    let trailing = "";
+    if (doc.accepted_at) {
+      const { data: sigs } = await supabase
+        .from("document_signatures")
+        .select("party, signer_name, signer_title, entity, image_path, method, terms_accepted, ip, signed_at")
+        .eq("document_id", doc.id);
+      const ordered = ["brightex", "client"]
+        .map((p) => (sigs ?? []).find((s) => s.party === p))
+        .filter(Boolean) as NonNullable<typeof sigs>;
+
+      if (doc.type === "agreement" && ordered.length > 0) {
+        const clientSig = ordered.find((s) => s.party === "client");
+        trailing = executedSignatures(
+          ordered.map((s) => ({
+            role: s.party === "brightex" ? "For Brightex Solutions" : "For the Client",
+            name: s.signer_name,
+            title: s.signer_title,
+            entity: s.party === "client" ? s.entity : null,
+            imageUrl: s.image_path ? `/api/public/documents/${doc.id}/signature/${s.party}` : null,
+            signedAt: s.signed_at,
+          })),
+          {
+            ip: clientSig?.ip,
+            method: clientSig?.method,
+            termsCount: Array.isArray(clientSig?.terms_accepted) ? clientSig.terms_accepted.length : 0,
+          }
+        );
+      } else {
+        trailing = acceptedBox(doc.accepted_by_name || doc.data.meta?.client?.name || "the client", doc.accepted_at);
+      }
+    }
+
+    html = renderBlockDocument(doc.data, {
+      gated: asClient && !!doc.gated,
+      trailingHtml: trailing,
+    });
   } else if (doc.type === "proposal") {
     html = renderProposalHtml(doc.data as ProposalData);
   } else if (doc.type === "agreement") {

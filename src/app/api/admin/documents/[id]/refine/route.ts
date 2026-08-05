@@ -19,6 +19,7 @@ import { callAI, ADMIN_SYSTEM_PROMPT, AI_MODELS, isAIAvailable, GeminiRateLimite
 import { recordAiFailure, recordAiRecovery } from "@/lib/ai-monitor";
 import { logAction } from "@/lib/audit";
 import { DOCUMENT_COPY_RULES } from "@/lib/document-copy-rules";
+import { isBlockDocument } from "@/lib/document-html/blocks";
 import type { AIProvider } from "@/types";
 
 type Params = { params: Promise<{ id: string }> };
@@ -55,6 +56,22 @@ export async function POST(request: NextRequest, { params }: Params) {
     .maybeSingle();
 
   if (docError || !doc) return NextResponse.json({ error: "Document not found" }, { status: 404 });
+
+  // Block documents are refused outright, not attempted.
+  //
+  // This route works by handing the ENTIRE `data` object to a model and writing
+  // back whatever it returns. On a legacy flat shape that is merely risky; on a
+  // block document it is destructive, because the model would have to reproduce
+  // every section, block id and nested content array exactly, and any drift
+  // silently rewrites or drops parts of a document that may already be shared
+  // with a client. Per-block refinement (which sends one block and locks the
+  // rest) is the correct mechanism and is built with the editor.
+  if (isBlockDocument(doc.data)) {
+    return NextResponse.json(
+      { error: "This document uses sections. Refine an individual section from the document editor rather than rewriting the whole document at once." },
+      { status: 409 }
+    );
+  }
 
   const { data: settingsRows } = await supabase
     .from("settings")

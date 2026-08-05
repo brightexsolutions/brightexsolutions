@@ -250,6 +250,19 @@ export function DocumentsPageClient() {
       const proposalData = json?.data?.data;
       if (!res.ok || !proposalData) { alert(json?.error ?? "Could not load the proposal."); return; }
 
+      // A section-based (v2) proposal holds its pricing in investment blocks,
+      // not in a flat line_items array, and may quote ranges rather than fixed
+      // amounts. Reading it through the legacy path yields a total of 0 and an
+      // empty scope, which would generate a plausible-looking agreement for
+      // KES 0. Refuse instead: the derived-agreement flow handles this properly
+      // by copying the accepted figures rather than re-drafting from a summary.
+      if (proposalData.version === 2) {
+        alert(
+          "This proposal uses sections. Prepare its agreement from the proposal itself once the client has accepted it, so the scope, figures and payment schedule carry across exactly rather than being re-drafted."
+        );
+        return;
+      }
+
       const total = (proposalData.line_items ?? []).reduce((s: number, it: { qty: number; unit_price: number }) => s + it.qty * it.unit_price, 0);
       const summary = [
         `This agreement formalises an already-discussed proposal: "${proposalData.project_title}".`,
@@ -461,6 +474,11 @@ export function DocumentsPageClient() {
                   ...base,
                   refine: { documentId: d.id, docType: d.type, data: res.data.data },
                   gating: d.type !== "sop" ? { documentId: d.id, gated: !!res.data.gated } : undefined,
+                  acceptedAt: res.data.accepted_at ?? null,
+                  acceptedByName: res.data.accepted_by_name ?? null,
+                  changesRequestedAt: res.data.changes_requested_at ?? null,
+                  changesRequestedBy: res.data.changes_requested_by ?? null,
+                  changesRequestedNote: res.data.changes_requested_note ?? null,
                 });
               }
             } },

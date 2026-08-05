@@ -2,11 +2,13 @@ import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/server";
 import { rateLimit } from "@/lib/rate-limit";
 import { sendNewClientIntakeAck, sendExistingClientIntakeAck } from "@/lib/intake-mail";
+import { sendIntakeRecap } from "@/lib/intake-recap";
 import { sendAdminPush } from "@/lib/push";
 import {
   IntakeSubmissionSchema, buildIntakeRow, insertIntake, summariseSubmission, MAX_INTAKE_EDITS,
 } from "@/lib/intake-submission";
 import { resolveCc, normaliseEmail } from "@/lib/cc-recipients";
+import { SITE_URL } from "@/lib/constants";
 
 export async function POST(request: NextRequest) {
   const limited = await rateLimit(request, "public");
@@ -110,8 +112,8 @@ export async function POST(request: NextRequest) {
     extra: data.contact_consent === false ? [] : (data.cc_emails ?? []),
     to: data.submitter_email,
   })
-    .then((cc) =>
-      ackFn({
+    .then(async (cc) => {
+      await ackFn({
         to: data.submitter_email,
         cc,
         name: data.submitter_name,
@@ -121,8 +123,22 @@ export async function POST(request: NextRequest) {
         description: data.description,
         editUrl: editToken ? `/intake/edit/${editToken}` : null,
         editsAllowed: MAX_INTAKE_EDITS,
-      })
-    )
+      });
+
+      // Then the full recap of what they actually submitted. Two emails, in
+      // this order, on purpose: the acknowledgement is the reassurance and the
+      // recap is the record, and a client wants the reassurance first. The
+      // recap is also the thing they forward to whoever signs.
+      await sendIntakeRecap(
+        { ...data, submitted_at: new Date().toISOString() },
+        {
+          to: data.submitter_email,
+          cc,
+          editUrl: editToken ? `${SITE_URL}/intake/edit/${editToken}` : null,
+          editsRemaining: MAX_INTAKE_EDITS,
+        }
+      );
+    })
     .catch((err) => console.error("[intake/POST generic] ack email:", err));
 
   sendAdminPush({

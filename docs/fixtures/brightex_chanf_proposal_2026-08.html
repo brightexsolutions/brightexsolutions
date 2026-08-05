@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Website Redesign Proposal — CHANF Healthcare Technical Training Institute</title>
+<style>
+  :root {
+    --navy:        #0d1f4e;
+    --navy-mid:    #1a3066;
+    --navy-light:  #e8edf8;
+    --orange:      #e8920a;
+    --orange-light:#fff5e0;
+    --white:       #ffffff;
+    --gray-50:     #f9f9f9;
+    --gray-100:    #f0f0f0;
+    --gray-200:    #e0e0e0;
+    --gray-600:    #555555;
+    --gray-800:    #222222;
+    --font:        "Georgia", serif;
+    --sans:        "Helvetica Neue", Arial, sans-serif;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: var(--sans); color: var(--gray-800); background: #d9dde5; }
+  .doc-wrap { max-width: 900px; margin: 0 auto; background: var(--white); box-shadow: 0 0 60px rgba(0,0,0,0.25); }
+
+  .dl-bar { position: sticky; top: 0; z-index: 50; background: var(--navy); color: var(--white);
+    display:flex; align-items:center; justify-content:space-between; padding: 12px 28px; font-size:12px; letter-spacing:0.5px;}
+  .dl-btn { background: var(--orange); color: var(--white); border:none; padding:8px 18px; font-weight:bold;
+    font-size:12px; border-radius:3px; cursor:pointer; font-family: var(--sans); }
+
+  /* Cover */
+  .cover { position:relative; background: var(--navy); color:var(--white); min-height:560px; padding:60px 70px 40px;
+    overflow:hidden; }
+  .cover::before { content:""; position:absolute; top:-140px; right:-140px; width:340px; height:340px; border-radius:50%;
+    background: var(--navy-mid); }
+  .cover::after { content:""; position:absolute; bottom:-120px; left:-90px; width:220px; height:220px; border-radius:50%;
+    background: var(--orange); opacity:0.9; }
+  .cover-inner { position:relative; z-index:2; }
+  .cover-tag { color: var(--orange); font-size:11px; letter-spacing:1.5px; font-weight:bold; margin-top:60px; margin-bottom:18px;}
+  .cover-title { font-family: var(--font); font-size:38px; line-height:1.25; max-width:560px; }
+  .cover-title strong { color: var(--orange); }
+  .cover-sub { margin-top:16px; color: rgba(255,255,255,0.65); font-size:14px; max-width:500px; line-height:1.6;}
+  .cover-meta { display:flex; gap:60px; border-top:1px solid rgba(255,255,255,0.2); margin-top:50px; padding-top:20px; }
+  .cover-meta div span { display:block; font-size:9px; letter-spacing:1px; color: var(--orange); font-weight:bold; margin-bottom:4px;}
+  .cover-meta div p { font-size:13px; color: rgba(255,255,255,0.85); }
+  .cover-badges { display:flex; gap:10px; margin-top:22px; flex-wrap:wrap; }
+  .badge { background: rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.2); font-size:11px; padding:6px 14px; border-radius:20px;}
+  .confid { position:relative; z-index:2; margin-top:24px; font-size:10px; font-style:italic; color: rgba(255,255,255,0.45); }
+
+  /* TOC */
+  .toc-page { background: var(--gray-50); padding: 50px 70px; }
+  .toc-title { font-family:var(--font); font-size:22px; color:var(--navy); margin-bottom:26px; }
+  .toc-grid { display:grid; grid-template-columns:1fr 1fr; gap:14px 40px; }
+  .toc-item { display:flex; gap:12px; align-items:baseline; font-size:13px; border-bottom:1px dotted var(--gray-200); padding-bottom:8px;}
+  .toc-item .n { color: var(--orange); font-weight:bold; font-family: var(--font); font-size:15px; width:22px;}
+
+  /* Section */
+  .section { padding:50px 70px; border-bottom:1px solid var(--gray-100); }
+  .section-header { display:flex; gap:16px; align-items:flex-start; margin-bottom:26px; }
+  .sec-num { background: var(--navy); color:var(--white); width:40px; height:40px; min-width:40px; display:flex; align-items:center;
+    justify-content:center; font-family:var(--font); font-weight:bold; font-size:16px; }
+  .sec-tag { color: var(--orange); font-size:10px; letter-spacing:1.2px; font-weight:bold; text-transform:uppercase; margin-bottom:4px;}
+  .sec-title { font-family: var(--font); font-size:23px; color: var(--navy); }
+
+  p.body-text { font-size:13.5px; line-height:1.85; color:var(--gray-800); margin-bottom:14px; }
+  .exec-lede { font-family: var(--font); font-size:17px; color: var(--navy); border-left:4px solid var(--orange);
+    padding-left:16px; line-height:1.6; margin: 18px 0; }
+
+  /* KPI row */
+  .kpi-row { display:flex; gap:14px; margin: 20px 0 28px; }
+  .kpi { flex:1; background: var(--navy); color:var(--white); padding:20px; text-align:center; }
+  .kpi .val { font-family:var(--font); font-size:19px; font-weight:bold; }
+  .kpi .lbl { font-size:9.5px; letter-spacing:0.8px; color: var(--orange); margin-top:6px; text-transform:uppercase; }
+
+  /* Feature cards */
+  .cards-grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-top:10px; }
+  .card { border:1px solid var(--gray-200); padding:20px; }
+  .card .icon { width:30px; height:30px; background: var(--orange-light); border:1px solid var(--orange); color:var(--orange);
+    display:flex; align-items:center; justify-content:center; font-weight:bold; font-size:13px; margin-bottom:12px;}
+  .card h4 { font-family:var(--font); color:var(--navy); font-size:14.5px; margin-bottom:10px; }
+  .card ul { list-style:none; }
+  .card li { font-size:12.5px; color:var(--gray-600); line-height:1.9; padding-left:16px; position:relative;}
+  .card li::before { content:"\2192"; color:var(--orange); position:absolute; left:0; }
+
+  /* Phase blocks */
+  .phase { border:1px solid var(--gray-200); margin-bottom:16px; }
+  .phase-head { background: var(--navy-light); padding:12px 18px; display:flex; justify-content:space-between; align-items:center;}
+  .phase-head .p-name { font-family:var(--font); color:var(--navy); font-size:14.5px; font-weight:bold;}
+  .phase-head .p-len { font-size:10.5px; color:var(--gray-600); }
+  .phase-body { padding:14px 18px; }
+  .phase-body li { font-size:12.5px; color:var(--gray-800); line-height:1.9; padding-left:16px; position:relative; list-style:none;}
+  .phase-body li::before { content:"\2192"; color:var(--orange); position:absolute; left:0; }
+
+  /* Note / callout */
+  .note { border:1px dashed var(--gray-200); background: var(--gray-50); padding:14px 18px; font-size:11.5px;
+    color: var(--gray-600); line-height:1.7; margin-top:14px; }
+  .note strong { color: var(--navy); }
+
+  /* Pricing table */
+  table.pricing { width:100%; border-collapse:collapse; margin-top:6px; font-size:12.5px; }
+  table.pricing thead th { background: var(--navy); color:var(--white); text-align:left; padding:11px 14px; font-size:11px; letter-spacing:0.3px;}
+  table.pricing td { padding:12px 14px; border-bottom:1px solid var(--gray-200); vertical-align:top;}
+  table.pricing tbody tr:nth-child(even) { background: var(--gray-50); }
+  table.pricing td.amt { text-align:right; font-weight:bold; color:var(--navy); white-space:nowrap; }
+  table.pricing tr.total td { background: var(--navy); color:var(--white); font-weight:bold; }
+  table.pricing tr.total td.amt { color: var(--orange); }
+
+  .scope-out { border:1px solid var(--orange); background: var(--orange-light); padding:18px 20px; margin-top:22px; }
+  .scope-out h5 { color:var(--navy); font-family:var(--font); font-size:13.5px; margin-bottom:10px; }
+  .scope-out table { width:100%; border-collapse:collapse; font-size:12px; }
+  .scope-out td { padding:8px 0; border-bottom:1px solid rgba(0,0,0,0.08); vertical-align:top; }
+  .scope-out td.label { color:var(--navy); font-weight:bold; width:230px; }
+
+  /* Timeline */
+  .tl { display:grid; grid-template-columns:90px 24px 1fr; margin-top:10px; }
+  .tl-week { background: var(--navy); color:var(--white); font-size:11px; font-weight:bold; padding:14px 8px; text-align:center;
+    align-self:stretch; display:flex; align-items:center; justify-content:center; }
+  .tl-week.launch { background: var(--orange); }
+  .tl-line { position:relative; display:flex; justify-content:center; }
+  .tl-line::before { content:""; position:absolute; top:0; bottom:0; width:2px; background: var(--gray-200); }
+  .tl-dot { width:12px; height:12px; border-radius:50%; background: var(--orange); margin-top:18px; z-index:2; }
+  .tl-content { padding:14px 0 14px 18px; font-size:12.5px; color:var(--gray-800); line-height:1.7;}
+  .tl-content.launch { background: var(--orange-light); padding-left:18px; }
+  .tl-content strong { color:var(--navy); display:block; font-size:13px; margin-bottom:3px; }
+
+  /* Retainer cards */
+  .ret-grid { display:grid; grid-template-columns:1fr 1fr 1fr; gap:14px; margin-top:12px; }
+  .ret-card { border:1px solid var(--gray-200); }
+  .ret-card.featured { border:2px solid var(--orange); }
+  .ret-head { padding:14px; text-align:center; background: var(--navy); color:var(--white); font-family:var(--font); font-weight:bold; font-size:14px;}
+  .ret-card.featured .ret-head { background: var(--orange); }
+  .ret-body { padding:16px; }
+  .ret-body p.desc { font-size:11.5px; color:var(--gray-600); margin-bottom:10px; }
+  .ret-body ul { list-style:none; margin-bottom:14px; }
+  .ret-body li { font-size:11.5px; color:var(--gray-800); line-height:1.8; padding-left:16px; position:relative;}
+  .ret-body li::before { content:"\2713"; color:var(--orange); position:absolute; left:0; font-weight:bold;}
+  .ret-price { text-align:center; font-family:var(--font); font-weight:bold; color:var(--orange); font-size:14px; border-top:1px solid var(--gray-200); padding-top:12px;}
+
+  /* About box */
+  .about-box { display:flex; gap:24px; align-items:flex-start; margin-top:6px;}
+  .about-box .txt { flex:2; }
+  .about-box .stats { flex:1; display:flex; flex-direction:column; gap:10px; }
+  .stat-pill { background: var(--navy-light); padding:12px 14px; }
+  .stat-pill .v { color: var(--navy); font-weight:bold; font-family:var(--font); font-size:14px;}
+  .stat-pill .l { color:var(--gray-600); font-size:10.5px; }
+
+  /* Steps */
+  .steps { margin-top:10px; }
+  .step { display:flex; gap:16px; align-items:center; border:1px solid var(--gray-200); padding:14px 18px; margin-bottom:10px;}
+  .step .num { background: var(--orange); color:var(--white); width:30px; height:30px; min-width:30px; border-radius:50%;
+    display:flex; align-items:center; justify-content:center; font-weight:bold; font-family:var(--font);}
+  .step .stext strong { display:block; color:var(--navy); font-size:13px; margin-bottom:2px;}
+  .step .stext span { font-size:12px; color:var(--gray-600); }
+
+  /* Footer */
+  .footer { background: var(--navy); color: rgba(255,255,255,0.75); padding:40px 70px; text-align:center; }
+  .footer-info { margin-top:14px; font-size:11px; line-height:1.8; }
+  .footer-info strong { color:var(--white); }
+
+  @media print {
+    body { background: var(--white); }
+    .dl-bar { display:none; }
+    .doc-wrap { box-shadow:none; max-width:100%; }
+    .section, .cover, .toc-page { page-break-inside: avoid; }
+  }
+</style>
+</head>
+<body>
+<div class="doc-wrap">
+
+  <div class="dl-bar">
+    <span>WEBSITE REDESIGN PROPOSAL — CHANF HEALTHCARE TECHNICAL TRAINING INSTITUTE</span>
+    <button class="dl-btn" onclick="window.print()">Download PDF</button>
+  </div>
+
+  <!-- COVER -->
+  <div class="cover">
+    <div class="cover-inner">
+      <svg viewBox="0 0 220 65" width="180" xmlns="http://www.w3.org/2000/svg">
+        <text x="0" y="44" font-family="Georgia,serif" font-size="44" font-weight="700">
+          <tspan fill="white">Bright</tspan><tspan fill="#E8920A">ex</tspan>
+        </text>
+        <text x="124" y="59" font-family="Helvetica Neue,Arial,sans-serif" font-size="11"
+              fill="rgba(255,255,255,0.6)" letter-spacing="1.5">Solutions</text>
+      </svg>
+      <div class="cover-tag">WEBSITE REDESIGN &amp; DIGITAL PARTNERSHIP PROPOSAL</div>
+      <div class="cover-title">A recruitment website built to convert the attention <strong>CHANF has already earned.</strong></div>
+      <div class="cover-sub">A phased plan to rebuild chan-f.or.ke as a mobile-first, trust-driven recruitment platform, with a clear path into ongoing partnership.</div>
+      <div class="cover-meta">
+        <div><span>PREPARED FOR</span><p>CHANF Healthcare Technical Training Institute</p></div>
+        <div><span>DATE</span><p>4 August 2026</p></div>
+        <div><span>REFERENCE</span><p>BX-CHANF-0826</p></div>
+      </div>
+      <div class="cover-badges">
+        <div class="badge">Investment: KES 135,000 - 210,000</div>
+        <div class="badge">Timeline: 6-8 weeks</div>
+        <div class="badge">3 Delivery Phases</div>
+      </div>
+    </div>
+    <div class="confid">CONFIDENTIAL — prepared exclusively for CHANF Healthcare Technical Training Institute</div>
+  </div>
+
+  <!-- TOC -->
+  <div class="toc-page">
+    <div class="toc-title">Table of Contents</div>
+    <div class="toc-grid">
+      <div class="toc-item"><span class="n">01</span> Executive Summary</div>
+      <div class="toc-item"><span class="n">02</span> Understanding the Brief</div>
+      <div class="toc-item"><span class="n">03</span> Project Scope &amp; Phases</div>
+      <div class="toc-item"><span class="n">04</span> Suggested Enhancements</div>
+      <div class="toc-item"><span class="n">05</span> Investment &amp; Pricing</div>
+      <div class="toc-item"><span class="n">06</span> Timeline</div>
+      <div class="toc-item"><span class="n">07</span> Measuring Success</div>
+      <div class="toc-item"><span class="n">08</span> Ongoing Partnership</div>
+      <div class="toc-item"><span class="n">09</span> About Brightex Solutions</div>
+      <div class="toc-item"><span class="n">10</span> Next Steps</div>
+    </div>
+  </div>
+
+  <!-- 01 EXECUTIVE SUMMARY -->
+  <div class="section">
+    <div class="section-header">
+      <div class="sec-num">01</div>
+      <div class="sec-head"><div class="sec-tag">Overview</div><div class="sec-title">Executive Summary</div></div>
+    </div>
+    <div class="kpi-row">
+      <div class="kpi"><div class="val">KES 135K - 210K</div><div class="lbl">Total Investment</div></div>
+      <div class="kpi"><div class="val">6 - 8 Weeks</div><div class="lbl">Delivery Timeline</div></div>
+      <div class="kpi"><div class="val">3</div><div class="lbl">Delivery Phases</div></div>
+      <div class="kpi"><div class="val">60 / 40</div><div class="lbl">Payment Split</div></div>
+    </div>
+    <p class="exec-lede">CHANF does not have a visibility problem. It has a conversion problem: strong outcomes and real social activity are not being turned into applications, because the website that should be doing that work is currently down.</p>
+    <p class="body-text">This proposal covers a full rebuild of chan-f.or.ke into a mobile-first recruitment platform with clear course information, working WhatsApp and enquiry funnels, authentic trust content, and analytics that finally show which efforts are producing enrolments. It is scoped in three phases so CHANF can see progress and results at each stage, not just at the end.</p>
+  </div>
+
+  <!-- 02 UNDERSTANDING THE BRIEF -->
+  <div class="section">
+    <div class="section-header">
+      <div class="sec-num">02</div>
+      <div class="sec-head"><div class="sec-tag">Context</div><div class="sec-title">Understanding the Brief</div></div>
+    </div>
+    <p class="body-text">Since its founding during COVID, CHANF has built genuine credibility as a NITA and DOSH accredited healthcare training institute, including its first graduation on 7 November 2025 with 24 graduates and documented placements, among them a graduate now working as a caregiver in Canada. That track record is not currently visible anywhere a prospective student or parent would look.</p>
+    <div class="cards-grid">
+      <div class="card">
+        <div class="icon">!</div>
+        <h4>The site is currently down</h4>
+        <p class="body-text" style="margin:0;font-size:12.5px;">A lapsed hosting/subscription issue has taken chan-f.or.ke offline. This needs to be resolved immediately, independent of the rebuild timeline.</p>
+      </div>
+      <div class="card">
+        <div class="icon">!</div>
+        <h4>Applications are fully manual</h4>
+        <p class="body-text" style="margin:0;font-size:12.5px;">There is no online application flow today. Prospective students enquire and apply through WhatsApp, calls, or in person, with no digital record or tracking.</p>
+      </div>
+      <div class="card">
+        <div class="icon">!</div>
+        <h4>Enquiries depend on inconsistent paid boosting</h4>
+        <p class="body-text" style="margin:0;font-size:12.5px;">Facebook, Instagram and TikTok boosts drive most enquiries, but the schedule is irregular and many leads are low-quality (job seekers rather than prospective students).</p>
+      </div>
+      <div class="card">
+        <div class="icon">!</div>
+        <h4>No tracking on what actually works</h4>
+        <p class="body-text" style="margin:0;font-size:12.5px;">There is no analytics on the site and no consistent way to tell which channel, page, or campaign is producing real enrolments.</p>
+      </div>
+    </div>
+    <div class="note"><strong>Note:</strong> CHANF already holds strong content assets, including quality photos and real success stories that perform well on WhatsApp. The rebuild is largely about harmonizing and surfacing what already exists, not creating everything from scratch.</div>
+  </div>
+
+  <!-- 03 SCOPE & PHASES -->
+  <div class="section">
+    <div class="section-header">
+      <div class="sec-num">03</div>
+      <div class="sec-head"><div class="sec-tag">Delivery Plan</div><div class="sec-title">Project Scope &amp; Phases</div></div>
+    </div>
+    <p class="body-text">Delivered in three phases so early wins (site recovery, visibility) land before the full rebuild is complete.</p>
+
+    <div class="phase">
+      <div class="phase-head"><div class="p-name">Phase 1 — Stabilize &amp; Discover</div><div class="p-len">Week 1</div></div>
+      <div class="phase-body"><ul>
+        <li>Diagnose and resolve the hosting/subscription issue, bring chan-f.or.ke back online</li>
+        <li>Full content and asset audit: courses, fees, photos, testimonials, accreditation documents</li>
+        <li>Confirm site architecture and sign off on final scope</li>
+      </ul></div>
+    </div>
+
+    <div class="phase">
+      <div class="phase-head"><div class="p-name">Phase 2 — Core Website Design &amp; Build</div><div class="p-len">Weeks 2-5</div></div>
+      <div class="phase-body"><ul>
+        <li>Mobile-first design across Home, About, individual Course pages, Admissions, Gallery, Testimonials/Graduate Stories, Blog, FAQ, Contact</li>
+        <li>Online application form, replacing the current fully manual process</li>
+        <li>WhatsApp Admissions button and enquiry funnel present sitewide</li>
+        <li>Trust-building content: accreditation badges, graduation proof, testimonials, current photography (replacing outdated imagery)</li>
+        <li>Google Maps embed, social feed embeds, email newsletter signup</li>
+      </ul></div>
+    </div>
+
+    <div class="phase">
+      <div class="phase-head"><div class="p-name">Phase 3 — Analytics, SEO &amp; Launch</div><div class="p-len">Weeks 6-8</div></div>
+      <div class="phase-body"><ul>
+        <li>Google Analytics 4 and Search Console setup to track engagement, page behaviour, and conversions</li>
+        <li>On-page SEO across all course pages, targeting searches such as "caregiving courses Kitengela" and "healthcare courses Kenya"</li>
+        <li>Cross-device testing, client review, revisions</li>
+        <li>Domain/DNS cutover and go-live</li>
+      </ul></div>
+    </div>
+
+    <div class="note" style="border-style:solid;border-color:var(--navy);">
+      <strong style="display:block;color:var(--navy);font-size:12.5px;margin-bottom:8px;">What Brightex will need from CHANF to begin</strong>
+      <ul style="list-style:none;margin:0;">
+        <li style="padding-left:16px;position:relative;line-height:1.9;">&#8594;&nbsp; Access to the domain registrar account for chan-f.or.ke (login, or added as an authorized manager), so DNS can be reviewed and migrated as part of Phase 1</li>
+        <li style="padding-left:16px;position:relative;line-height:1.9;">&#8594;&nbsp; Access to the current hosting account, or confirmation of the hosting provider, so the outage can be diagnosed and a decision made on repair vs. migration</li>
+        <li style="padding-left:16px;position:relative;line-height:1.9;">&#8594;&nbsp; Login access to the current website's admin/CMS, if it exists, for content and asset recovery</li>
+        <li style="padding-left:16px;position:relative;line-height:1.9;">&#8594;&nbsp; Logo files, brand colours, and fonts, if already established. If CHANF doesn't have these formalized yet, Brightex can develop a simple brand identity (logo refinement, colour palette, typography) as a separate scoped add-on before the site build begins</li>
+        <li style="padding-left:16px;position:relative;line-height:1.9;">&#8594;&nbsp; Current course list with fees, requirements, and durations</li>
+        <li style="padding-left:16px;position:relative;line-height:1.9;">&#8594;&nbsp; Updated photography and any video content, replacing the existing outdated hospital images</li>
+        <li style="padding-left:16px;position:relative;line-height:1.9;">&#8594;&nbsp; Testimonials and graduate stories, including any existing accreditation documents (NITA/DOSH) and trainer bios/photos if these should feature on the site</li>
+        <li style="padding-left:16px;position:relative;line-height:1.9;">&#8594;&nbsp; Access to any existing Google Analytics, Search Console, or Google Business Profile accounts, if previously set up</li>
+        <li style="padding-left:16px;position:relative;line-height:1.9;">&#8594;&nbsp; A single point of contact for content sign-off and questions during the build</li>
+      </ul>
+    </div>
+
+    <div class="note" style="margin-top:14px;">
+      <strong style="display:block;color:var(--navy);font-size:12.5px;margin-bottom:8px;">How to share photos, videos, and documents</strong>
+      <p style="font-size:11.5px;color:var(--gray-600);line-height:1.8;margin-bottom:10px;">To keep everything organized and avoid assets getting lost across WhatsApp threads and email, please share all photo, video, and document assets through a single, structured Google Drive folder, shared with edit access to the Brightex team. A simple structure that works well:</p>
+      <p style="font-size:11.5px;color:var(--gray-800);line-height:1.9;font-family:monospace;background:var(--gray-50);padding:12px 14px;border:1px solid var(--gray-200);">
+        CHANF Website Assets/<br/>
+        &nbsp;&nbsp;01 - Logo &amp; Branding/<br/>
+        &nbsp;&nbsp;02 - Course Photos/ (one subfolder per course)<br/>
+        &nbsp;&nbsp;03 - Campus &amp; Facility Photos/<br/>
+        &nbsp;&nbsp;04 - Graduate Stories &amp; Testimonials/ (photos, videos, written quotes)<br/>
+        &nbsp;&nbsp;05 - Trainer Photos &amp; Bios/<br/>
+        &nbsp;&nbsp;06 - Accreditation Documents/ (NITA, DOSH certificates)<br/>
+        &nbsp;&nbsp;07 - Course Fee Sheets &amp; Requirements/
+      </p>
+    </div>
+  </div>
+
+  <!-- 04 SUGGESTED ENHANCEMENTS -->
+  <div class="section">
+    <div class="section-header">
+      <div class="sec-num">04</div>
+      <div class="sec-head"><div class="sec-tag">Looking Ahead</div><div class="sec-title">Suggested Enhancements</div></div>
+    </div>
+    <p class="body-text">These sit outside the scope and pricing in this proposal. They are flagged here because CHANF's team raised process gaps on the call, mainly around telling serious applicants apart from job seekers, and tracking students once they enrol, that these tools are built to solve. Worth discussing once the core site is live, not before.</p>
+    <div class="cards-grid">
+      <div class="card">
+        <div class="icon">1</div>
+        <h4>Internal CRM / Lead Tracker</h4>
+        <ul>
+          <li>Every website enquiry logged automatically instead of living only in WhatsApp threads</li>
+          <li>Simple tagging to separate genuine applicants from job seekers, addressing the lead-quality issue raised on the call</li>
+          <li>Gives Jacinta a single place to follow up, instead of scrolling chat history</li>
+        </ul>
+      </div>
+      <div class="card">
+        <div class="icon">2</div>
+        <h4>Learner Dashboard / Student Portal</h4>
+        <ul>
+          <li>Enrolled students log in to see class schedules, results, and payment balances</li>
+          <li>Reduces walk-in and phone-call admin load on staff</li>
+          <li>Doubles as a source of authentic, ongoing testimonial and outcome content for the site</li>
+        </ul>
+      </div>
+      <div class="card">
+        <div class="icon">3</div>
+        <h4>WhatsApp Auto-Responder / Chatbot</h4>
+        <ul>
+          <li>Answers common questions (fees, intake dates, requirements) instantly, before a human is needed</li>
+          <li>Pre-qualifies enquiries so staff spend time on serious applicants first</li>
+        </ul>
+      </div>
+      <div class="card">
+        <div class="icon">4</div>
+        <h4>Automated Fee &amp; Payment Tracking</h4>
+        <ul>
+          <li>Digital record of who has paid, what's outstanding, and payment deadlines per intake</li>
+          <li>Removes reliance on manual spreadsheets or paper records</li>
+        </ul>
+      </div>
+    </div>
+    <div class="note"><strong>How this streamlines things:</strong> today, enquiry tracking, applicant follow-up, and student records all happen manually across WhatsApp, phone calls, and paper. Each tool above digitizes one part of that chain. They are independent of each other, CHANF can adopt one, several, or none, and each would be scoped and priced separately once the core site is live and stable.</div>
+  </div>
+
+  <!-- 05 INVESTMENT -->
+  <div class="section">
+    <div class="section-header">
+      <div class="sec-num">05</div>
+      <div class="sec-head"><div class="sec-tag">Pricing</div><div class="sec-title">Investment &amp; Pricing</div></div>
+    </div>
+    <table class="pricing">
+      <thead><tr><th>Phase</th><th>Deliverable</th><th style="text-align:right;">Investment (KES)</th></tr></thead>
+      <tbody>
+        <tr><td>Phase 1</td><td>Site recovery, content audit &amp; discovery</td><td class="amt">15,000 - 20,000</td></tr>
+        <tr><td>Phase 2</td><td>Core website design &amp; build</td><td class="amt">100,000 - 150,000</td></tr>
+        <tr><td>Phase 3</td><td>Analytics, SEO foundation &amp; launch</td><td class="amt">20,000 - 40,000</td></tr>
+        <tr class="total"><td colspan="2">Total Investment Range</td><td class="amt">135,000 - 210,000</td></tr>
+      </tbody>
+    </table>
+    <p class="body-text" style="margin-top:16px;"><strong style="color:var(--navy);">Payment structure:</strong> 60% deposit upfront to commence development, 40% due on completion and launch.</p>
+    <div class="note"><strong>Domain &amp; hosting:</strong> Brightex Solutions will handle initial domain and hosting setup. Annual domain renewal (approximately KES 2,000 - 3,500) and ongoing hosting costs remain CHANF's direct responsibility.</div>
+
+    <div class="scope-out">
+      <h5>Out of Scope (available separately, on request)</h5>
+      <table>
+        <tr><td class="label">Social Media Management &amp; Paid Ad Strategy</td><td>Not offered in-house by Brightex Solutions. This includes day-to-day posting, paid boosting strategy, and campaign management across TikTok, Instagram and Facebook. Brightex Solutions can recommend a trusted independent social media manager or agency to take this on.</td></tr>
+        <tr><td class="label">LinkedIn / Multi-Platform Content Strategy</td><td>Ongoing thought-leadership and content strategy across platforms beyond the website's own blog is outside this scope. The website's blog and SEO content are included in Phase 2 and 3.</td></tr>
+        <tr><td class="label">Graduate Testimonial Video Production</td><td>Professional video testimonials can be scoped and priced separately if CHANF wants to pursue this as an enhancement.</td></tr>
+      </table>
+    </div>
+  </div>
+
+  <!-- 05 TIMELINE -->
+  <div class="section">
+    <div class="section-header">
+      <div class="sec-num">06</div>
+      <div class="sec-head"><div class="sec-tag">Schedule</div><div class="sec-title">Timeline</div></div>
+    </div>
+    <div class="tl">
+      <div class="tl-week">Week 1</div><div class="tl-line"><div class="tl-dot"></div></div>
+      <div class="tl-content"><strong>Stabilize &amp; Discover</strong>Site recovery, content audit, architecture sign-off</div>
+
+      <div class="tl-week">Weeks 2-5</div><div class="tl-line"><div class="tl-dot"></div></div>
+      <div class="tl-content"><strong>Design &amp; Build</strong>Core pages, application flow, WhatsApp funnel, trust content</div>
+
+      <div class="tl-week">Weeks 6-7</div><div class="tl-line"><div class="tl-dot"></div></div>
+      <div class="tl-content"><strong>Analytics, SEO &amp; Testing</strong>GA4/Search Console, on-page SEO, cross-device QA, client review</div>
+
+      <div class="tl-week launch">Week 8</div><div class="tl-line"><div class="tl-dot"></div></div>
+      <div class="tl-content launch"><strong>Launch</strong>Domain/DNS cutover, go-live, Google Business Profile submission</div>
+    </div>
+  </div>
+
+  <!-- 07 MEASURING SUCCESS -->
+  <div class="section">
+    <div class="section-header">
+      <div class="sec-num">07</div>
+      <div class="sec-head"><div class="sec-tag">Results</div><div class="sec-title">Measuring Success</div></div>
+    </div>
+    <p class="body-text">Once live, the site reports on the same things CHANF told us matter: traffic, enquiries, WhatsApp conversations, applications, and enrolments. Analytics set up in Phase 3 makes each of these visible rather than anecdotal.</p>
+    <table class="pricing">
+      <thead><tr><th>What we track</th><th>How it's measured</th><th style="text-align:right;">Realistic timeline</th></tr></thead>
+      <tbody>
+        <tr><td>Website traffic &amp; search visibility</td><td>GA4 + Google Search Console</td><td class="amt" style="color:var(--gray-800);">2-4 weeks post-launch</td></tr>
+        <tr><td>Course page engagement</td><td>Page views, time on page, scroll behaviour</td><td class="amt" style="color:var(--gray-800);">Immediate</td></tr>
+        <tr><td>WhatsApp &amp; Apply Now clicks</td><td>Click tracking on CTA buttons</td><td class="amt" style="color:var(--gray-800);">Immediate</td></tr>
+        <tr><td>Online applications submitted</td><td>Application form submissions</td><td class="amt" style="color:var(--gray-800);">Immediate</td></tr>
+        <tr><td>Search ranking for target keywords</td><td>Search Console position tracking</td><td class="amt" style="color:var(--gray-800);">Meaningful movement in 3-6 months</td></tr>
+        <tr><td>Enrolments per intake</td><td>Cross-referenced with CHANF's admissions records</td><td class="amt" style="color:var(--gray-800);">Each intake cycle</td></tr>
+      </tbody>
+    </table>
+    <div class="note"><strong>The honest picture:</strong> the website will make traffic, enquiries, and applications visible and trackable from day one. It will not, by itself, guarantee more enrolments. That last step still depends on how quickly CHANF's team follows up on enquiries, how consistently course and intake information stays current on the site, and intake capacity. A monthly numbers review (included from the Growth retainer tier upward) is where the website's data and CHANF's admissions reality get looked at together, so decisions are based on what the numbers actually show, not assumptions.</div>
+  </div>
+
+  <!-- 08 ONGOING PARTNERSHIP -->
+  <div class="section">
+    <div class="section-header">
+      <div class="sec-num">08</div>
+      <div class="sec-head"><div class="sec-tag">Retainer</div><div class="sec-title">Ongoing Partnership</div></div>
+    </div>
+    <p class="body-text">Beyond launch, Brightex Solutions offers three retainer tiers to keep the site secure, current, and actively working toward enrolment growth. Scope stays deliberately focused on the website and its technical performance.</p>
+    <div class="ret-grid">
+      <div class="ret-card">
+        <div class="ret-head">Care</div>
+        <div class="ret-body">
+          <p class="desc">Keeping the site secure and current</p>
+          <ul>
+            <li>Hosting &amp; security monitoring</li>
+            <li>Uptime checks</li>
+            <li>Minor content updates (fees, intakes, courses)</li>
+            <li>Monthly backup</li>
+          </ul>
+          <div class="ret-price">KES 8,000 - 15,000/mo</div>
+        </div>
+      </div>
+      <div class="ret-card featured">
+        <div class="ret-head">Growth</div>
+        <div class="ret-body">
+          <p class="desc">Actively growing enquiries</p>
+          <ul>
+            <li>Everything in Care</li>
+            <li>Monthly SEO-targeted blog content</li>
+            <li>Google Business Profile management</li>
+            <li>Monthly analytics &amp; enquiry report</li>
+          </ul>
+          <div class="ret-price">KES 20,000 - 35,000/mo</div>
+        </div>
+      </div>
+      <div class="ret-card">
+        <div class="ret-head">Scale</div>
+        <div class="ret-body">
+          <p class="desc">Full technical growth partner</p>
+          <ul>
+            <li>Everything in Growth</li>
+            <li>WhatsApp/enquiry funnel optimization</li>
+            <li>Quarterly strategy review</li>
+            <li>Priority turnaround on new pages/features</li>
+          </ul>
+          <div class="ret-price">KES 40,000+/mo</div>
+        </div>
+      </div>
+    </div>
+    <div class="note"><strong>Scope note:</strong> Retainer tiers cover the website's technical health, content, and SEO performance. Social media posting and paid ad management are not included at any tier and remain a separate engagement with a specialist of CHANF's choosing.</div>
+  </div>
+
+  <!-- 07 ABOUT -->
+  <div class="section">
+    <div class="section-header">
+      <div class="sec-num">09</div>
+      <div class="sec-head"><div class="sec-tag">Introduction</div><div class="sec-title">About Brightex Solutions</div></div>
+    </div>
+    <div class="about-box">
+      <div class="txt">
+        <p class="body-text">Brightex Solutions builds and manages websites and digital systems for growing businesses and institutions across Kenya, led by a software engineering background of 3-5 years and hands-on delivery across education, hospitality, and service-based sectors.</p>
+        <p class="body-text">Brightex Solutions previously delivered the website for Verb Education, a direct match to CHANF's own recruitment and student-conversion challenge, alongside work for Beco Interiors and Dreamville Estate &amp; Hospitality.</p>
+      </div>
+      <div class="stats">
+        <div class="stat-pill"><div class="v">Education</div><div class="l">Verb Education</div></div>
+        <div class="stat-pill"><div class="v">Service Brands</div><div class="l">Beco Interiors</div></div>
+        <div class="stat-pill"><div class="v">Hospitality</div><div class="l">Dreamville Estate</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 08 NEXT STEPS -->
+  <div class="section">
+    <div class="section-header">
+      <div class="sec-num">10</div>
+      <div class="sec-head"><div class="sec-tag">Moving Forward</div><div class="sec-title">Next Steps</div></div>
+    </div>
+    <div class="steps">
+      <div class="step"><div class="num">1</div><div class="stext"><strong>Review this proposal</strong><span>CHANF's team reviews scope, phasing, and investment range</span></div></div>
+      <div class="step"><div class="num">2</div><div class="stext"><strong>Align on final scope</strong><span>Confirm any adjustments before signing</span></div></div>
+      <div class="step"><div class="num">3</div><div class="stext"><strong>Sign agreement &amp; 60% deposit</strong><span>Formalizes the engagement and triggers Phase 1</span></div></div>
+      <div class="step"><div class="num">4</div><div class="stext"><strong>Delivery across 3 phases</strong><span>Site recovery through to launch, 6-8 weeks</span></div></div>
+      <div class="step"><div class="num">5</div><div class="stext"><strong>Ongoing partnership begins</strong><span>CHANF selects a retainer tier post-launch</span></div></div>
+    </div>
+  </div>
+
+  <div class="footer">
+    <svg viewBox="0 0 220 65" width="180" xmlns="http://www.w3.org/2000/svg">
+      <text x="0" y="44" font-family="Georgia,serif" font-size="44" font-weight="700">
+        <tspan fill="white">Bright</tspan><tspan fill="#E8920A">ex</tspan>
+      </text>
+      <text x="124" y="59" font-family="Helvetica Neue,Arial,sans-serif" font-size="11"
+            fill="rgba(255,255,255,0.6)" letter-spacing="1.5">Solutions</text>
+    </svg>
+    <div class="footer-info">
+      <strong>www.brightexsolutions.co.ke</strong><br/>
+      +254 741 980 127 &nbsp;|&nbsp; info.brightexsolutions@gmail.com<br/>
+      This document is confidential and prepared exclusively for CHANF Healthcare Technical Training Institute.
+    </div>
+  </div>
+
+</div>
+</body>
+</html>

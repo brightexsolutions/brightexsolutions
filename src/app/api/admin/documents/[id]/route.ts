@@ -7,7 +7,10 @@ import { logAction } from "@/lib/audit";
 type Params = { params: Promise<{ id: string }> };
 
 const PatchSchema = z.object({
-  status: z.enum(["draft", "sent", "final"]).optional(),
+  // "accepted": a proposal the client has accepted but which is not yet a
+  // signed contract. "final" stays what it has always meant, a signed
+  // agreement, so the two stages are not conflated.
+  status: z.enum(["draft", "sent", "accepted", "final"]).optional(),
   data: z.record(z.string(), z.unknown()).optional(),
   title: z.string().max(200).trim().optional(),
   gated: z.boolean().optional(),
