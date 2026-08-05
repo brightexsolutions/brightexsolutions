@@ -158,7 +158,6 @@ export const BlockDocumentSchema = z.object({
   }),
   sections: z.array(SectionSchema).min(1),
   schedule: PaymentScheduleSchema.optional(),
-  scheduleOptions: z.array(PaymentScheduleSchema).max(3).optional(),
 })
   // Section ids address blocks for editing, gating and per-section AI. A
   // duplicate id means an edit silently lands on the wrong section.

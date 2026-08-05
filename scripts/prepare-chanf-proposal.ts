@@ -77,7 +77,7 @@ function chanfCallSummary(documentUrl: string): CallSummary {
     ],
     nextSteps: [
       "Read the proposal linked below, covering scope, phasing, timeline and investment.",
-      "Come back with anything that needs changing, or accept it and choose how you would like to pay.",
+      "Come back with anything that needs changing, or accept it as it stands.",
       "Once the agreement is signed and the deposit received, Phase 1 begins with bringing the site back online.",
     ],
     documentUrl,
@@ -207,7 +207,7 @@ async function main() {
           emailInfoCard("🗓️", "Timeline", "6 to 8 weeks, across 3 phases") +
           emailButton("Read the proposal", proposalUrl) +
           emailDivider() +
-          emailParagraph("At the end you can accept it and confirm how you would like to pay, or tell us what needs changing and we will set up a call to work through it. Nothing is committed either way, and the figures within each phase are confirmed with you before anything is signed.") +
+          emailParagraph("At the end you can accept it, or tell us what needs changing and we will set up a call to work through it. Nothing is committed either way, and the final figure within each phase is confirmed with you before anything is signed.") +
           emailSignoff(),
       }),
       text: `Preview of the CHANF proposal email.\n\nRead it here: ${proposalUrl}`,

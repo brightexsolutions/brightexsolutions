@@ -34,7 +34,9 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useConfirm } from "@/components/admin/confirm-dialog";
-import type { BlockDocument, DocSection, Block } from "@/lib/document-html/blocks";
+import { DEFAULT_PAYMENT_SCHEDULE as HOUSE_TERMS } from "@/lib/document-html/blocks";
+import { cn } from "@/lib/utils";
+import type { BlockDocument, DocSection, Block, PaymentSchedule, ScheduleStage } from "@/lib/document-html/blocks";
 
 type Viewport = "desktop" | "phone" | "print";
 
@@ -413,6 +415,122 @@ function BlockEditor({ block, onChange, readOnly }: { block: Block; onChange: (b
   }
 }
 
+
+/**
+ * Payment terms for this document.
+ *
+ * Set here, once, and everything downstream derives from it: the agreement's
+ * milestone table and one invoice per stage. It is never offered to the client
+ * as a choice, so this is the only place it is decided.
+ *
+ * Percentages must total exactly 100. A schedule that does not would produce
+ * invoices that do not add up to the contract, and the client would find the
+ * discrepancy on the final one.
+ */
+function PaymentTermsPanel({
+  schedule, readOnly, saving, onSave,
+}: {
+  schedule: PaymentSchedule | undefined;
+  readOnly: boolean;
+  saving: boolean;
+  onSave: (next: PaymentSchedule) => void;
+}) {
+  const [stages, setStages] = useState<ScheduleStage[]>(
+    schedule?.stages ?? HOUSE_TERMS.stages
+  );
+
+  const total = stages.reduce((n, s) => n + (Number(s.percent) || 0), 0);
+  const valid = total === 100 && stages.every((s) => s.label.trim().length > 0);
+  const current = schedule?.stages ?? HOUSE_TERMS.stages;
+  const dirty = JSON.stringify(stages) !== JSON.stringify(current);
+
+  function update(i: number, patch: Partial<ScheduleStage>) {
+    setStages((prev) => prev.map((s, j) => (j === i ? { ...s, ...patch } : s)));
+  }
+
+  return (
+    <Card className="p-3 mb-3">
+      <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground mb-1">
+        Payment terms
+      </p>
+      <p className="text-[10px] text-muted-foreground mb-3 leading-relaxed">
+        Your decision, not the client&apos;s. Whatever is set here becomes the agreement&apos;s
+        milestone table and one invoice per stage.
+      </p>
+
+      {stages.map((stage, i) => (
+        <div key={i} className="flex gap-2 mb-2">
+          <Input
+            className="flex-1"
+            value={stage.label}
+            disabled={readOnly}
+            placeholder="Deposit, to commence work"
+            onChange={(e) => update(i, { label: e.target.value })}
+          />
+          <Input
+            className="w-16"
+            type="number"
+            value={String(stage.percent)}
+            disabled={readOnly}
+            onChange={(e) => update(i, { percent: Number(e.target.value) || 0 })}
+          />
+          <select
+            className="w-40 rounded border border-input bg-background px-2 text-xs"
+            value={stage.trigger}
+            disabled={readOnly}
+            onChange={(e) => update(i, { trigger: e.target.value as ScheduleStage["trigger"] })}
+          >
+            <option value="on_signature">On signature</option>
+            <option value="on_milestone">At a milestone</option>
+            <option value="on_completion">On completion</option>
+            <option value="on_date">On a date</option>
+          </select>
+          {stages.length > 1 && !readOnly && (
+            <button
+              type="button"
+              onClick={() => setStages((prev) => prev.filter((_, j) => j !== i))}
+              className="text-muted-foreground hover:text-destructive px-1"
+              title="Remove this stage"
+            >
+              <Trash2 size={13} />
+            </button>
+          )}
+        </div>
+      ))}
+
+      <div className="flex items-center justify-between gap-2 mt-2">
+        <span className={cn("text-[11px] font-medium", total === 100 ? "text-emerald-600" : "text-destructive")}>
+          {total}% {total === 100 ? "" : "(must be exactly 100)"}
+        </span>
+        <div className="flex gap-2">
+          {!readOnly && stages.length < 3 && (
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => setStages((prev) => [...prev, { label: "", percent: 0, trigger: "on_milestone" }])}
+            >
+              Add stage
+            </Button>
+          )}
+          {!readOnly && (
+            <Button size="sm" disabled={!valid || !dirty || saving} onClick={() => onSave({ mode: stages.length > 2 ? "flexible" : "standard", stages })}>
+              {saving ? <Loader2 size={13} className="animate-spin" /> : <Save size={13} />}
+              {dirty ? "Save terms" : "Saved"}
+            </Button>
+          )}
+        </div>
+      </div>
+
+      {!schedule && (
+        <p className="text-[10px] text-muted-foreground mt-2 flex items-start gap-1">
+          <Info size={11} className="mt-0.5 shrink-0" />
+          This document states no terms, so the house 60/40 applies. Save to make it explicit.
+        </p>
+      )}
+    </Card>
+  );
+}
+
 // ─── Editor ─────────────────────────────────────────────────────────────────
 
 export function DocumentEditor({ documentId }: { documentId: string }) {
@@ -588,6 +706,13 @@ export function DocumentEditor({ documentId }: { documentId: string }) {
             and reinitialises it from props rather than syncing state in an effect. */}
         <div className="border-r border-border overflow-y-auto p-4"
              key={active ? `${active.id}:${JSON.stringify(active).length}` : "none"}>
+          <PaymentTermsPanel
+            schedule={doc.data.schedule}
+            readOnly={readOnly}
+            saving={saving}
+            onSave={(schedule) => void patch({ schedule }, "Payment terms saved.")}
+          />
+
           {!draft ? (
             <p className="text-sm text-muted-foreground">Select a section.</p>
           ) : (

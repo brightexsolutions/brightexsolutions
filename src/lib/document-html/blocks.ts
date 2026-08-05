@@ -135,15 +135,6 @@ export interface BlockDocument {
    * table and the invoice tranches, so all three agree by construction rather
    * than by being retyped in three places. */
   schedule?: PaymentSchedule;
-  /**
-   * Alternatives the client may choose between at acceptance.
-   *
-   * Absent, or a single entry, means `schedule` is simply confirmed rather than
-   * chosen: a client must never be shown a payment option that was not
-   * deliberately offered to them, so this is opt-in per document rather than a
-   * default set of terms the system invents.
-   */
-  scheduleOptions?: PaymentSchedule[];
 }
 
 export type ScheduleTrigger = "on_signature" | "on_milestone" | "on_completion" | "on_date";
@@ -159,6 +150,32 @@ export interface ScheduleStage {
 export interface PaymentSchedule {
   mode: "standard" | "flexible";
   stages: ScheduleStage[];
+}
+
+/**
+ * The house payment terms: 60% to commence, 40% on completion.
+ *
+ * How a project is paid for is Brightex's commercial decision, not the
+ * client's, so this is a stated term rather than something offered as a menu.
+ * A client presented with payment options will reasonably read them as
+ * negotiable and pick the one that suits them, which is a negotiation nobody
+ * asked to open at the moment they were ready to say yes.
+ *
+ * A document may state something else where an engagement genuinely warrants
+ * it, but that is set on the document by us, deliberately, before it is sent.
+ * Where a document says nothing, this applies.
+ */
+export const DEFAULT_PAYMENT_SCHEDULE: PaymentSchedule = {
+  mode: "standard",
+  stages: [
+    { label: "Deposit, to commence work", percent: 60, trigger: "on_signature" },
+    { label: "On completion and handover", percent: 40, trigger: "on_completion" },
+  ],
+};
+
+/** The schedule a document is actually on: its own, or the house default. */
+export function scheduleOf(doc: Pick<BlockDocument, "schedule">): PaymentSchedule {
+  return doc.schedule ?? DEFAULT_PAYMENT_SCHEDULE;
 }
 
 // ─── Money ──────────────────────────────────────────────────────────────────

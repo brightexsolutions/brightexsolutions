@@ -19,7 +19,7 @@ import { createClient, createAdminClient } from "@/lib/supabase/server";
 import { rateLimit } from "@/lib/rate-limit";
 import { logAction } from "@/lib/audit";
 import { isBlockDocument } from "@/lib/document-html/blocks";
-import { parseBlockDocument, normaliseCopy } from "@/lib/document-html/block-schema";
+import { parseBlockDocument, normaliseCopy, PaymentScheduleSchema } from "@/lib/document-html/block-schema";
 import type { BlockDocument, DocSection } from "@/lib/document-html/blocks";
 
 export const dynamic = "force-dynamic";
@@ -40,6 +40,10 @@ const PatchSchema = z.object({
   section: z.unknown().optional(),
   /** Remove a section by id. */
   removeId: z.string().optional(),
+  /** The payment terms this document is on. Ours to set, per document, before
+   * it is sent: the agreement's milestone table and every invoice stage are
+   * derived from it, so this is the single place it is decided. */
+  schedule: PaymentScheduleSchema.optional(),
 });
 
 export async function PATCH(request: NextRequest, { params }: Params) {
@@ -127,7 +131,17 @@ export async function PATCH(request: NextRequest, { params }: Params) {
     changes.push("reordered sections");
   }
 
-  const next: BlockDocument = { ...document, sections };
+  // ── Payment terms ────────────────────────────────────────────────────────
+  // Validated to sum to exactly 100 by the schema. A schedule that does not
+  // would produce invoices that do not add up to the contract, and the
+  // discrepancy would surface when the client queries the final one.
+  let schedule = document.schedule;
+  if (parsed.data.schedule) {
+    schedule = parsed.data.schedule;
+    changes.push(`payment terms: ${schedule.stages.map((s) => `${s.percent}%`).join("/")}`);
+  }
+
+  const next: BlockDocument = { ...document, sections, ...(schedule ? { schedule } : {}) };
   const validated = parseBlockDocument(next);
   if (!validated.ok || !validated.doc) {
     return NextResponse.json(

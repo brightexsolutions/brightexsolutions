@@ -144,7 +144,8 @@ async function main() {
   check(viewRes.status === 200, "link returns the document", String(viewRes.status));
   check(html.includes("brxAcceptProposal"), "accept control is offered");
   check(html.includes("brxRequestChanges"), "request-changes control is offered");
-  check(html.includes('name="brxSched"'), "both payment schedules offered as a choice");
+  check(!html.includes('name="brxSched"'), "payment terms are stated, not offered as a choice");
+  check(html.includes("sched-fixed"), "the stated terms are shown before accepting");
   check(!html.includes("—"), "no em dashes in what the client sees");
   check(/@page\{size:A4/.test(html), "prints to A4");
   check(!/@media\s*\(max-width:720px\)/.test(html), "no unscoped breakpoint leaking into print");
@@ -175,13 +176,12 @@ async function main() {
   ok("emails sent: full note to Brightex, acknowledgement to the client");
 
   // ── The client accepts ───────────────────────────────────────────────────
-  heading("Client accepts, choosing the 40/20/40 schedule");
+  heading("Client accepts on the stated 60/40 terms");
   const acceptRes = await fetch(`${publicUrl}/accept-proposal`, {
     method: "POST", headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       name: SIGNER_NAME, role: "Director", email: SIGNER_EMAIL,
-      notes: "Happy to proceed on the phased payment option.",
-      schedule_index: 1,
+      notes: "Happy to proceed.",
     }),
   });
   const acceptBody = await json(acceptRes);
@@ -196,14 +196,17 @@ async function main() {
   check(accepted?.accepted_by_role === "Director", "role captured", String(accepted?.accepted_by_role));
   check(accepted?.status === "accepted", "status is accepted, not final", String(accepted?.status));
   const chosen = accepted?.chosen_schedule as PaymentSchedule | null;
-  check(chosen?.stages?.length === 3, "the 3-stage schedule they picked was stored", JSON.stringify(chosen?.stages?.map((s) => s.percent)));
-  check(chosen?.stages?.[0]?.percent === 40, "first stage is 40%, as chosen");
+  // Recorded, not chosen: the client is never offered payment options.
+  check(chosen?.stages?.length === 2, "the stated schedule was recorded on acceptance",
+    JSON.stringify(chosen?.stages?.map((s) => s.percent)));
+  check(chosen?.stages?.[0]?.percent === 60, "the house 60/40 terms applied",
+    String(chosen?.stages?.[0]?.percent));
   ok("emails sent: confirmation to the client, alert and push to Brightex");
 
   // Accepting twice must be idempotent, not a second acceptance.
   const twice = await json(await fetch(`${publicUrl}/accept-proposal`, {
     method: "POST", headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ name: SIGNER_NAME, role: "Director", email: SIGNER_EMAIL, schedule_index: 0 }),
+    body: JSON.stringify({ name: SIGNER_NAME, role: "Director", email: SIGNER_EMAIL }),
   }));
   check(twice.already === true, "accepting twice is idempotent");
 
@@ -334,13 +337,15 @@ async function main() {
   check(plan.warnings.length === 0, "plan has no warnings", plan.warnings.join(" | "));
   check(plan.project.budget === 180000, "project budget is the contract total", String(plan.project.budget));
   check(plan.tasks.length === 3, "one task per delivery phase", String(plan.tasks.length));
-  check(plan.invoices.length === 3, "one invoice per payment stage", String(plan.invoices.length));
+  check(plan.invoices.length === 2, "one invoice per payment stage", String(plan.invoices.length));
 
   const invoiceSum = plan.invoices.reduce((n, i) => n + i.amount, 0);
   check(invoiceSum === 180000, "invoices sum exactly to the contract", String(invoiceSum));
-  check(plan.invoices[0].issueNow && !plan.invoices[1].issueNow && !plan.invoices[2].issueNow,
+  check(plan.invoices.filter((i) => i.issueNow).length === 1,
     "only the deposit is billed now; the rest wait for their trigger");
-  check(plan.tasks.some((t) => t.isPaymentMilestone), "the milestone task is flagged as releasing a payment");
+  // With 60/40 there is no mid-project milestone stage, so no task gates a payment.
+  check(!plan.tasks.some((t) => t.isPaymentMilestone),
+    "60/40 has no mid-project milestone, so no task gates a payment");
 
   for (const inv of dated.invoices) {
     line(`   · stage ${inv.stage}/${inv.stageTotal}  KES ${inv.amount.toLocaleString("en-KE")}  ${inv.trigger}  due ${inv.dueDate}  ${inv.issueNow ? "[issue now]" : "[draft]"}`);
@@ -392,37 +397,31 @@ async function main() {
       schedule_trigger_ref: inv.gatedByTaskIndex !== undefined ? (createdTasks ?? [])[inv.gatedByTaskIndex]?.id ?? null : null,
     }))
   ).select("id, invoice_number, total, status, schedule_stage, schedule_trigger");
-  check(!invErr && (createdInvoices ?? []).length === 3, "invoices created", invErr?.message ?? "");
+  check(!invErr && (createdInvoices ?? []).length === 2, "invoices created", invErr?.message ?? "");
 
   const dbSum = (createdInvoices ?? []).reduce((n, i) => n + Number(i.total), 0);
   check(dbSum === 180000, "invoices in the database sum to the contract", String(dbSum));
   check((createdInvoices ?? []).filter((i) => i.status === "sent").length === 1,
-    "exactly one invoice is live; two wait for their trigger");
+    "exactly one invoice is live; the balance waits for completion");
 
-  // ── The milestone completes, and the cron issues its invoice ─────────────
-  heading("Milestone completes: the scheduled invoice is released");
-  const milestoneTask = (createdTasks ?? []).find((t) =>
-    dated.tasks[(createdTasks ?? []).indexOf(t)]?.isPaymentMilestone);
-  if (milestoneTask) {
-    await supabase.from("tasks").update({ status: "done", completed_at: new Date().toISOString() }).eq("id", milestoneTask.id);
-    ok(`marked "${milestoneTask.title}" done`);
+  // ── The completion stage is released by the cron ────────────────────────
+  heading("Completion: the balance invoice is released");
+  await supabase.from("projects").update({ status: "live" }).eq("id", project.id);
+  ok("marked the project live");
 
-    const cronRes = await fetch(`${BASE}/api/cron/schedule-invoices`, {
-      headers: { "x-cron-secret": process.env.CRON_SECRET ?? "" },
-    });
-    const cronBody = await json(cronRes);
-    check(cronRes.status === 200, "cron ran", JSON.stringify(cronBody).slice(0, 200));
-    check(cronBody.issued >= 1, "the milestone invoice was released", JSON.stringify(cronBody.details ?? cronBody));
+  const cronRes = await fetch(`${BASE}/api/cron/schedule-invoices`, {
+    headers: { "x-cron-secret": process.env.CRON_SECRET ?? "" },
+  });
+  const cronBody = await json(cronRes);
+  check(cronRes.status === 200, "cron ran", JSON.stringify(cronBody).slice(0, 200));
+  check(cronBody.issued >= 1, "the balance invoice was released", JSON.stringify(cronBody.details ?? cronBody));
 
-    const { data: nowLive } = await supabase
-      .from("invoices").select("invoice_number, status, schedule_stage")
-      .eq("project_id", project.id).order("schedule_stage");
-    for (const i of nowLive ?? []) line(`   · ${i.invoice_number}  stage ${i.schedule_stage}  ${i.status}`);
-    check((nowLive ?? []).filter((i) => i.status === "sent").length === 2,
-      "two invoices live, the final one still waiting on completion");
-  } else {
-    bad("no milestone task found to complete");
-  }
+  const { data: nowLive } = await supabase
+    .from("invoices").select("invoice_number, status, schedule_stage")
+    .eq("project_id", project.id).order("schedule_stage");
+  for (const i of nowLive ?? []) line(`   · ${i.invoice_number}  stage ${i.schedule_stage}  ${i.status}`);
+  check((nowLive ?? []).filter((i) => i.status === "sent").length === 2,
+    "both invoices now live");
 
   // ── What Godwin will see ─────────────────────────────────────────────────
   heading("Trail");

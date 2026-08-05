@@ -1,4 +1,7 @@
-import { renderBlockDocument, needsFigureLock, documentTotal, fmtMoney } from "@/lib/document-html/blocks";
+import {
+  renderBlockDocument, needsFigureLock, documentTotal, fmtMoney,
+  DEFAULT_PAYMENT_SCHEDULE, scheduleOf,
+} from "@/lib/document-html/blocks";
 import { proposalAcceptBox, proposalAcceptedBox, describeSchedule } from "@/lib/document-html/accept";
 import { acceptButton, acceptedBox } from "@/lib/document-html";
 import { CHANF_PROPOSAL as doc } from "@/lib/document-html/fixtures/chanf-proposal";
@@ -15,7 +18,7 @@ const states = {
     trailingHtml: proposalAcceptBox({
       documentId: "11111111-2222-3333-4444-555555555555",
       clientName: "Jacinta Nduta", clientEmail: "j@chanf.or.ke",
-      schedule: doc.schedule, scheduleOptions: null, hasRangedPricing: needsFigureLock(doc),
+      schedule: doc.schedule, hasRangedPricing: needsFigureLock(doc),
     }),
   }),
   "proposal, gated": renderBlockDocument(doc, {
@@ -23,22 +26,6 @@ const states = {
   }),
   "proposal, accepted": renderBlockDocument(doc, {
     trailingHtml: proposalAcceptedBox("Jacinta Nduta", "2026-08-06T09:00:00Z"),
-  }),
-  "proposal, schedule choice": renderBlockDocument(doc, {
-    trailingHtml: proposalAcceptBox({
-      documentId: "11111111-2222-3333-4444-555555555555",
-      schedule: doc.schedule,
-      scheduleOptions: [
-        { mode: "standard", stages: [
-          { label: "Deposit", percent: 60, trigger: "on_signature" },
-          { label: "On completion", percent: 40, trigger: "on_completion" }] },
-        { mode: "flexible", stages: [
-          { label: "Deposit", percent: 40, trigger: "on_signature" },
-          { label: "Midpoint", percent: 20, trigger: "on_milestone", milestone_index: 1 },
-          { label: "On completion", percent: 40, trigger: "on_completion" }] },
-      ],
-      hasRangedPricing: true,
-    }),
   }),
   "agreement, unsigned": renderBlockDocument(
     { ...doc, type: "agreement" },
@@ -89,13 +76,22 @@ const agrPosted = [...states["agreement, unsigned"].matchAll(/fetch\('([^']+)'/g
 check("sign posts to /accept", agrPosted.some((u) => u.endsWith("/accept")), agrPosted.join(", "));
 
 // ── 4. Schedule choice ────────────────────────────────────────────────────
-console.log("\n4. Payment schedule");
-check("single schedule shown as confirmation", states["proposal, open"].includes("sched-fixed"));
-check("single schedule is NOT a radio choice", !states["proposal, open"].includes('name="brxSched"'));
-check("multiple schedules render as choice",   states["proposal, schedule choice"].includes('name="brxSched"'));
-check("choice renders both options",           (states["proposal, schedule choice"].match(/class="sched-opt/g) ?? []).length === 2);
-check("describeSchedule reads correctly",      describeSchedule(doc.schedule!) === "60% on signature, then 40% on completion",
+console.log("\n4. Payment terms are stated, never chosen");
+// How a project is paid for is Brightex's decision. A client shown a menu of
+// terms reads them as negotiable, which opens a negotiation at the exact moment
+// they were ready to say yes.
+check("terms shown as a plain statement", states["proposal, open"].includes("sched-fixed"));
+check("no radio picker rendered", !states["proposal, open"].includes('name="brxSched"'));
+check("no schedule choice is posted", !states["proposal, open"].includes("schedule_index"));
+check("the house terms read correctly",
+  describeSchedule(doc.schedule!) === "60% on signature, then 40% on completion",
   describeSchedule(doc.schedule!));
+check("the house default is 60/40",
+  DEFAULT_PAYMENT_SCHEDULE.stages.map((st) => st.percent).join("/") === "60/40",
+  DEFAULT_PAYMENT_SCHEDULE.stages.map((st) => st.percent).join("/"));
+check("a document with no schedule falls back to the house terms",
+  describeSchedule(scheduleOf({ schedule: undefined })) === "60% on signature, then 40% on completion",
+  describeSchedule(scheduleOf({ schedule: undefined })));
 
 // ── 5. Print and responsive invariants ────────────────────────────────────
 console.log("\n5. Print and responsive");

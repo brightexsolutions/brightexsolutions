@@ -278,19 +278,10 @@ const DOCUMENT_CSS = `
   .accept-label{display:block;max-width:26rem;margin:0 auto 8px;text-align:left;
     color:rgba(255,255,255,.72);font-size:11.5px;font-weight:700;text-transform:uppercase;letter-spacing:.06em}
 
-  /* Proposal acceptance: payment schedule picker and multi-column fields.
+  /* Proposal acceptance: the stated payment terms and multi-column fields.
      Lives here, not in accept.ts, because documentShell() emits the document's
      only <style> block: CSS defined next to the markup that uses it would be
      dropped silently and the control would ship unstyled. */
-  .sched-list{display:grid;gap:10px;max-width:26rem;margin:0 auto 18px}
-  .sched-opt{display:flex;gap:11px;align-items:flex-start;text-align:left;cursor:pointer;
-    border:1px solid rgba(255,255,255,.18);border-radius:8px;padding:13px 15px;
-    background:rgba(255,255,255,.04);transition:border-color .15s ease,background .15s ease}
-  .sched-opt:hover{border-color:rgba(255,255,255,.34)}
-  .sched-opt.on{border-color:var(--orange);background:rgba(232,146,10,.1)}
-  .sched-opt input{margin-top:3px;flex:none;width:15px;height:15px;accent-color:var(--orange)}
-  .sched-opt .sd-name{display:block;color:#fff;font-size:13.5px;font-weight:700;margin-bottom:3px}
-  .sched-opt .sd-detail{display:block;color:rgba(255,255,255,.62);font-size:12px;line-height:1.6}
   .sched-fixed{border:1px solid rgba(255,255,255,.16);border-radius:8px;padding:13px 15px;
     background:rgba(255,255,255,.04);text-align:left;max-width:26rem;margin:0 auto 18px}
   .sched-fixed .sd-name{color:#fff;font-size:13px;font-weight:700;margin-bottom:4px}
@@ -332,7 +323,7 @@ const DOCUMENT_CSS = `
 
   /* Acceptance controls are interactive: they have no place on paper. */
   @media print{
-    .accept-box,.sched-list,.sched-fixed,.changes-panel,.sig-tabs,.sig-pane{display:none}
+    .accept-box,.sched-fixed,.changes-panel,.sig-tabs,.sig-pane{display:none}
   }
 
   /* Executed signature block: what a signed contract actually ends with.

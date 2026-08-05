@@ -23,6 +23,9 @@ const STANDARD: PaymentSchedule = { mode: "standard", stages: [
   { label: "Deposit", percent: 60, trigger: "on_signature" },
   { label: "On completion", percent: 40, trigger: "on_completion" },
 ]};
+// Not offered to clients. A document may still STATE a phased schedule where
+// an engagement warrants it, decided by us before it is sent, so derivation and
+// kick-off must both handle one.
 const FLEXIBLE: PaymentSchedule = { mode: "flexible", stages: [
   { label: "Deposit", percent: 40, trigger: "on_signature" },
   { label: "Midpoint", percent: 20, trigger: "on_milestone", milestone_index: 1 },

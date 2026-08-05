@@ -24,7 +24,10 @@ import { transporter, SENDERS } from "@/lib/mail";
 import { emailTemplate, emailParagraph, emailInfoCard, emailButton, emailDivider, emailSignoff } from "@/lib/email-templates";
 import { resolveCc } from "@/lib/cc-recipients";
 import { SITE_URL } from "@/lib/constants";
-import { isBlockDocument, needsFigureLock, documentTotal, fmtMoney, isRanged } from "@/lib/document-html/blocks";
+import {
+  isBlockDocument, needsFigureLock, documentTotal, fmtMoney, isRanged,
+  scheduleOf, DEFAULT_PAYMENT_SCHEDULE,
+} from "@/lib/document-html/blocks";
 import { describeSchedule } from "@/lib/document-html/accept";
 import { logClientAction } from "@/lib/audit";
 import type { PaymentSchedule } from "@/lib/document-html/blocks";
@@ -38,7 +41,6 @@ const AcceptProposalSchema = z.object({
   role: z.string().max(120).trim().optional().default(""),
   email: z.string().email().max(200).trim(),
   notes: z.string().max(1000).trim().optional().default(""),
-  schedule_index: z.number().int().min(0).max(9).optional().default(0),
 });
 
 export async function POST(request: NextRequest, { params }: Params) {
@@ -76,16 +78,12 @@ export async function POST(request: NextRequest, { params }: Params) {
     return NextResponse.json({ ok: true, already: true, accepted_at: doc.accepted_at });
   }
 
-  // ── Which schedule did they choose ────────────────────────────────────────
+  // The payment terms are ours, stated on the proposal, not chosen at this
+  // click. Where a document says nothing, the house 60/40 applies. Recording it
+  // on acceptance still matters: it is what the agreement's milestone table and
+  // the invoice stages are derived from.
   const blockDoc = isBlockDocument(doc.data) ? doc.data : null;
-  const offered: PaymentSchedule[] = blockDoc?.scheduleOptions?.length
-    ? blockDoc.scheduleOptions
-    : blockDoc?.schedule
-      ? [blockDoc.schedule]
-      : [];
-  // Out-of-range index means a tampered or stale form: fall back to what the
-  // proposal actually stated rather than recording a schedule never offered.
-  const chosen = offered[parsed.data.schedule_index] ?? offered[0] ?? null;
+  const chosen: PaymentSchedule = blockDoc ? scheduleOf(blockDoc) : DEFAULT_PAYMENT_SCHEDULE;
 
   const pendingFigures = blockDoc ? needsFigureLock(blockDoc) : false;
   const total = blockDoc ? documentTotal(blockDoc) : null;
@@ -140,7 +138,7 @@ export async function POST(request: NextRequest, { params }: Params) {
     severity: "info",
     message:
       `${clientLabel} accepted "${doc.title}" (${doc.reference_code}) as ${who}. ` +
-      (chosen ? `Payment: ${describeSchedule(chosen)}. ` : "") +
+      `Payment: ${describeSchedule(chosen)}. ` +
       (total && isRanged(total) ? `Quoted range: KES ${fmtMoney(total)}. ` : "") +
       nextAction +
       (parsed.data.notes ? ` Client note: "${parsed.data.notes}"` : ""),
@@ -177,7 +175,7 @@ export async function POST(request: NextRequest, { params }: Params) {
         emailParagraph(`Hi ${parsed.data.name.split(" ")[0]}, this confirms that you accepted <strong>${doc.title}</strong>. Nothing is signed yet: the agreement follows separately, and that is where anything is formally agreed.`) +
         emailInfoCard("👤", "Accepted by", who) +
         emailInfoCard("📅", "Accepted on", acceptedDate) +
-        (chosen ? emailInfoCard("💳", "Payment schedule", describeSchedule(chosen)) : "") +
+        emailInfoCard("💳", "Payment schedule", describeSchedule(chosen)) +
         (doc.reference_code ? emailInfoCard("🔖", "Reference", doc.reference_code) : "") +
         emailButton("View the proposal", viewUrl) +
         emailDivider() +
@@ -191,7 +189,7 @@ export async function POST(request: NextRequest, { params }: Params) {
     text:
       `Hi ${parsed.data.name.split(" ")[0]},\n\n` +
       `This confirms you accepted ${doc.title} on ${acceptedDate}.\n` +
-      (chosen ? `Payment schedule: ${describeSchedule(chosen)}\n` : "") +
+      `Payment schedule: ${describeSchedule(chosen)}\n` +
       `\nView it here: ${viewUrl}\n\n` +
       (pendingFigures
         ? "Next: we will confirm the final figure within each phase range with you, then send the agreement for signing.\n"
@@ -206,7 +204,7 @@ export async function POST(request: NextRequest, { params }: Params) {
       subject: `Proposal accepted: ${doc.title}`,
       body:
         `Accepted by ${who} <${parsed.data.email}> on ${acceptedDate}.` +
-        (chosen ? ` Payment: ${describeSchedule(chosen)}.` : "") +
+        ` Payment: ${describeSchedule(chosen)}.` +
         (parsed.data.notes ? ` Client note: "${parsed.data.notes}"` : ""),
       direction: "in",
       status: "sent",
@@ -222,7 +220,7 @@ export async function POST(request: NextRequest, { params }: Params) {
     entity_label: `${doc.title} (${doc.reference_code})`,
     notes:
       `Accepted by ${who} <${parsed.data.email}> for ${clientLabel}.` +
-      (chosen ? ` Payment: ${describeSchedule(chosen)}.` : "") +
+      ` Payment: ${describeSchedule(chosen)}.` +
       (total ? ` Quoted: KES ${fmtMoney(total)}.` : "") +
       (parsed.data.notes ? ` Note: "${parsed.data.notes}"` : ""),
   });

@@ -76,7 +76,7 @@ Some context about where things stand today.
 
 ## Next Steps
 1. **Review this proposal** Check the scope and the phasing.
-2. **Accept it** Choose how you would like to pay.
+2. **Accept it** Confirm you are happy to proceed.
 `;
 
 console.log("\n1. Markdown import");

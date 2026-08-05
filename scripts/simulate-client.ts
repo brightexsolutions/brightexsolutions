@@ -153,7 +153,7 @@ async function main() {
         emailInfoCard("🗓️", "Timeline", "6 to 8 weeks, across 3 phases") +
         emailButton("Read the proposal", proposalUrl) +
         emailDivider() +
-        emailParagraph("Take your time with it. At the end you can accept it and choose how you would like to pay, or tell us what needs changing first and we will set up a call to talk it through. Nothing is committed either way.") +
+        emailParagraph("Take your time with it. At the end you can accept it, or tell us what needs changing first and we will set up a call to talk it through. Nothing is committed either way.") +
         emailSignoff(),
     }),
     text:
@@ -163,7 +163,7 @@ async function main() {
       (total ? `Investment: KES ${fmtMoney(total)}\n` : "") +
       `Timeline: 6 to 8 weeks across 3 phases\n\n` +
       `Read it here: ${proposalUrl}\n\n` +
-      `At the end you can accept it and choose how you would like to pay, or tell us what needs changing first.\n\n` +
+      `At the end you can accept it, or tell us what needs changing first.\n\n` +
       `Best regards,\nThe Brightex Solutions Team`,
   });
 

@@ -55,25 +55,15 @@ async function main() {
       },
       confidentialFor: client.company || client.name,
     },
-    // Two schedules, so the client-facing choice is exercised rather than
-    // rendering as a single confirmation line.
-    scheduleOptions: [
-      {
-        mode: "standard",
-        stages: [
-          { label: "Deposit, to commence development", percent: 60, trigger: "on_signature" },
-          { label: "On completion and launch", percent: 40, trigger: "on_completion" },
-        ],
-      },
-      {
-        mode: "flexible",
-        stages: [
-          { label: "Deposit, to commence development", percent: 40, trigger: "on_signature" },
-          { label: "At the midpoint review", percent: 20, trigger: "on_milestone", milestone_index: 1 },
-          { label: "On completion and launch", percent: 40, trigger: "on_completion" },
-        ],
-      },
-    ],
+    // The house terms, stated. Payment is not offered as a client choice: see
+    // DEFAULT_PAYMENT_SCHEDULE in document-html/blocks.ts.
+    schedule: {
+      mode: "standard",
+      stages: [
+        { label: "Deposit, to commence work", percent: 60, trigger: "on_signature" },
+        { label: "On completion and handover", percent: 40, trigger: "on_completion" },
+      ],
+    },
   };
 
   const validated = parseBlockDocument(doc);

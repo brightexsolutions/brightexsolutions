@@ -9,15 +9,18 @@
  * A proposal is an offer and an agreement is a contract. Collapsing them into
  * one button means asking a client to sign legal terms in the same breath as
  * expressing interest, which is both worse for them and weaker evidence for us.
- * So accepting a proposal captures who is accepting and which options they
- * chose, and nothing more: no signature, no per-clause confirmation, and no
- * read-to-end gate, because the thing that has to be read in full is the
- * agreement that follows.
+ * So accepting a proposal captures who is accepting, and nothing more: no
+ * signature, no per-clause confirmation, and no read-to-end gate, because the
+ * thing that has to be read in full is the agreement that follows.
  *
- * What acceptance is actually FOR is the two decisions only the client can
- * make: which option they want, and how they want to pay. Capturing them here
- * means the agreement, its milestone table and the invoice tranches are all
- * derived from one recorded choice instead of from a WhatsApp thread.
+ * What acceptance captures is who is accepting and on whose authority. It does
+ * NOT offer payment options: how a project is paid for is Brightex's commercial
+ * decision and is stated on the proposal, not chosen at the last click. A client
+ * shown a menu of payment terms will reasonably read them as negotiable, which
+ * opens a negotiation at the exact moment they were ready to say yes.
+ *
+ * The terms are still shown here, plainly, so nobody accepts without having
+ * seen what they are agreeing to pay and when.
  */
 import { esc } from "./index";
 import type { PaymentSchedule } from "./blocks";
@@ -46,13 +49,9 @@ export interface ProposalAcceptOptions {
   documentId: string;
   clientName?: string | null;
   clientEmail?: string | null;
-  /** The schedule stated in the proposal. Shown as a confirmation when no
-   * alternatives are offered, so the client sees what they are agreeing to
-   * without being handed a choice that was never on the table. */
+  /** The payment terms stated in the proposal, shown for confirmation. Never
+   * a choice: see the note at the top of this file. */
   schedule?: PaymentSchedule | null;
-  /** Alternatives the client may pick between. When present, this replaces the
-   * single confirmation with a real choice. */
-  scheduleOptions?: PaymentSchedule[] | null;
   /** True when the proposal quotes ranges rather than fixed amounts, so the
    * client is told plainly that a final figure is confirmed before signing
    * rather than discovering it on the agreement. */
@@ -60,30 +59,19 @@ export interface ProposalAcceptOptions {
 }
 
 export function proposalAcceptBox(opts: ProposalAcceptOptions): string {
-  const options = opts.scheduleOptions ?? [];
-  const hasChoice = options.length > 1;
-
-  const scheduleHtml = hasChoice
-    ? `<label class="accept-label">How would you like to pay?</label>
-       <div class="sched-list">
-         ${options.map((s, i) => `<label class="sched-opt${i === 0 ? " on" : ""}" id="schedOpt${i}">
-           <input type="radio" name="brxSched" value="${i}" ${i === 0 ? "checked" : ""} onchange="brxSchedPick(${i})">
-           <span>
-             <span class="sd-name">${esc(s.stages.map((st) => `${st.percent}%`).join(" / "))}</span>
-             <span class="sd-detail">${esc(s.stages.map((st) => `${st.label} (${st.percent}%)`).join(". "))}</span>
-           </span>
-         </label>`).join("")}
+  // Stated, never chosen. The client sees the terms they are accepting; the
+  // terms themselves were decided when the proposal was written.
+  const schedule = opts.schedule ?? null;
+  const scheduleHtml = schedule
+    ? `<div class="sched-fixed">
+         <div class="sd-name">Payment: ${esc(describeSchedule(schedule))}</div>
+         <div class="sd-detail">${esc(schedule.stages.map((st) => `${st.label} (${st.percent}%)`).join(". "))}</div>
        </div>`
-    : opts.schedule
-      ? `<div class="sched-fixed">
-           <div class="sd-name">Payment: ${esc(describeSchedule(opts.schedule))}</div>
-           <div class="sd-detail">${esc(opts.schedule.stages.map((st) => `${st.label} (${st.percent}%)`).join(". "))}</div>
-         </div>`
-      : "";
+    : "";
 
   return `<div class="accept-box" id="propAcceptBox">
     <h4>Happy to go ahead?</h4>
-    <p>Accepting here tells us you are satisfied with the plan and want to proceed. It is not a contract: we will prepare the agreement${opts.hasRangedPricing ? ", confirm the final figure within each range with you," : ""} and send it over for signing.</p>
+    <p>Accepting here tells us you are satisfied with the plan and want to proceed. It is not a contract: we will prepare the agreement${opts.hasRangedPricing ? ", confirm the final figure within each phase with you," : ""} and send it over for signing.</p>
 
     ${scheduleHtml}
 
@@ -122,11 +110,6 @@ export function proposalAcceptBox(opts: ProposalAcceptOptions): string {
   </div>
   <script>
     (function(){
-      window.brxSchedPick = function(i){
-        var list = document.querySelectorAll('.sched-opt');
-        for (var n = 0; n < list.length; n++) list[n].classList.toggle('on', n === i);
-      };
-
       window.brxPropSync = function(){
         var name  = (document.getElementById('propName')  || {}).value || '';
         var email = (document.getElementById('propEmail') || {}).value || '';
@@ -139,7 +122,6 @@ export function proposalAcceptBox(opts: ProposalAcceptOptions): string {
       window.brxAcceptProposal = function(){
         var btn = document.getElementById('propBtn');
         var err = document.getElementById('propError');
-        var picked = document.querySelector('input[name=brxSched]:checked');
         if (btn) { btn.disabled = true; btn.textContent = 'Sending...'; }
         if (err) err.style.display = 'none';
 
@@ -150,8 +132,7 @@ export function proposalAcceptBox(opts: ProposalAcceptOptions): string {
             name:  (document.getElementById('propName')  || {}).value || '',
             role:  (document.getElementById('propRole')  || {}).value || '',
             email: (document.getElementById('propEmail') || {}).value || '',
-            notes: (document.getElementById('propNotes') || {}).value || '',
-            schedule_index: picked ? Number(picked.value) : 0
+            notes: (document.getElementById('propNotes') || {}).value || ''
           })
         }).then(function(r){ return r.json().then(function(j){ return { ok: r.ok, body: j }; }); })
           .then(function(res){

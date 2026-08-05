@@ -4,7 +4,7 @@ import { rateLimit } from "@/lib/rate-limit";
 import { SITE_URL } from "@/lib/constants";
 import { renderProposalHtml, renderProposalTeaserHtml } from "@/lib/document-html/proposal";
 import { renderAgreementHtml, renderAgreementTeaserHtml } from "@/lib/document-html/agreement";
-import { renderBlockDocument, isBlockDocument, needsFigureLock } from "@/lib/document-html/blocks";
+import { renderBlockDocument, isBlockDocument, needsFigureLock, scheduleOf } from "@/lib/document-html/blocks";
 import { acceptedBox, executedSignatures } from "@/lib/document-html";
 import { proposalAcceptBox, proposalAcceptedBox, agreementSignBox } from "@/lib/document-html/accept";
 import type { ProposalData } from "@/components/admin/proposal-pdf";
@@ -103,15 +103,14 @@ export async function GET(request: NextRequest, { params }: Params) {
             clientName: clientRow?.name,
             clientEmail: clientRow?.email,
             entity: clientRow?.company || clientRow?.name,
-            schedule: doc.data.schedule ?? null,
+            schedule: scheduleOf(doc.data),
             countersignedBy: countersignatory,
           })
         : proposalAcceptBox({
             documentId: doc.id,
             clientName: clientRow?.name,
             clientEmail: clientRow?.email,
-            schedule: doc.data.schedule ?? null,
-            scheduleOptions: doc.data.scheduleOptions ?? null,
+            schedule: scheduleOf(doc.data),
             hasRangedPricing: needsFigureLock(doc.data),
           });
     }
