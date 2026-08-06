@@ -14,7 +14,8 @@
     "simulate:client": "node scripts/run-ts.mjs scripts/simulate-client.ts --env",
     "chanf:prepare": "node scripts/run-ts.mjs scripts/prepare-chanf-proposal.ts --env",
     "docs:sync": "node scripts/run-ts.mjs scripts/sync-documents.ts --env",
-    "simulate:agreement": "node scripts/run-ts.mjs scripts/simulate-agreement.ts --env"
+    "simulate:agreement": "node scripts/run-ts.mjs scripts/simulate-agreement.ts --env",
+    "demo:reset": "node scripts/run-ts.mjs scripts/reset-demo.ts --env"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.102.0",
