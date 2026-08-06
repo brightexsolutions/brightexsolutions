@@ -144,6 +144,7 @@ export const CHANF_PROPOSAL: BlockDocument = {
               duration: "Week 1",
               items: [
                 "Diagnose and resolve the hosting and subscription issue, bringing chan-f.or.ke back online",
+                "If the domain registration itself has lapsed and been released, recovery may not be possible. We will confirm its status in the first two days and advise: registering a replacement domain is a separate cost, and we would rather tell you in week one than in week six.",
                 "Full content and asset audit: courses, fees, photos, testimonials, accreditation documents",
                 "Confirm site architecture and sign off on final scope",
               ],
@@ -152,13 +153,13 @@ export const CHANF_PROPOSAL: BlockDocument = {
               name: "Phase 2: Core Website Design & Build",
               duration: "Weeks 2 to 5",
               items: [
-                "Mobile-first design and build of nine pages: Home, About, Courses (one template serving all courses), Admissions, Gallery, Graduate Stories, Blog, FAQ and Contact",
+                "Mobile-first design and build of nine pages: Home, About, Courses (one template serving all courses), Admissions, Gallery, Graduate Stories, Blog, FAQ and Contact. The blog is built and styled with two starter posts; writing posts after launch is CHANF's own, or sits in the Growth retainer.",
                 "Online application form, replacing the current fully manual process, with submissions delivered to a nominated CHANF inbox",
                 "Rule-based website chat assistant: it answers common questions (fees, intake dates, entry requirements, location) from a set of questions and answers CHANF approves, and hands over to WhatsApp for anything outside that set. It does not generate its own answers, so it cannot tell a prospective student something CHANF has not said.",
                 "WhatsApp Admissions button and enquiry funnel present sitewide",
                 "Trust-building content: accreditation badges, graduation proof, testimonials, and the updated photography CHANF supplies",
                 "Google Maps embed, social feed embeds, email newsletter signup",
-                "Two rounds of revisions on the design, within the agreed scope",
+                "Design revisions until CHANF is happy with it, within the scope agreed in Phase 1. Anything that changes that scope is a new request rather than a revision, and is quoted before any work starts, so there are no surprises on either side.",
               ],
             },
             {
@@ -168,7 +169,7 @@ export const CHANF_PROPOSAL: BlockDocument = {
                 "Google Analytics 4 and Search Console setup to track engagement, page behaviour, and conversions",
                 'One-time on-page SEO setup across every page built: page titles, meta descriptions, headings, image alt text, internal linking and a sitemap, targeting searches such as "caregiving courses Kitengela" and "healthcare courses Kenya"',
                 "Google Business Profile setup or claim, so the institute appears on Maps and in local search",
-                "Cross-device testing, client review, and one round of launch corrections",
+                "Cross-device testing, client review, and the corrections that come out of it before go-live",
                 "Domain and DNS cutover, and go-live",
               ],
             },
@@ -189,6 +190,7 @@ export const CHANF_PROPOSAL: BlockDocument = {
             "Updated photography and any video content, replacing the existing outdated hospital images",
             "Testimonials and graduate stories, including any existing accreditation documents (NITA and DOSH) and trainer bios and photos if these should feature on the site",
             "Access to any existing Google Analytics, Search Console, or Google Business Profile accounts, if previously set up",
+            "The questions prospective students ask most often, with CHANF's approved answers, so the chat assistant says what CHANF would say. A list of 15 to 25 is enough, and we will help shape it during Phase 1.",
             "A single point of contact for content sign-off and questions during the build",
           ],
         },
@@ -212,7 +214,76 @@ export const CHANF_PROPOSAL: BlockDocument = {
       ],
     },
 
-    // ── 04 ── Indicative: raised on the call, deliberately unpriced ─────────
+    // ── Pricing ────────────────────────────────────────────────────────────
+    // gated: pricing blurs behind the walkthrough card when the document-level
+    // gate is on. Nothing else in the proposal is withheld, so the client can
+    // read and judge the whole plan and only the numbers wait for the call.
+    {
+      id: "investment",
+      tag: "Pricing",
+      title: "Investment & Pricing",
+      gated: true,
+      blocks: [
+        {
+          id: "inv-table",
+          kind: "phased_investment_table",
+          rows: [
+            { phase: "Phase 1", desc: "Site recovery, content audit and discovery", amount: "10,000 - 15,000" },
+            { phase: "Phase 2", desc: "Nine-page mobile-first build, online application form and rule-based chat assistant", amount: "75,000 - 90,000" },
+            { phase: "Phase 3", desc: "Analytics, one-time SEO setup, Google Business Profile and launch", amount: "25,000 - 30,000" },
+          ],
+          total: { label: "Total investment range", amount: "110,000 - 135,000" },
+        },
+        {
+          id: "inv-terms",
+          kind: "key_value_list",
+          items: [
+            {
+              label: "Payment structure",
+              detail: "60% deposit upfront to commence work, which covers Phase 1 from day one, and 40% due on completion and launch.",
+            },
+          ],
+        },
+        {
+          id: "inv-hosting",
+          kind: "note",
+          heading: "Domain and hosting",
+          text:
+            "Brightex Solutions sets up the domain and hosting as part of Phase 1. The running costs stay with CHANF and are paid directly to the provider, not through us: hosting of roughly KES 12,000 to 18,000 a year, and domain renewal of roughly KES 2,000 to 3,500 a year. Both are annual, both fall due on the anniversary of setup, and we will put those dates in writing at handover with a reminder ahead of each one. This is the bill that took the current site offline, so it is worth having in the calendar rather than in an inbox.",
+        },
+        {
+          id: "inv-out",
+          kind: "scope_out",
+          heading: "Out of scope, available separately on request",
+          rows: [
+            {
+              label: "Social media management and paid ad strategy",
+              detail:
+                "Not offered in-house by Brightex Solutions. This includes day-to-day posting, paid boosting strategy, and campaign management across TikTok, Instagram and Facebook. Brightex Solutions can recommend a trusted independent social media manager or agency to take this on.",
+            },
+            {
+              label: "Ongoing SEO and content marketing",
+              detail:
+                "Phase 3 includes a one-time SEO setup: the pages built are correctly titled, described, structured and submitted. Ranking then improves over months, driven by publishing new content and earning links, which is continuing work rather than a deliverable. That sits in the retainer packages in Section 08, from the Growth tier upward, and is not part of this build.",
+            },
+            {
+              label: "LinkedIn and multi-platform content strategy",
+              detail:
+                "Ongoing thought-leadership and content strategy across platforms beyond the website's own blog is outside this scope.",
+            },
+            {
+              label: "Graduate testimonial video production",
+              detail:
+                "Professional video testimonials can be scoped and priced separately if CHANF wants to pursue this as an enhancement.",
+            },
+          ],
+        },
+      ],
+    },
+
+    // ── Indicative: raised on the call, deliberately unpriced. Placed AFTER
+    //    pricing on purpose: scope, then the number, then the upside. Ahead of
+    //    it, a list of things they cannot have yet dilutes the ask. ─────────
     {
       id: "enhancements",
       tag: "Looking ahead",
@@ -277,74 +348,7 @@ export const CHANF_PROPOSAL: BlockDocument = {
       ],
     },
 
-    // ── 05 ─────────────────────────────────────────────────────────────────
-    // gated: pricing blurs behind the walkthrough card when the document-level
-    // gate is on. Nothing else in the proposal is withheld, so the client can
-    // read and judge the whole plan and only the numbers wait for the call.
-    {
-      id: "investment",
-      tag: "Pricing",
-      title: "Investment & Pricing",
-      gated: true,
-      blocks: [
-        {
-          id: "inv-table",
-          kind: "phased_investment_table",
-          rows: [
-            { phase: "Phase 1", desc: "Site recovery, content audit and discovery", amount: "10,000 - 15,000" },
-            { phase: "Phase 2", desc: "Nine-page mobile-first build, online application form and rule-based chat assistant", amount: "75,000 - 90,000" },
-            { phase: "Phase 3", desc: "Analytics, one-time SEO setup, Google Business Profile and launch", amount: "25,000 - 30,000" },
-          ],
-          total: { label: "Total investment range", amount: "110,000 - 135,000" },
-        },
-        {
-          id: "inv-terms",
-          kind: "key_value_list",
-          items: [
-            {
-              label: "Payment structure",
-              detail: "60% deposit upfront to commence development, 40% due on completion and launch.",
-            },
-          ],
-        },
-        {
-          id: "inv-hosting",
-          kind: "note",
-          heading: "Domain and hosting",
-          text:
-            "Brightex Solutions will handle initial domain and hosting setup. Annual domain renewal (approximately KES 2,000 to 3,500) and ongoing hosting costs remain CHANF's direct responsibility.",
-        },
-        {
-          id: "inv-out",
-          kind: "scope_out",
-          heading: "Out of scope, available separately on request",
-          rows: [
-            {
-              label: "Social media management and paid ad strategy",
-              detail:
-                "Not offered in-house by Brightex Solutions. This includes day-to-day posting, paid boosting strategy, and campaign management across TikTok, Instagram and Facebook. Brightex Solutions can recommend a trusted independent social media manager or agency to take this on.",
-            },
-            {
-              label: "Ongoing SEO and content marketing",
-              detail:
-                "Phase 3 includes a one-time SEO setup: the pages built are correctly titled, described, structured and submitted. Ranking then improves over months, driven by publishing new content and earning links, which is continuing work rather than a deliverable. That sits in the retainer packages in Section 08, from the Growth tier upward, and is not part of this build.",
-            },
-            {
-              label: "LinkedIn and multi-platform content strategy",
-              detail:
-                "Ongoing thought-leadership and content strategy across platforms beyond the website's own blog is outside this scope.",
-            },
-            {
-              label: "Graduate testimonial video production",
-              detail:
-                "Professional video testimonials can be scoped and priced separately if CHANF wants to pursue this as an enhancement.",
-            },
-          ],
-        },
-      ],
-    },
-
-    // ── 06 ──────────────────────────────────────────────────────────────────
+    // ── Schedule ───────────────────────────────────────────────────────────
     {
       id: "timeline",
       tag: "Schedule",
@@ -355,7 +359,7 @@ export const CHANF_PROPOSAL: BlockDocument = {
           kind: "timeline",
           rows: [
             { week: "Week 1", title: "Stabilise & Discover", desc: "Site recovery, content audit, architecture sign-off" },
-            { week: "Weeks 2 to 5", title: "Design & Build", desc: "Core pages, application flow, WhatsApp funnel, trust content" },
+            { week: "Weeks 2 to 5", title: "Design & Build", desc: "Core pages, online application flow, chat assistant, WhatsApp funnel and trust content" },
             { week: "Weeks 6 to 7", title: "Analytics, SEO & Testing", desc: "GA4 and Search Console, on-page SEO, cross-device QA, client review" },
             { week: "Week 8", title: "Launch", desc: "Domain and DNS cutover, go-live, Google Business Profile submission", launch: true },
           ],

@@ -4,6 +4,27 @@ import { CHANF_PROPOSAL } from "@/lib/document-html/fixtures/chanf-proposal";
 let fails = 0;
 const t = (n: string, c: boolean, d = "") => { if (!c) { fails++; console.log(`  FAIL ${n} :: ${d}`); } else console.log(`  ok   ${n}`); };
 
+
+/**
+ * Sections are addressed by id, never by index.
+ *
+ * These checks used positional lookups and broke the moment a section was
+ * reordered in the fixture, failing with a TypeError that said nothing about
+ * the real cause. The fixture is a live proposal whose order changes; its
+ * section ids do not.
+ */
+type Sec = { id: string; blocks: { kind: string; [k: string]: unknown }[] };
+const sectionById = (doc: { sections: Sec[] }, id: string): Sec => {
+  const found = doc.sections.find((s) => s.id === id);
+  if (!found) throw new Error(`Fixture has no section "${id}". Ids: ${doc.sections.map((s) => s.id).join(", ")}`);
+  return found;
+};
+const blockOfKind = (section: Sec, kind: string) => {
+  const found = section.blocks.find((b) => b.kind === kind);
+  if (!found) throw new Error(`Section "${section.id}" has no ${kind} block.`);
+  return found;
+};
+
 const r = parseBlockDocument(CHANF_PROPOSAL);
 t("CHANF fixture validates", r.ok, (r.errors ?? []).join(" | "));
 
@@ -51,11 +72,11 @@ allHidden.sections.forEach((s: { hidden: boolean }) => { s.hidden = true; });
 t("all-sections-hidden REJECTED", !parseBlockDocument(allHidden).ok);
 
 const emptyList = JSON.parse(JSON.stringify(CHANF_PROPOSAL));
-emptyList.sections[2].blocks[1].phases = [];
+(blockOfKind(sectionById(emptyList, "scope"), "phases") as { phases: unknown[] }).phases = [];
 t("empty phases list REJECTED", !parseBlockDocument(emptyList).ok);
 
 const blankAmount = JSON.parse(JSON.stringify(CHANF_PROPOSAL));
-blankAmount.sections[4].blocks[0].rows[0].amount = "";
+(blockOfKind(sectionById(blankAmount, "investment"), "phased_investment_table") as { rows: { amount: string }[] }).rows[0].amount = "";
 t("blank amount REJECTED", !parseBlockDocument(blankAmount).ok);
 
 const badVersion = JSON.parse(JSON.stringify(CHANF_PROPOSAL));
@@ -64,7 +85,7 @@ t("wrong version REJECTED", !parseBlockDocument(badVersion).ok);
 
 // Error messages must name where the problem is
 const e = parseBlockDocument(emptyList);
-t("error path names the section", (e.errors ?? []).some((m) => m.startsWith("sections.2")), (e.errors ?? []).join(" | "));
+t("error path names the offending section", (e.errors ?? []).some((m) => /^sections\.\d+\./.test(m)), (e.errors ?? []).join(" | "));
 
 console.log(fails === 0 ? "\nALL VALIDATION CHECKS PASSED\n" : `\n${fails} FAILED\n`);
 process.exit(fails === 0 ? 0 : 1);
