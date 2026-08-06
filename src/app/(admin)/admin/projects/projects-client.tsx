@@ -18,7 +18,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { useConfirm } from "@/components/admin/confirm-dialog";
+import { useConfirm, useNotice } from "@/components/admin/confirm-dialog";
 import { EmailComposer } from "@/components/admin/email-composer";
 import { DocumentViewerSheet, type DocumentViewerTarget } from "@/components/admin/document-viewer-sheet";
 
@@ -283,6 +283,7 @@ function InvoiceRow({ inv }: { inv: Invoice }) {
 
 export function ProjectsPageClient() {
   const confirm = useConfirm();
+  const notice = useNotice();
   const [projects, setProjects] = useState<Project[]>([]);
   const [clients, setClients] = useState<Client[]>([]);
   const [loading, setLoading] = useState(true);
@@ -521,7 +522,13 @@ export function ProjectsPageClient() {
   }
 
   async function generateDocForProject(type: "proposal" | "agreement") {
-    if (!viewProject?.client_id) { alert("This project has no client on file."); return; }
+    if (!viewProject?.client_id) {
+      void notice({
+        title: "No client on this project",
+        message: "A document needs a client to be addressed to. Attach one to the project first.",
+      });
+      return;
+    }
     setGeneratingDocType(type);
     try {
       const summary = [
@@ -542,7 +549,10 @@ export function ProjectsPageClient() {
         }),
       });
       const json = await res.json().catch(() => ({}));
-      if (!res.ok) { alert(json.error ?? `Failed to generate the ${type}.`); return; }
+      if (!res.ok) {
+        await notice(json.error ?? `The ${type} could not be generated.`);
+        return;
+      }
       setViewProject((p) => p ? { ...p, generated_documents: [json.data, ...(p.generated_documents ?? [])] } : p);
     } finally {
       setGeneratingDocType(null);

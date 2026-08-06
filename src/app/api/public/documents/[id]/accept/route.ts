@@ -7,6 +7,7 @@ import { transporter, SENDERS } from "@/lib/mail";
 import { emailTemplate, emailParagraph, emailInfoCard, emailButton, emailDivider, emailSignoff } from "@/lib/email-templates";
 import { resolveCc } from "@/lib/cc-recipients";
 import { SITE_URL } from "@/lib/constants";
+import { logClientAction } from "@/lib/audit";
 
 type Params = { params: Promise<{ id: string }> };
 
@@ -125,7 +126,7 @@ export async function POST(request: NextRequest, { params }: Params) {
       heroLabel: "Agreement signed",
       heroTitle: "That's official.\nThank you.",
       body:
-        emailParagraph(`Hi ${parsed.data.name.split(" ")[0]}, this confirms that you signed <strong>${doc.title}</strong>. Keep this email as your record.`) +
+        emailParagraph(`Hello ${parsed.data.name.split(" ")[0]}, this confirms that you signed <strong>${doc.title}</strong>. Keep this email as your record.`) +
         emailInfoCard("✍️", "Signed by", `${parsed.data.name} (${parsed.data.email})`) +
         emailInfoCard("📅", "Signed on", signedDate) +
         (doc.reference_code ? emailInfoCard("🔖", "Reference", doc.reference_code) : "") +
@@ -134,7 +135,7 @@ export async function POST(request: NextRequest, { params }: Params) {
         emailParagraph("We will be in touch shortly to schedule the kick-off and confirm the first milestone. If anything in the agreement does not match your understanding, reply to this email straight away.") +
         emailSignoff(),
     }),
-    text: `Hi ${parsed.data.name.split(" ")[0]},\n\nThis confirms you signed ${doc.title} on ${signedDate}.\n\nView it here: ${viewUrl}\n\nWe will be in touch to schedule the kick-off.\n\nBest regards,\nThe Brightex Solutions Team`,
+    text: `Hello ${parsed.data.name.split(" ")[0]},\n\nThis confirms you signed ${doc.title} on ${signedDate}.\n\nView it here: ${viewUrl}\n\nWe will be in touch to schedule the kick-off.\n\nBest regards,\nThe Brightex Solutions Team`,
   }).catch((err) => console.error("[document-accept] confirmation email:", err));
 
   if (doc.client_id) {
@@ -148,6 +149,15 @@ export async function POST(request: NextRequest, { params }: Params) {
       document_id: doc.id,
     });
   }
+
+  await logClientAction({
+    actor_name: parsed.data.name,
+    action: "accepted_agreement",
+    entity_type: "generated_document",
+    entity_id: doc.id,
+    entity_label: `${doc.title} (${doc.reference_code})`,
+    notes: `Accepted by ${parsed.data.name} <${parsed.data.email}> for ${clientLabel}.`,
+  });
 
   return NextResponse.json({ ok: true, accepted_at: acceptedAt });
 }

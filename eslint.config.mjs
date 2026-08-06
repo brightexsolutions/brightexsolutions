@@ -12,6 +12,10 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Transient bundle written by scripts/run-ts.mjs while a check or seed
+    // runs. Linting it produced dozens of phantom errors that appeared and
+    // vanished depending on whether a script happened to be mid-flight.
+    ".run-ts.tmp.cjs",
   ]),
 ]);
 

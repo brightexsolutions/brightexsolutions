@@ -108,7 +108,7 @@ type AIPayload = z.infer<typeof AISchema>;
 function defaultTemplate(payload: AIPayload): string | null {
   switch (payload.intent) {
     case "draft_invoice_email":
-      return `Hi ${payload.clientName},
+      return `Hello ${payload.clientName},
 
 Please find attached invoice ${payload.invoiceNumber}${payload.projectName ? ` for ${payload.projectName}` : ""}.
 
@@ -124,7 +124,7 @@ Brightex Solutions Team
 +254 741 980 127`;
 
     case "draft_reminder":
-      return `Hi ${payload.clientName},
+      return `Hello ${payload.clientName},
 
 This is a friendly reminder that invoice ${payload.invoiceNumber}${payload.projectName ? ` for ${payload.projectName}` : ""} is ${payload.daysOverdue > 0 ? `${payload.daysOverdue} day${payload.daysOverdue === 1 ? "" : "s"} overdue` : "now due"}.
 
@@ -137,7 +137,7 @@ Brightex Solutions Team
 +254 741 980 127`;
 
     case "draft_receipt_email":
-      return `Hi ${payload.clientName},
+      return `Hello ${payload.clientName},
 
 Thank you: we've received your payment of ${payload.amount}${payload.invoiceNumber ? ` for invoice ${payload.invoiceNumber}` : ""}${payload.projectName ? ` (${payload.projectName})` : ""}.${payload.reference ? `\n\nPayment reference: ${payload.reference}` : ""}
 
@@ -147,7 +147,7 @@ Warm regards,
 Brightex Solutions Team`;
 
     case "draft_project_update":
-      return `Hi ${payload.clientName},
+      return `Hello ${payload.clientName},
 
 Here's a quick update on ${payload.projectName}:
 

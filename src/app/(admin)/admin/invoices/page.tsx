@@ -13,9 +13,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { useConfirm } from "@/components/admin/confirm-dialog";
+import { useConfirm, useNotice } from "@/components/admin/confirm-dialog";
 import { EmailComposer, type EmailComposerRecipient } from "@/components/admin/email-composer";
 import { DocumentViewerSheet, type DocumentViewerTarget } from "@/components/admin/document-viewer-sheet";
+import { RecipientHint, useClientContacts } from "@/components/admin/recipient-hint";
 
 const statusColors: Record<string, string> = {
   draft: "bg-slate-400/10 text-slate-400",
@@ -75,6 +76,9 @@ const defaultForm = { client_id: "", client_name: "", client_company: "", client
 
 export default function InvoicesPage() {
   const confirm = useConfirm();
+  const notice = useNotice();
+  // Fetched once for the page so each row can show who its send will reach.
+  const { contacts: ccContacts, state: ccState } = useClientContacts();
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeFilter, setActiveFilter] = useState("All");
@@ -201,7 +205,13 @@ export default function InvoicesPage() {
   }
 
   function resendInvoiceDoc(inv: Invoice, doc: GeneratedDoc) {
-    if (!inv.clients?.email) { alert("This client has no email on file."); return; }
+    if (!inv.clients?.email) {
+      void notice({
+        title: "No email on file",
+        message: "Add an email address to this client record, then send the invoice from here.",
+      });
+      return;
+    }
     setEmailDocTarget({ id: doc.id, title: doc.title });
     setEmailDocRecipient({ clientId: inv.clients.id, name: inv.clients.name ?? "Client", email: inv.clients.email });
     setEmailDocOpen(true);
@@ -428,14 +438,23 @@ export default function InvoicesPage() {
                       <Eye size={11} />PDF
                     </button>
                     {inv.status !== "cancelled" && (
-                      <button
-                        onClick={() => sendInvoice(inv.id)}
-                        disabled={busyIds.has(inv.id)}
-                        className="flex items-center gap-1 px-2 py-1 rounded-md text-[11px] font-medium bg-brand-navy text-white hover:bg-brand-navy/90 transition-colors disabled:opacity-60"
-                      >
-                        {busyIds.has(inv.id) ? <Loader2 size={10} className="animate-spin" /> : <Send size={10} />}
-                        {inv.status === "draft" ? "Send" : "Resend"}
-                      </button>
+                      <>
+                        <button
+                          onClick={() => sendInvoice(inv.id)}
+                          disabled={busyIds.has(inv.id)}
+                          className="flex items-center gap-1 px-2 py-1 rounded-md text-[11px] font-medium bg-brand-navy text-white hover:bg-brand-navy/90 transition-colors disabled:opacity-60"
+                        >
+                          {busyIds.has(inv.id) ? <Loader2 size={10} className="animate-spin" /> : <Send size={10} />}
+                          {inv.status === "draft" ? "Send" : "Resend"}
+                        </button>
+                        <RecipientHint
+                          contacts={ccContacts}
+                          state={ccState}
+                          clientId={inv.clients?.id}
+                          scope="invoices"
+                          to={inv.clients?.email}
+                        />
+                      </>
                     )}
                   </div>
                 );

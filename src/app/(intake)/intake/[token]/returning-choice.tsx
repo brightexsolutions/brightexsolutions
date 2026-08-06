@@ -80,29 +80,23 @@ export function ReturningClientChoice({
               <p className="text-xs text-slate-400 mt-1">Sent on {submittedLabel}</p>
             )}
 
+            {/* Only rendered when editing is genuinely open. Every closed case,
+                whether we have read it or the allowance is spent, is caught by
+                intakeEditLock() upstream and shown as IntakeLockedNotice, so
+                the reason for closing lives in one place rather than two. */}
             <div className="mt-5">
-              {editsRemaining > 0 ? (
-                <>
-                  <a
-                    href={`/intake/edit/${intake.editToken}`}
-                    className="flex items-center justify-center w-full py-3 rounded-xl text-sm font-semibold transition-all"
-                    style={{ background: GOLD, color: NAVY }}
-                  >
-                    Update my answers
-                  </a>
-                  <p className="text-[11px] text-slate-400 mt-2 text-center leading-relaxed">
-                    Everything you told us is still there. You can update it{" "}
-                    {editsRemaining} more {editsRemaining === 1 ? "time" : "times"} out of {maxEdits}.
-                  </p>
-                </>
-              ) : (
-                <div className="rounded-xl bg-slate-50 border border-slate-200 px-4 py-3">
-                  <p className="text-xs text-slate-500 leading-relaxed">
-                    You have used all {maxEdits} updates on this submission, so it is now final. If
-                    something still needs changing, message us and we will do it for you.
-                  </p>
-                </div>
-              )}
+              <a
+                href={`/intake/edit/${intake.editToken}`}
+                className="flex items-center justify-center w-full py-3 rounded-xl text-sm font-semibold transition-all"
+                style={{ background: GOLD, color: NAVY }}
+              >
+                Update my answers
+              </a>
+              <p className="text-[11px] text-slate-400 mt-2 text-center leading-relaxed">
+                Everything you told us is still there. You can update it{" "}
+                {editsRemaining} more {editsRemaining === 1 ? "time" : "times"} out of {maxEdits}.
+                Once we have read your requirements they are locked in, so send any changes before then.
+              </p>
             </div>
           </div>
 

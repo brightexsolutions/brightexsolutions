@@ -14,6 +14,7 @@ import { IntakeDetailSheet, type IntakeDetail, type IntakeAnalysis, SERVICE_LABE
 import { EmailComposer } from "@/components/admin/email-composer";
 import { ClientContactsPanel } from "@/components/admin/client-contacts-panel";
 import { DocumentViewerSheet, type DocumentViewerTarget } from "@/components/admin/document-viewer-sheet";
+import { RecipientHint, useClientContacts } from "@/components/admin/recipient-hint";
 
 type Client = {
   id: string;
@@ -113,6 +114,7 @@ export function QuickClientPanel({
   clientId: string | null;
   onClose: () => void;
 }) {
+  const { contacts: ccContacts, state: ccState } = useClientContacts();
   const [detail, setDetail] = useState<ClientDetail | null>(null);
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<"overview" | "comms">("overview");
@@ -167,7 +169,16 @@ export function QuickClientPanel({
     setTimeout(() => setIntakeLinkCopied(false), 2000);
   }
 
-  async function updateIntakeStatus(intakeId: string, status: "reviewed" | "archived") {
+  /**
+   * Reviewing is not a private flag: it locks the client out of editing their
+   * own submission and, unless suppressed, emails them to say so. Reopening
+   * ("new") hands editing back with whatever edit allowance was left.
+   */
+  async function updateIntakeStatus(
+    intakeId: string,
+    status: "new" | "reviewed" | "archived",
+    notifyClient = true
+  ) {
     if (!clientId) return;
     const setBusy = status === "archived" ? setArchivingIntakeId : setMarkingIntakeId;
     setBusy(intakeId);
@@ -175,13 +186,16 @@ export function QuickClientPanel({
       await fetch(`/api/admin/clients/${clientId}/intakes?intakeId=${intakeId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status }),
+        body: JSON.stringify({ status, notifyClient }),
       });
+      const reviewedAt = status === "reviewed" ? new Date().toISOString() : null;
       setDetail((prev) => prev ? {
         ...prev,
-        intakes: prev.intakes.map((i) => i.id === intakeId ? { ...i, status } : i),
+        intakes: prev.intakes.map((i) => i.id === intakeId ? { ...i, status, reviewed_at: reviewedAt } : i),
       } : prev);
-      setSelectedIntake((prev) => prev && prev.id === intakeId ? { ...prev, status } : prev);
+      setSelectedIntake((prev) =>
+        prev && prev.id === intakeId ? { ...prev, status, reviewed_at: reviewedAt } : prev
+      );
     } finally {
       setBusy(null);
     }
@@ -295,7 +309,10 @@ export function QuickClientPanel({
   return (
     <>
     <Sheet open={!!clientId} onOpenChange={(v) => !v && onClose()}>
-      <SheetContent className="w-full sm:max-w-md flex flex-col overflow-hidden p-0" side="right">
+      {/* Wider than the default sheet: this panel carries dense rows (contacts
+          with their scope chips, invoices, documents) that wrap badly at md.
+          Stepped rather than fixed so it does not dominate a small laptop. */}
+      <SheetContent className="w-full sm:max-w-lg lg:max-w-xl flex flex-col overflow-hidden p-0" side="right">
         {loading ? (
           <div className="flex-1 flex items-center justify-center">
             <Loader2 size={24} className="animate-spin text-muted-foreground" />
@@ -524,6 +541,15 @@ export function QuickClientPanel({
                                   {isSending ? "Sending…" : justSent ? "Sent!" : isSent ? "Resend" : "Send"}
                                 </button>
                               )}
+                              {inv.status !== "paid" && client.email && (
+                                <RecipientHint
+                                  contacts={ccContacts}
+                                  state={ccState}
+                                  clientId={clientId}
+                                  scope="invoices"
+                                  to={client.email}
+                                />
+                              )}
                               {!client.email && inv.status !== "paid" && (
                                 <span className="text-[10px] text-muted-foreground/50">No email</span>
                               )}
@@ -618,6 +644,7 @@ export function QuickClientPanel({
                             <button
                               onClick={() => updateIntakeStatus(intake.id, "reviewed")}
                               disabled={markingIntakeId === intake.id}
+                              title="Locks the client out of editing and emails them to say we have read it. Open the details to review without emailing."
                               className="flex items-center gap-1 text-[10px] text-emerald-600 hover:text-emerald-700 transition-colors disabled:opacity-50"
                             >
                               {markingIntakeId === intake.id
@@ -773,8 +800,10 @@ export function QuickClientPanel({
       intake={selectedIntake}
       clientId={clientId}
       onClose={() => setSelectedIntake(null)}
-      onMarkReviewed={async (id) => { await updateIntakeStatus(id, "reviewed"); }}
+      onMarkReviewed={async (id, notifyClient) => { await updateIntakeStatus(id, "reviewed", notifyClient); }}
       marking={!!markingIntakeId}
+      onReopen={async (id) => { await updateIntakeStatus(id, "new"); }}
+      reopening={!!markingIntakeId}
       onArchive={async (id) => { await updateIntakeStatus(id, "archived"); }}
       archiving={!!archivingIntakeId}
       onEmailClient={() => { if (selectedIntake) replyToIntake(selectedIntake); }}

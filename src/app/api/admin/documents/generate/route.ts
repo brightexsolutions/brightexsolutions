@@ -250,6 +250,7 @@ Return JSON in exactly this shape:
         status: "draft",
         source: "ai",
         gated: payload.gated ?? false,
+        gate_mode: payload.gated ? "manual" : "off",
         source_document_id: payload.sourceDocumentId ?? null,
         engagement_summary: payload.engagementSummary,
         created_by: user.id,

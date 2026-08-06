@@ -1,6 +1,7 @@
 import { transporter, SENDERS, SITE_NAME, SITE_URL } from "@/lib/mail";
 import { BUSINESS_WHATSAPP } from "@/lib/constants";
 import { SERVICE_LABELS } from "@/lib/intake-schema";
+import { greetingName } from "@/lib/greeting";
 
 const WA_URL = `https://wa.me/${BUSINESS_WHATSAPP}`;
 
@@ -35,7 +36,8 @@ function editNote(opts: IntakeAckOptions) {
       <p style="margin:0 0 6px 0;font-size:14px;font-weight:600;color:#334155;">Forgotten something?</p>
       <p style="margin:0 0 12px 0;font-size:13px;color:#64748b;line-height:1.6;">
         You can update what you sent us up to ${times} times. Everything you already filled in will
-        still be there.
+        still be there. Once we have read through your requirements they are locked in, so it is
+        worth sending any changes before then.
       </p>
       <a href="${url}" style="display:inline-block;font-size:13px;font-weight:700;color:#152238;text-decoration:underline;">
         Update my answers
@@ -146,7 +148,7 @@ function signOff() {
 // ─── New client (submitted via generic /intake link) ──────────────────────────
 
 export async function sendNewClientIntakeAck(opts: IntakeAckOptions) {
-  const firstName = opts.name.split(" ")[0];
+  const firstName = greetingName(opts.name);
   const services  = describeServices(opts.serviceType, opts.serviceTypes);
 
   const html = baseHtml(`
@@ -172,7 +174,7 @@ export async function sendNewClientIntakeAck(opts: IntakeAckOptions) {
     ${ccNote(opts.cc)}
   `);
 
-  const text = `Hi ${firstName},
+  const text = `Hello ${firstName},
 
 Thank you for reaching out to ${SITE_NAME}. We have your requirements for ${services} and we are on it.
 
@@ -194,10 +196,87 @@ The ${SITE_NAME} Team`;
   });
 }
 
+// ─── We have read it, and it is now locked ────────────────────────────────────
+
+interface IntakeReviewedOptions {
+  to: string;
+  cc?: string[];
+  name: string;
+  serviceType: string;
+  serviceTypes?: string[];
+  projectTitle?: string | null;
+}
+
+/**
+ * Sent when an intake is marked reviewed, which is also the moment the client
+ * loses the ability to edit it.
+ *
+ * Without this the lock is silent: they were invited to update their answers,
+ * and would only discover the window had shut by clicking the link we sent
+ * them. Closing a door quietly is the part that reads as a fault. Framed
+ * properly it is also good news, because it means a real person has read the
+ * thing and the proposal is next.
+ */
+export async function sendIntakeReviewedNotice(opts: IntakeReviewedOptions) {
+  const firstName = greetingName(opts.name);
+  const services  = describeServices(opts.serviceType, opts.serviceTypes);
+
+  const html = baseHtml(`
+    <p style="margin:0 0 6px 0;font-size:22px;font-weight:700;color:#152238;line-height:1.3;">
+      We have been through it, ${firstName} ✅
+    </p>
+    <p style="margin:0 0 16px 0;font-size:15px;color:#475569;line-height:1.6;">
+      Your ${services} requirements have now been reviewed by our team. We have everything we need
+      to put together what comes next, and we will be in touch shortly with the detail.
+    </p>
+    ${summaryBox(opts.serviceType, opts.serviceTypes, opts.projectTitle, null)}
+
+    <table width="100%" cellpadding="0" cellspacing="0" style="margin:4px 0 0;border:1px solid #fde68a;background:#fffbeb;border-radius:10px;">
+      <tr><td style="padding:14px 18px;">
+        <p style="margin:0 0 4px 0;font-size:13px;font-weight:700;color:#92400e;">Your answers are now locked</p>
+        <p style="margin:0;font-size:13px;color:#78350f;line-height:1.6;">
+          Because we scope and price from exactly what you sent us, the form is closed to further
+          edits from here. That is not the end of the conversation: if anything needs to change,
+          reply to this email or message us and we will update it for you.
+        </p>
+      </td></tr>
+    </table>
+
+    <p style="margin:20px 0 0 0;font-size:14px;color:#64748b;line-height:1.6;">
+      If anything has changed on your side, now is exactly the right time to tell us.
+    </p>
+    ${whatsappBtn()}
+    ${signOff()}
+    ${ccNote(opts.cc)}
+  `);
+
+  const text = `Hello ${firstName},
+
+Your ${services} requirements have now been reviewed by our team. We have what we need to put together the next step, and we will be in touch shortly.
+
+Your answers are now locked. We scope and price from exactly what you sent us, so the form is closed to further edits. If anything needs changing, reply to this email or message us and we will update it for you.
+
+Chat with us: ${WA_URL}
+
+Talk soon,
+The ${SITE_NAME} Team`;
+
+  await transporter.sendMail({
+    from: SENDERS.info,
+    to: opts.to,
+    cc: opts.cc,
+    subject: opts.projectTitle
+      ? `We have reviewed your requirements for "${opts.projectTitle}"`
+      : `We have reviewed your ${services} requirements`,
+    html,
+    text,
+  });
+}
+
 // ─── Existing client (submitted via personal /intake/[token] link) ────────────
 
 export async function sendExistingClientIntakeAck(opts: IntakeAckOptions) {
-  const firstName = opts.name.split(" ")[0];
+  const firstName = greetingName(opts.name);
   const services  = describeServices(opts.serviceType, opts.serviceTypes);
   const subject   = opts.projectTitle
     ? `Got your requirements for "${opts.projectTitle}", ${firstName}`
@@ -226,7 +305,7 @@ export async function sendExistingClientIntakeAck(opts: IntakeAckOptions) {
     ${ccNote(opts.cc)}
   `);
 
-  const text = `Hi ${firstName},
+  const text = `Hello ${firstName},
 
 Thanks for sharing your requirements. We have your ${services} submission and we are reviewing it now.
 

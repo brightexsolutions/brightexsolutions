@@ -2,6 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient, createAdminClient } from "@/lib/supabase/server";
 import { rateLimit } from "@/lib/rate-limit";
 
+// DB-backed GET handler: without this Next freezes the response at build
+// time and the route serves stale data forever.
+export const dynamic = "force-dynamic";
+
 export async function GET(request: NextRequest) {
   const limited = await rateLimit(request, "admin");
   if (limited) return limited;

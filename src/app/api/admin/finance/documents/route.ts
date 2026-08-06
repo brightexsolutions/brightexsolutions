@@ -4,6 +4,10 @@ import { rateLimit } from "@/lib/rate-limit";
 import { logAction } from "@/lib/audit";
 import { compressFile, mimeToExt } from "@/lib/compress";
 
+// DB-backed GET handler: without this Next freezes the response at build
+// time and the route serves stale data forever.
+export const dynamic = "force-dynamic";
+
 const ALLOWED_TYPES = [
   "application/pdf",
   "image/jpeg", "image/png", "image/webp",

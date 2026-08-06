@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback } from "react";
 import {
   FileSignature, Plus, Trash2, Eye, Send, Sparkles, Loader2, ScrollText, Briefcase, ClipboardList,
-  Receipt, FolderOpen, Wallet, Library, CheckCircle2, Upload,
+  Receipt, FolderOpen, Wallet, Library, CheckCircle2, Upload, Pencil,
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { StatCard } from "@/components/admin/stat-card";
@@ -14,7 +14,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { useConfirm } from "@/components/admin/confirm-dialog";
+import { useConfirm, useNotice } from "@/components/admin/confirm-dialog";
 import { EmailComposer } from "@/components/admin/email-composer";
 import { DocumentViewerSheet, type DocumentViewerTarget } from "@/components/admin/document-viewer-sheet";
 
@@ -31,6 +31,9 @@ type GeneratedDocument = {
   client_id: string | null;
   accepted_at?: string | null;
   source_document_id?: string | null;
+  /** Section-based documents are version 2. Only those can be edited by
+   * section; legacy shapes still render through the old path. */
+  data?: { version?: number } | null;
   clients?: { id: string; name: string; company: string | null } | null;
 };
 
@@ -93,6 +96,7 @@ const defaultForm = {
 
 export function DocumentsPageClient() {
   const confirm = useConfirm();
+  const notice = useNotice();
   const [tab, setTab] = useState<"generated" | "hub">("generated");
   const [documents, setDocuments] = useState<GeneratedDocument[]>([]);
   const [hubDocuments, setHubDocuments] = useState<HubDocument[]>([]);
@@ -242,13 +246,37 @@ export function DocumentsPageClient() {
   }
 
   async function prepareAgreement(doc: GeneratedDocument) {
-    if (!doc.client_id) { alert("This document has no client on file."); return; }
+    if (!doc.client_id) {
+      await notice({
+        title: "No client on this document",
+        message: "An agreement needs a client to be addressed to. Attach one to the proposal first.",
+      });
+      return;
+    }
     setPreparingId(doc.id);
     try {
       const res = await fetch(`/api/admin/documents/${doc.id}`);
       const json = await res.json().catch(() => ({}));
       const proposalData = json?.data?.data;
-      if (!res.ok || !proposalData) { alert(json?.error ?? "Could not load the proposal."); return; }
+      if (!res.ok || !proposalData) {
+        await notice(json?.error ?? "Could not load the proposal.");
+        return;
+      }
+
+      // A section-based (v2) proposal holds its pricing in investment blocks,
+      // not in a flat line_items array, and may quote ranges rather than fixed
+      // amounts. Reading it through the legacy path yields a total of 0 and an
+      // empty scope, which would generate a plausible-looking agreement for
+      // KES 0. Refuse instead: the derived-agreement flow handles this properly
+      // by copying the accepted figures rather than re-drafting from a summary.
+      if (proposalData.version === 2) {
+        await notice({
+          title: "Prepare this from the proposal itself",
+          message:
+            "This proposal is section based. Once the client accepts it, the agreement is derived from it directly, so the scope, figures and payment terms carry across exactly rather than being re-drafted.",
+        });
+        return;
+      }
 
       const total = (proposalData.line_items ?? []).reduce((s: number, it: { qty: number; unit_price: number }) => s + it.qty * it.unit_price, 0);
       const summary = [
@@ -271,7 +299,10 @@ export function DocumentsPageClient() {
         }),
       });
       const genJson = await genRes.json().catch(() => ({}));
-      if (!genRes.ok) { alert(genJson.error ?? "Failed to prepare the agreement."); return; }
+      if (!genRes.ok) {
+        await notice(genJson.error ?? "The agreement could not be prepared.");
+        return;
+      }
       setDocuments((prev) => [genJson.data, ...prev]);
     } finally {
       setPreparingId(null);
@@ -291,9 +322,21 @@ export function DocumentsPageClient() {
   }
 
   function openEmail(doc: GeneratedDocument) {
-    if (doc.type === "sop") { alert("SOPs are internal documents and can't be emailed to a client."); return; }
+    if (doc.type === "sop") {
+      void notice({
+        title: "SOPs stay internal",
+        message: "A standard operating procedure describes how we work and is not sent to clients.",
+      });
+      return;
+    }
     const client = clients.find((c) => c.id === doc.client_id);
-    if (!client?.email) { alert("This client has no email on file."); return; }
+    if (!client?.email) {
+      void notice({
+        title: "No email on file",
+        message: "Add an email address to this client record, then send the document from here.",
+      });
+      return;
+    }
     setEmailDoc({ id: doc.id, title: doc.title, client });
   }
 
@@ -461,9 +504,33 @@ export function DocumentsPageClient() {
                   ...base,
                   refine: { documentId: d.id, docType: d.type, data: res.data.data },
                   gating: d.type !== "sop" ? { documentId: d.id, gated: !!res.data.gated } : undefined,
+                  acceptedAt: res.data.accepted_at ?? null,
+                  acceptedByName: res.data.accepted_by_name ?? null,
+                  changesRequestedAt: res.data.changes_requested_at ?? null,
+                  changesRequestedBy: res.data.changes_requested_by ?? null,
+                  changesRequestedNote: res.data.changes_requested_note ?? null,
+                  editHref:
+                    res.data.data?.version === 2 && !res.data.accepted_at
+                      ? `/admin/documents/${d.id}/edit`
+                      : null,
                 });
               }
             } },
+            {
+              label: "Edit sections",
+              icon: <Pencil size={13} />,
+              // Only section-based documents can be edited here, and only until
+              // a client accepts one: after that it is a record of what was
+              // agreed, not a draft.
+              hidden: (row) => {
+                const d = row as unknown as GeneratedDocument;
+                return d.data?.version !== 2 || !!d.accepted_at;
+              },
+              onClick: (row) => {
+                const d = row as unknown as GeneratedDocument;
+                window.location.href = `/admin/documents/${d.id}/edit`;
+              },
+            },
             { label: "Email to client", icon: <Send size={13} />, onClick: (row) => openEmail(row as unknown as GeneratedDocument) },
             {
               label: (row) => preparingId === (row as unknown as GeneratedDocument).id ? "Preparing…" : "Prepare Agreement",

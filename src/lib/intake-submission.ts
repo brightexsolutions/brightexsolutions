@@ -171,6 +171,64 @@ export async function insertIntake(
  */
 export const MAX_INTAKE_EDITS = 2;
 
+export type IntakeLockReason = "reviewed" | "archived" | "budget";
+
+export interface IntakeEditLock {
+  locked: boolean;
+  reason: IntakeLockReason | null;
+  /** Shown to the client. Explains why, and what to do instead. */
+  message: string;
+}
+
+/**
+ * Whether a client may still revise their own submission.
+ *
+ * Two things close it. The edit budget is the obvious one. The one that
+ * actually matters is review: an intake is the document a proposal gets priced
+ * from, so scope that can still move after we have quoted against it means the
+ * quote describes something that no longer exists. Reading it is therefore the
+ * point at which it becomes a fixed reference.
+ *
+ * Review is checked before the budget because it is the stronger statement: an
+ * unused edit is irrelevant once the thing has been read, and offering an
+ * allowance the server will refuse is worse than saying it is closed.
+ *
+ * Nothing here is permanent. Setting the intake back to "new" from the admin
+ * panel reopens editing with whatever allowance was left.
+ */
+export function intakeEditLock(row: {
+  status?: string | null;
+  edit_count?: number | null;
+}): IntakeEditLock {
+  if (row.status === "archived") {
+    return {
+      locked: true,
+      reason: "archived",
+      message:
+        "This request is closed, so it can no longer be changed here. If it is still live, message us and we will reopen it.",
+    };
+  }
+
+  if (row.status === "reviewed") {
+    return {
+      locked: true,
+      reason: "reviewed",
+      message:
+        "We have been through your requirements, so they are now locked while we work on your proposal. Anything else you want changed, just reply to our email or message us and we will handle it.",
+    };
+  }
+
+  if (Number(row.edit_count ?? 0) >= MAX_INTAKE_EDITS) {
+    return {
+      locked: true,
+      reason: "budget",
+      message: `You have already updated this submission ${MAX_INTAKE_EDITS} times, which is the limit. Reply to our email and we will make any further changes for you.`,
+    };
+  }
+
+  return { locked: false, reason: null, message: "" };
+}
+
 /** Fields a client may change when revising. Excludes everything the admin
  * owns (status, review state, AI analysis) so an edit can never reset those. */
 const EDITABLE_FIELDS = [

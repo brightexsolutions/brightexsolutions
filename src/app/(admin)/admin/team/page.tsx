@@ -12,7 +12,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { TeamInviteModal } from "@/components/admin/team-invite-modal";
 import { cn } from "@/lib/utils";
-import { useConfirm } from "@/components/admin/confirm-dialog";
+import { useConfirm, useNotice } from "@/components/admin/confirm-dialog";
 
 // ─── Permission definitions ────────────────────────────────────────────────────
 
@@ -95,6 +95,7 @@ type PendingInvite = {
 
 export default function AdminTeamPage() {
   const confirm = useConfirm();
+  const notice = useNotice();
   const [tab, setTab] = useState<"members" | "invites">("members");
   const [members, setMembers] = useState<TeamMember[]>([]);
   const [invites, setInvites] = useState<PendingInvite[]>([]);
@@ -204,7 +205,10 @@ export default function AdminTeamPage() {
     try {
       const res = await fetch(`/api/admin/team/${member.id}/impersonate`, { method: "POST" });
       const json = await res.json();
-      if (!res.ok) { alert(json.error ?? "Failed to generate login link."); return; }
+      if (!res.ok) {
+        await notice(json.error ?? "That login link could not be generated.");
+        return;
+      }
       // Build the /auth/impersonate URL with token + email + destination portal.
       // The page calls verifyOtp directly: no Supabase redirect URL whitelist required.
       const params = new URLSearchParams({ token: json.token, next: json.next });

@@ -12,6 +12,7 @@ import { rateLimit } from "@/lib/rate-limit";
 import { callAI, ADMIN_SYSTEM_PROMPT, AI_MODELS, isAIAvailable, GeminiRateLimitedError } from "@/lib/ai";
 import { recordAiFailure, recordAiRecovery } from "@/lib/ai-monitor";
 import type { AIProvider } from "@/types";
+import { greetingName } from "@/lib/greeting";
 
 const DraftSchema = z.object({
   kind: z.enum(["invoice_reminder", "lead_followup", "client_checkin"]),
@@ -77,7 +78,7 @@ export async function POST(request: NextRequest) {
     title = `Payment reminder: Invoice ${invoice.invoice_number}`;
     rationale = `${client.name}: invoice ${invoice.invoice_number} is ${daysOverdue} day${daysOverdue === 1 ? "" : "s"} overdue (KES ${outstanding.toLocaleString()} outstanding).`;
     ruleSubject = `Payment reminder: Invoice ${invoice.invoice_number}`;
-    ruleBody = `Hi ${client.name.split(" ")[0]},\n\nThis is a friendly reminder that invoice ${invoice.invoice_number} has an outstanding balance of ${totalStr}${paidToDate > 0 ? ` (KES ${paidToDate.toLocaleString()} already received, thank you)` : ""}, and is ${daysOverdue > 0 ? `${daysOverdue} day${daysOverdue === 1 ? "" : "s"} overdue` : "now due"}.\n\nPlease arrange payment at your earliest convenience, or reply if there's anything to discuss.\n\nBest regards,\nThe Brightex Team`;
+    ruleBody = `Hello ${greetingName(client.name, client.company)},\n\nThis is a friendly reminder that invoice ${invoice.invoice_number} has an outstanding balance of ${totalStr}${paidToDate > 0 ? ` (KES ${paidToDate.toLocaleString()} already received, thank you)` : ""}, and is ${daysOverdue > 0 ? `${daysOverdue} day${daysOverdue === 1 ? "" : "s"} overdue` : "now due"}.\n\nPlease arrange payment at your earliest convenience, or reply if there's anything to discuss.\n\nBest regards,\nThe Brightex Team`;
     const dueDateStr = invoice.due_date ? new Date(invoice.due_date).toLocaleDateString("en-KE", { day: "numeric", month: "long", year: "numeric" }) : "not on file";
     userPrompt = `Write a firm but professional payment reminder email. Only reference facts given below: never invent or ask the reader to fill in a placeholder.\n\nClient: ${client.name}\nInvoice: ${invoice.invoice_number}\nOutstanding balance owed: ${totalStr}${paidToDate > 0 ? ` (KES ${paidToDate.toLocaleString()} already paid toward the original KES ${Number(invoice.total).toLocaleString()} total: only ask for the outstanding balance, never the original total)` : ""}\nOriginal due date: ${dueDateStr}\nDays overdue: ${daysOverdue}\n\nKeep it respectful but clear. Sign off as "The Brightex Solutions Team". Write only the email body.`;
   } else if (payload.kind === "lead_followup") {
@@ -89,13 +90,13 @@ export async function POST(request: NextRequest) {
     title = `Re-engage lead: ${client.name}`;
     rationale = `${sale.service ?? "Opportunity"} has been "${sale.status}" for ${daysOld} days.`;
     ruleSubject = `Following up: ${sale.service ?? "your project"}`;
-    ruleBody = `Hi ${client.name.split(" ")[0]},\n\nJust checking in on ${sale.service ?? "the project we discussed"}: happy to answer any questions or pick things back up whenever suits you.\n\nBest regards,\nThe Brightex Team`;
+    ruleBody = `Hello ${greetingName(client.name, client.company)},\n\nJust checking in on ${sale.service ?? "the project we discussed"}: happy to answer any questions or pick things back up whenever suits you.\n\nBest regards,\nThe Brightex Team`;
     userPrompt = `Draft a warm, brief re-engagement email to a lead who has gone quiet.\n\nClient: ${client.name}\nOpportunity: ${sale.service ?? "a project"}\nStatus: ${sale.status}, no movement in ${daysOld} days\n\nTone: warm, low-pressure. Write only the email body, sign off as "The Brightex Solutions Team".`;
   } else {
     title = `Check in with ${client.name}`;
     rationale = "No recent contact on record: still marked as an active client.";
     ruleSubject = "Checking in";
-    ruleBody = `Hi ${client.name.split(" ")[0]},\n\nIt's been a little while: just checking in to see how things are going and whether there's anything we can help with.\n\nBest regards,\nThe Brightex Team`;
+    ruleBody = `Hello ${greetingName(client.name, client.company)},\n\nIt's been a little while: just checking in to see how things are going and whether there's anything we can help with.\n\nBest regards,\nThe Brightex Team`;
     userPrompt = `Draft a warm, brief check-in email to an active client we haven't spoken to in a while, with no specific agenda beyond staying in touch.\n\nClient: ${client.name}\n\nWrite only the email body, sign off as "The Brightex Solutions Team".`;
   }
 

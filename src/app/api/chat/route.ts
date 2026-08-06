@@ -78,7 +78,7 @@ export async function POST(request: NextRequest) {
   // ── 0. Greeting fast path: no AI or DB needed ────────────────────────────
   if (isGreeting(message) && history.length === 0) {
     return NextResponse.json({
-      answer: "Hi there! 👋 I'm Brixo, the Brightex assistant. How can I help you today?",
+      answer: "Hello there! 👋 I'm Brixo, the Brightex assistant. How can I help you today?",
       escalate: false,
       source: "greeting",
     });

@@ -136,6 +136,24 @@ function ManualEditor({
   saving: boolean;
   onSave: (newData: Record<string, unknown>) => void;
 }) {
+  // Section-based (v2) documents keep their content in sections and blocks, not
+  // in the flat line_items / scope_items / payment_milestones fields these
+  // editors read. Rendering them here would show empty pricing on a document
+  // that is in fact fully priced, and saving would write empty legacy keys over
+  // the top of it. Refuse clearly instead of appearing to work.
+  if ((target.data as { version?: unknown }).version === 2) {
+    return (
+      <div className="p-4 text-sm text-muted-foreground">
+        <p className="font-medium text-foreground mb-1">Edited by section</p>
+        <p>
+          This document is built from sections. Edit it in the document editor, where each section can be
+          changed, reordered, hidden, or improved on its own. Pricing here would show as empty because it
+          lives in the document&apos;s investment sections rather than in a single list.
+        </p>
+      </div>
+    );
+  }
+
   if (target.docType === "proposal") return <ProposalEditor data={target.data} saving={saving} onSave={onSave} />;
   if (target.docType === "agreement") return <AgreementEditor data={target.data} saving={saving} onSave={onSave} />;
   return <SopEditor data={target.data} saving={saving} onSave={onSave} />;

@@ -3,14 +3,15 @@ import { z } from "zod";
 import { createClient, createAdminClient } from "@/lib/supabase/server";
 import { rateLimit } from "@/lib/rate-limit";
 import { logAction } from "@/lib/audit";
-import { CC_SCOPES, CC_SCOPE_ALL } from "@/lib/cc-recipients";
+import { CC_SCOPES, CC_SCOPE_ALL, contactLabel } from "@/lib/cc-recipients";
 
 export const dynamic = "force-dynamic";
 
 const ScopeEnum = z.enum([...CC_SCOPES, CC_SCOPE_ALL] as [string, ...string[]]);
 
 const PatchSchema = z.object({
-  name: z.string().min(1).max(200).trim().optional(),
+  // Blank is allowed, so a name added by mistake can be cleared again.
+  name: z.string().max(200).trim().optional(),
   email: z.string().email().max(200).trim().optional(),
   role: z.string().max(120).trim().optional(),
   cc_scopes: z.array(ScopeEnum).max(CC_SCOPES.length + 1).optional(),
@@ -56,7 +57,7 @@ export async function PATCH(
     action: "updated",
     entity_type: "client_contact",
     entity_id: data.id,
-    entity_label: `${data.name} <${data.email}>`,
+    entity_label: contactLabel(data),
     notes: `Scopes: ${data.cc_scopes?.join(", ") || "none"}`,
   });
 
@@ -94,7 +95,7 @@ export async function DELETE(
     action: "deleted",
     entity_type: "client_contact",
     entity_id: contactId,
-    entity_label: data ? `${data.name} <${data.email}>` : contactId,
+    entity_label: data ? contactLabel(data) : contactId,
   });
 
   return NextResponse.json({ success: true });

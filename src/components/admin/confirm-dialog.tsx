@@ -12,6 +12,14 @@ export interface ConfirmOptions {
   confirmLabel?: string;
   cancelLabel?: string;
   variant?: "danger" | "warning" | "default";
+  /**
+   * A notice, not a question: one button, nothing to decline.
+   *
+   * Exists so that telling someone something never has to borrow window.alert(),
+   * which does not match the app, blocks the whole tab, and cannot be styled.
+   * A yes/no dialog with a pointless Cancel is the other wrong answer.
+   */
+  noticeOnly?: boolean;
 }
 
 interface ConfirmState extends ConfirmOptions {
@@ -65,6 +73,21 @@ export function useConfirm() {
   return useContext(ConfirmContext);
 }
 
+/**
+ * Shows a message with a single acknowledge button. The replacement for
+ * window.alert() throughout the admin.
+ */
+export function useNotice() {
+  const confirm = useContext(ConfirmContext);
+  return useCallback(
+    (opts: Omit<ConfirmOptions, "noticeOnly" | "cancelLabel"> | string) => {
+      const options = typeof opts === "string" ? { message: opts } : opts;
+      return confirm({ variant: "default", confirmLabel: "OK", ...options, noticeOnly: true });
+    },
+    [confirm]
+  );
+}
+
 // ─── Dialog modal ─────────────────────────────────────────────────────────────
 
 interface ModalProps extends ConfirmOptions {
@@ -76,6 +99,7 @@ function ConfirmDialogModal({
   title,
   message,
   confirmLabel,
+  noticeOnly,
   cancelLabel,
   variant = "danger",
   onConfirm,
@@ -148,7 +172,7 @@ function ConfirmDialogModal({
 
           {/* Text */}
           <h2 id="confirm-title" className="text-[15px] font-semibold text-foreground mb-1.5 leading-snug">
-            {title ?? (isDanger ? "Are you sure?" : "Confirm action")}
+            {title ?? (noticeOnly ? "Just so you know" : isDanger ? "Are you sure?" : "Confirm action")}
           </h2>
           <p id="confirm-message" className="text-sm text-muted-foreground leading-relaxed">
             {message}
@@ -157,12 +181,14 @@ function ConfirmDialogModal({
 
         {/* Actions */}
         <div className="flex items-center justify-end gap-2 px-6 pb-5">
-          <button
-            onClick={onCancel}
-            className="px-4 py-2 text-sm font-medium rounded-lg border border-border bg-background hover:bg-muted text-foreground transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1"
-          >
-            {cancelLabel ?? "Cancel"}
-          </button>
+          {!noticeOnly && (
+            <button
+              onClick={onCancel}
+              className="px-4 py-2 text-sm font-medium rounded-lg border border-border bg-background hover:bg-muted text-foreground transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1"
+            >
+              {cancelLabel ?? "Cancel"}
+            </button>
+          )}
           <button
             ref={confirmRef}
             onClick={onConfirm}

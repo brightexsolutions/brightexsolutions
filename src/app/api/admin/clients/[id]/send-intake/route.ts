@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient, createAdminClient } from "@/lib/supabase/server";
 import { transporter, SENDERS, SITE_NAME, SITE_URL } from "@/lib/mail";
 import { rateLimit } from "@/lib/rate-limit";
+import { greetingName, businessContext } from "@/lib/greeting";
 
 export async function POST(
   request: NextRequest,
@@ -18,7 +19,7 @@ export async function POST(
 
   const { data: client, error } = await supabase
     .from("clients")
-    .select("id, name, email, intake_token")
+    .select("id, name, company, email, intake_token")
     .eq("id", id)
     .is("deleted_at", null)
     .single();
@@ -33,7 +34,8 @@ export async function POST(
     return NextResponse.json({ error: "Client has no intake token" }, { status: 400 });
   }
 
-  const firstName = client.name.split(" ")[0];
+  const firstName = greetingName(client.name, client.company);
+  const business = businessContext(client.name, client.company);
   const intakeUrl = `${SITE_URL}/intake/${client.intake_token}`;
 
   const html = `
@@ -79,7 +81,7 @@ export async function POST(
                 Hi ${firstName}, welcome to ${SITE_NAME}! 👋
               </p>
               <p style="margin:0 0 20px 0;font-size:15px;color:#475569;line-height:1.6;">
-                We're excited to work with you. Before we dive in, we'd love to get a better understanding of what you have in mind: your vision, goals, and what you're hoping to achieve.
+                We're excited to work with you. Before we dive in, we'd love to get a better understanding of what you have in mind${business ? ` for ${business}` : ""}: your vision, goals, and what you're hoping to achieve.
               </p>
               <p style="margin:0 0 28px 0;font-size:15px;color:#475569;line-height:1.6;">
                 We've put together a short requirements form that walks you through a few simple questions. There are no right or wrong answers: just share your thoughts in your own words and we'll take it from there.
@@ -134,7 +136,7 @@ export async function POST(
 </html>
 `;
 
-  const text = `Hi ${firstName},
+  const text = `Hello ${firstName},
 
 Welcome to ${SITE_NAME}!
 

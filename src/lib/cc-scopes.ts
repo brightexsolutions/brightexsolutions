@@ -77,6 +77,18 @@ export function dedupeCc(cc: (string | null | undefined)[], to?: string | string
   return out;
 }
 
+/**
+ * What to display for a CC contact.
+ *
+ * A name is optional, because plenty of the addresses worth copying are not
+ * people: accounts@, billing@, a shared ops inbox. Forcing a name onto those
+ * only produces a label someone invented on the spot. Where there is no name,
+ * the address is the identity.
+ */
+export function contactLabel(contact: { name?: string | null; email: string }): string {
+  return contact.name?.trim() || contact.email;
+}
+
 /** Renders a CC list for the communications log, so the trail shows who else received it. */
 export function describeCc(cc: string[]): string {
   if (cc.length === 0) return "";

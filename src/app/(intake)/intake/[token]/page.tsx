@@ -1,8 +1,9 @@
 import { notFound } from "next/navigation";
 import { createAdminClient } from "@/lib/supabase/server";
-import { MAX_INTAKE_EDITS } from "@/lib/intake-submission";
+import { intakeEditLock, MAX_INTAKE_EDITS } from "@/lib/intake-submission";
 import { IntakeWizard } from "./wizard";
 import { ReturningClientChoice } from "./returning-choice";
+import { IntakeLockedNotice } from "./locked-notice";
 
 export const dynamic = "force-dynamic";
 
@@ -29,7 +30,7 @@ async function getLatestIntake(clientId: string) {
   const supabase = createAdminClient();
   const { data } = await supabase
     .from("client_intakes")
-    .select("id, project_title, service_type, service_types, submitted_at, edit_token, edit_count")
+    .select("id, project_title, service_type, service_types, submitted_at, edit_token, edit_count, status, reviewed_at")
     .eq("client_id", clientId)
     .is("deleted_at", null)
     .neq("status", "archived")
@@ -62,19 +63,36 @@ export default async function IntakePage({
 
   if (latest?.edit_token) {
     const editsUsed = Number(latest.edit_count ?? 0);
+    const newRequestHref = `/intake/${token}?new=1`;
+    const summary = {
+      projectTitle: latest.project_title,
+      serviceType: latest.service_type,
+      serviceTypes: latest.service_types,
+      submittedAt: latest.submitted_at,
+    };
+
+    // Offering "update my answers" on a submission we have already read would
+    // walk them into a refusal two screens later.
+    const lock = intakeEditLock(latest);
+    if (lock.locked) {
+      return (
+        <IntakeLockedNotice
+          clientName={client.name}
+          reason={lock.reason!}
+          message={lock.message}
+          intake={{ ...summary, reviewedAt: latest.reviewed_at }}
+          newRequestHref={newRequestHref}
+        />
+      );
+    }
+
     return (
       <ReturningClientChoice
         clientName={client.name}
-        intake={{
-          projectTitle: latest.project_title,
-          serviceType: latest.service_type,
-          serviceTypes: latest.service_types,
-          submittedAt: latest.submitted_at,
-          editToken: latest.edit_token,
-        }}
+        intake={{ ...summary, editToken: latest.edit_token }}
         editsRemaining={Math.max(0, MAX_INTAKE_EDITS - editsUsed)}
         maxEdits={MAX_INTAKE_EDITS}
-        newRequestHref={`/intake/${token}?new=1`}
+        newRequestHref={newRequestHref}
       />
     );
   }

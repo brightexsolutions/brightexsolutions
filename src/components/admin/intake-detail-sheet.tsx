@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -289,8 +289,11 @@ interface Props {
   intake: IntakeDetail | null;
   clientId?: string | null;
   onClose: () => void;
-  onMarkReviewed?: (id: string) => Promise<void>;
+  onMarkReviewed?: (id: string, notifyClient: boolean) => Promise<void>;
   marking?: boolean;
+  /** Puts a reviewed intake back to "new", which reopens client editing. */
+  onReopen?: (id: string) => Promise<void>;
+  reopening?: boolean;
   onEmailClient?: () => void;
   onArchive?: (id: string) => Promise<void>;
   archiving?: boolean;
@@ -298,7 +301,199 @@ interface Props {
   onProposalReady?: (intake: IntakeDetail, doc: { id: string; title: string; data: Record<string, unknown> }) => void;
 }
 
-export function IntakeDetailSheet({ intake, clientId, onClose, onMarkReviewed, marking, onEmailClient, onArchive, archiving, onAnalysisSaved, onProposalReady }: Props) {
+/**
+ * Marking reviewed is no longer a private bookkeeping flag: it closes the
+ * client's edit window and emails them to say so. The button therefore has to
+ * state both consequences before it is pressed, and offer the quiet version for
+ * tidying up old submissions.
+ *
+ * Its own component because IntakeDetailSheet returns early when there is no
+ * intake, so state cannot be held above that line.
+ */
+function MarkReviewedAction({
+  intakeId,
+  onMarkReviewed,
+  marking,
+}: {
+  intakeId: string;
+  onMarkReviewed: (id: string, notifyClient: boolean) => Promise<void>;
+  marking?: boolean;
+}) {
+  const [notify, setNotify] = useState(true);
+
+  return (
+    <div className="space-y-2">
+      <Button
+        className="w-full gap-2"
+        onClick={() => onMarkReviewed(intakeId, notify)}
+        disabled={marking}
+        size="sm"
+      >
+        <CheckCircle size={14} />
+        {marking ? "Marking…" : "Mark as reviewed"}
+      </Button>
+      <label className="flex items-start gap-2 cursor-pointer select-none">
+        <input
+          type="checkbox"
+          checked={notify}
+          onChange={(e) => setNotify(e.target.checked)}
+          className="mt-0.5 accent-brand-gold"
+        />
+        <span className="text-[11px] text-muted-foreground leading-relaxed">
+          Email the client to say we have read it. Either way this locks their form, so leaving it
+          off means they find a closed link with no warning.
+        </span>
+      </label>
+    </div>
+  );
+}
+
+/**
+ * Sends the client their own submission back, in full.
+ *
+ * It goes automatically on submission, so this is for the cases that follow:
+ * "we never got it", the person who filled the form is not the person who
+ * signs, or a new contact has joined and needs the same picture as everyone
+ * else. The alternative is retyping a questionnaire into an email by hand.
+ *
+ * Recipients follow the client's normal CC routing rather than being typed
+ * here, so whoever is set to receive onboarding correspondence gets it without
+ * anyone remembering they exist. The extra field is for the one-off.
+ */
+function SendRecapAction({ intakeId }: { intakeId: string; submitterEmail: string }) {
+  const [sending, setSending] = useState(false);
+  const [open, setOpen] = useState(false);
+  const [options, setOptions] = useState<{ email: string; label: string; isDefault: boolean }[]>([]);
+  const [autoCc, setAutoCc] = useState<string[]>([]);
+  const [to, setTo] = useState("");
+  const [extra, setExtra] = useState("");
+  const [result, setResult] = useState<{ ok: boolean; text: string } | null>(null);
+
+  // Who this could go to, and who the CC rules would copy anyway. Loaded so the
+  // panel shows the real routing rather than making it guessable.
+  useEffect(() => {
+    if (!open) return;
+    let cancelled = false;
+    fetch(`/api/admin/intakes/${intakeId}/recap`)
+      .then((r) => r.json())
+      .then((json) => {
+        if (cancelled || !json.options) return;
+        setOptions(json.options);
+        setAutoCc(json.cc ?? []);
+        setTo((current) => current || json.options.find((o: { isDefault: boolean }) => o.isDefault)?.email || "");
+      })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, [open, intakeId]);
+
+  async function send() {
+    setSending(true);
+    setResult(null);
+    try {
+      const extraCc = extra
+        .split(/[,;\s]+/)
+        .map((e) => e.trim())
+        .filter((e) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e));
+
+      const res = await fetch(`/api/admin/intakes/${intakeId}/recap`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ extraCc, ...(to ? { to } : {}) }),
+      });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(json.error ?? "Could not send it");
+      setResult({
+        ok: true,
+        text: `Sent to ${json.to}${json.cc?.length ? `, copied to ${json.cc.join(", ")}` : ""}.`,
+      });
+      setExtra("");
+      setOpen(false);
+    } catch (err) {
+      setResult({ ok: false, text: err instanceof Error ? err.message : "Could not send it" });
+    } finally {
+      setSending(false);
+    }
+  }
+
+  return (
+    <div className="space-y-2">
+      <Button
+        className="w-full gap-2"
+        variant="outline"
+        size="sm"
+        onClick={() => (open ? void send() : setOpen(true))}
+        disabled={sending}
+      >
+        {sending ? <Loader2 size={14} className="animate-spin" /> : <ClipboardList size={14} />}
+        {sending ? "Sending…" : open ? "Send it" : "Send this summary to the client"}
+      </Button>
+
+      {open && (
+        <div className="space-y-2 rounded border border-border p-2.5 bg-muted/20">
+          <div>
+            <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground mb-1">
+              Address it to
+            </p>
+            {options.length === 0 ? (
+              <p className="text-[11px] text-muted-foreground">Loading…</p>
+            ) : (
+              options.map((o) => (
+                <label key={o.email} className="flex items-start gap-2 cursor-pointer py-0.5">
+                  <input
+                    type="radio"
+                    name="recapTo"
+                    checked={to === o.email}
+                    onChange={() => setTo(o.email)}
+                    className="mt-0.5 accent-brand-gold"
+                  />
+                  <span className="text-[11px] leading-relaxed">
+                    <span className="text-foreground">{o.label}</span>
+                    <span className="block text-muted-foreground">{o.email}</span>
+                  </span>
+                </label>
+              ))
+            )}
+          </div>
+
+          {autoCc.length > 0 && (
+            <p className="text-[10px] text-muted-foreground leading-relaxed">
+              Automatically copied: {autoCc.join(", ")}
+            </p>
+          )}
+
+          <div>
+            <input
+              type="text"
+              value={extra}
+              onChange={(e) => setExtra(e.target.value)}
+              placeholder="Copy anyone else (optional)"
+              className="w-full px-2.5 py-1.5 text-xs rounded border border-input bg-background"
+            />
+            <p className="text-[10px] text-muted-foreground mt-1 leading-relaxed">
+              Whoever filled the form is always copied when it is addressed elsewhere.
+            </p>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => { setOpen(false); setResult(null); }}
+            className="text-[11px] text-muted-foreground hover:text-foreground"
+          >
+            Cancel
+          </button>
+        </div>
+      )}
+
+      {result && (
+        <p className={cn("text-[11px] leading-relaxed", result.ok ? "text-emerald-600" : "text-destructive")}>
+          {result.text}
+        </p>
+      )}
+    </div>
+  );
+}
+
+export function IntakeDetailSheet({ intake, clientId, onClose, onMarkReviewed, marking, onReopen, reopening, onEmailClient, onArchive, archiving, onAnalysisSaved, onProposalReady }: Props) {
   if (!intake) return null;
 
   const services = serviceTypesOf(intake);
@@ -318,7 +513,9 @@ export function IntakeDetailSheet({ intake, clientId, onClose, onMarkReviewed, m
   return (
     <Sheet open={!!intake} onOpenChange={(v) => !v && onClose()}>
       <SheetContent
-        className="w-full sm:max-w-lg flex flex-col overflow-hidden p-0"
+        // Matches the client panel it opens over, so the one in front is never
+        // the narrower of the two.
+        className="w-full sm:max-w-lg lg:max-w-xl flex flex-col overflow-hidden p-0"
         side="right"
       >
         {/* Header */}
@@ -559,36 +756,52 @@ export function IntakeDetailSheet({ intake, clientId, onClose, onMarkReviewed, m
 
           {/* Reviewed info */}
           {intake.status === "reviewed" && intake.reviewed_at && (
-            <div className="flex items-center gap-2 text-xs text-emerald-600 bg-emerald-50 rounded-lg px-3 py-2">
-              <CheckCircle size={13} />
-              Reviewed on {new Date(intake.reviewed_at).toLocaleDateString("en-KE", {
-                day: "numeric", month: "short", year: "numeric",
-              })}
+            <div className="flex items-start gap-2 text-xs text-emerald-700 bg-emerald-50 dark:bg-emerald-950/20 rounded-lg px-3 py-2">
+              <CheckCircle size={13} className="mt-0.5 shrink-0" />
+              <div>
+                <p>
+                  Reviewed on {new Date(intake.reviewed_at).toLocaleDateString("en-KE", {
+                    day: "numeric", month: "short", year: "numeric",
+                  })}
+                </p>
+                <p className="text-emerald-600/80 leading-relaxed mt-0.5">
+                  The client can no longer edit this. To let them change something, set it back to
+                  new, then review it again once they are done.
+                </p>
+              </div>
             </div>
           )}
         </div>
 
         {/* Footer actions */}
-        {(onMarkReviewed || onEmailClient || onArchive) && intake.status !== "archived" && (
+        {intake.status !== "archived" && (
           <div className="flex-shrink-0 border-t border-border px-5 py-4 space-y-2">
-            <div className="flex gap-2">
-              {intake.status === "new" && onMarkReviewed && (
-                <Button
-                  className="flex-1 gap-2"
-                  onClick={() => onMarkReviewed(intake.id)}
-                  disabled={marking}
-                  size="sm"
-                >
-                  <CheckCircle size={14} />
-                  {marking ? "Marking…" : "Mark as reviewed"}
-                </Button>
-              )}
-              {onEmailClient && (
-                <Button className="flex-1 gap-2" variant="outline" onClick={onEmailClient} size="sm">
-                  <Mail size={14} /> Reply by Email
-                </Button>
-              )}
-            </div>
+            {intake.status === "new" && onMarkReviewed && (
+              <MarkReviewedAction
+                intakeId={intake.id}
+                onMarkReviewed={onMarkReviewed}
+                marking={marking}
+              />
+            )}
+            {intake.status === "reviewed" && onReopen && (
+              <Button
+                className="w-full gap-2"
+                variant="outline"
+                onClick={() => onReopen(intake.id)}
+                disabled={reopening}
+                size="sm"
+              >
+                <Pencil size={14} />
+                {reopening ? "Reopening…" : "Reopen for client edits"}
+              </Button>
+            )}
+            <SendRecapAction intakeId={intake.id} submitterEmail={intake.submitter_email} />
+
+            {onEmailClient && (
+              <Button className="w-full gap-2" variant="outline" onClick={onEmailClient} size="sm">
+                <Mail size={14} /> Reply by Email
+              </Button>
+            )}
             {onArchive && (
               <button
                 type="button"

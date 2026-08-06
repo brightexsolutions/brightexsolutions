@@ -1,11 +1,11 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
-import { Send, Loader2, X, Paperclip, Sparkles, CheckCircle2, Bold, Underline as UnderlineIcon, List } from "lucide-react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Send, Loader2, X, Paperclip, Sparkles, CheckCircle2, Bold, Underline as UnderlineIcon, List, AlertTriangle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { compressImageClientSide } from "@/lib/compress-client";
-import { CC_SCOPE_ALL, isValidEmail, type CcScope } from "@/lib/cc-scopes";
+import { CC_SCOPE_ALL, isValidEmail, contactLabel, type CcScope } from "@/lib/cc-scopes";
 
 const SENDER_OPTIONS = [
   { value: "info", label: "Info (general)" },
@@ -99,6 +99,10 @@ export function EmailComposer({ open, onClose, recipient: initialRecipient, link
   const [customEmail, setCustomEmail] = useState("");
 
   const [contacts, setContacts] = useState<ClientContactOption[]>([]);
+  // "not loaded yet" and "this client has nobody configured" produce the same
+  // empty CC box, and only one of them is safe to send on. Tracked separately
+  // so a failed lookup cannot pass for a client with no routing rules.
+  const [contactsState, setContactsState] = useState<"idle" | "loading" | "ready" | "failed">("idle");
   const [cc, setCc] = useState<string[]>([]);
   const [ccDraft, setCcDraft] = useState("");
   const [ccTouched, setCcTouched] = useState(false);
@@ -157,12 +161,31 @@ export function EmailComposer({ open, onClose, recipient: initialRecipient, link
   }, [open, initialRecipient]);
 
   // Whenever we have a client (pre-filled or picked), load their invoices/deals for AI context
+  const loadContacts = useCallback(async (clientId: string) => {
+    setContactsState("loading");
+    try {
+      const res = await fetch(`/api/admin/clients/${clientId}/contacts`);
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error ?? "Failed");
+      setContacts(json.data ?? []);
+      setContactsState("ready");
+    } catch {
+      // Swallowing this used to mean an agreement went out with nobody copied
+      // and no sign that the client's routing rules had not been consulted.
+      setContacts([]);
+      setContactsState("failed");
+    }
+  }, []);
+
   useEffect(() => {
-    if (!recipient?.clientId) { setInvoices([]); setDeals([]); setContacts([]); return; }
+    if (!recipient?.clientId) {
+      setInvoices([]); setDeals([]); setContacts([]); setContactsState("idle");
+      return;
+    }
     fetch(`/api/admin/invoices?client_id=${recipient.clientId}`).then((r) => r.json()).then((j) => setInvoices(j.data ?? [])).catch(() => {});
     fetch(`/api/admin/sales?client_id=${recipient.clientId}`).then((r) => r.json()).then((j) => setDeals(j.data ?? [])).catch(() => {});
-    fetch(`/api/admin/clients/${recipient.clientId}/contacts`).then((r) => r.json()).then((j) => setContacts(j.data ?? [])).catch(() => {});
-  }, [recipient?.clientId]);
+    loadContacts(recipient.clientId);
+  }, [recipient?.clientId, loadContacts]);
 
   /** Contacts configured to receive this kind of message. */
   const suggestedCc = useMemo(() => {
@@ -173,6 +196,19 @@ export function EmailComposer({ open, onClose, recipient: initialRecipient, link
       (c) => c.cc_scopes?.includes(scope) || c.cc_scopes?.includes(CC_SCOPE_ALL)
     );
   }, [contacts, purpose, linkDocument]);
+
+  /**
+   * Rule-matched contacts who are not on this email.
+   *
+   * The sender keeps the final say, so this warns rather than re-adding. The
+   * case it exists for is the quiet one: an agreement leaving without the
+   * director who is configured to see every agreement, because the list was
+   * emptied by hand three purposes ago and nobody noticed.
+   */
+  const missingFromCc = useMemo(
+    () => suggestedCc.filter((c) => !cc.some((e) => e.toLowerCase() === c.email.toLowerCase())),
+    [suggestedCc, cc]
+  );
 
   // Pre-fill from the client's routing rules, and follow the purpose as it
   // changes, until the sender edits the list by hand. After that the manual
@@ -523,7 +559,7 @@ export function EmailComposer({ open, onClose, recipient: initialRecipient, link
                       return (
                         <span key={email}
                           className="inline-flex items-center gap-1 pl-2 pr-1 py-0.5 rounded-full text-[11px] bg-muted text-foreground border border-border">
-                          {known ? `${known.name} <${email}>` : email}
+                          {known?.name?.trim() ? `${known.name} <${email}>` : email}
                           <button type="button" onClick={() => removeCc(email)}
                             className="text-muted-foreground hover:text-red-500 transition-colors"
                             aria-label={`Remove ${email}`}>
@@ -560,9 +596,50 @@ export function EmailComposer({ open, onClose, recipient: initialRecipient, link
                       .map((c) => (
                         <button key={c.id} type="button" onClick={() => addCc(c.email)}
                           className="px-2 py-0.5 rounded-full text-[10px] border border-dashed border-border text-muted-foreground hover:text-foreground hover:border-foreground/40 transition-colors">
-                          + {c.name}{c.role ? ` (${c.role})` : ""}
+                          + {contactLabel(c)}{c.role ? ` (${c.role})` : ""}
                         </button>
                       ))}
+                  </div>
+                )}
+
+                {contactsState === "loading" && (
+                  <p className="text-[10px] text-muted-foreground">Checking who should be copied...</p>
+                )}
+
+                {/* Somebody the rules say should see this is not on it. Stated,
+                    not corrected: leaving them off is a legitimate choice. */}
+                {missingFromCc.length > 0 && (
+                  <div className="flex items-start gap-1.5 rounded-sm border border-amber-300/60 bg-amber-50 dark:bg-amber-950/20 px-2.5 py-2">
+                    <AlertTriangle size={12} className="text-amber-600 mt-0.5 shrink-0" />
+                    <div className="min-w-0 space-y-1">
+                      <p className="text-[11px] text-amber-800 dark:text-amber-500 leading-relaxed">
+                        Set to be copied on {linkDocument ? "proposals and agreements" : "this kind of email"},
+                        but not on this one: {missingFromCc.map((c) => contactLabel(c)).join(", ")}.
+                      </p>
+                      <button type="button"
+                        onClick={() => { setCcTouched(true); setCc((prev) => [...prev, ...missingFromCc.map((c) => c.email)]); }}
+                        className="text-[10px] font-semibold text-amber-700 dark:text-amber-500 underline hover:no-underline">
+                        Add {missingFromCc.length === 1 ? "them" : "all of them"}
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {/* An empty CC box means one of two very different things. */}
+                {contactsState === "failed" && (
+                  <div className="flex items-start gap-1.5 rounded-sm border border-red-300/60 bg-red-50 dark:bg-red-950/20 px-2.5 py-2">
+                    <AlertTriangle size={12} className="text-red-600 mt-0.5 shrink-0" />
+                    <div className="min-w-0 space-y-1">
+                      <p className="text-[11px] text-red-700 dark:text-red-400 leading-relaxed">
+                        Could not load this client&apos;s copy list, so anyone configured to receive
+                        this will be left off unless you add them by hand.
+                      </p>
+                      <button type="button"
+                        onClick={() => recipient?.clientId && loadContacts(recipient.clientId)}
+                        className="text-[10px] font-semibold text-red-700 dark:text-red-400 underline hover:no-underline">
+                        Try again
+                      </button>
+                    </div>
                   </div>
                 )}
               </div>

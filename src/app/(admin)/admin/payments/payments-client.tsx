@@ -12,9 +12,10 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-import { useConfirm } from "@/components/admin/confirm-dialog";
+import { useConfirm, useNotice } from "@/components/admin/confirm-dialog";
 import { EmailComposer, type EmailComposerRecipient } from "@/components/admin/email-composer";
 import { DocumentViewerSheet, type DocumentViewerTarget } from "@/components/admin/document-viewer-sheet";
+import { RecipientHint, useClientContacts } from "@/components/admin/recipient-hint";
 
 const methods = ["mpesa", "bank", "paypal", "cash"] as const;
 const methodLabels: Record<string, string> = {
@@ -77,6 +78,9 @@ type InvoiceOption = {
 
 export function PaymentsPageClient() {
   const confirm = useConfirm();
+  const notice = useNotice();
+  // Fetched once for the page so each row can show who its receipt will reach.
+  const { contacts: ccContacts, state: ccState } = useClientContacts();
   const [open, setOpen] = useState(false);
   const [editTarget, setEditTarget] = useState<Payment | null>(null);
   const [form, setForm] = useState(defaultForm);
@@ -237,7 +241,13 @@ export function PaymentsPageClient() {
 
   function resendPaymentDoc(payment: Payment, doc: GeneratedDoc) {
     const email = payment.invoices?.clients?.email;
-    if (!email) { alert("This client has no email on file."); return; }
+    if (!email) {
+      void notice({
+        title: "No email on file",
+        message: "Add an email address to this client record, then send the receipt from here.",
+      });
+      return;
+    }
     setEmailDocTarget({ id: doc.id, title: doc.title });
     setEmailDocRecipient({ clientId: payment.invoices?.client_id ?? undefined, name: payment.invoices?.clients?.name ?? "Client", email });
     setEmailDocOpen(true);
@@ -420,15 +430,24 @@ export function PaymentsPageClient() {
                       View
                     </button>
                     {hasClient && (
-                      <button
-                        onClick={(e) => { e.stopPropagation(); sendReceipt(p); }}
-                        disabled={busy}
-                        className="flex items-center gap-1 px-2 py-1 rounded-md text-[11px] font-medium bg-emerald-400/10 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-400/20 transition-colors disabled:opacity-50"
-                        title={p.confirmation_sent ? "Resend receipt" : "Send receipt"}
-                      >
-                        {busy ? <Loader2 size={10} className="animate-spin" /> : <Send size={10} />}
-                        {p.confirmation_sent ? "Resend" : "Send"}
-                      </button>
+                      <>
+                        <button
+                          onClick={(e) => { e.stopPropagation(); sendReceipt(p); }}
+                          disabled={busy}
+                          className="flex items-center gap-1 px-2 py-1 rounded-md text-[11px] font-medium bg-emerald-400/10 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-400/20 transition-colors disabled:opacity-50"
+                          title={p.confirmation_sent ? "Resend receipt" : "Send receipt"}
+                        >
+                          {busy ? <Loader2 size={10} className="animate-spin" /> : <Send size={10} />}
+                          {p.confirmation_sent ? "Resend" : "Send"}
+                        </button>
+                        <RecipientHint
+                          contacts={ccContacts}
+                          state={ccState}
+                          clientId={p.invoices?.client_id}
+                          scope="payments"
+                          to={p.invoices?.clients?.email}
+                        />
+                      </>
                     )}
                   </div>
                 );

@@ -4,10 +4,17 @@ import { createClient, createAdminClient } from "@/lib/supabase/server";
 import { rateLimit } from "@/lib/rate-limit";
 import { logAction } from "@/lib/audit";
 
+// DB-backed GET handler: without this Next freezes the response at build
+// time and the route serves stale data forever.
+export const dynamic = "force-dynamic";
+
 type Params = { params: Promise<{ id: string }> };
 
 const PatchSchema = z.object({
-  status: z.enum(["draft", "sent", "final"]).optional(),
+  // "accepted": a proposal the client has accepted but which is not yet a
+  // signed contract. "final" stays what it has always meant, a signed
+  // agreement, so the two stages are not conflated.
+  status: z.enum(["draft", "sent", "accepted", "final"]).optional(),
   data: z.record(z.string(), z.unknown()).optional(),
   title: z.string().max(200).trim().optional(),
   gated: z.boolean().optional(),
@@ -52,6 +59,14 @@ export async function PATCH(request: NextRequest, { params }: Params) {
   const supabase = createAdminClient();
   const updates: Record<string, unknown> = { ...result.data, updated_at: new Date().toISOString() };
   if (result.data.status === "sent") updates.sent_at = new Date().toISOString();
+
+  // `gated` and `gate_mode` must move together. This route predates gate_mode
+  // and set `gated` alone, so the two drifted: a document could read gated=true
+  // with gate_mode='off', which is not a state anything knows how to interpret.
+  // Toggling the simple flag here means the manual gate, so say so explicitly.
+  if (result.data.gated !== undefined) {
+    updates.gate_mode = result.data.gated ? "manual" : "off";
+  }
 
   const { data, error } = await supabase
     .from("generated_documents")

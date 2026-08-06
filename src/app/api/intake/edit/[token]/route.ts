@@ -15,7 +15,7 @@ import { rateLimit } from "@/lib/rate-limit";
 import { sendAdminPush } from "@/lib/push";
 import {
   IntakeSubmissionSchema, buildIntakeRow, stripV2Columns,
-  intakeRowToFormState, diffIntake, snapshotOf, MAX_INTAKE_EDITS,
+  intakeRowToFormState, diffIntake, snapshotOf, intakeEditLock, MAX_INTAKE_EDITS,
 } from "@/lib/intake-submission";
 import { SERVICE_LABELS } from "@/lib/intake-schema";
 
@@ -47,12 +47,16 @@ export async function GET(request: NextRequest, { params }: Params) {
   if (!intake) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
   const editCount = Number(intake.edit_count ?? 0);
+  const lock = intakeEditLock(intake);
 
   return NextResponse.json({
     state: intakeRowToFormState(intake),
     editsUsed: editCount,
-    editsRemaining: Math.max(0, MAX_INTAKE_EDITS - editCount),
+    editsRemaining: lock.locked ? 0 : Math.max(0, MAX_INTAKE_EDITS - editCount),
     maxEdits: MAX_INTAKE_EDITS,
+    locked: lock.locked,
+    lockReason: lock.reason,
+    lockMessage: lock.message,
     submittedAt: intake.submitted_at,
     lastEditedAt: intake.last_edited_at,
   });
@@ -71,12 +75,14 @@ export async function PUT(request: NextRequest, { params }: Params) {
   if (!intake) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
   const editCount = Number(intake.edit_count ?? 0);
-  if (editCount >= MAX_INTAKE_EDITS) {
+
+  // The only thing standing between a reviewed intake and a client still
+  // holding the link is this check. The browser is told the same thing, but a
+  // page loaded before we marked it reviewed would otherwise still submit.
+  const lock = intakeEditLock(intake);
+  if (lock.locked) {
     return NextResponse.json(
-      {
-        error: `You have already updated this submission ${MAX_INTAKE_EDITS} times, which is the limit. Reply to our email and we will make any further changes for you.`,
-        editsRemaining: 0,
-      },
+      { error: lock.message, locked: true, lockReason: lock.reason, editsRemaining: 0 },
       { status: 409 }
     );
   }
@@ -114,7 +120,6 @@ export async function PUT(request: NextRequest, { params }: Params) {
   }
 
   const now = new Date().toISOString();
-  const wasReviewed = intake.status === "reviewed";
 
   const revisions = Array.isArray(intake.revisions) ? intake.revisions : [];
   const update: Record<string, unknown> = {
@@ -127,7 +132,11 @@ export async function PUT(request: NextRequest, { params }: Params) {
       ...revisions,
       { edited_at: now, changed_fields: changed.map((c) => c.field), snapshot: snapshotOf(intake) },
     ],
-    edited_after_review: intake.edited_after_review || wasReviewed,
+    // Keyed on reviewed_at rather than current status, because the lock means
+    // the only way to reach this line on a read intake is that we deliberately
+    // set it back to "new" to let the client change something. That is exactly
+    // the case worth flagging: we have already read it, and possibly quoted it.
+    edited_after_review: intake.edited_after_review || !!intake.reviewed_at,
   };
 
   let { error } = await supabase
@@ -153,9 +162,11 @@ export async function PUT(request: NextRequest, { params }: Params) {
   const serviceLabel = SERVICE_LABELS[result.data.service_type] ?? result.data.service_type;
   const changedLabels = changed.map((c) => c.label).join(", ");
 
-  // An edit arriving after the intake was reviewed is the case that actually
-  // needs attention, because a quote may already have been built from the
-  // previous version. Say so explicitly rather than sending a generic ping.
+  // An edit on a previously-read intake is the case that actually needs
+  // attention, because a quote may already have been built from the previous
+  // version. Say so explicitly rather than sending a generic ping.
+  const wasReviewed = !!intake.reviewed_at;
+
   sendAdminPush({
     title: wasReviewed ? "Intake changed after review" : "Client updated their intake",
     body: `${result.data.submitter_name} (${serviceLabel}) changed: ${changedLabels}`,

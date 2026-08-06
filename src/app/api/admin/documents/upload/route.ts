@@ -110,6 +110,7 @@ export async function POST(request: NextRequest) {
     raw_html: stripActiveContent(data.html),
     raw_html_gated: data.gatedHtml ? stripActiveContent(data.gatedHtml) : null,
     gated: data.gated,
+    gate_mode: data.gated ? "manual" : "off",
     status: "draft",
     source: "upload",
     original_filename: data.originalFilename ?? null,

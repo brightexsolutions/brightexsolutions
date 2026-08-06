@@ -7,7 +7,15 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "lint:copy": "node scripts/check-em-dashes.mjs"
+    "lint:copy": "node scripts/check-em-dashes.mjs",
+    "check:docs": "node scripts/run-ts.mjs scripts/checks/validate.ts && node scripts/run-ts.mjs scripts/checks/render.ts && node scripts/run-ts.mjs scripts/checks/flow.ts && node scripts/run-ts.mjs scripts/checks/editor.ts && node scripts/run-ts.mjs scripts/checks/wiring.ts",
+    "seed:demo-proposal": "node scripts/run-ts.mjs scripts/seed-demo-proposal.ts --env",
+    "simulate:flow": "node scripts/run-ts.mjs scripts/simulate-flow.ts --env",
+    "simulate:client": "node scripts/run-ts.mjs scripts/simulate-client.ts --env",
+    "chanf:prepare": "node scripts/run-ts.mjs scripts/prepare-chanf-proposal.ts --env",
+    "docs:sync": "node scripts/run-ts.mjs scripts/sync-documents.ts --env",
+    "simulate:agreement": "node scripts/run-ts.mjs scripts/simulate-agreement.ts --env",
+    "demo:reset": "node scripts/run-ts.mjs scripts/reset-demo.ts --env"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.102.0",
@@ -60,6 +68,7 @@
     "@types/react-dom": "^19",
     "@types/sharp": "^0.31.1",
     "@types/web-push": "^3.6.4",
+    "esbuild": "^0.28.1",
     "eslint": "^9",
     "eslint-config-next": "16.2.6",
     "tailwindcss": "^4",

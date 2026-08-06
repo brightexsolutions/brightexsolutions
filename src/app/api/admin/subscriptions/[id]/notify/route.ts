@@ -13,6 +13,7 @@ import {
   emailSignoff,
 } from "@/lib/email-templates";
 import { resolveCc } from "@/lib/cc-recipients";
+import { greetingName } from "@/lib/greeting";
 
 const NotifySchema = z.object({
   channel: z.enum(["email", "whatsapp"]),
@@ -36,13 +37,13 @@ export async function POST(
 
   const { data: sub, error } = await supabase
     .from("subscriptions")
-    .select("*, clients(id, name, email, phone)")
+    .select("*, clients(id, name, company, email, phone)")
     .eq("id", id)
     .single();
 
   if (error || !sub) return NextResponse.json({ error: "Subscription not found" }, { status: 404 });
 
-  const client = sub.clients as { id: string; name?: string | null; email?: string | null; phone?: string | null } | null;
+  const client = sub.clients as { id: string; name?: string | null; company?: string | null; email?: string | null; phone?: string | null } | null;
 
   if (!client) return NextResponse.json({ error: "No client linked to this subscription" }, { status: 422 });
 
@@ -54,7 +55,7 @@ export async function POST(
   if (result.data.channel === "email") {
     if (!client.email) return NextResponse.json({ error: "Client has no email address on file" }, { status: 422 });
 
-    const firstName = (client.name ?? "").split(" ")[0] || "there";
+    const firstName = greetingName(client.name, client.company);
     const renewalDateLabel = new Date(sub.next_renewal_date).toLocaleDateString("en-KE", {
       day: "2-digit", month: "long", year: "numeric",
     });
@@ -71,7 +72,7 @@ export async function POST(
         : `${sub.name} renews in ${daysUntil} day${daysUntil !== 1 ? "s" : ""}`,
       body:
         emailAlert(alertText, isOverdue ? "error" : daysUntil <= 3 ? "warning" : "info") +
-        emailParagraph(`Hi ${firstName},`) +
+        emailParagraph(`Hello ${firstName},`) +
         emailInfoTable(
           emailRow("Subscription", sub.name) +
           (sub.provider ? emailRow("Provider", sub.provider) : "") +
@@ -121,8 +122,8 @@ export async function POST(
   });
 
   const message = isOverdue
-    ? `Hi ${client.name ?? "there"}, this is a reminder that the *${sub.name}* subscription renewal date (${renewalDateLabel}) has already passed. Please let us know how you'd like to proceed.: ${SITE_NAME}`
-    : `Hi ${client.name ?? "there"}, just a heads-up that *${sub.name}* is due for renewal on ${renewalDateLabel} (${daysUntil} day${daysUntil !== 1 ? "s" : ""}). Please let us know if you'd like to renew.: ${SITE_NAME}`;
+    ? `Hello ${client.name ?? "there"}, this is a reminder that the *${sub.name}* subscription renewal date (${renewalDateLabel}) has already passed. Please let us know how you'd like to proceed.: ${SITE_NAME}`
+    : `Hello ${client.name ?? "there"}, just a heads-up that *${sub.name}* is due for renewal on ${renewalDateLabel} (${daysUntil} day${daysUntil !== 1 ? "s" : ""}). Please let us know if you'd like to renew.: ${SITE_NAME}`;
 
   const waLink = `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
 

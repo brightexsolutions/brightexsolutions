@@ -13,6 +13,7 @@ import {
   emailSignoff,
 } from "@/lib/email-templates";
 import { resolveCc } from "@/lib/cc-recipients";
+import { greetingName } from "@/lib/greeting";
 
 export async function POST(
   request: NextRequest,
@@ -29,20 +30,20 @@ export async function POST(
 
   const { data: payment, error } = await supabase
     .from("payments")
-    .select("*, invoices(id, invoice_number, total, client_id, clients(name, email))")
+    .select("*, invoices(id, invoice_number, total, client_id, clients(name, company, email))")
     .eq("id", id)
     .single();
 
   if (error || !payment) return NextResponse.json({ error: "Payment not found" }, { status: 404 });
 
-  const invoice = payment.invoices as { id: string; invoice_number?: string | null; total?: number | null; client_id?: string | null; clients?: { name?: string | null; email?: string | null } | null } | null;
-  const client = invoice?.clients as { name?: string | null; email?: string | null } | null;
+  const invoice = payment.invoices as { id: string; invoice_number?: string | null; total?: number | null; client_id?: string | null; clients?: { name?: string | null; company?: string | null; email?: string | null } | null } | null;
+  const client = invoice?.clients as { name?: string | null; company?: string | null; email?: string | null } | null;
 
   if (!client?.email) {
     return NextResponse.json({ error: "No client email on file for this payment" }, { status: 422 });
   }
 
-  const firstName = (client.name ?? "").split(" ")[0] || "there";
+  const firstName = greetingName(client.name, client.company);
   const receiptDate = payment.date
     ? new Date(payment.date).toLocaleDateString("en-KE", { day: "2-digit", month: "long", year: "numeric" })
     : new Date(payment.created_at).toLocaleDateString("en-KE", { day: "2-digit", month: "long", year: "numeric" });

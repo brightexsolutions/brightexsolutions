@@ -3,6 +3,10 @@ import { createClient, createAdminClient } from "@/lib/supabase/server";
 import { rateLimit } from "@/lib/rate-limit";
 import { compressFile, mimeToExt } from "@/lib/compress";
 
+// DB-backed GET handler: without this Next freezes the response at build
+// time and the route serves stale data forever.
+export const dynamic = "force-dynamic";
+
 const ALLOWED_TYPES = [
   "application/pdf",
   "application/msword",

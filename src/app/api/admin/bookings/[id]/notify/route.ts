@@ -61,7 +61,7 @@ export async function POST(
   const purposeLabel = purposeLabels[booking.purpose] ?? "Meeting";
 
   // ── WhatsApp link (always built; returned for whatsapp channel) ─────────────
-  const waMessage = `Hi ${booking.booker_name}, your ${purposeLabel} with ${SITE_NAME} on ${formattedDate} at ${formattedTime} has been confirmed.${booking.meeting_link ? ` Join here: ${booking.meeting_link}` : ""} Looking forward to speaking with you!`;
+  const waMessage = `Hello ${booking.booker_name}, your ${purposeLabel} with ${SITE_NAME} on ${formattedDate} at ${formattedTime} has been confirmed.${booking.meeting_link ? ` Join here: ${booking.meeting_link}` : ""} Looking forward to speaking with you!`;
   const waLink = booking.booker_phone
     ? `https://wa.me/${booking.booker_phone.replace(/\D/g, "")}?text=${encodeURIComponent(waMessage)}`
     : `https://wa.me/${BUSINESS_WHATSAPP}?text=${encodeURIComponent(waMessage)}`;
@@ -97,7 +97,7 @@ export async function POST(
     preheader: `Your ${purposeLabel} with ${SITE_NAME} on ${formattedDate} is confirmed`,
     body:
       emailAlert("Your booking has been confirmed.", "success") +
-      emailParagraph(`Hi <strong>${booking.booker_name}</strong>, here are your confirmed booking details:`) +
+      emailParagraph(`Hello <strong>${booking.booker_name}</strong>, here are your confirmed booking details:`) +
       emailInfoTable(
         emailRow("Type", purposeLabel) +
         emailRow("Date", formattedDate) +

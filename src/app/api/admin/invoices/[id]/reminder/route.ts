@@ -15,6 +15,7 @@ import {
 } from "@/lib/email-templates";
 import { generateInvoicePdf, type InvoicePaymentSettings } from "@/lib/invoice-pdf-helper";
 import { resolveCc } from "@/lib/cc-recipients";
+import { greetingName } from "@/lib/greeting";
 
 type PaymentSettings = Record<string, string>;
 
@@ -81,7 +82,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   const { id } = await params;
 
   const [{ data: invoice, error }, { data: settingsRows }, { data: payments }] = await Promise.all([
-    supabase.from("invoices").select("*, clients(name, email), projects(name)").eq("id", id).single(),
+    supabase.from("invoices").select("*, clients(name, company, email), projects(name)").eq("id", id).single(),
     supabase.from("settings").select("key, value").in("key", [
       "invoice_mpesa_number", "invoice_mpesa_name",
       "invoice_till_number", "invoice_till_name",
@@ -99,12 +100,12 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     (settingsRows ?? []).map((r: { key: string; value: string }) => [r.key, r.value])
   );
 
-  const client = invoice.clients as { name: string; email: string };
+  const client = invoice.clients as { name: string; company?: string | null; email: string };
   const daysOverdue = invoice.due_date
     ? Math.floor((Date.now() - new Date(invoice.due_date).getTime()) / 86400000)
     : 0;
 
-  const firstName = client.name.split(" ")[0];
+  const firstName = greetingName(client.name, client.company);
   const dueDateLabel = invoice.due_date
     ? new Date(invoice.due_date).toLocaleDateString("en-KE", { day: "2-digit", month: "long", year: "numeric" })
     : "-";
