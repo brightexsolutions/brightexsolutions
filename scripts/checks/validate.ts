@@ -72,11 +72,11 @@ allHidden.sections.forEach((s: { hidden: boolean }) => { s.hidden = true; });
 t("all-sections-hidden REJECTED", !parseBlockDocument(allHidden).ok);
 
 const emptyList = JSON.parse(JSON.stringify(CHANF_PROPOSAL));
-(blockOfKind(sectionById(emptyList, "scope"), "phases") as { phases: unknown[] }).phases = [];
+(blockOfKind(sectionById(emptyList, "scope"), "phases") as unknown as { phases: unknown[] }).phases = [];
 t("empty phases list REJECTED", !parseBlockDocument(emptyList).ok);
 
 const blankAmount = JSON.parse(JSON.stringify(CHANF_PROPOSAL));
-(blockOfKind(sectionById(blankAmount, "investment"), "phased_investment_table") as { rows: { amount: string }[] }).rows[0].amount = "";
+(blockOfKind(sectionById(blankAmount, "investment"), "phased_investment_table") as unknown as { rows: { amount: string }[] }).rows[0].amount = "";
 t("blank amount REJECTED", !parseBlockDocument(blankAmount).ok);
 
 const badVersion = JSON.parse(JSON.stringify(CHANF_PROPOSAL));
