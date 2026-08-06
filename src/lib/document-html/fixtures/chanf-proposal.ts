@@ -30,7 +30,7 @@ export const CHANF_PROPOSAL: BlockDocument = {
     created_at: "2026-08-04",
     client: { name: "CHANF Healthcare Technical Training Institute", company: "CHANF Healthcare Technical Training Institute" },
     badges: [
-      { label: "Investment", value: "KES 135,000 - 210,000" },
+      { label: "Investment", value: "KES 100,000 - 120,000" },
       { label: "Timeline", value: "6 to 8 weeks" },
       { label: "Delivery phases", value: "3" },
     ],
@@ -55,7 +55,7 @@ export const CHANF_PROPOSAL: BlockDocument = {
           id: "exec-kpi",
           kind: "kpi_row",
           items: [
-            { value: "KES 135K - 210K", label: "Total investment" },
+            { value: "KES 100K - 120K", label: "Total investment" },
             { value: "6 to 8 weeks", label: "Delivery timeline" },
             { value: "3", label: "Delivery phases" },
             { value: "60 / 40", label: "Payment split" },
@@ -152,20 +152,23 @@ export const CHANF_PROPOSAL: BlockDocument = {
               name: "Phase 2: Core Website Design & Build",
               duration: "Weeks 2 to 5",
               items: [
-                "Mobile-first design across Home, About, individual Course pages, Admissions, Gallery, Testimonials and Graduate Stories, Blog, FAQ, Contact",
-                "Online application form, replacing the current fully manual process",
+                "Mobile-first design and build of nine pages: Home, About, Courses (one template serving all courses), Admissions, Gallery, Graduate Stories, Blog, FAQ and Contact",
+                "Online application form, replacing the current fully manual process, with submissions delivered to a nominated CHANF inbox",
+                "Website chat assistant that answers common questions (fees, intake dates, entry requirements, location) from a set of answers CHANF approves, and hands over to WhatsApp for anything it cannot answer",
                 "WhatsApp Admissions button and enquiry funnel present sitewide",
-                "Trust-building content: accreditation badges, graduation proof, testimonials, current photography replacing outdated imagery",
+                "Trust-building content: accreditation badges, graduation proof, testimonials, and the updated photography CHANF supplies",
                 "Google Maps embed, social feed embeds, email newsletter signup",
+                "Two rounds of revisions on the design, within the agreed scope",
               ],
             },
             {
-              name: "Phase 3: Analytics, SEO & Launch",
+              name: "Phase 3: Analytics, SEO Setup & Launch",
               duration: "Weeks 6 to 8",
               items: [
                 "Google Analytics 4 and Search Console setup to track engagement, page behaviour, and conversions",
-                'On-page SEO across all course pages, targeting searches such as "caregiving courses Kitengela" and "healthcare courses Kenya"',
-                "Cross-device testing, client review, revisions",
+                'One-time on-page SEO setup across every page built: page titles, meta descriptions, headings, image alt text, internal linking and a sitemap, targeting searches such as "caregiving courses Kitengela" and "healthcare courses Kenya"',
+                "Google Business Profile setup or claim, so the institute appears on Maps and in local search",
+                "Cross-device testing, client review, and one round of launch corrections",
                 "Domain and DNS cutover, and go-live",
               ],
             },
@@ -247,10 +250,11 @@ export const CHANF_PROPOSAL: BlockDocument = {
             },
             {
               icon: "3",
-              title: "WhatsApp auto-responder",
+              title: "WhatsApp automation",
               points: [
-                "Answers common questions (fees, intake dates, requirements) instantly, before a human is needed",
+                "Extends the website chat assistant, which is included in this proposal, onto WhatsApp where most enquiries actually arrive",
                 "Pre-qualifies enquiries so staff spend time on serious applicants first",
+                "Requires a WhatsApp Business API account, which carries its own monthly cost",
               ],
             },
             {
@@ -288,10 +292,10 @@ export const CHANF_PROPOSAL: BlockDocument = {
           kind: "phased_investment_table",
           rows: [
             { phase: "Phase 1", desc: "Site recovery, content audit and discovery", amount: "15,000 - 20,000" },
-            { phase: "Phase 2", desc: "Core website design and build", amount: "100,000 - 150,000" },
-            { phase: "Phase 3", desc: "Analytics, SEO foundation and launch", amount: "20,000 - 40,000" },
+            { phase: "Phase 2", desc: "Nine-page mobile-first build, online application form and website chat assistant", amount: "60,000 - 70,000" },
+            { phase: "Phase 3", desc: "Analytics, one-time SEO setup, Google Business Profile and launch", amount: "25,000 - 30,000" },
           ],
-          total: { label: "Total investment range", amount: "135,000 - 210,000" },
+          total: { label: "Total investment range", amount: "100,000 - 120,000" },
         },
         {
           id: "inv-terms",
@@ -321,9 +325,14 @@ export const CHANF_PROPOSAL: BlockDocument = {
                 "Not offered in-house by Brightex Solutions. This includes day-to-day posting, paid boosting strategy, and campaign management across TikTok, Instagram and Facebook. Brightex Solutions can recommend a trusted independent social media manager or agency to take this on.",
             },
             {
+              label: "Ongoing SEO and content marketing",
+              detail:
+                "Phase 3 includes a one-time SEO setup: the pages built are correctly titled, described, structured and submitted. Ranking improves over months and is driven by publishing new content and earning links, which is continuing work. That is available from the Growth retainer tier, not as part of this build.",
+            },
+            {
               label: "LinkedIn and multi-platform content strategy",
               detail:
-                "Ongoing thought-leadership and content strategy across platforms beyond the website's own blog is outside this scope. The website's blog and SEO content are included in Phase 2 and 3.",
+                "Ongoing thought-leadership and content strategy across platforms beyond the website's own blog is outside this scope.",
             },
             {
               label: "Graduate testimonial video production",
@@ -376,7 +385,7 @@ export const CHANF_PROPOSAL: BlockDocument = {
             ["Course page engagement", "Page views, time on page, scroll behaviour", "Immediate"],
             ["WhatsApp and Apply Now clicks", "Click tracking on CTA buttons", "Immediate"],
             ["Online applications submitted", "Application form submissions", "Immediate"],
-            ["Search ranking for target keywords", "Search Console position tracking", "Meaningful movement in 3 to 6 months"],
+            ["Search ranking for target keywords", "Search Console position tracking", "Moves over 3 to 6 months, and only with new content"],
             ["Enrolments per intake", "Cross-referenced with CHANF's admissions records", "Each intake cycle"],
           ],
         },

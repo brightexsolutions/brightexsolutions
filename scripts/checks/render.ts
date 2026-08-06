@@ -1,5 +1,5 @@
 import {
-  renderBlockDocument, needsFigureLock, documentTotal, fmtMoney,
+  renderBlockDocument, needsFigureLock, documentTotal, fmtMoney, rangedAmounts,
   DEFAULT_PAYMENT_SCHEDULE, scheduleOf,
 } from "@/lib/document-html/blocks";
 import { proposalAcceptBox, proposalAcceptedBox, describeSchedule } from "@/lib/document-html/accept";
@@ -121,8 +121,19 @@ check("ungated has no gate wrapper", !/class="gate-wrap"/.test(states["proposal,
 // ── 8. Money and totals ───────────────────────────────────────────────────
 console.log("\n8. Money");
 const total = documentTotal(doc)!;
-check("total is the ranged project fee", fmtMoney(total) === "135,000 - 210,000", fmtMoney(total));
-check("indicative retainers excluded from total", total.max === 210000, String(total.max));
+// Asserted as properties, not figures. The fixture is a live proposal whose
+// pricing changes; what must stay true is that the total is the sum of the
+// priced phases and that nothing marked indicative leaks into it.
+const priced = rangedAmounts(doc);
+const phaseMin = priced.reduce((n, r) => n + r.amount.min, 0);
+const phaseMax = priced.reduce((n, r) => n + (r.amount.max ?? r.amount.min), 0);
+check("total equals the sum of the priced phases",
+  total.min === phaseMin && total.max === phaseMax,
+  `${fmtMoney(total)} vs ${phaseMin}-${phaseMax}`);
+check("indicative sections contribute nothing",
+  !JSON.stringify(doc.sections.filter((s) => s.indicative)).includes(String(total.max)),
+  "a retainer or enhancement figure reached the project total");
+check("the quoted total is a range at proposal stage", total.max !== undefined && total.max > total.min);
 check("figure lock required", needsFigureLock(doc));
 
 // ── 9. TOC and numbering derived ──────────────────────────────────────────
