@@ -249,7 +249,13 @@ export const CHANF_PROPOSAL: BlockDocument = {
           kind: "note",
           heading: "Domain and hosting",
           text:
-            "Brightex Solutions sets up the domain and hosting as part of Phase 1. The running costs stay with CHANF and are paid directly to the provider, not through us: hosting of roughly KES 12,000 to 18,000 a year, and domain renewal of roughly KES 2,000 to 3,500 a year. Both are annual, both fall due on the anniversary of setup, and we will put those dates in writing at handover with a reminder ahead of each one. This is the bill that took the current site offline, so it is worth having in the calendar rather than in an inbox.",
+            "Brightex Solutions sets up the domain and hosting as part of Phase 1. These are running costs, separate from the project fee, and they recur every year: domain renewal of roughly KES 1,500 to 2,500, and hosting of roughly KES 5,000 to 9,000. Both fall due on the anniversary of setup, and there are two ways to handle them.",
+          items: [
+            "CHANF pays the providers directly. We set the accounts up in CHANF's name, hand over the logins at launch, and put the renewal dates in writing.",
+            "Or Brightex manages them for CHANF. We hold the accounts, keep everything renewed on time, and invoice CHANF once a year, one month before renewal falls due, so nothing is ever paid late or in a rush.",
+            "The domain is registered in CHANF's name either way. It is CHANF's asset, not ours, and stays that way whatever happens between us. Managing it on your behalf is a convenience, not a hold on anything.",
+            "A lapsed renewal is what took the current site offline. Whichever route CHANF chooses, the dates go in writing at handover and we send a reminder before each one.",
+          ],
         },
         {
           id: "inv-out",
