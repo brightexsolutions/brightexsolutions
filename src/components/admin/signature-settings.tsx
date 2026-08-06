@@ -20,7 +20,16 @@ import { Label } from "@/components/ui/label";
 import { useConfirm } from "@/components/admin/confirm-dialog";
 import { cn } from "@/lib/utils";
 
+import type { SignatureInputMethod } from "@/lib/signature-image";
+
+/**
+ * What the two tabs are called in the UI. Deliberately not the stored
+ * vocabulary: "Draw it" reads better on a button than "Drawn". toMethod()
+ * is the single place the two are reconciled.
+ */
 type Mode = "draw" | "upload";
+
+const toMethod = (mode: Mode): SignatureInputMethod => (mode === "draw" ? "drawn" : "upload");
 
 interface SignatureState {
   name: string;
@@ -178,7 +187,7 @@ export function SignatureSettings() {
         body: JSON.stringify({
           name: name.trim() || undefined,
           title: title.trim(),
-          ...(pending ? { image: pending, method: pendingMethod } : {}),
+          ...(pending ? { image: pending, method: toMethod(pendingMethod) } : {}),
         }),
       });
       const json = await res.json().catch(() => ({}));

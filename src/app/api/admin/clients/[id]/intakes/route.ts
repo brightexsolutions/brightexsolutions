@@ -9,6 +9,13 @@ import { sendIntakeReviewedNotice } from "@/lib/intake-mail";
 // time and the route serves stale data forever.
 export const dynamic = "force-dynamic";
 
+/** Names the offending field. A bare "Invalid input" sends whoever hits it
+ * reading source to work out which one was wrong. */
+function invalid(error: z.ZodError): NextResponse {
+  const problems = error.issues.map((i) => `${i.path.join(".") || "request"}: ${i.message}`);
+  return NextResponse.json({ error: problems.join("; "), problems }, { status: 400 });
+}
+
 const PatchSchema = z.object({
   status: z.enum(["new", "reviewed", "archived"]).optional(),
   /** Marking reviewed closes the client's edit window, so it tells them by
@@ -68,9 +75,7 @@ export async function PATCH(
   }
 
   const result = PatchSchema.safeParse(body);
-  if (!result.success) {
-    return NextResponse.json({ error: "Invalid input" }, { status: 400 });
-  }
+  if (!result.success) return invalid(result.error);
 
   const supabase = createAdminClient();
   const { status, notifyClient = true } = result.data;

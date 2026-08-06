@@ -20,6 +20,25 @@
  */
 import sharp from "sharp";
 
+/**
+ * How a signature was made, as stored in document_signatures.method.
+ *
+ * Exported so the API schema and every caller share one list rather than each
+ * repeating string literals. They had already drifted once: the settings UI
+ * called it "draw" while the API expected "drawn", which zod rejected as a bare
+ * "Invalid input" that named neither the field nor the reason.
+ *
+ * "typed" is a stored value but never an input: it is what a signature IS when
+ * no image was supplied, decided server side, so it is not accepted from a
+ * request.
+ */
+export const SIGNATURE_METHODS = ["drawn", "upload", "typed"] as const;
+export type SignatureMethod = (typeof SIGNATURE_METHODS)[number];
+
+/** The two a caller may actually send. */
+export const SIGNATURE_INPUT_METHODS = ["drawn", "upload"] as const;
+export type SignatureInputMethod = (typeof SIGNATURE_INPUT_METHODS)[number];
+
 export const MAX_SIGNATURE_BYTES = 6 * 1024 * 1024;
 const OUTPUT_WIDTH = 600;
 

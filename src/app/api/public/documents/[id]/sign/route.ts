@@ -26,7 +26,7 @@ import { SITE_URL } from "@/lib/constants";
 import { logClientAction } from "@/lib/audit";
 import {
   decodeDataUrl, processDrawnSignature, processUploadedSignature,
-  assertUsable, SignatureError,
+  assertUsable, SignatureError, SIGNATURE_INPUT_METHODS,
 } from "@/lib/signature-image";
 
 export const dynamic = "force-dynamic";
@@ -38,7 +38,7 @@ const SignSchema = z.object({
   title: z.string().max(120).trim().optional().default(""),
   email: z.string().email().max(200).trim(),
   entity: z.string().min(2).max(200).trim(),
-  method: z.enum(["drawn", "upload"]),
+  method: z.enum(SIGNATURE_INPUT_METHODS),
   image: z.string().min(64).max(9_000_000),
   terms: z.array(z.object({
     key: z.string().min(1).max(60),

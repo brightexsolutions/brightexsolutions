@@ -143,6 +143,32 @@ for (const [file, text] of source) {
 const pipelineFrozen = frozen.filter((f) => /documents|intakes|signature|templates|schedule-invoices/.test(f));
 t("document pipeline GET routes are force-dynamic", pipelineFrozen.length === 0, pipelineFrozen.join(", "));
 
+// ── 5b. Shared vocabularies are imported, not retyped ──────────────────────
+console.log("\n5b. Enums are shared, not repeated as literals");
+
+// The settings UI once sent method "draw" while the API expected "drawn". zod
+// rejected it as a bare "Invalid input" naming neither field nor reason, and
+// nothing caught it until it was clicked. The fix was one exported list that
+// both sides import; this keeps it that way.
+for (const [file, text] of source) {
+  if (!/signature/.test(file)) continue;
+  const inlineEnum = /z\.enum\(\s*\[\s*"(?:drawn|upload|typed)"/.test(text);
+  t(`${file.replace(ROOT + "/", "")} does not retype the signature methods`, !inlineEnum,
+    "import SIGNATURE_INPUT_METHODS instead");
+}
+
+// Any zod schema rejecting a request should say which field was wrong. A bare
+// "Invalid input" sends whoever hits it reading source.
+const opaque: string[] = [];
+for (const [file, text] of source) {
+  if (!/[/\\]route\.ts$/.test(file)) continue;
+  if (!/documents|intakes|signature|templates/.test(file)) continue;
+  if (/error: "Invalid input" \}/.test(text) && !/parsed\.error\.issues|error\.flatten\(\)/.test(text)) {
+    opaque.push(file.replace(ROOT + "/", ""));
+  }
+}
+t("rejections name the offending field", opaque.length === 0, opaque.join(", "));
+
 // ── 6. Client actions reach the audit log ──────────────────────────────────
 console.log("\n6. Client-facing state changes are audited");
 for (const route of [

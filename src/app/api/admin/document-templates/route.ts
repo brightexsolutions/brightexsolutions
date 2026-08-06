@@ -25,6 +25,13 @@ import type { BlockDocument } from "@/lib/document-html/blocks";
 
 export const dynamic = "force-dynamic";
 
+/** Names the offending field. A bare "Invalid input" sends whoever hits it
+ * reading source to work out which one was wrong. */
+function invalid(error: z.ZodError): NextResponse {
+  const problems = error.issues.map((i) => `${i.path.join(".") || "request"}: ${i.message}`);
+  return NextResponse.json({ error: problems.join("; "), problems }, { status: 400 });
+}
+
 export async function GET(request: NextRequest) {
   const limited = await rateLimit(request, "admin");
   if (limited) return limited;
@@ -75,7 +82,7 @@ export async function POST(request: NextRequest) {
   if (!user) return NextResponse.json({ error: "Unauthorised" }, { status: 401 });
 
   const parsed = SaveSchema.safeParse(await request.json().catch(() => ({})));
-  if (!parsed.success) return NextResponse.json({ error: "Invalid input" }, { status: 400 });
+  if (!parsed.success) return invalid(parsed.error);
 
   const supabase = createAdminClient();
   const { data: doc } = await supabase

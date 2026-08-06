@@ -19,7 +19,7 @@ import { rateLimit } from "@/lib/rate-limit";
 import { logAction } from "@/lib/audit";
 import {
   decodeDataUrl, processDrawnSignature, processUploadedSignature,
-  assertUsable, SignatureError,
+  assertUsable, SignatureError, SIGNATURE_INPUT_METHODS,
 } from "@/lib/signature-image";
 
 export const dynamic = "force-dynamic";
@@ -70,7 +70,7 @@ const SaveSchema = z.object({
   title: z.string().max(160).trim().optional(),
   /** PNG data URL from the canvas, or a photograph to be cleaned up. */
   image: z.string().min(64).max(9_000_000).optional(),
-  method: z.enum(["drawn", "upload"]).optional(),
+  method: z.enum(SIGNATURE_INPUT_METHODS).optional(),
 });
 
 export async function POST(request: NextRequest) {
@@ -80,7 +80,15 @@ export async function POST(request: NextRequest) {
   if (!user) return NextResponse.json({ error: "Unauthorised" }, { status: 401 });
 
   const parsed = SaveSchema.safeParse(await request.json().catch(() => ({})));
-  if (!parsed.success) return NextResponse.json({ error: "Invalid input" }, { status: 400 });
+  if (!parsed.success) {
+    // A bare "Invalid input" sends whoever hits it reading source to find out
+    // which of four fields was wrong. Name the field and what it expected.
+    const problems = parsed.error.issues.map((i) => {
+      const field = i.path.join(".") || "request";
+      return `${field}: ${i.message}`;
+    });
+    return NextResponse.json({ error: problems.join("; "), problems }, { status: 400 });
+  }
 
   const supabase = createAdminClient();
   const rows: { key: string; value: string }[] = [];

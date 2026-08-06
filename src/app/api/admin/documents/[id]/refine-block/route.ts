@@ -33,6 +33,13 @@ import type { BlockDocument, DocSection } from "@/lib/document-html/blocks";
 
 export const dynamic = "force-dynamic";
 
+/** Names the offending field. A bare "Invalid input" sends whoever hits it
+ * reading source to work out which one was wrong. */
+function invalid(error: z.ZodError): NextResponse {
+  const problems = error.issues.map((i) => `${i.path.join(".") || "request"}: ${i.message}`);
+  return NextResponse.json({ error: problems.join("; "), problems }, { status: 400 });
+}
+
 type Params = { params: Promise<{ id: string }> };
 
 const RefineBlockSchema = z.object({
@@ -49,7 +56,7 @@ export async function POST(request: NextRequest, { params }: Params) {
 
   const { id } = await params;
   const parsed = RefineBlockSchema.safeParse(await request.json().catch(() => ({})));
-  if (!parsed.success) return NextResponse.json({ error: "Invalid input" }, { status: 400 });
+  if (!parsed.success) return invalid(parsed.error);
 
   const supabase = createAdminClient();
   const { data: doc } = await supabase
