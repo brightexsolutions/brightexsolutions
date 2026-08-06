@@ -154,7 +154,7 @@ export const CHANF_PROPOSAL: BlockDocument = {
               items: [
                 "Mobile-first design and build of nine pages: Home, About, Courses (one template serving all courses), Admissions, Gallery, Graduate Stories, Blog, FAQ and Contact",
                 "Online application form, replacing the current fully manual process, with submissions delivered to a nominated CHANF inbox",
-                "Website chat assistant that answers common questions (fees, intake dates, entry requirements, location) from a set of answers CHANF approves, and hands over to WhatsApp for anything it cannot answer",
+                "Rule-based website chat assistant: it answers common questions (fees, intake dates, entry requirements, location) from a set of questions and answers CHANF approves, and hands over to WhatsApp for anything outside that set. It does not generate its own answers, so it cannot tell a prospective student something CHANF has not said.",
                 "WhatsApp Admissions button and enquiry funnel present sitewide",
                 "Trust-building content: accreditation badges, graduation proof, testimonials, and the updated photography CHANF supplies",
                 "Google Maps embed, social feed embeds, email newsletter signup",
@@ -252,7 +252,7 @@ export const CHANF_PROPOSAL: BlockDocument = {
               icon: "3",
               title: "WhatsApp automation",
               points: [
-                "Extends the website chat assistant, which is included in this proposal, onto WhatsApp where most enquiries actually arrive",
+                "Extends the rule-based website chat assistant, which is included in this proposal, onto WhatsApp where most enquiries actually arrive",
                 "Pre-qualifies enquiries so staff spend time on serious applicants first",
                 "Requires a WhatsApp Business API account, which carries its own monthly cost",
               ],
@@ -291,8 +291,8 @@ export const CHANF_PROPOSAL: BlockDocument = {
           id: "inv-table",
           kind: "phased_investment_table",
           rows: [
-            { phase: "Phase 1", desc: "Site recovery, content audit and discovery", amount: "15,000 - 20,000" },
-            { phase: "Phase 2", desc: "Nine-page mobile-first build, online application form and website chat assistant", amount: "60,000 - 70,000" },
+            { phase: "Phase 1", desc: "Site recovery, content audit and discovery", amount: "10,000 - 15,000" },
+            { phase: "Phase 2", desc: "Nine-page mobile-first build, online application form and rule-based chat assistant", amount: "65,000 - 75,000" },
             { phase: "Phase 3", desc: "Analytics, one-time SEO setup, Google Business Profile and launch", amount: "25,000 - 30,000" },
           ],
           total: { label: "Total investment range", amount: "100,000 - 120,000" },
@@ -327,7 +327,7 @@ export const CHANF_PROPOSAL: BlockDocument = {
             {
               label: "Ongoing SEO and content marketing",
               detail:
-                "Phase 3 includes a one-time SEO setup: the pages built are correctly titled, described, structured and submitted. Ranking improves over months and is driven by publishing new content and earning links, which is continuing work. That is available from the Growth retainer tier, not as part of this build.",
+                "Phase 3 includes a one-time SEO setup: the pages built are correctly titled, described, structured and submitted. Ranking then improves over months, driven by publishing new content and earning links, which is continuing work rather than a deliverable. That sits in the retainer packages in Section 08, from the Growth tier upward, and is not part of this build.",
             },
             {
               label: "LinkedIn and multi-platform content strategy",
