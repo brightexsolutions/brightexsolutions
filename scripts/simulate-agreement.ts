@@ -103,7 +103,6 @@ async function main() {
     brightexSignatory: {
       name: settings.signatory_name || "Godwin",
       title: settings.signatory_title || "Lead at Brightex Solutions",
-      imageUrl: hasImage ? "PENDING" : null,
     },
   });
   if (!derived.ok || !derived.doc) throw new Error(derived.error);
@@ -120,21 +119,17 @@ async function main() {
   }).select("id").single();
   if (error) throw error;
 
-  // Point the in-document signature at the real id, now that it exists.
-  if (hasImage) {
-    const patched = JSON.parse(
-      JSON.stringify(validated.doc).replaceAll("PENDING", `/api/public/documents/${agreement.id}/signature/brightex`)
-    );
-    await supabase.from("generated_documents").update({ data: patched }).eq("id", agreement.id);
-  }
-
-  await supabase.from("document_signatures").insert({
+  const { error: sigErr } = await supabase.from("document_signatures").insert({
     document_id: agreement.id, party: "brightex",
     signer_name: settings.signatory_name || "Godwin",
     signer_title: settings.signatory_title || "Lead at Brightex Solutions",
     method: hasImage ? "drawn" : "typed",
     image_path: settings.signature_path ?? null,
   });
+  if (sigErr) {
+    line(`   \x1b[31mFAIL\x1b[0m  countersignature row: ${sigErr.message}`);
+    process.exit(1);
+  }
 
   ok(`${ref} created, countersigned by ${settings.signatory_name || "Godwin"}`);
   ok(`contract value KES ${derived.total ? fmtMoney(derived.total) : "?"}, terms ${schedule.stages.map((s) => `${s.percent}%`).join("/")}`);

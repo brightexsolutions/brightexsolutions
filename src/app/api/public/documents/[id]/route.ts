@@ -11,10 +11,48 @@ import {
 } from "@/lib/document-html/accept";
 import type { ProposalData } from "@/components/admin/proposal-pdf";
 import type { AgreementData } from "@/lib/document-types";
+import { resolveSignatures } from "@/lib/document-html/resolve-signatures";
 
 // DB-backed GET handler: without this Next freezes the response at build
 // time and the route serves stale data forever.
 export const dynamic = "force-dynamic";
+
+
+/**
+ * Signature settings and rows, resolved together. Kept in one place because the
+ * public link and the admin view must never disagree about what is on a
+ * contract.
+ */
+async function signatureContext(
+  supabase: ReturnType<typeof createAdminClient>,
+  doc: { id: string; accepted_at: string | null; created_at: string },
+  clientLabel: string
+) {
+  const [{ data: rows }, { data: settingsRows }] = await Promise.all([
+    supabase
+      .from("document_signatures")
+      .select("party, signer_name, signer_title, entity, image_path, signed_at")
+      .eq("document_id", doc.id),
+    supabase.from("settings").select("key, value").in("key", ["signatory_name", "signatory_title", "signature_path"]),
+  ]);
+
+  const settings = Object.fromEntries(
+    (settingsRows ?? []).map((r: { key: string; value: string }) => [r.key, r.value])
+  );
+
+  return resolveSignatures({
+    documentId: doc.id,
+    acceptedAt: doc.accepted_at,
+    rows: rows ?? [],
+    settings: {
+      name: settings.signatory_name || "Godwin",
+      title: settings.signatory_title || "Lead at Brightex Solutions",
+      hasImage: !!settings.signature_path,
+    },
+    clientLabel,
+    createdAt: doc.created_at,
+  });
+}
 
 type Params = { params: Promise<{ id: string }> };
 
@@ -47,59 +85,29 @@ export async function GET(request: NextRequest, { params }: Params) {
     const isAgreement = doc.type === "agreement";
     const clientRow = doc.data.meta?.client ?? null;
 
-    // Who signed for Brightex, so the client can see the agreement is not blank
-    // on our side before committing to it. Absent until migration 039.
-    let countersignatory: { name: string; title: string } | null = null;
-    if (isAgreement && !doc.accepted_at) {
-      const { data: sig } = await supabase
-        .from("document_signatures")
-        .select("signer_name, signer_title")
-        .eq("document_id", doc.id)
-        .eq("party", "brightex")
-        .maybeSingle();
-      if (sig?.signer_name) {
-        countersignatory = { name: sig.signer_name, title: sig.signer_title ?? "Brightex Solutions" };
-      }
-    }
+    // Fee gating asks for money, not a call, so the gate card must say so.
+    const feeGate = doc.gate_mode === "fee" && doc.unlock_fee
+      ? {
+          heading: "Unlock the full breakdown",
+          body:
+            `The detailed scope and costings are available on payment of the ` +
+            `KES ${Number(doc.unlock_fee).toLocaleString("en-KE")} scoping fee. ` +
+            `It is credited in full against the project if you go ahead.`,
+          buttonLabel: "Talk to us about unlocking this",
+          buttonHref: `${SITE_URL}/contact`,
+        }
+      : undefined;
+
+    const clientLabel = clientRow?.company?.trim() || clientRow?.name || "the Client";
+    const signatures = isAgreement ? await signatureContext(supabase, doc, clientLabel) : undefined;
 
     let trailingHtml = "";
     if (doc.accepted_at) {
-      if (isAgreement) {
-        // A signed agreement ends with its execution block: both parties, their
-        // marks, and when each signed. Falls back to the acknowledgement pill
-        // only when there are no signature rows to build it from.
-        const { data: sigs } = await supabase
-          .from("document_signatures")
-          .select("party, signer_name, signer_title, entity, image_path, method, terms_accepted, ip, signed_at")
-          .eq("document_id", doc.id);
-
-        const ordered = ["brightex", "client"]
-          .map((p) => (sigs ?? []).find((s) => s.party === p))
-          .filter(Boolean) as NonNullable<typeof sigs>;
-
-        if (ordered.length > 0) {
-          const clientSig = ordered.find((s) => s.party === "client");
-          trailingHtml = executedSignatures(
-            ordered.map((s) => ({
-              role: s.party === "brightex" ? "For Brightex Solutions" : "For the Client",
-              name: s.signer_name,
-              title: s.signer_title,
-              entity: s.party === "client" ? s.entity : null,
-              imageUrl: s.image_path ? `/api/public/documents/${doc.id}/signature/${s.party}` : null,
-              signedAt: s.signed_at,
-            })),
-            {
-              ip: clientSig?.ip,
-              method: clientSig?.method,
-              termsCount: Array.isArray(clientSig?.terms_accepted) ? clientSig.terms_accepted.length : 0,
-            }
-          );
-        } else {
-          trailingHtml = acceptedBox(doc.accepted_by_name || clientRow?.name || "the client", doc.accepted_at);
-        }
-      } else {
-        trailingHtml = proposalAcceptedBox(doc.accepted_by_name || clientRow?.name || "the client", doc.accepted_at);
-      }
+      // A signed agreement renders its execution block in place, via the
+      // signed_by section, so nothing is appended after it.
+      trailingHtml = isAgreement
+        ? ""
+        : proposalAcceptedBox(doc.accepted_by_name || clientRow?.name || "the client", doc.accepted_at);
     } else if (gated) {
       // A gated proposal still needs a way to reply. Accepting is refused (a
       // client must not commit to terms whose pricing was withheld) but "the
@@ -120,7 +128,9 @@ export async function GET(request: NextRequest, { params }: Params) {
             clientEmail: clientRow?.email,
             entity: clientRow?.company || clientRow?.name,
             schedule: scheduleOf(doc.data),
-            countersignedBy: countersignatory,
+            countersignedBy: signatures?.parties[0]
+              ? { name: signatures.parties[0].name, title: signatures.parties[0].title ?? "Brightex Solutions" }
+              : null,
           })
         : proposalAcceptBox({
             documentId: doc.id,
@@ -131,25 +141,10 @@ export async function GET(request: NextRequest, { params }: Params) {
           });
     }
 
-    // Fee gating asks for money, not a call, so the gate card must say so.
-    // A client shown "book a walkthrough" who is actually being asked to pay
-    // will book the call and be surprised, which is a worse outcome than
-    // either honest option.
-    const feeGate = doc.gate_mode === "fee" && doc.unlock_fee
-      ? {
-          heading: "Unlock the full breakdown",
-          body:
-            `The detailed scope and costings are available on payment of the ` +
-            `KES ${Number(doc.unlock_fee).toLocaleString("en-KE")} scoping fee. ` +
-            `It is credited in full against the project if you go ahead.`,
-          buttonLabel: "Talk to us about unlocking this",
-          buttonHref: `${SITE_URL}/contact`,
-        }
-      : undefined;
-
     html = renderBlockDocument(doc.data, {
       gated,
       gateCopy: feeGate,
+      signatures,
       trailingHtml,
       // An unsigned agreement must not be downloadable: a PDF of it could
       // circulate as though it were executed.

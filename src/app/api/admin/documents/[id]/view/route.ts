@@ -8,10 +8,48 @@ import { renderBlockDocument, isBlockDocument } from "@/lib/document-html/blocks
 import { acceptedBox, executedSignatures } from "@/lib/document-html";
 import type { ProposalData } from "@/components/admin/proposal-pdf";
 import type { AgreementData, SopData } from "@/lib/document-types";
+import { resolveSignatures } from "@/lib/document-html/resolve-signatures";
 
 // DB-backed GET handler: without this Next freezes the response at build
 // time and the route serves stale data forever.
 export const dynamic = "force-dynamic";
+
+
+/**
+ * Signature settings and rows, resolved together. Kept in one place because the
+ * public link and the admin view must never disagree about what is on a
+ * contract.
+ */
+async function signatureContext(
+  supabase: ReturnType<typeof createAdminClient>,
+  doc: { id: string; accepted_at: string | null; created_at: string },
+  clientLabel: string
+) {
+  const [{ data: rows }, { data: settingsRows }] = await Promise.all([
+    supabase
+      .from("document_signatures")
+      .select("party, signer_name, signer_title, entity, image_path, signed_at")
+      .eq("document_id", doc.id),
+    supabase.from("settings").select("key, value").in("key", ["signatory_name", "signatory_title", "signature_path"]),
+  ]);
+
+  const settings = Object.fromEntries(
+    (settingsRows ?? []).map((r: { key: string; value: string }) => [r.key, r.value])
+  );
+
+  return resolveSignatures({
+    documentId: doc.id,
+    acceptedAt: doc.accepted_at,
+    rows: rows ?? [],
+    settings: {
+      name: settings.signatory_name || "Godwin",
+      title: settings.signatory_title || "Lead at Brightex Solutions",
+      hasImage: !!settings.signature_path,
+    },
+    clientLabel,
+    createdAt: doc.created_at,
+  });
+}
 
 type Params = { params: Promise<{ id: string }> };
 

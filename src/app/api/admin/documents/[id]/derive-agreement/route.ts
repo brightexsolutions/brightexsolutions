@@ -46,20 +46,16 @@ const DeriveSchema = z.object({
 
 /** Countersignatory, from settings, with a sane fallback so a missing setting
  * never blocks an agreement: it is a name on a contract, not a secret. */
-async function brightexSignatory(supabase: ReturnType<typeof createAdminClient>, documentId: string) {
+async function brightexSignatory(supabase: ReturnType<typeof createAdminClient>) {
   const { data } = await supabase
     .from("settings")
     .select("key, value")
     .in("key", ["signatory_name", "signatory_title", "signature_path"]);
   const map = Object.fromEntries((data ?? []).map((r: { key: string; value: string }) => [r.key, r.value]));
 
-  // The image is served through the document's own signature route, which only
-  // works once a signature row exists for it. The row is written below, so the
-  // URL is valid by the time a client can open the document.
   return {
     name: map.signatory_name || "Godwin",
     title: map.signatory_title || "Lead at Brightex Solutions",
-    imageUrl: map.signature_path ? `/api/public/documents/${documentId}/signature/brightex` : null,
     imagePath: map.signature_path || null,
   };
 }
@@ -133,15 +129,13 @@ export async function POST(request: NextRequest, { params }: Params) {
     .gte("created_at", `${year}-01-01`);
   const referenceCode = `AGR-${year}-${String((count ?? 0) + 1).padStart(3, "0")}`;
 
-  // The document id does not exist yet, so the signature URL is patched in
-  // after the insert, below.
-  const signatory = await brightexSignatory(supabase, "PENDING");
+  const signatory = await brightexSignatory(supabase);
 
   const result = deriveAgreement(proposal.data, {
     referenceCode,
     schedule,
     locked: parsed.data.figures,
-    brightexSignatory: signatory,
+    brightexSignatory: { name: signatory.name, title: signatory.title },
     specialTerms: parsed.data.specialTerms ?? null,
   });
 
@@ -195,8 +189,9 @@ export async function POST(request: NextRequest, { params }: Params) {
       .eq("id", id);
   }
 
-  // Countersignature, stamped now rather than when the client signs, with the
-  // stored signature image attached where one is on file.
+  // Countersignature: the evidence row. The rendered signature itself is
+  // resolved from settings at view time, so an agreement drafted before a
+  // signature was uploaded still shows it once it exists.
   const { error: sigError } = await supabase.from("document_signatures").insert({
     document_id: created.id,
     party: "brightex",
@@ -207,15 +202,11 @@ export async function POST(request: NextRequest, { params }: Params) {
     signed_at: new Date().toISOString(),
   });
 
-  // Now the id exists, point the in-document signature at it.
-  if (signatory.imagePath) {
-    const withUrl = JSON.parse(
-      JSON.stringify(validated.doc).replaceAll(
-        "/api/public/documents/PENDING/signature/brightex",
-        `/api/public/documents/${created.id}/signature/brightex`
-      )
-    );
-    await supabase.from("generated_documents").update({ data: withUrl }).eq("id", created.id);
+  // Never silent. A missing countersignature row is a gap in the audit trail,
+  // and the previous version swallowed the failure, which is how an agreement
+  // ended up with no signature row at all.
+  if (sigError) {
+    console.error("[derive-agreement] countersignature row failed:", sigError.message);
   }
   // Needs migration 039. An agreement without its countersignature row is
   // still a valid agreement, so this never blocks creation.

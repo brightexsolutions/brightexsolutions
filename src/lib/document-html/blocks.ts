@@ -32,6 +32,7 @@
  * proposal in docs/fixtures/ has HTML comments whose numbers disagree with the
  * rendered ones, which is the ordinary outcome of editing by hand.
  */
+import type { ExecutedParty } from "./index";
 import {
   documentShell, sectionHeader, execLede, kpiRow, arrowList, arrowListKeyValue,
   investmentTable, phasedInvestmentTable, cardsGrid, phaseList, dataTable,
@@ -262,7 +263,7 @@ export function parseMoney(text: string): Money | null {
 
 // ─── Rendering ──────────────────────────────────────────────────────────────
 
-function renderBlock(block: Block): string {
+function renderBlock(block: Block, opts: RenderOptions = {}): string {
   switch (block.kind) {
     case "prose":
       return block.paragraphs.map((p) => `<p>${esc(p)}</p>`).join("");
@@ -308,8 +309,13 @@ function renderBlock(block: Block): string {
         .join("");
     case "signature":
       return signatureBlock(block.leftLabel, block.rightLabel);
-    case "signed_by":
-      return executedSignatures(block.parties, undefined, block.awaiting ?? undefined);
+    case "signed_by": {
+      // Live data wins over whatever was stored with the document.
+      const parties = opts.signatures?.parties ?? block.parties;
+      const awaiting = opts.signatures ? opts.signatures.awaiting : block.awaiting;
+      if (parties.length === 0 && !awaiting) return "";
+      return executedSignatures(parties, undefined, awaiting ?? undefined);
+    }
   }
 }
 
@@ -317,6 +323,24 @@ export interface RenderOptions {
   /** Public link: gated sections are blurred behind the paywall card.
    * Admin view is never gated, so Godwin always sees the real document. */
   gated?: boolean;
+  /**
+   * Live signature data, overriding whatever the document's signed_by block
+   * holds.
+   *
+   * Signatures are resolved when the page is rendered, not baked in when the
+   * document is created. An agreement drafted before a signature was uploaded
+   * would otherwise show a typed name forever, and changing the signature would
+   * leave every existing draft stale. The block declares WHO signs; this says
+   * what their mark currently is.
+   *
+   * For a SIGNED agreement the caller passes the stored evidence instead, since
+   * what matters then is what was actually signed, not what our signature looks
+   * like today.
+   */
+  signatures?: {
+    parties: ExecutedParty[];
+    awaiting?: { role: string; label: string } | null;
+  };
   /** Overrides the gate card for every gated section. Used for fee gating,
    * where the ask is a payment rather than a call, so the card must say so:
    * a client shown "book a walkthrough" who is actually being asked for money
@@ -349,7 +373,7 @@ export function renderBlockDocument(doc: BlockDocument, opts: RenderOptions = {}
 
   const bodyHtml = visible
     .map(({ section, num }) => {
-      const inner = section.blocks.map(renderBlock).join("");
+      const inner = section.blocks.map((b) => renderBlock(b, opts)).join("");
       const content = opts.gated && section.gated
         ? blurredSection(inner, { ...DEFAULT_GATE_COPY, ...(opts.gateCopy ?? {}), ...(section.gateCopy ?? {}) })
         : inner;

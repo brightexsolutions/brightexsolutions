@@ -12,6 +12,7 @@ import { documentTotal, needsFigureLock, rangedAmounts, parseMoney, fmtMoney, re
 import { parseBlockDocument } from "@/lib/document-html/block-schema";
 import { agreementSignBox, signingTerms, describeSchedule } from "@/lib/document-html/accept";
 import { planKickoff, planDates, parsePhaseSpan } from "@/lib/document-html/kickoff";
+import { resolveSignatures } from "@/lib/document-html/resolve-signatures";
 import { CHANF_PROPOSAL } from "@/lib/document-html/fixtures/chanf-proposal";
 import type { PaymentSchedule, BlockDocument } from "@/lib/document-html/blocks";
 
@@ -183,6 +184,46 @@ empty.sections = empty.sections.filter((s) => !s.blocks.some((b) => b.kind === "
 const emptyPlan = planKickoff(empty, { startDate: "2026-08-10T09:00:00Z", clientLabel: "X" });
 t("missing phases produce a warning, not silent success",
   emptyPlan.warnings.some((w) => /phases/i.test(w)), emptyPlan.warnings.join(" | "));
+
+console.log("\n10. Signatures resolve at render time, not creation time");
+// An agreement drafted before a signature was uploaded showed a typed name
+// forever, because the image reference was baked in when the document was
+// created. Unsigned documents therefore read our CURRENT signature; signed ones
+// read the stored record, because what matters then is what was actually
+// signed.
+const SETTINGS = { name: "Godwin Ochieng", title: "Lead at Brightex Solutions", hasImage: true };
+const DOC_ID = "11111111-2222-3333-4444-555555555555";
+
+const unsignedNoRow = resolveSignatures({
+  documentId: DOC_ID, acceptedAt: null, rows: [], settings: SETTINGS,
+  clientLabel: "Demo Client Ltd", createdAt: "2026-08-05T09:00:00Z",
+});
+t("unsigned with no row still shows our signature",
+  !!unsignedNoRow.parties[0].imageUrl, String(unsignedNoRow.parties[0].imageUrl));
+t("unsigned shows the client's empty space", unsignedNoRow.awaiting?.label === "Demo Client Ltd");
+t("unsigned has one party only", unsignedNoRow.parties.length === 1);
+
+const unsignedStaleRow = resolveSignatures({
+  documentId: DOC_ID, acceptedAt: null,
+  rows: [{ party: "brightex", signer_name: "Godwin Ochieng", method: "typed", image_path: null, signed_at: "2026-08-05T09:00:00Z" }],
+  settings: SETTINGS, clientLabel: "Demo Client Ltd", createdAt: "2026-08-05T09:00:00Z",
+});
+t("a row written before the signature existed does not suppress it",
+  !!unsignedStaleRow.parties[0].imageUrl, "settings win while unsigned");
+
+const signed = resolveSignatures({
+  documentId: DOC_ID, acceptedAt: "2026-08-06T10:00:00Z",
+  rows: [
+    { party: "brightex", signer_name: "Godwin Ochieng", method: "typed", image_path: null, signed_at: "2026-08-05T09:00:00Z" },
+    { party: "client", signer_name: "Jacinta Nduta", entity: "CHANF", method: "drawn", image_path: "x.png", signed_at: "2026-08-06T10:00:00Z" },
+  ],
+  settings: SETTINGS, clientLabel: "CHANF", createdAt: "2026-08-05T09:00:00Z",
+});
+t("a SIGNED agreement uses the stored record, not current settings",
+  signed.parties[0].imageUrl === null, "our signature must not change after signing");
+t("signed shows both parties", signed.parties.length === 2);
+t("signed has no awaiting space", signed.awaiting === null);
+t("the client's entity is carried", signed.parties[1].entity === "CHANF");
 
 console.log(fails === 0 ? "\nALL FLOW CHECKS PASSED\n" : `\n${fails} FAILED\n`);
 process.exit(fails === 0 ? 0 : 1);
