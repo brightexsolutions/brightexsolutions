@@ -249,12 +249,11 @@ export const CHANF_PROPOSAL: BlockDocument = {
           kind: "note",
           heading: "Domain and hosting",
           text:
-            "Brightex Solutions sets up the domain and hosting as part of Phase 1. These are running costs, separate from the project fee, and they recur every year: domain renewal of roughly KES 1,500 to 2,500, and hosting of roughly KES 5,000 to 9,000. Both fall due on the anniversary of setup, and there are two ways to handle them.",
+            "Brightex Solutions sets up the domain and hosting as part of Phase 1. These are running costs, separate from the project fee, and they recur every year: domain renewal of roughly KES 1,500 to 2,500, and hosting of roughly KES 5,000 to 9,000. They are paid by CHANF directly to the providers, not through us.",
           items: [
-            "CHANF pays the providers directly. We set the accounts up in CHANF's name, hand over the logins at launch, and put the renewal dates in writing.",
-            "Or Brightex manages them for CHANF. We hold the accounts, keep everything renewed on time, and invoice CHANF once a year, one month before renewal falls due, so nothing is ever paid late or in a rush.",
-            "The domain is registered in CHANF's name either way. It is CHANF's asset, not ours, and stays that way whatever happens between us. Managing it on your behalf is a convenience, not a hold on anything.",
-            "A lapsed renewal is what took the current site offline. Whichever route CHANF chooses, the dates go in writing at handover and we send a reminder before each one.",
+            "Both accounts are registered in CHANF's name and the logins are handed over at launch. The domain is CHANF's asset and stays that way.",
+            "At handover we put both renewal dates in writing, so they go into the institute's calendar rather than sitting in an inbox.",
+            "We send a reminder ahead of each renewal and walk whoever is handling it through the steps. A lapsed renewal is what took the current site offline, and it is a five minute job once someone knows where to look.",
           ],
         },
         {
@@ -487,11 +486,6 @@ export const CHANF_PROPOSAL: BlockDocument = {
           paragraphs: [
             "Brightex Solutions previously delivered the website for Verb Education, a direct match to CHANF's own recruitment and student-conversion challenge, alongside work for Beco Interiors and Dreamville Estate & Hospitality.",
           ],
-        },
-        {
-          id: "about-chips",
-          kind: "chips",
-          items: ["Education: Verb Education", "Service brands: Beco Interiors", "Hospitality: Dreamville Estate"],
         },
       ],
     },
