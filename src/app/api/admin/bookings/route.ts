@@ -94,7 +94,7 @@ export async function POST(request: NextRequest) {
           preheader: `Your ${purposeLabel} with ${SITE_NAME} on ${formattedDate} is confirmed`,
           body:
             emailAlert("Your booking has been confirmed.", "success") +
-            emailParagraph(`Hi <strong>${booking.booker_name}</strong>, here are your confirmed booking details:`) +
+            emailParagraph(`Hello <strong>${booking.booker_name}</strong>, here are your confirmed booking details:`) +
             emailInfoTable(
               emailRow("Type", purposeLabel) +
               emailRow("Date", formattedDate) +
@@ -119,7 +119,7 @@ export async function POST(request: NextRequest) {
           preheader: `Your ${purposeLabel} booking has been cancelled`,
           body:
             emailAlert("Your booking has been cancelled.", "warning") +
-            emailParagraph(`Hi <strong>${booking.booker_name}</strong>, your ${purposeLabel} on <strong>${formattedDate}</strong> has been cancelled.`) +
+            emailParagraph(`Hello <strong>${booking.booker_name}</strong>, your ${purposeLabel} on <strong>${formattedDate}</strong> has been cancelled.`) +
             emailParagraph("You're welcome to rebook at any time using the link below:") +
             emailButton("Book a New Slot", `${SITE_URL}/book`, "secondary") +
             emailDivider() +

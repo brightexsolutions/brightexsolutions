@@ -228,7 +228,7 @@ export function renderIntakeRecap(
         </td></tr>
 
         <tr><td style="padding:26px 30px 30px 30px;">
-          <p style="margin:0 0 4px 0;font-size:16px;color:#1e293b;line-height:1.6;">Hi ${esc(firstName)},</p>
+          <p style="margin:0 0 4px 0;font-size:16px;color:#1e293b;line-height:1.6;">Hello ${esc(firstName)},</p>
           <p style="margin:0;font-size:14px;color:#475569;line-height:1.7;">
             Thank you for taking the time to go through that properly. Below is your submission in full, so you have a
             record of it and can check we have understood you correctly${services.length ? ` on the ${esc(services.join(" and "))} side` : ""}.
@@ -253,7 +253,7 @@ export function renderIntakeRecap(
 
   // Plain text mirrors the structure: some clients strip HTML, and a recap that
   // arrives as one run-on paragraph is not a recap.
-  const textLines: string[] = [`Hi ${firstName},`, "", "Here is your submission in full:", ""];
+  const textLines: string[] = [`Hello ${firstName},`, "", "Here is your submission in full:", ""];
   const push = (label: string, value: unknown) => {
     if (value === null || value === undefined || String(value).trim() === "") return;
     textLines.push(`${label}: ${String(value).trim()}`);

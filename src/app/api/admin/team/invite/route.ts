@@ -146,7 +146,7 @@ export async function POST(request: NextRequest) {
         emailAlert(
           isResend
             ? `Your invite has been resent. Use the button below to set your password and access the ${roleLabel} portal.`
-            : `Hi <strong>${name}</strong>, you've been invited to join the <strong>${SITE_NAME} ${roleLabel} portal</strong>.`,
+            : `Hello <strong>${name}</strong>, you've been invited to join the <strong>${SITE_NAME} ${roleLabel} portal</strong>.`,
           "info"
         ) +
         emailParagraph(`Click the button below to set your password and get started. This link expires in <strong>24 hours</strong>.`) +
@@ -165,7 +165,7 @@ export async function POST(request: NextRequest) {
       "",
       isResend
         ? "Your invite has been resent. Use the link below to set your password:"
-        : `Hi ${name}, click the link below to set your password and get started:`,
+        : `Hello ${name}, click the link below to set your password and get started:`,
       "",
       inviteLink,
       "",

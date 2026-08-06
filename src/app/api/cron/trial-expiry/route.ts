@@ -56,7 +56,7 @@ export async function GET(request: NextRequest) {
             preheader: `Your ${productName} trial has ended: subscribe to continue`,
             body:
               emailAlert(`Your ${productName} trial has ended.`, "warning") +
-              emailParagraph(`Hi ${firstName}, your free trial of <strong>${productName}</strong> has come to an end.`) +
+              emailParagraph(`Hello ${firstName}, your free trial of <strong>${productName}</strong> has come to an end.`) +
               emailInfoTable(
                 emailRow("Product", productName) +
                 emailRow("Trial Status", "Expired") +

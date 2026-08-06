@@ -201,7 +201,7 @@ async function main() {
         heroLabel: "Proposal ready",
         heroTitle: "Here is the plan\nwe put together.",
         body:
-          emailParagraph(`Hi ${summary.clientName}, following our call, here is the full proposal: what we would do, in what order, over what timeline, and what it would cost.`) +
+          emailParagraph(`Hello ${summary.clientName}, following our call, here is the full proposal: what we would do, in what order, over what timeline, and what it would cost.`) +
           emailInfoCard("📄", "Proposal", `${validated.doc.meta.title} (${validated.doc.meta.reference_code})`) +
           (total ? emailInfoCard("💰", "Investment", `KES ${fmtMoney(total)}`) : "") +
           emailInfoCard("🗓️", "Timeline", "6 to 8 weeks, across 3 phases") +

@@ -147,7 +147,7 @@ async function main() {
       heroLabel: "Proposal ready",
       heroTitle: "Here is the plan\nwe put together.",
       body:
-        emailParagraph(`Hi ${CLIENT_NAME.split(" ")[0]}, thank you for the call and for filling in the questionnaire so thoroughly. Based on what you told us, here is what we would do, how long it would take, and what it would cost.`) +
+        emailParagraph(`Hello ${CLIENT_NAME.split(" ")[0]}, thank you for the call and for filling in the questionnaire so thoroughly. Based on what you told us, here is what we would do, how long it would take, and what it would cost.`) +
         emailInfoCard("📄", "Proposal", `${proposal.title}${proposal.reference_code ? ` (${proposal.reference_code})` : ""}`) +
         (total ? emailInfoCard("💰", "Investment", `KES ${fmtMoney(total)}`) : "") +
         emailInfoCard("🗓️", "Timeline", "6 to 8 weeks, across 3 phases") +
@@ -157,7 +157,7 @@ async function main() {
         emailSignoff(),
     }),
     text:
-      `Hi ${CLIENT_NAME.split(" ")[0]},\n\n` +
+      `Hello ${CLIENT_NAME.split(" ")[0]},\n\n` +
       `Thank you for the call and for filling in the questionnaire so thoroughly. Here is the proposal.\n\n` +
       `${proposal.title}${proposal.reference_code ? ` (${proposal.reference_code})` : ""}\n` +
       (total ? `Investment: KES ${fmtMoney(total)}\n` : "") +

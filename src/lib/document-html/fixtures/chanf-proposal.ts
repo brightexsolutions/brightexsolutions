@@ -21,11 +21,11 @@ export const CHANF_PROPOSAL: BlockDocument = {
   version: 2,
   type: "proposal",
   meta: {
-    title: "Website Redesign Proposal: CHANF Healthcare Technical Training Institute",
-    coverTag: "Website redesign & digital partnership proposal",
-    coverTitle: "A recruitment website built to convert the attention CHANF has already earned.",
+    title: "Student Recruitment Website: CHANF Healthcare Technical Training Institute",
+    coverTag: "Student recruitment website & digital partnership proposal",
+    coverTitle: "A website that gets CHANF found, and turns interest into applications.",
     coverSub:
-      "A phased plan to rebuild chan-f.or.ke as a mobile-first, trust-driven recruitment platform, with a clear path into ongoing partnership.",
+      "A phased plan to bring chan-f.or.ke back online and rebuild it as a mobile-first recruitment platform, with a clear path into ongoing partnership.",
     reference_code: "BX-CHANF-0826",
     created_at: "2026-08-04",
     client: { name: "CHANF Healthcare Technical Training Institute", company: "CHANF Healthcare Technical Training Institute" },
@@ -65,9 +65,9 @@ export const CHANF_PROPOSAL: BlockDocument = {
           id: "exec-lede",
           kind: "exec_lede",
           text:
-            "CHANF does not have a visibility problem. It has a conversion problem: strong outcomes and real social activity are not being turned into applications, because the website that should be doing that work is currently down.",
+            "CHANF has two problems with one cause: the website is down. Nobody searching for caregiving training in Kitengela finds CHANF at all, and the audience that does find it, through Facebook and TikTok, has nowhere to apply when it gets there.",
           paragraphs: [
-            "This proposal covers a full rebuild of chan-f.or.ke into a mobile-first recruitment platform with clear course information, working WhatsApp and enquiry funnels, authentic trust content, and analytics that finally show which efforts are producing enrolments. It is scoped in three phases so CHANF can see progress and results at each stage, not just at the end.",
+            "This proposal covers a full rebuild of chan-f.or.ke into a mobile-first recruitment platform: the site back online and findable in search, clear course information, an online application form, a chat assistant answering the questions that come up before anyone applies, and analytics that finally show which efforts are producing enrolments. It is scoped in three phases so CHANF can see progress and results at each stage, not just at the end.",
           ],
         },
       ],

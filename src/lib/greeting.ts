@@ -3,7 +3,7 @@
  *
  * Every send site used to do `client.name.split(" ")[0]`, which is correct
  * only when `name` holds a person. It frequently does not: a client added as
- * "Fawley Enterprises Ltd" with no named contact yet is greeted "Hi Fawley",
+ * "Fawley Enterprises Ltd" with no named contact yet is greeted "Hello Fawley",
  * inventing a person who does not exist. That reads worse than any honest
  * fallback, and it went out on invoices and payment reminders.
  *
@@ -94,7 +94,7 @@ export function greetingName(
 
 /**
  * People type their names into forms in caps often enough that greeting them
- * "Hi JOHN" is a real outcome. Only touched when the token is entirely one
+ * "Hello JOHN" is a real outcome. Only touched when the token is entirely one
  * case, so McDonald and O'Brien survive intact.
  */
 function tidyCase(word: string): string {
@@ -104,11 +104,11 @@ function tidyCase(word: string): string {
 }
 
 /**
- * "Hi Fawley" or "Hi there". The greeting itself rather than the fragment, so
+ * "Hello Fawley" or "Hello there". The greeting itself rather than the fragment, so
  * call sites cannot reintroduce the bug by interpolating it wrongly.
  */
 export function greeting(name: string | null | undefined, company?: string | null): string {
-  return `Hi ${greetingName(name, company)}`;
+  return `Hello ${greetingName(name, company)}`;
 }
 
 /**

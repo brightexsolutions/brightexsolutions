@@ -67,7 +67,7 @@ export async function GET(request: NextRequest) {
           subtitle: purposeLabel,
           preheader: `Your ${purposeLabel} with ${SITE_NAME} is tomorrow`,
           body:
-            emailParagraph(`Hi <strong>${booking.booker_name}</strong>, just a reminder that your ${purposeLabel} is tomorrow.`) +
+            emailParagraph(`Hello <strong>${booking.booker_name}</strong>, just a reminder that your ${purposeLabel} is tomorrow.`) +
             emailInfoTable(
               emailRow("Type", purposeLabel) +
               emailRow("Date", formattedDate) +

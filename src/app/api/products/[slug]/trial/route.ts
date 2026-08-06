@@ -138,7 +138,7 @@ export async function POST(
         body:
           emailAlert(`Your ${trialDays}-day trial of <strong>${product.name}</strong> is being set up!`, "success") +
           emailParagraph(
-            `Hi ${firstName}, thanks for requesting a trial of <strong>${product.name}</strong>. We're setting up your access and will send login details within a few hours.`
+            `Hello ${firstName}, thanks for requesting a trial of <strong>${product.name}</strong>. We're setting up your access and will send login details within a few hours.`
           ) +
           emailParagraph("Have questions in the meantime? Reach us on WhatsApp:") +
           emailButton("Chat on WhatsApp", whatsappUrl(), "secondary") +

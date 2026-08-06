@@ -149,14 +149,14 @@ export async function POST(request: NextRequest, { params }: Params) {
       heroLabel: "Received",
       heroTitle: "Thank you.\nWe have your notes.",
       body:
-        emailParagraph(`Hi ${firstName}, thank you for taking the time to go through <strong>${doc.title}</strong> properly and telling us what needs to change.`) +
+        emailParagraph(`Hello ${firstName}, thank you for taking the time to go through <strong>${doc.title}</strong> properly and telling us what needs to change.`) +
         emailParagraph(`<strong>What you sent us</strong><br/>${parsed.data.message.replace(/\n/g, "<br/>")}`) +
         emailDivider() +
         emailParagraph("We will read it and come back to you shortly to arrange a call so we can talk it through together. Nothing is committed, and the proposal is unchanged until we have agreed what it should say.") +
         emailSignoff(),
     }),
     text:
-      `Hi ${firstName},\n\nThank you for going through ${doc.title} and telling us what needs to change.\n\n` +
+      `Hello ${firstName},\n\nThank you for going through ${doc.title} and telling us what needs to change.\n\n` +
       `What you sent us:\n${parsed.data.message}\n\n` +
       `We will come back to you shortly to arrange a call. Nothing is committed, and the proposal is unchanged until we have agreed what it should say.\n\n` +
       `Best regards,\nThe Brightex Solutions Team`,

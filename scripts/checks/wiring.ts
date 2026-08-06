@@ -169,6 +169,24 @@ for (const [file, text] of source) {
 }
 t("rejections name the offending field", opaque.length === 0, opaque.join(", "));
 
+// ── 5c. Client-facing email opens with "Hello" ─────────────────────────────
+console.log("\n5c. Email greetings");
+
+// House voice: emails greet with "Hello", never "Hi". Worth enforcing because
+// the greeting is written fresh in every new email template and drifts back by
+// habit. WhatsApp prefills are excluded: those are the VISITOR's own words, put
+// in their mouth by a link, not ours.
+const wrongGreeting: string[] = [];
+for (const [file, text] of source) {
+  if (!/[/\\]api[/\\]|[/\\]lib[/\\]/.test(file)) continue;
+  for (const m of text.matchAll(/[`">]Hi[ ,]/g)) {
+    const context = text.slice(Math.max(0, m.index! - 120), m.index! + 40);
+    if (/whatsapp|wa\.me|WHATSAPP/i.test(context)) continue;
+    wrongGreeting.push(`${file.replace(ROOT + "/", "")}: ${text.slice(m.index!, m.index! + 30).replace(/\n/g, " ")}`);
+  }
+}
+t('emails greet with "Hello", not "Hi"', wrongGreeting.length === 0, wrongGreeting.slice(0, 3).join(" | "));
+
 // ── 6. Client actions reach the audit log ──────────────────────────────────
 console.log("\n6. Client-facing state changes are audited");
 for (const route of [

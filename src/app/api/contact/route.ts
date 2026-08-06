@@ -136,7 +136,7 @@ export async function POST(request: NextRequest) {
           preheader: "Thanks for reaching out: we'll respond within 24 hours",
           body:
             emailParagraph(
-              `Hi ${firstName}, thanks for reaching out to <strong>${SITE_NAME}</strong>. We've received your enquiry and will get back to you within 24 hours.`
+              `Hello ${firstName}, thanks for reaching out to <strong>${SITE_NAME}</strong>. We've received your enquiry and will get back to you within 24 hours.`
             ) +
             emailParagraph("In the meantime, you can reach us directly on WhatsApp:") +
             emailButton("Chat on WhatsApp", whatsappUrl(), "secondary") +

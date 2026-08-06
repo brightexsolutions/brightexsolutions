@@ -186,7 +186,7 @@ export async function POST(request: NextRequest, { params }: Params) {
       heroLabel: "Agreement signed",
       heroTitle: "That's official.\nThank you.",
       body:
-        emailParagraph(`Hi ${parsed.data.name.split(" ")[0]}, this confirms that you signed <strong>${doc.title}</strong> on behalf of ${parsed.data.entity}. Keep this email as your record.`) +
+        emailParagraph(`Hello ${parsed.data.name.split(" ")[0]}, this confirms that you signed <strong>${doc.title}</strong> on behalf of ${parsed.data.entity}. Keep this email as your record.`) +
         emailInfoCard("✍️", "Signed by", `${who}, ${parsed.data.email}`) +
         emailInfoCard("🏢", "On behalf of", parsed.data.entity) +
         emailInfoCard("📅", "Signed on", signedDate) +
@@ -197,7 +197,7 @@ export async function POST(request: NextRequest, { params }: Params) {
         emailSignoff(),
     }),
     text:
-      `Hi ${parsed.data.name.split(" ")[0]},\n\n` +
+      `Hello ${parsed.data.name.split(" ")[0]},\n\n` +
       `This confirms you signed ${doc.title} on behalf of ${parsed.data.entity} on ${signedDate}.\n\n` +
       `View it here: ${viewUrl}\n\n` +
       `We will be in touch to schedule the kick-off.\n\nBest regards,\nThe Brightex Solutions Team`,

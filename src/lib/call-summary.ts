@@ -68,7 +68,7 @@ export function renderCallSummary(summary: CallSummary): { subject: string; html
     heroLabel: "Call summary",
     heroTitle: "Here is what\nwe agreed.",
     body:
-      emailParagraph(`Hi ${esc(firstName)}, thank you for your time. Writing this down while it is fresh so we are working from the same understanding. If anything below is not how you remember it, tell us now rather than later.`) +
+      emailParagraph(`Hello ${esc(firstName)}, thank you for your time. Writing this down while it is fresh so we are working from the same understanding. If anything below is not how you remember it, tell us now rather than later.`) +
       emailInfoCard("📅", "Call", dateLabel) +
       emailInfoCard("👥", "On the call", summary.attendees.join(", ")) +
       block("What we discussed", summary.discussed) +
@@ -85,7 +85,7 @@ export function renderCallSummary(summary: CallSummary): { subject: string; html
   });
 
   const textLines = [
-    `Hi ${firstName},`,
+    `Hello ${firstName},`,
     "",
     `Notes from our call on ${dateLabel}.`,
     `On the call: ${summary.attendees.join(", ")}`,

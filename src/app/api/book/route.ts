@@ -107,7 +107,7 @@ export async function POST(request: NextRequest) {
       subtitle: purposeLabel,
       preheader: `Your ${purposeLabel} request has been received: we'll confirm shortly`,
       body:
-        emailParagraph(`Hi ${firstName}, we've received your booking request and will confirm it shortly.`) +
+        emailParagraph(`Hello ${firstName}, we've received your booking request and will confirm it shortly.`) +
         emailInfoTable(
           emailRow("Purpose", purposeLabel) +
           emailRow("Scheduled", scheduledDate)

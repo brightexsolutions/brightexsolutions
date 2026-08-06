@@ -174,7 +174,7 @@ export async function sendNewClientIntakeAck(opts: IntakeAckOptions) {
     ${ccNote(opts.cc)}
   `);
 
-  const text = `Hi ${firstName},
+  const text = `Hello ${firstName},
 
 Thank you for reaching out to ${SITE_NAME}. We have your requirements for ${services} and we are on it.
 
@@ -250,7 +250,7 @@ export async function sendIntakeReviewedNotice(opts: IntakeReviewedOptions) {
     ${ccNote(opts.cc)}
   `);
 
-  const text = `Hi ${firstName},
+  const text = `Hello ${firstName},
 
 Your ${services} requirements have now been reviewed by our team. We have what we need to put together the next step, and we will be in touch shortly.
 
@@ -305,7 +305,7 @@ export async function sendExistingClientIntakeAck(opts: IntakeAckOptions) {
     ${ccNote(opts.cc)}
   `);
 
-  const text = `Hi ${firstName},
+  const text = `Hello ${firstName},
 
 Thanks for sharing your requirements. We have your ${services} submission and we are reviewing it now.
 

@@ -72,7 +72,7 @@ export async function POST(
         : `${sub.name} renews in ${daysUntil} day${daysUntil !== 1 ? "s" : ""}`,
       body:
         emailAlert(alertText, isOverdue ? "error" : daysUntil <= 3 ? "warning" : "info") +
-        emailParagraph(`Hi ${firstName},`) +
+        emailParagraph(`Hello ${firstName},`) +
         emailInfoTable(
           emailRow("Subscription", sub.name) +
           (sub.provider ? emailRow("Provider", sub.provider) : "") +
@@ -122,8 +122,8 @@ export async function POST(
   });
 
   const message = isOverdue
-    ? `Hi ${client.name ?? "there"}, this is a reminder that the *${sub.name}* subscription renewal date (${renewalDateLabel}) has already passed. Please let us know how you'd like to proceed.: ${SITE_NAME}`
-    : `Hi ${client.name ?? "there"}, just a heads-up that *${sub.name}* is due for renewal on ${renewalDateLabel} (${daysUntil} day${daysUntil !== 1 ? "s" : ""}). Please let us know if you'd like to renew.: ${SITE_NAME}`;
+    ? `Hello ${client.name ?? "there"}, this is a reminder that the *${sub.name}* subscription renewal date (${renewalDateLabel}) has already passed. Please let us know how you'd like to proceed.: ${SITE_NAME}`
+    : `Hello ${client.name ?? "there"}, just a heads-up that *${sub.name}* is due for renewal on ${renewalDateLabel} (${daysUntil} day${daysUntil !== 1 ? "s" : ""}). Please let us know if you'd like to renew.: ${SITE_NAME}`;
 
   const waLink = `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
 

@@ -65,7 +65,7 @@ export async function GET(request: NextRequest) {
       alertsCreated++;
 
       const linkedClient = (sub as unknown as { clients?: { name?: string | null; company?: string | null; email?: string | null } | null }).clients;
-      const greeting = `Hi ${greetingName(linkedClient?.name, linkedClient?.company)},`;
+      const greeting = `Hello ${greetingName(linkedClient?.name, linkedClient?.company)},`;
       const recipients = [BUSINESS_EMAIL];
       if (linkedClient?.email) recipients.push(linkedClient.email);
 
@@ -123,7 +123,7 @@ export async function GET(request: NextRequest) {
       alertsCreated++;
 
       const linkedClient = (sub as unknown as { clients?: { name?: string | null; company?: string | null; email?: string | null } | null }).clients;
-      const greeting = `Hi ${greetingName(linkedClient?.name, linkedClient?.company)},`;
+      const greeting = `Hello ${greetingName(linkedClient?.name, linkedClient?.company)},`;
       const recipients = [BUSINESS_EMAIL];
       if (linkedClient?.email) recipients.push(linkedClient.email);
 

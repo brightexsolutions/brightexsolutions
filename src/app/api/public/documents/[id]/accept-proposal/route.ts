@@ -172,7 +172,7 @@ export async function POST(request: NextRequest, { params }: Params) {
       heroLabel: "Proposal accepted",
       heroTitle: "Thank you.\nLet us get started.",
       body:
-        emailParagraph(`Hi ${parsed.data.name.split(" ")[0]}, this confirms that you accepted <strong>${doc.title}</strong>. Nothing is signed yet: the agreement follows separately, and that is where anything is formally agreed.`) +
+        emailParagraph(`Hello ${parsed.data.name.split(" ")[0]}, this confirms that you accepted <strong>${doc.title}</strong>. Nothing is signed yet: the agreement follows separately, and that is where anything is formally agreed.`) +
         emailInfoCard("👤", "Accepted by", who) +
         emailInfoCard("📅", "Accepted on", acceptedDate) +
         emailInfoCard("💳", "Payment schedule", describeSchedule(chosen)) +
@@ -187,7 +187,7 @@ export async function POST(request: NextRequest, { params }: Params) {
         emailSignoff(),
     }),
     text:
-      `Hi ${parsed.data.name.split(" ")[0]},\n\n` +
+      `Hello ${parsed.data.name.split(" ")[0]},\n\n` +
       `This confirms you accepted ${doc.title} on ${acceptedDate}.\n` +
       `Payment schedule: ${describeSchedule(chosen)}\n` +
       `\nView it here: ${viewUrl}\n\n` +

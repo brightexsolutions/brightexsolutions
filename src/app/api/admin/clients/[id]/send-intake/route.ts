@@ -136,7 +136,7 @@ export async function POST(
 </html>
 `;
 
-  const text = `Hi ${firstName},
+  const text = `Hello ${firstName},
 
 Welcome to ${SITE_NAME}!
 
