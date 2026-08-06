@@ -5,6 +5,10 @@ import { rateLimit } from "@/lib/rate-limit";
 import { resolveCc } from "@/lib/cc-recipients";
 import { sendIntakeReviewedNotice } from "@/lib/intake-mail";
 
+// DB-backed GET handler: without this Next freezes the response at build
+// time and the route serves stale data forever.
+export const dynamic = "force-dynamic";
+
 const PatchSchema = z.object({
   status: z.enum(["new", "reviewed", "archived"]).optional(),
   /** Marking reviewed closes the client's edit window, so it tells them by

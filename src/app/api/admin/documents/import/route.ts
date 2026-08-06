@@ -111,6 +111,7 @@ export async function POST(request: NextRequest) {
     reference_code: referenceCode,
     data: doc,
     gated: parsed.data.gated,
+    gate_mode: parsed.data.gated ? "manual" : "off",
     status: "draft",
     source: "import",
     original_filename: parsed.data.originalFilename ?? null,

@@ -4,6 +4,10 @@ import { createClient, createAdminClient } from "@/lib/supabase/server";
 import { rateLimit } from "@/lib/rate-limit";
 import { logAction } from "@/lib/audit";
 
+// DB-backed GET handler: without this Next freezes the response at build
+// time and the route serves stale data forever.
+export const dynamic = "force-dynamic";
+
 type Params = { params: Promise<{ id: string }> };
 
 const PatchSchema = z.object({

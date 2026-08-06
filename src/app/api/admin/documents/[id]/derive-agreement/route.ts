@@ -170,6 +170,7 @@ export async function POST(request: NextRequest, { params }: Params) {
       reference_code: referenceCode,
       data: validated.doc,
       gated: parsed.data.gated,
+      gate_mode: parsed.data.gated ? "manual" : "off",
       status: "draft",
       source: "derived",
       source_document_id: proposal.id,

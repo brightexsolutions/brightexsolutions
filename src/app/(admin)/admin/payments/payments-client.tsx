@@ -12,7 +12,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-import { useConfirm } from "@/components/admin/confirm-dialog";
+import { useConfirm, useNotice } from "@/components/admin/confirm-dialog";
 import { EmailComposer, type EmailComposerRecipient } from "@/components/admin/email-composer";
 import { DocumentViewerSheet, type DocumentViewerTarget } from "@/components/admin/document-viewer-sheet";
 import { RecipientHint, useClientContacts } from "@/components/admin/recipient-hint";
@@ -78,6 +78,7 @@ type InvoiceOption = {
 
 export function PaymentsPageClient() {
   const confirm = useConfirm();
+  const notice = useNotice();
   // Fetched once for the page so each row can show who its receipt will reach.
   const { contacts: ccContacts, state: ccState } = useClientContacts();
   const [open, setOpen] = useState(false);
@@ -240,7 +241,13 @@ export function PaymentsPageClient() {
 
   function resendPaymentDoc(payment: Payment, doc: GeneratedDoc) {
     const email = payment.invoices?.clients?.email;
-    if (!email) { alert("This client has no email on file."); return; }
+    if (!email) {
+      void notice({
+        title: "No email on file",
+        message: "Add an email address to this client record, then send the receipt from here.",
+      });
+      return;
+    }
     setEmailDocTarget({ id: doc.id, title: doc.title });
     setEmailDocRecipient({ clientId: payment.invoices?.client_id ?? undefined, name: payment.invoices?.clients?.name ?? "Client", email });
     setEmailDocOpen(true);

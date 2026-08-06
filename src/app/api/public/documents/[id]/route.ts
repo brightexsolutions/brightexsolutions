@@ -12,6 +12,10 @@ import {
 import type { ProposalData } from "@/components/admin/proposal-pdf";
 import type { AgreementData } from "@/lib/document-types";
 
+// DB-backed GET handler: without this Next freezes the response at build
+// time and the route serves stale data forever.
+export const dynamic = "force-dynamic";
+
 type Params = { params: Promise<{ id: string }> };
 
 /** Public, unauthenticated document view: the link sent to clients.

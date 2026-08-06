@@ -6,13 +6,14 @@ import {
   Phone, Mail, MapPin, ExternalLink, Save,
   Hash, BarChart2, Building2, FileText,
   CheckCircle2, AlertCircle, ChevronRight, Image, Upload, X, Loader2,
-  Bot, MailOpen,
+  Bot, MailOpen, PenLine,
 } from "lucide-react";
 import { CLAUDE_MODEL_OPTIONS, GEMINI_MODEL_OPTIONS, AI_MODELS } from "@/lib/ai-models";
 import type { AIProvider } from "@/types";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
+import { SignatureSettings } from "@/components/admin/signature-settings";
 
 const sections = [
   { id: "business", label: "Business", icon: Building2, description: "Name, tagline, location" },
@@ -21,6 +22,7 @@ const sections = [
   { id: "invoice", label: "Invoice & Payments", icon: FileText, description: "Payment methods, bank details" },
   { id: "social", label: "Social Media", icon: Hash, description: "Platform handles" },
   { id: "integrations", label: "Integrations", icon: BarChart2, description: "Analytics, cron" },
+  { id: "signature", label: "Signature", icon: PenLine, description: "Countersignature on agreements" },
   { id: "ai", label: "AI", icon: Bot, description: "Provider, model, on/off toggle" },
 ] as const;
 type Section = (typeof sections)[number]["id"];
@@ -96,6 +98,9 @@ const SECTION_KEYS: Record<Section, (keyof SettingsForm)[]> = {
   social:       ["instagram", "facebook", "linkedin", "youtube", "tiktok"],
   integrations: ["google_tag"],
   ai:           ["ai_enabled", "ai_provider", "ai_model"],
+  // Saves through its own route (it posts an image), so it contributes no
+  // keys to the page form and never reads as dirty here.
+  signature:    [],
 };
 
 export default function SettingsPage() {
@@ -522,6 +527,8 @@ export default function SettingsPage() {
               )}
 
               {/* ── AI ── */}
+              {active === "signature" && <SignatureSettings />}
+
               {active === "ai" && (
                 <>
                   {/* Enable / disable toggle */}

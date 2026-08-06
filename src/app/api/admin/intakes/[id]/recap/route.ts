@@ -36,6 +36,56 @@ const RecapSchema = z.object({
   to: z.string().email().optional(),
 });
 
+/**
+ * Who this could sensibly go to, so the UI offers real choices rather than a
+ * free-text box. The submitter filled the form; the client record's address is
+ * frequently the one the organisation actually wants correspondence on, and on
+ * a shared institutional inbox those are different people.
+ */
+export async function GET(request: NextRequest, { params }: Params) {
+  const limited = await rateLimit(request, "admin");
+  if (limited) return limited;
+  const { data: { user } } = await (await createClient()).auth.getUser();
+  if (!user) return NextResponse.json({ error: "Unauthorised" }, { status: 401 });
+
+  const { id } = await params;
+  const supabase = createAdminClient();
+  const { data: intake } = await supabase
+    .from("client_intakes")
+    .select("id, submitter_name, submitter_email, client_id, clients(name, company, email)")
+    .eq("id", id)
+    .maybeSingle();
+  if (!intake) return NextResponse.json({ error: "Submission not found" }, { status: 404 });
+
+  const client = intake.clients as unknown as { name?: string; company?: string; email?: string } | null;
+  const options: { email: string; label: string; isDefault: boolean }[] = [];
+
+  if (client?.email) {
+    options.push({
+      email: client.email,
+      label: `${client.company?.trim() || client.name || "Client"} (main address)`,
+      isDefault: true,
+    });
+  }
+  if (intake.submitter_email && intake.submitter_email !== client?.email) {
+    options.push({
+      email: intake.submitter_email,
+      label: `${intake.submitter_name || "Submitter"} (filled the form)`,
+      isDefault: !client?.email,
+    });
+  }
+
+  // Everyone the CC rules would copy anyway, so the UI can show it rather than
+  // leaving Godwin to guess who else receives it.
+  const cc = await resolveCc({
+    clientId: intake.client_id,
+    scope: "intake",
+    to: options.find((o) => o.isDefault)?.email ?? intake.submitter_email ?? "",
+  });
+
+  return NextResponse.json({ options, cc });
+}
+
 export async function POST(request: NextRequest, { params }: Params) {
   const limited = await rateLimit(request, "admin");
   if (limited) return limited;
@@ -59,13 +109,23 @@ export async function POST(request: NextRequest, { params }: Params) {
     return NextResponse.json({ error: "This submission has no email address on it." }, { status: 400 });
   }
 
-  const to = parsed.data.to ?? intake.submitter_email;
+  // Default to the organisation's own address where there is one. On a shared
+  // institutional inbox the person who filled the form is often not the person
+  // correspondence should be addressed to, and defaulting to the submitter
+  // quietly routes everything to whoever happened to fill in a web form.
+  const { data: clientRow } = intake.client_id
+    ? await supabase.from("clients").select("email").eq("id", intake.client_id).maybeSingle()
+    : { data: null };
+
+  const to = parsed.data.to ?? clientRow?.email ?? intake.submitter_email;
 
   // When sending to someone else, the person who filled the form is copied:
   // they should know their answers were forwarded.
+  // Whoever filled the form is always copied when the recap is addressed
+  // elsewhere: their answers being forwarded is something they should see.
   const extra = [
     ...parsed.data.extraCc,
-    ...(parsed.data.to && parsed.data.to !== intake.submitter_email ? [intake.submitter_email] : []),
+    ...(to !== intake.submitter_email ? [intake.submitter_email] : []),
     ...(intake.cc_emails ?? []),
   ];
 

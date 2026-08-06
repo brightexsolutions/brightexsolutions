@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -360,11 +360,31 @@ function MarkReviewedAction({
  * here, so whoever is set to receive onboarding correspondence gets it without
  * anyone remembering they exist. The extra field is for the one-off.
  */
-function SendRecapAction({ intakeId, submitterEmail }: { intakeId: string; submitterEmail: string }) {
+function SendRecapAction({ intakeId }: { intakeId: string; submitterEmail: string }) {
   const [sending, setSending] = useState(false);
   const [open, setOpen] = useState(false);
+  const [options, setOptions] = useState<{ email: string; label: string; isDefault: boolean }[]>([]);
+  const [autoCc, setAutoCc] = useState<string[]>([]);
+  const [to, setTo] = useState("");
   const [extra, setExtra] = useState("");
   const [result, setResult] = useState<{ ok: boolean; text: string } | null>(null);
+
+  // Who this could go to, and who the CC rules would copy anyway. Loaded so the
+  // panel shows the real routing rather than making it guessable.
+  useEffect(() => {
+    if (!open) return;
+    let cancelled = false;
+    fetch(`/api/admin/intakes/${intakeId}/recap`)
+      .then((r) => r.json())
+      .then((json) => {
+        if (cancelled || !json.options) return;
+        setOptions(json.options);
+        setAutoCc(json.cc ?? []);
+        setTo((current) => current || json.options.find((o: { isDefault: boolean }) => o.isDefault)?.email || "");
+      })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, [open, intakeId]);
 
   async function send() {
     setSending(true);
@@ -378,7 +398,7 @@ function SendRecapAction({ intakeId, submitterEmail }: { intakeId: string; submi
       const res = await fetch(`/api/admin/intakes/${intakeId}/recap`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ extraCc }),
+        body: JSON.stringify({ extraCc, ...(to ? { to } : {}) }),
       });
       const json = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(json.error ?? "Could not send it");
@@ -397,32 +417,70 @@ function SendRecapAction({ intakeId, submitterEmail }: { intakeId: string; submi
 
   return (
     <div className="space-y-2">
-      <Button className="w-full gap-2" variant="outline" size="sm" disabled={sending} onClick={() => void send()}>
+      <Button
+        className="w-full gap-2"
+        variant="outline"
+        size="sm"
+        onClick={() => (open ? void send() : setOpen(true))}
+        disabled={sending}
+      >
         {sending ? <Loader2 size={14} className="animate-spin" /> : <ClipboardList size={14} />}
-        {sending ? "Sending…" : "Send this summary to the client"}
+        {sending ? "Sending…" : open ? "Send it" : "Send this summary to the client"}
       </Button>
 
-      {!open ? (
-        <button
-          type="button"
-          onClick={() => setOpen(true)}
-          className="w-full text-[11px] text-muted-foreground hover:text-foreground transition-colors"
-        >
-          Copy someone else in as well
-        </button>
-      ) : (
-        <div className="space-y-1.5">
-          <input
-            type="text"
-            value={extra}
-            onChange={(e) => setExtra(e.target.value)}
-            placeholder="director@company.co.ke"
-            className="w-full px-2.5 py-1.5 text-xs rounded border border-input bg-background"
-          />
-          <p className="text-[10px] text-muted-foreground leading-relaxed">
-            Added on top of {submitterEmail} and anyone already set to receive onboarding
-            correspondence for this client. Separate several with commas.
-          </p>
+      {open && (
+        <div className="space-y-2 rounded border border-border p-2.5 bg-muted/20">
+          <div>
+            <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground mb-1">
+              Address it to
+            </p>
+            {options.length === 0 ? (
+              <p className="text-[11px] text-muted-foreground">Loading…</p>
+            ) : (
+              options.map((o) => (
+                <label key={o.email} className="flex items-start gap-2 cursor-pointer py-0.5">
+                  <input
+                    type="radio"
+                    name="recapTo"
+                    checked={to === o.email}
+                    onChange={() => setTo(o.email)}
+                    className="mt-0.5 accent-brand-gold"
+                  />
+                  <span className="text-[11px] leading-relaxed">
+                    <span className="text-foreground">{o.label}</span>
+                    <span className="block text-muted-foreground">{o.email}</span>
+                  </span>
+                </label>
+              ))
+            )}
+          </div>
+
+          {autoCc.length > 0 && (
+            <p className="text-[10px] text-muted-foreground leading-relaxed">
+              Automatically copied: {autoCc.join(", ")}
+            </p>
+          )}
+
+          <div>
+            <input
+              type="text"
+              value={extra}
+              onChange={(e) => setExtra(e.target.value)}
+              placeholder="Copy anyone else (optional)"
+              className="w-full px-2.5 py-1.5 text-xs rounded border border-input bg-background"
+            />
+            <p className="text-[10px] text-muted-foreground mt-1 leading-relaxed">
+              Whoever filled the form is always copied when it is addressed elsewhere.
+            </p>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => { setOpen(false); setResult(null); }}
+            className="text-[11px] text-muted-foreground hover:text-foreground"
+          >
+            Cancel
+          </button>
         </div>
       )}
 

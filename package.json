@@ -8,7 +8,7 @@
     "start": "next start",
     "lint": "eslint",
     "lint:copy": "node scripts/check-em-dashes.mjs",
-    "check:docs": "node scripts/run-ts.mjs scripts/checks/validate.ts && node scripts/run-ts.mjs scripts/checks/render.ts && node scripts/run-ts.mjs scripts/checks/flow.ts && node scripts/run-ts.mjs scripts/checks/editor.ts",
+    "check:docs": "node scripts/run-ts.mjs scripts/checks/validate.ts && node scripts/run-ts.mjs scripts/checks/render.ts && node scripts/run-ts.mjs scripts/checks/flow.ts && node scripts/run-ts.mjs scripts/checks/editor.ts && node scripts/run-ts.mjs scripts/checks/wiring.ts",
     "seed:demo-proposal": "node scripts/run-ts.mjs scripts/seed-demo-proposal.ts --env",
     "simulate:flow": "node scripts/run-ts.mjs scripts/simulate-flow.ts --env",
     "simulate:client": "node scripts/run-ts.mjs scripts/simulate-client.ts --env",
