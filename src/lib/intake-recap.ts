@@ -16,6 +16,13 @@
  *
  * Built on the same table-based primitives as the rest of intake-mail.ts, since
  * Gmail and Outlook still need tables.
+ *
+ * Note on what this email does NOT say: it makes no promise about turnaround.
+ * The acknowledgement that goes out on submission does, correctly, because it
+ * fires the moment a form is sent. This one can be sent at any point, including
+ * weeks later or forwarded to a contact who joined after the fact, and
+ * "we will come back to you within one to two business days" is false in most
+ * of those cases.
  */
 import { SERVICE_LABELS, readAnswerGroups, serviceTypesOf } from "@/lib/intake-schema";
 import { esc } from "@/lib/document-html";
@@ -232,7 +239,6 @@ export function renderIntakeRecap(
           <p style="margin:0;font-size:14px;color:#475569;line-height:1.7;">
             Thank you for taking the time to go through that properly. Below is your submission in full, so you have a
             record of it and can check we have understood you correctly${services.length ? ` on the ${esc(services.join(" and "))} side` : ""}.
-            We will review it and come back to you within one to two business days to arrange a call.
           </p>
 
           <table width="100%" cellpadding="0" cellspacing="0">
