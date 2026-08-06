@@ -30,7 +30,7 @@ export const CHANF_PROPOSAL: BlockDocument = {
     created_at: "2026-08-04",
     client: { name: "CHANF Healthcare Technical Training Institute", company: "CHANF Healthcare Technical Training Institute" },
     badges: [
-      { label: "Investment", value: "KES 100,000 - 120,000" },
+      { label: "Investment", value: "KES 110,000 - 135,000" },
       { label: "Timeline", value: "6 to 8 weeks" },
       { label: "Delivery phases", value: "3" },
     ],
@@ -55,7 +55,7 @@ export const CHANF_PROPOSAL: BlockDocument = {
           id: "exec-kpi",
           kind: "kpi_row",
           items: [
-            { value: "KES 100K - 120K", label: "Total investment" },
+            { value: "KES 110K - 135K", label: "Total investment" },
             { value: "6 to 8 weeks", label: "Delivery timeline" },
             { value: "3", label: "Delivery phases" },
             { value: "60 / 40", label: "Payment split" },
@@ -292,10 +292,10 @@ export const CHANF_PROPOSAL: BlockDocument = {
           kind: "phased_investment_table",
           rows: [
             { phase: "Phase 1", desc: "Site recovery, content audit and discovery", amount: "10,000 - 15,000" },
-            { phase: "Phase 2", desc: "Nine-page mobile-first build, online application form and rule-based chat assistant", amount: "65,000 - 75,000" },
+            { phase: "Phase 2", desc: "Nine-page mobile-first build, online application form and rule-based chat assistant", amount: "75,000 - 90,000" },
             { phase: "Phase 3", desc: "Analytics, one-time SEO setup, Google Business Profile and launch", amount: "25,000 - 30,000" },
           ],
-          total: { label: "Total investment range", amount: "100,000 - 120,000" },
+          total: { label: "Total investment range", amount: "110,000 - 135,000" },
         },
         {
           id: "inv-terms",
