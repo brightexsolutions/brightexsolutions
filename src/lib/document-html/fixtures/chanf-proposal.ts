@@ -484,10 +484,7 @@ export const CHANF_PROPOSAL: BlockDocument = {
           id: "about-box",
           kind: "about",
           text:
-            "Brightex Solutions builds and manages websites and digital systems for growing businesses and institutions across Kenya, led by a software engineering background of 3 to 5 years and hands-on delivery across education, hospitality, and service-based sectors.",
-          paragraphs: [
-            "Brightex Solutions previously delivered the website for Verb Education, a direct match to CHANF's own recruitment and student-conversion challenge, alongside work for Beco Interiors and Dreamville Estate & Hospitality.",
-          ],
+            "Brightex Solutions builds and manages websites and digital systems for growing businesses and institutions across Kenya, with hands-on delivery across education, hospitality and service-based sectors.",
         },
       ],
     },
