@@ -170,7 +170,7 @@ export const CHANF_PROPOSAL: BlockDocument = {
                 'One-time on-page SEO setup across every page built: page titles, meta descriptions, headings, image alt text, internal linking and a sitemap, targeting searches such as "caregiving courses Kitengela" and "healthcare courses Kenya"',
                 "Google Business Profile setup or claim, so the institute appears on Maps and in local search",
                 "Cross-device testing, client review, and the corrections that come out of it before go-live",
-                "Domain and DNS cutover, and go-live",
+                "Point chan-f.or.ke at the rebuilt site, and go live",
               ],
             },
           ],
@@ -182,7 +182,7 @@ export const CHANF_PROPOSAL: BlockDocument = {
           heading: "What Brightex will need from CHANF to begin",
           text: "",
           items: [
-            "Access to the domain registrar account for chan-f.or.ke (login, or added as an authorised manager), so DNS can be reviewed and migrated as part of Phase 1",
+            "Access to the existing domain registrar account for chan-f.or.ke (login, or added as an authorised manager), so we can check the registration is current and point it at the rebuilt site. The domain stays registered to CHANF.",
             "Access to the current hosting account, or confirmation of the hosting provider, so the outage can be diagnosed and a decision made on repair against migration",
             "Login access to the current website's admin or CMS, if it exists, for content and asset recovery",
             "Logo files, brand colours, and fonts, if already established. If CHANF does not have these formalised yet, Brightex can develop a simple brand identity (logo refinement, colour palette, typography) as a separate scoped add-on before the site build begins",
@@ -249,7 +249,14 @@ export const CHANF_PROPOSAL: BlockDocument = {
           kind: "note",
           heading: "Domain and hosting",
           text:
-            "Brightex Solutions sets up the domain and hosting as part of Phase 1. The running costs stay with CHANF and are paid directly to the provider, not through us: hosting of roughly KES 12,000 to 18,000 a year, and domain renewal of roughly KES 2,000 to 3,500 a year. Both are annual, both fall due on the anniversary of setup, and we will put those dates in writing at handover with a reminder ahead of each one. This is the bill that took the current site offline, so it is worth having in the calendar rather than in an inbox.",
+            "CHANF already owns chan-f.or.ke and already has hosting. These are existing costs, not new ones this project introduces, and they stay in CHANF's name and are paid directly to the providers. What lapsed is a renewal, which is why the site is offline, and settling that is the first thing Phase 1 does.",
+          items: [
+            "Roughly KES 1,500 to 2,500 a year for the domain and KES 5,000 to 9,000 for hosting, unchanged by this project.",
+            "Any balance owed to the current provider before the account can be reactivated is CHANF's to settle. We will confirm what it is within the first two days rather than let it surface later.",
+            "We need access to both accounts during Phase 1 to diagnose the outage and point the domain at the rebuilt site. That access is CHANF's to grant and CHANF's to revoke.",
+            "If the current hosting is the reason things lapsed, or is not suitable for the rebuilt site, we will say so in Phase 1 and set out what moving would involve. We will not migrate anything without asking.",
+            "At handover both renewal dates go in writing, and we send a reminder ahead of each one and walk whoever is handling it through the steps. It is a five minute job once someone knows where to look.",
+          ],
         },
         {
           id: "inv-out",
@@ -361,7 +368,7 @@ export const CHANF_PROPOSAL: BlockDocument = {
             { week: "Week 1", title: "Stabilise & Discover", desc: "Site recovery, content audit, architecture sign-off" },
             { week: "Weeks 2 to 5", title: "Design & Build", desc: "Core pages, online application flow, chat assistant, WhatsApp funnel and trust content" },
             { week: "Weeks 6 to 7", title: "Analytics, SEO & Testing", desc: "GA4 and Search Console, on-page SEO, cross-device QA, client review" },
-            { week: "Week 8", title: "Launch", desc: "Domain and DNS cutover, go-live, Google Business Profile submission", launch: true },
+            { week: "Week 8", title: "Launch", desc: "Domain pointed at the new site, go live, Google Business Profile submission", launch: true },
           ],
         },
       ],
@@ -481,11 +488,6 @@ export const CHANF_PROPOSAL: BlockDocument = {
           paragraphs: [
             "Brightex Solutions previously delivered the website for Verb Education, a direct match to CHANF's own recruitment and student-conversion challenge, alongside work for Beco Interiors and Dreamville Estate & Hospitality.",
           ],
-        },
-        {
-          id: "about-chips",
-          kind: "chips",
-          items: ["Education: Verb Education", "Service brands: Beco Interiors", "Hospitality: Dreamville Estate"],
         },
       ],
     },
