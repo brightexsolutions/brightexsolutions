@@ -321,9 +321,31 @@ const DOCUMENT_CSS = `
   .sig-preview img{max-width:100%;max-height:110px;display:block;margin:0 auto 8px}
   .sig-preview .sig-hint{color:var(--gray-600)}
 
-  /* Acceptance controls are interactive: they have no place on paper. */
+  /**
+   * Nothing interactive survives into a PDF.
+   *
+   * A downloaded document is a record, not a workspace. Buttons and form fields
+   * printed onto paper are dead controls that make the document look broken,
+   * and an "Accept this proposal" button in a saved PDF invites someone to
+   * believe a file can be accepted.
+   *
+   * Listed as whole components rather than individual controls, so a field
+   * added inside one of these later is hidden without anyone remembering to
+   * come back here.
+   *
+   * The executed signature block is deliberately NOT in this list: on a signed
+   * agreement it IS the record, and a contract that prints without its
+   * signatures is worthless.
+   */
   @media print{
-    .accept-box,.sched-fixed,.changes-panel,.sig-tabs,.sig-pane{display:none}
+    .accept-box,        /* proposal accept, agreement signing, request changes */
+    .sched-fixed,       /* the payment terms restated inside the accept box */
+    .changes-panel,
+    .sig-tabs,.sig-pane,/* signature capture: canvas, upload, preview */
+    .accepted-box,      /* "Accepted by X" is a status pill, not document content */
+    .gate-card,         /* the unlock prompt on a gated teaser */
+    .cta-box,           /* any call to action */
+    button,.cta-btn,.accept-btn,.dl-btn{display:none !important}
   }
 
   /* Executed signature block: what a signed contract actually ends with.
@@ -381,9 +403,50 @@ const DOCUMENT_CSS = `
     body{background:#fff}
     .dl-bar{display:none}
     .doc-wrap{margin:0;box-shadow:none;max-width:none}
-    .section,.cover,.toc-page{page-break-inside:avoid}
-    .cover{page-break-after:always}
-    .fcard,.tier,.kpi,table,.tl-row,.step,.phase,.scope-out{break-inside:avoid}
+
+    /* Sections MUST be allowed to break.
+       They were previously page-break-inside:avoid, which is only meaningful
+       for something that fits on a page. A scope section runs well past one,
+       and a browser told not to break an over-tall element pushes the whole
+       thing to a fresh page and then lets it overflow: content overlapping the
+       footer, and a near-empty page before it. Sections break; the small units
+       inside them are what must not. */
+    .section{break-inside:auto;page-break-inside:auto}
+    .cover{break-inside:avoid;page-break-after:always}
+    .toc-page{break-inside:avoid}
+
+    /* A heading at the foot of a page with its content overleaf reads as a
+       mistake, so headings stay with what follows them. */
+    .section-header,h1,h2,h3,h4,.sec-title,.note h5,.scope-out h5{
+      break-after:avoid;page-break-after:avoid}
+
+    /* No single stranded line at the top or bottom of a page. */
+    p,li{orphans:3;widows:3}
+
+    /* The units that genuinely fit on one page, and look broken when split. */
+    .fcard,.tier,.kpi,.tl-row,.step,.phase,.scope-out .row,.note,
+    .exec-party,.exec-sig,.accepted-box{break-inside:avoid}
+
+    /* A long table breaks across pages and repeats its header, rather than
+       being pushed whole onto the next page and overflowing it. */
+    table{break-inside:auto}
+    thead{display:table-header-group}
+    tfoot{display:table-footer-group}
+    tr{break-inside:avoid}
+
+    /* The footer closes the document; it should not be orphaned onto a page of
+       its own with nothing above it. */
+    .footer{break-before:avoid}
+
+    /* @page already provides the 14mm margin, so the on-screen side padding is
+       doubling it and squeezing the text column. Vertical padding stays: it is
+       the rhythm between sections. */
+    .section,.toc-page{padding-left:0;padding-right:0}
+    .section{padding-top:26px;padding-bottom:26px}
+    /* The footer is a filled block, so its text is inset rather than flush to
+       the navy edge. Kept small so it still reads as aligned with the sections
+       above it. */
+    .footer{padding:22px 20px}
   }
 
   /* ── Responsive: SCREEN ONLY ──────────────────────────────────────────────

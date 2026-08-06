@@ -102,7 +102,33 @@ for (const [state, html] of Object.entries(states)) {
 }
 // Whitespace-tolerant: the rule's formatting is not the thing being asserted.
 const printBlocks = [...styleBlock.matchAll(/@media\s+print\s*\{([\s\S]*?)\n\s*\}/g)].map((m) => m[1]).join("\n");
-check("print hides the accept box", /\.accept-box/.test(printBlocks), printBlocks.slice(0, 120));
+// A downloaded document is a record, not a workspace: nothing a client could
+// click may survive into the PDF. Asserted per component, because "the accept
+// box is hidden" was true while the confirmation pill and CTA buttons were not.
+for (const hidden of [".accept-box", ".changes-panel", ".sig-tabs", ".sig-pane", ".accepted-box", ".gate-card", ".cta-box", "button"]) {
+  check(`print hides ${hidden}`, printBlocks.includes(hidden), printBlocks.slice(0, 160));
+}
+// The one thing that must NOT be hidden: a signed contract without its
+// signatures is worthless.
+check("print keeps the executed signature block",
+  !/\.exec-sig[^{]*\{[^}]*display:none/.test(printBlocks.replace(/\s+/g, "")),
+  "the execution block is the record");
+
+// Print pagination. Each of these was a real symptom in a downloaded PDF:
+// content overlapping the footer, and a last page holding one sentence.
+check("sections are allowed to break across pages",
+  /\.section\{[^}]*break-inside:auto/.test(printBlocks.replace(/\s+/g, "")) ||
+  /\.section\{break-inside:auto/.test(printBlocks.replace(/\s+/g, "")),
+  "a section taller than a page must not be break-inside:avoid, or it overflows");
+check("sections are NOT told to avoid breaking",
+  !/\.section,[^{]*\{[^}]*page-break-inside:avoid/.test(printBlocks.replace(/\s+/g, "")),
+  "this is what pushed a whole section onto a fresh page and overflowed it");
+check("headings stay with their content", /break-after:avoid/.test(printBlocks));
+check("no stranded single lines", /orphans:3/.test(printBlocks) && /widows:3/.test(printBlocks));
+check("table headers repeat across pages", /thead\{display:table-header-group\}/.test(printBlocks.replace(/\s+/g, "")));
+check("table rows do not split", /tr\{break-inside:avoid\}/.test(printBlocks.replace(/\s+/g, "")));
+check("the footer is not orphaned", /\.footer\{break-before:avoid\}/.test(printBlocks.replace(/\s+/g, "")));
+check("signature block does not split", /\.exec-sig/.test(printBlocks));
 check("tables carry data-label", (states["proposal, open"].match(/data-label=/g) ?? []).length > 10);
 
 // ── 6. Download button state ──────────────────────────────────────────────
