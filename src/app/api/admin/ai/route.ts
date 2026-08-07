@@ -175,7 +175,7 @@ Tone: ${payload.tone}${payload.subject ? `\nSubject line: ${payload.subject}` : 
 Context / what to address:
 ${payload.context}
 
-Write only the email body (no subject line, no "---" dividers). End with a professional sign-off from "The Brightex Team" or "The Brightex Solutions Team".`,
+Write only the email body (no subject line, no "---" dividers). End with a professional sign-off from "The Brightex Solutions Team", written in full, never shortened.`,
       };
 
     case "draft_invoice_email":
