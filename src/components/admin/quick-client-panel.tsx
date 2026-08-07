@@ -73,8 +73,32 @@ type ClientDoc = {
   accepted_by_email?: string | null;
   first_viewed_at?: string | null;
   view_count?: number | null;
+  sent_at?: string | null;
   created_at: string;
 };
+
+/**
+ * What a document's state actually is, said in the client's own vocabulary.
+ *
+ * Two things this gets right that the previous inline logic did not:
+ *
+ * A document is only "read" if it was SENT. first_viewed_at is set by any view
+ * of the public link, including our own while checking it over, so a draft
+ * nobody has seen was reporting "Read, not signed" on the strength of us
+ * opening it.
+ *
+ * And a proposal is accepted, not signed. Signing belongs to agreements. The
+ * two are deliberately different acts and the label should not blur them.
+ */
+function documentState(doc: ClientDoc): { label: string; tone: "done" | "waiting" | "idle" } {
+  const verb = doc.type === "agreement" ? "signed" : "accepted";
+  if (doc.accepted_at) {
+    return { label: doc.type === "agreement" ? "Signed" : "Accepted", tone: "done" };
+  }
+  if (!doc.sent_at) return { label: "Draft, not sent", tone: "idle" };
+  if (doc.first_viewed_at) return { label: `Read, not ${verb}`, tone: "waiting" };
+  return { label: "Sent, unopened", tone: "idle" };
+}
 
 type ClientDetail = {
   client: Client;
@@ -683,19 +707,20 @@ export function QuickClientPanel({
                                 </p>
                               </div>
                             </div>
-                            {doc.accepted_at ? (
-                              <span className="shrink-0 flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-emerald-400/10 text-emerald-600">
-                                <CheckCircle2 size={10} />Signed
-                              </span>
-                            ) : doc.first_viewed_at ? (
-                              <span className="shrink-0 text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-amber-400/10 text-amber-600">
-                                Read, not signed
-                              </span>
-                            ) : (
-                              <span className="shrink-0 text-[10px] font-semibold px-1.5 py-0.5 rounded-full capitalize text-muted-foreground bg-muted">
-                                {doc.status === "sent" ? "Sent, unopened" : doc.status}
-                              </span>
-                            )}
+                            {(() => {
+                              const state = documentState(doc);
+                              return (
+                                <span className={cn(
+                                  "shrink-0 flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded-full",
+                                  state.tone === "done" ? "bg-emerald-400/10 text-emerald-600"
+                                    : state.tone === "waiting" ? "bg-amber-400/10 text-amber-600"
+                                    : "text-muted-foreground bg-muted"
+                                )}>
+                                  {state.tone === "done" && <CheckCircle2 size={10} />}
+                                  {state.label}
+                                </span>
+                              );
+                            })()}
                           </div>
 
                           {/* Signature record: who signed and when, so the
@@ -703,13 +728,13 @@ export function QuickClientPanel({
                               without opening the document. */}
                           {doc.accepted_at && (
                             <p className="text-[10px] text-emerald-600/90 leading-relaxed">
-                              Signed by {doc.accepted_by_name ?? "the client"}
+                              {doc.type === "agreement" ? "Signed" : "Accepted"} by {doc.accepted_by_name ?? "the client"}
                               {doc.accepted_by_email ? ` (${doc.accepted_by_email})` : ""}
                               {" on "}
                               {new Date(doc.accepted_at).toLocaleDateString("en-KE", { day: "numeric", month: "short", year: "numeric" })}
                             </p>
                           )}
-                          {!doc.accepted_at && doc.first_viewed_at && (
+                          {!doc.accepted_at && doc.sent_at && doc.first_viewed_at && (
                             <p className="text-[10px] text-muted-foreground">
                               Opened {new Date(doc.first_viewed_at).toLocaleDateString("en-KE", { day: "numeric", month: "short" })}
                               {doc.view_count && doc.view_count > 1 ? ` · ${doc.view_count} views` : ""}
@@ -736,7 +761,7 @@ export function QuickClientPanel({
                                 onClick={() => resendClientDoc(doc)}
                                 className="flex items-center gap-1 text-[10px] text-muted-foreground hover:text-foreground transition-colors font-medium"
                               >
-                                <Send size={10} />Resend
+                                <Send size={10} />{doc.sent_at ? "Resend" : "Send"}
                               </button>
                             )}
                           </div>

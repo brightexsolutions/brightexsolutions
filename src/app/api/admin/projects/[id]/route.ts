@@ -57,7 +57,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
   // rather than breaking project detail entirely in the meantime.
   let { data, error } = await supabase
     .from("projects")
-    .select("*, clients(id, name, company, email), tasks(*), invoices(*, payments(*)), consultancy_rate_history(id, monthly_rate, effective_from, notes, created_at), generated_documents(id, type, title, reference_code, status, gated, accepted_at, created_at)")
+    .select("*, clients(id, name, company, email), tasks(*), invoices(*, payments(*)), consultancy_rate_history(id, monthly_rate, effective_from, notes, created_at), generated_documents(id, type, title, reference_code, status, gated, accepted_at, sent_at, created_at)")
     .eq("id", id)
     .single();
   if (error) {

@@ -139,6 +139,7 @@ type GeneratedDoc = {
   status: string;
   gated?: boolean | null;
   accepted_at?: string | null;
+  sent_at?: string | null;
   created_at: string;
 };
 
@@ -1285,14 +1286,14 @@ export function ProjectsPageClient() {
                               <p className="text-sm text-foreground truncate">{doc.title}</p>
                               <p className="text-[11px] text-muted-foreground">
                                 {doc.reference_code} · {fmtDate(doc.created_at)}
-                                {doc.accepted_at ? " · Accepted" : ""}
+                                {doc.accepted_at ? (doc.type === "agreement" ? " · Signed" : " · Accepted") : doc.sent_at ? " · Sent" : " · Draft"}
                               </p>
                             </div>
                             <div className="flex items-center gap-1">
                               <button onClick={() => viewGeneratedDoc(doc)} className="p-1 rounded-sm text-muted-foreground hover:text-foreground hover:bg-muted transition-colors" title="View">
                                 <Eye size={13} />
                               </button>
-                              <button onClick={() => resendGeneratedDoc(doc)} className="p-1 rounded-sm text-muted-foreground hover:text-foreground hover:bg-muted transition-colors" title="Resend">
+                              <button onClick={() => resendGeneratedDoc(doc)} className="p-1 rounded-sm text-muted-foreground hover:text-foreground hover:bg-muted transition-colors" title={doc.sent_at ? "Resend" : "Send"}>
                                 <Send size={13} />
                               </button>
                             </div>
