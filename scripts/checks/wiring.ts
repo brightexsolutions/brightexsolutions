@@ -204,6 +204,19 @@ for (const [file, text] of source) {
 }
 t('sign-off is "The Brightex Solutions Team"', wrongSignoff.length === 0, wrongSignoff.slice(0, 3).join(", "));
 
+// ── 5d. A draft survives the parent re-rendering ───────────────────────────
+console.log("\n5d. Composer draft is not wiped mid-compose");
+
+// Every caller passes `recipient` and `linkDocument` as inline object literals,
+// so those props get a fresh identity on each parent render. If the composer's
+// reset effect depends on them, it re-runs while someone is typing and throws
+// away the body, CC, subject and attachments. Reset belongs to the closed ->
+// open transition, so the dependency array must be `open` and nothing else.
+const composer = source.get(join(ROOT, "src/components/admin/email-composer.tsx")) ?? "";
+const resetDeps = composer.match(/setBody\(\s*\n?\s*initialRecipient[\s\S]*?\}, \[([^\]]*)\]\);/)?.[1]?.trim();
+t("reset effect depends on `open` alone", resetDeps === "open", `deps are [${resetDeps ?? "not found"}]`);
+t("composer body is editable", /value=\{body\}/.test(composer) && /onChange=\{\(e\) => \{ setBody/.test(composer));
+
 // ── 6. Client actions reach the audit log ──────────────────────────────────
 console.log("\n6. Client-facing state changes are audited");
 for (const route of [

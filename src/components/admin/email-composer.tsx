@@ -126,9 +126,27 @@ export function EmailComposer({ open, onClose, recipient: initialRecipient, link
   const [sent, setSent] = useState(false);
   const [error, setError] = useState("");
 
+  /**
+   * The opening props, read through a ref so the reset below cannot see them
+   * change.
+   *
+   * This effect used to list initialRecipient and linkDocument as dependencies.
+   * Every caller builds those as inline object literals, so a fresh identity
+   * arrived on every parent render and the "reset on open" ran again mid
+   * compose, wiping the body, CC, subject and attachments while the sender was
+   * still typing. Editing the draft was effectively impossible: the client
+   * panel re-renders whenever its detail reloads.
+   *
+   * Reset belongs to the closed -> open transition and nothing else, so the
+   * effect depends on `open` alone and takes its values from here.
+   */
+  const openingProps = useRef({ initialRecipient, linkDocument, initialContext, initialSubject });
+  openingProps.current = { initialRecipient, linkDocument, initialContext, initialSubject };
+
   // Reset state whenever the panel opens fresh
   useEffect(() => {
     if (!open) return;
+    const { initialRecipient, linkDocument, initialContext, initialSubject } = openingProps.current;
     setRecipient(initialRecipient ?? null);
     setCustomRecipient(false);
     setCustomName("");
@@ -152,7 +170,7 @@ export function EmailComposer({ open, onClose, recipient: initialRecipient, link
         ? `Hello ${firstName(initialRecipient.name)},\n\n${linkDocument ? `Please find your ${linkDocument.title} below. You can read it in your browser and download a PDF from the top of the page.\n\n` : ""}Best regards,\nThe Brightex Solutions Team`
         : ""
     );
-  }, [open, initialRecipient, linkDocument, initialContext, initialSubject]);
+  }, [open]);
 
   // Standalone mode (Communications page): load the client list to pick from
   useEffect(() => {
