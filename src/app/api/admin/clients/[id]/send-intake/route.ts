@@ -113,7 +113,7 @@ export async function POST(
 
               <p style="margin:0;font-size:14px;color:#475569;line-height:1.6;">
                 Talk soon,<br />
-                <strong style="color:#152238;">The Brightex Team</strong>
+                <strong style="color:#152238;">The Brightex Solutions Team</strong>
               </p>
             </td>
           </tr>
@@ -147,7 +147,7 @@ ${intakeUrl}
 Once you've submitted it, we'll review your requirements and reach out to schedule a call.
 
 Talk soon,
-The Brightex Team
+The Brightex Solutions Team
 `;
 
   try {

@@ -149,7 +149,7 @@ export function EmailComposer({ open, onClose, recipient: initialRecipient, link
     setError("");
     setBody(
       initialRecipient
-        ? `Hi ${firstName(initialRecipient.name)},\n\n${linkDocument ? `Please find your ${linkDocument.title} below, or as a PDF attached for your records.\n\n` : ""}Best regards,\nThe Brightex Team`
+        ? `Hello ${firstName(initialRecipient.name)},\n\n${linkDocument ? `Please find your ${linkDocument.title} below. You can read it in your browser and download a PDF from the top of the page.\n\n` : ""}Best regards,\nThe Brightex Solutions Team`
         : ""
     );
   }, [open, initialRecipient, linkDocument, initialContext, initialSubject]);
@@ -243,7 +243,7 @@ export function EmailComposer({ open, onClose, recipient: initialRecipient, link
     if (!c || !c.email) return;
     setCustomRecipient(false);
     setRecipient({ clientId: c.id, name: c.name, email: c.email });
-    setBody(`Hi ${firstName(c.name)},\n\n\n\nBest regards,\nThe Brightex Team`);
+    setBody(`Hello ${firstName(c.name)},\n\n\n\nBest regards,\nThe Brightex Solutions Team`);
   }
 
   function applyCustomRecipient(name: string, email: string) {

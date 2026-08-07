@@ -176,16 +176,33 @@ console.log("\n5c. Email greetings");
 // the greeting is written fresh in every new email template and drifts back by
 // habit. WhatsApp prefills are excluded: those are the VISITOR's own words, put
 // in their mouth by a link, not ours.
+// Scans components too. It did not, and the email composer sat on "Hi" and
+// "The Brightex Team" for weeks because the scan never looked at the one file
+// that writes the body a human actually sends.
 const wrongGreeting: string[] = [];
 for (const [file, text] of source) {
-  if (!/[/\\]api[/\\]|[/\\]lib[/\\]/.test(file)) continue;
+  // Renders a quoted inbound enquiry, i.e. someone else's greeting.
+  if (file.includes("email-preview")) continue;
   for (const m of text.matchAll(/[`">]Hi[ ,]/g)) {
     const context = text.slice(Math.max(0, m.index! - 120), m.index! + 40);
     if (/whatsapp|wa\.me|WHATSAPP/i.test(context)) continue;
+    // "Hi Brightex..." is a visitor writing to us, prefilled into their client.
+    // Their voice, not ours, so the house rule does not apply.
+    if (/^[`">]Hi,? Brightex/.test(text.slice(m.index!, m.index! + 20))) continue;
     wrongGreeting.push(`${file.replace(ROOT + "/", "")}: ${text.slice(m.index!, m.index! + 30).replace(/\n/g, " ")}`);
   }
 }
 t('emails greet with "Hello", not "Hi"', wrongGreeting.length === 0, wrongGreeting.slice(0, 3).join(" | "));
+
+// Sign-off is the company name in full. "The Brightex Team" reads like a
+// different company to a client holding an invoice from Brightex Solutions.
+const wrongSignoff: string[] = [];
+for (const [file, text] of source) {
+  for (const m of text.matchAll(/(?<!Solutions )Brightex Team/g)) {
+    wrongSignoff.push(`${file.replace(ROOT + "/", "")}:${text.slice(0, m.index!).split("\n").length}`);
+  }
+}
+t('sign-off is "The Brightex Solutions Team"', wrongSignoff.length === 0, wrongSignoff.slice(0, 3).join(", "));
 
 // ── 6. Client actions reach the audit log ──────────────────────────────────
 console.log("\n6. Client-facing state changes are audited");

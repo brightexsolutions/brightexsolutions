@@ -247,7 +247,7 @@ export function ClientsPageClient() {
     if (!token) return;
     const name = String(row.name ?? "there").split(" ")[0];
     const url = intakeUrl(token);
-    const msg = `Hi ${name},\n\nTo help us understand your project better, please fill in this short requirements form:\n${url}\n\nIt only takes a few minutes and will help us prepare for our conversation.`;
+    const msg = `Hello ${name},\n\nTo help us understand your project better, please fill in this short requirements form:\n${url}\n\nIt only takes a few minutes and will help us prepare for our conversation.`;
     window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, "_blank");
   }
 

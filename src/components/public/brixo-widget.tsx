@@ -56,7 +56,7 @@ export function BrixoWidget() {
   const [messages, setMessages] = useState<Message[]>([
     {
       role: "bot",
-      content: "Hi 👋 I'm Brixo, the Brightex assistant. What can I help you with today?",
+      content: "Hello 👋 I'm Brixo, the Brightex assistant. What can I help you with today?",
       source: "system",
     },
   ]);

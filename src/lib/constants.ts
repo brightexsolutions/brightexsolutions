@@ -60,7 +60,7 @@ export function whatsappUrl(message?: string): string {
 
 /** Default WhatsApp message used when escalating from Brixo or public pages */
 export const WHATSAPP_DEFAULT_MESSAGE =
-  "Hi Brightex Team, I was on the Brightex website and I'd like to chat.";
+  "Hi Brightex Solutions Team, I was on the Brightex website and I'd like to chat.";
 
 // ─── Supabase Storage image helper ──────────────────────────────────────────
 
