@@ -1,5 +1,5 @@
 import {
-  renderBlockDocument, needsFigureLock, documentTotal, fmtMoney, rangedAmounts,
+  renderBlockDocument, needsFigureLock, documentTotal, fmtMoney, rangedAmounts, parseMoney,
   DEFAULT_PAYMENT_SCHEDULE, scheduleOf,
 } from "@/lib/document-html/blocks";
 import { proposalAcceptBox, proposalAcceptedBox, describeSchedule } from "@/lib/document-html/accept";
@@ -150,17 +150,35 @@ const total = documentTotal(doc)!;
 // Asserted as properties, not figures. The fixture is a live proposal whose
 // pricing changes; what must stay true is that the total is the sum of the
 // priced phases and that nothing marked indicative leaks into it.
-const priced = rangedAmounts(doc);
-const phaseMin = priced.reduce((n, r) => n + r.amount.min, 0);
-const phaseMax = priced.reduce((n, r) => n + (r.amount.max ?? r.amount.min), 0);
-check("total equals the sum of the priced phases",
-  total.min === phaseMin && total.max === phaseMax,
-  `${fmtMoney(total)} vs ${phaseMin}-${phaseMax}`);
+// The printed total against the sum of the rows above it.
+//
+// documentTotal sums the rows and ignores the total the fixture declares, so
+// the declared figure, the one the client actually reads, was never checked
+// against anything. Change a phase price and the printed total could sit there
+// stale and wrong. This used rangedAmounts as the source of the sum, which
+// silently measured nothing once the pricing stopped being ranges.
+const invTable = doc.sections
+  .flatMap((sec) => sec.hidden || sec.indicative ? [] : sec.blocks)
+  .find((b) => b.kind === "phased_investment_table") as
+    | { rows: { amount: string }[]; total: { amount: string } }
+    | undefined;
+check("the investment table is present", !!invTable);
+const declared = parseMoney(invTable!.total.amount);
+check("the printed total matches the sum of the phases",
+  !!declared && declared.min === total.min && (declared.max ?? declared.min) === (total.max ?? total.min),
+  `printed ${invTable!.total.amount} vs phases ${fmtMoney(total)}`);
 check("indicative sections contribute nothing",
-  !JSON.stringify(doc.sections.filter((s) => s.indicative)).includes(String(total.max)),
+  !JSON.stringify(doc.sections.filter((s) => s.indicative)).includes(String(total.max ?? total.min)),
   "a retainer or enhancement figure reached the project total");
-check("the quoted total is a range at proposal stage", total.max !== undefined && total.max > total.min);
-check("figure lock required", needsFigureLock(doc));
+
+// Both pricing styles are legitimate: a proposal may quote a range and get
+// pinned later, or state a settled figure. What must hold is that the lock is
+// demanded exactly when a range is still open. Asserting one particular style
+// here made a pricing decision look like a broken invariant.
+check("a figure lock is demanded exactly when a range remains",
+  needsFigureLock(doc) === (rangedAmounts(doc).length > 0));
+check("CHANF is priced exactly, so nothing needs pinning",
+  !needsFigureLock(doc), rangedAmounts(doc).map((r) => r.label).join(", "));
 
 // ── 9. TOC and numbering derived ──────────────────────────────────────────
 console.log("\n9. Structure");

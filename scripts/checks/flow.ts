@@ -8,6 +8,7 @@
  * it. Those are the failures that would reach a client as a wrong number.
  */
 import { deriveAgreement, applyLockedFigures } from "@/lib/document-html/derive-agreement";
+import { RANGED_PROPOSAL, RANGED_PHASE_COUNT } from "./ranged-proposal";
 import { documentTotal, needsFigureLock, rangedAmounts, parseMoney, fmtMoney, renderBlockDocument } from "@/lib/document-html/blocks";
 import { parseBlockDocument } from "@/lib/document-html/block-schema";
 import { agreementSignBox, signingTerms, describeSchedule } from "@/lib/document-html/accept";
@@ -34,11 +35,18 @@ const FLEXIBLE: PaymentSchedule = { mode: "flexible", stages: [
 ]};
 
 console.log("\n1. Ranges block derivation");
-const ranged = deriveAgreement(CHANF_PROPOSAL, { referenceCode: "AGR-TEST-001", schedule: STANDARD, brightexSignatory: SIGNATORY });
+const ranged = deriveAgreement(RANGED_PROPOSAL, { referenceCode: "AGR-TEST-001", schedule: STANDARD, brightexSignatory: SIGNATORY });
 t("derivation REFUSES while ranges remain", !ranged.ok);
 t("refusal names the unresolved lines", (ranged.error ?? "").includes("Phase 1"), ranged.error ?? "");
-t("proposal reports it needs a figure lock", needsFigureLock(CHANF_PROPOSAL));
-t("three ranged lines detected", rangedAmounts(CHANF_PROPOSAL).length === 3, String(rangedAmounts(CHANF_PROPOSAL).length));
+t("a ranged proposal reports it needs a figure lock", needsFigureLock(RANGED_PROPOSAL));
+t("every ranged line detected",
+  rangedAmounts(RANGED_PROPOSAL).length === RANGED_PHASE_COUNT, String(rangedAmounts(RANGED_PROPOSAL).length));
+
+// The live proposal is priced exactly, so it needs no lock and must derive
+// straight through. Both routes have to work: this is the one in use.
+t("an exactly priced proposal needs no figure lock", !needsFigureLock(CHANF_PROPOSAL));
+const direct = deriveAgreement(CHANF_PROPOSAL, { referenceCode: "AGR-TEST-000", schedule: STANDARD, brightexSignatory: SIGNATORY });
+t("exact pricing derives without locking anything", direct.ok, direct.error ?? "");
 
 console.log("\n2. Locking figures");
 const LOCKED = [
@@ -46,7 +54,7 @@ const LOCKED = [
   { blockId: "inv-table", rowIndex: 1, amount: 130000 },
   { blockId: "inv-table", rowIndex: 2, amount: 32000 },
 ];
-const pinned = applyLockedFigures(CHANF_PROPOSAL, LOCKED);
+const pinned = applyLockedFigures(RANGED_PROPOSAL, LOCKED);
 const pinnedTotal = documentTotal(pinned);
 t("no ranges remain after locking", !needsFigureLock(pinned));
 t("total is the sum of pinned figures", pinnedTotal?.min === 180000, fmtMoney(pinnedTotal!));
@@ -55,7 +63,7 @@ t("table total recomputed, not stale", (() => {
   const b = s.blocks.find((x) => x.id === "inv-table")! as { total: { amount: string } };
   return parseMoney(b.total.amount)?.min === 180000;
 })());
-t("original proposal is not mutated", needsFigureLock(CHANF_PROPOSAL));
+t("original proposal is not mutated", needsFigureLock(RANGED_PROPOSAL));
 
 console.log("\n3. Derived agreement");
 const derived = deriveAgreement(CHANF_PROPOSAL, {

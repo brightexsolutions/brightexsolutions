@@ -30,7 +30,7 @@ export const CHANF_PROPOSAL: BlockDocument = {
     created_at: "2026-08-04",
     client: { name: "CHANF Healthcare Technical Training Institute", company: "CHANF Healthcare Technical Training Institute" },
     badges: [
-      { label: "Investment", value: "KES 110,000 - 135,000" },
+      { label: "Investment", value: "KES 125,000" },
       { label: "Timeline", value: "6 to 8 weeks" },
       { label: "Delivery phases", value: "3" },
     ],
@@ -55,7 +55,7 @@ export const CHANF_PROPOSAL: BlockDocument = {
           id: "exec-kpi",
           kind: "kpi_row",
           items: [
-            { value: "KES 110K - 135K", label: "Total investment" },
+            { value: "KES 125,000", label: "Total investment" },
             { value: "6 to 8 weeks", label: "Delivery timeline" },
             { value: "3", label: "Delivery phases" },
             { value: "60 / 40", label: "Payment split" },
@@ -228,16 +228,20 @@ export const CHANF_PROPOSAL: BlockDocument = {
           id: "inv-table",
           kind: "phased_investment_table",
           rows: [
-            { phase: "Phase 1", desc: "Site recovery, content audit and discovery", amount: "10,000 - 15,000" },
-            { phase: "Phase 2", desc: "Nine-page mobile-first build, online application form and rule-based chat assistant", amount: "75,000 - 90,000" },
-            { phase: "Phase 3", desc: "Analytics, one-time SEO setup, Google Business Profile and launch", amount: "25,000 - 30,000" },
+            { phase: "Phase 1", desc: "Site recovery, content audit and discovery", amount: "12,000" },
+            { phase: "Phase 2", desc: "Nine-page mobile-first build, online application form and rule-based chat assistant", amount: "85,000" },
+            { phase: "Phase 3", desc: "Analytics, one-time SEO setup, Google Business Profile and launch", amount: "28,000" },
           ],
-          total: { label: "Total investment range", amount: "110,000 - 135,000" },
+          total: { label: "Total investment", amount: "125,000" },
         },
         {
           id: "inv-terms",
           kind: "key_value_list",
           items: [
+            {
+              label: "Pricing",
+              detail: "These are final figures set by Brightex Solutions, not estimates to be narrowed later. Each phase is priced as scoped above, and the total is KES 125,000.",
+            },
             {
               label: "Payment structure",
               detail: "60% deposit upfront to commence work, which covers Phase 1 from day one, and 40% due on completion and launch.",
@@ -499,8 +503,8 @@ export const CHANF_PROPOSAL: BlockDocument = {
           id: "next-steps",
           kind: "steps",
           steps: [
-            { title: "Review this proposal", desc: "CHANF's team reviews scope, phasing, and investment range" },
-            { title: "Align on final scope", desc: "Confirm any adjustments, and the final figure within each phase range, before signing" },
+            { title: "Review this proposal", desc: "CHANF's team reviews the scope, phasing, and investment" },
+            { title: "Align on final scope", desc: "Confirm any adjustments before signing" },
             { title: "Sign the agreement and pay the 60% deposit", desc: "Formalises the engagement and triggers Phase 1" },
             { title: "Delivery across 3 phases", desc: "Site recovery through to launch, 6 to 8 weeks" },
             { title: "Ongoing partnership begins", desc: "CHANF selects a retainer tier post-launch" },
