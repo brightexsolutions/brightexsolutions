@@ -83,7 +83,7 @@ export const CHANF_PROPOSAL: BlockDocument = {
           id: "brief-intro",
           kind: "prose",
           paragraphs: [
-            "Since its founding during COVID, CHANF has built genuine credibility as a NITA and DOSH accredited healthcare training institute, including its first graduation on 7 November 2025 with 24 graduates and documented placements, among them a graduate now working as a caregiver in Canada. That track record is not currently visible anywhere a prospective student or parent would look.",
+            "Since its founding during COVID, CHANF has built genuine credibility as a NITA, DOSH and TVET accredited healthcare training institute, with its TVET programmes accounting for most of its enrolment. Its first graduation on 7 November 2025 produced 24 graduates and documented placements, among them a graduate now working as a caregiver in Canada. That track record is not currently visible anywhere a prospective student or parent would look.",
           ],
         },
         {
@@ -188,7 +188,7 @@ export const CHANF_PROPOSAL: BlockDocument = {
             "Logo files, brand colours, and fonts, if already established. If CHANF does not have these formalised yet, Brightex can develop a simple brand identity (logo refinement, colour palette, typography) as a separate scoped add-on before the site build begins",
             "Current course list with fees, requirements, and durations",
             "Updated photography and any video content, replacing the existing outdated hospital images",
-            "Testimonials and graduate stories, including any existing accreditation documents (NITA and DOSH) and trainer bios and photos if these should feature on the site",
+            "Testimonials and graduate stories, including any existing accreditation documents (NITA, DOSH and TVET) and trainer bios and photos if these should feature on the site",
             "Access to any existing Google Analytics, Search Console, or Google Business Profile accounts, if previously set up",
             "The questions prospective students ask most often, with CHANF's approved answers, so the chat assistant says what CHANF would say. A list of 15 to 25 is enough, and we will help shape it during Phase 1.",
             "A single point of contact for content sign-off and questions during the build",
@@ -207,7 +207,7 @@ export const CHANF_PROPOSAL: BlockDocument = {
             "  03 - Campus & Facility Photos/",
             "  04 - Graduate Stories & Testimonials/ (photos, videos, written quotes)",
             "  05 - Trainer Photos & Bios/",
-            "  06 - Accreditation Documents/ (NITA, DOSH certificates)",
+            "  06 - Accreditation Documents/ (NITA, DOSH, TVET certificates)",
             "  07 - Course Fee Sheets & Requirements/",
           ].join("\n"),
         },
