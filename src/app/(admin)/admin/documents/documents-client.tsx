@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback, useSyncExternalStore } from "react";
+import { useEffect, useState, useCallback, useSyncExternalStore, useRef } from "react";
 import {
   FileSignature, Plus, Trash2, Eye, Send, Sparkles, Loader2, ScrollText, Briefcase, ClipboardList,
   Receipt, FolderOpen, Wallet, Library, CheckCircle2, Upload, Pencil, List, LayoutGrid, Check,
@@ -115,6 +115,63 @@ const TYPE_TINT: Record<string, string> = {
   sop: "bg-emerald-500/12 text-emerald-800 dark:text-emerald-200",
 };
 
+const DOC_PAGE_WIDTH = 900; // .doc-wrap max-width in the rendered documents
+
+/**
+ * The document's real first page, scaled to exactly fill its container.
+ * Same-origin, so the frame's download bar and page margins can be hidden.
+ */
+function DocPreview({ id, title }: { id: string; title: string }) {
+  const boxRef = useRef<HTMLDivElement>(null);
+  const [scale, setScale] = useState(0);
+  const [ready, setReady] = useState(false);
+
+  useEffect(() => {
+    const el = boxRef.current;
+    if (!el) return;
+    const ro = new ResizeObserver(([entry]) => setScale(entry.contentRect.width / DOC_PAGE_WIDTH));
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+
+  function onLoad(e: React.SyntheticEvent<HTMLIFrameElement>) {
+    try {
+      const doc = e.currentTarget.contentDocument;
+      if (doc) {
+        const style = doc.createElement("style");
+        style.textContent =
+          ".dl-bar{display:none!important}html,body{margin:0!important;padding:0!important;background:#fff!important;overflow:hidden!important}.doc-wrap{max-width:none!important;box-shadow:none!important}";
+        doc.head.appendChild(style);
+      }
+    } catch {
+      // Cross-origin or blocked: the unstyled page still previews fine
+    }
+    setReady(true);
+  }
+
+  return (
+    <div ref={boxRef} className="relative aspect-[4/3] overflow-hidden bg-brand-navy">
+      {!ready && <Skeleton className="absolute inset-0 rounded-none" />}
+      {scale > 0 && (
+        <iframe
+          src={`/api/admin/documents/${id}/view`}
+          title={`Preview of ${title}`}
+          loading="lazy"
+          tabIndex={-1}
+          aria-hidden
+          onLoad={onLoad}
+          className={cn("absolute top-0 left-0 origin-top-left pointer-events-none border-0 transition-opacity duration-300", ready ? "opacity-100" : "opacity-0")}
+          style={{
+            width: DOC_PAGE_WIDTH,
+            height: Math.ceil((DOC_PAGE_WIDTH * 3) / 4) + 2,
+            transform: `scale(${scale})`,
+          }}
+        />
+      )}
+    </div>
+  );
+}
+
 /** Card grid with a live, scaled-down render of each document's first page. */
 function DocumentGrid({
   documents, loading, counts, active, onFilter, onOpen,
@@ -168,34 +225,33 @@ function DocumentGrid({
             <button
               key={d.id}
               onClick={() => onOpen(d)}
-              className="group text-left rounded-2xl border border-border bg-card overflow-hidden hover:border-brand-gold/50 hover:shadow-[0_12px_32px_-16px_rgba(15,23,42,0.4)] hover:-translate-y-0.5 transition-all"
+              className="group flex flex-col text-left rounded-2xl border border-border bg-card overflow-hidden hover:border-brand-gold/50 hover:shadow-[0_16px_40px_-20px_rgba(15,23,42,0.45)] hover:-translate-y-0.5 transition-all focus-visible:outline-2 focus-visible:outline-ring"
             >
-              {/* Live preview: the real document, rendered small and non-interactive */}
-              <div className="relative aspect-[4/3] overflow-hidden bg-muted">
-                <iframe
-                  src={`/api/admin/documents/${d.id}/view`}
-                  title={`Preview of ${d.title}`}
-                  loading="lazy"
-                  tabIndex={-1}
-                  aria-hidden
-                  className="absolute top-0 left-0 w-[1000px] h-[750px] origin-top-left scale-[0.28] pointer-events-none bg-white"
-                />
-                <div className="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-card to-transparent" />
-                <span className={cn("absolute top-2.5 left-2.5 h-6 px-2.5 inline-flex items-center rounded-full text-[11px] font-semibold capitalize backdrop-blur", TYPE_TINT[d.type] ?? "bg-muted text-foreground")}>
-                  {d.type === "sop" ? "SOP" : d.type}
-                </span>
+              <div className="relative">
+                <DocPreview id={d.id} title={d.title} />
+                {/* Hover: make it obvious the card opens the document */}
+                <div className="absolute inset-0 flex items-center justify-center bg-brand-navy/0 group-hover:bg-brand-navy/45 transition-colors">
+                  <span className="inline-flex items-center gap-1.5 h-9 px-4 rounded-full bg-white text-brand-navy text-sm font-semibold shadow-lg opacity-0 translate-y-1 group-hover:opacity-100 group-hover:translate-y-0 transition-all">
+                    <Eye size={15} /> Open
+                  </span>
+                </div>
               </div>
-              <div className="p-3.5 space-y-1.5">
-                <p className="text-sm font-semibold text-foreground line-clamp-2 leading-snug">{d.title}</p>
+              <div className="flex flex-col gap-2 p-4 border-t border-border">
+                <div className="flex items-center justify-between gap-2">
+                  <span className={cn("h-6 px-2.5 inline-flex items-center rounded-full text-[11px] font-semibold capitalize", TYPE_TINT[d.type] ?? "bg-muted text-foreground")}>
+                    {d.type === "sop" ? "SOP" : d.type}
+                  </span>
+                  <span className="text-xs text-muted-foreground whitespace-nowrap">
+                    {new Date(d.created_at).toLocaleDateString("en-KE", { day: "numeric", month: "short", year: "numeric" })}
+                  </span>
+                </div>
+                <p className="text-[15px] font-semibold text-foreground leading-snug line-clamp-2 min-h-[2.6em]" title={d.title}>{d.title}</p>
                 <p className="text-xs text-muted-foreground truncate">
                   {d.clients?.company?.trim() || d.clients?.name || "Internal"}
-                  {d.reference_code ? ` · ${d.reference_code}` : ""}
+                  {d.reference_code ? <span className="tabular-nums"> · {d.reference_code}</span> : null}
                 </p>
-                <div className="flex items-center justify-between gap-2 pt-1">
+                <div className="pt-1">
                   <StatusDot status={d.accepted_at ? "accepted" : d.status} />
-                  <span className="text-xs text-muted-foreground whitespace-nowrap">
-                    {new Date(d.created_at).toLocaleDateString("en-KE", { day: "numeric", month: "short" })}
-                  </span>
                 </div>
               </div>
             </button>

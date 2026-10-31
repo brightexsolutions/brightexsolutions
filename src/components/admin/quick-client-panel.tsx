@@ -8,6 +8,7 @@ import {
   RefreshCw, CheckCircle, Briefcase, ScrollText, Download,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Avatar } from "@/components/admin/data-table";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { whatsappUrl } from "@/lib/constants";
 import { IntakeDetailSheet, type IntakeDetail, type IntakeAnalysis, SERVICE_LABELS } from "@/components/admin/intake-detail-sheet";
@@ -336,7 +337,7 @@ export function QuickClientPanel({
       {/* Wider than the default sheet: this panel carries dense rows (contacts
           with their scope chips, invoices, documents) that wrap badly at md.
           Stepped rather than fixed so it does not dominate a small laptop. */}
-      <SheetContent className="w-full sm:max-w-lg lg:max-w-xl flex flex-col overflow-hidden p-0" side="right">
+      <SheetContent showCloseButton={false} className="w-full sm:max-w-lg lg:max-w-xl flex flex-col overflow-hidden p-0" side="right">
         {loading ? (
           <div className="flex-1 flex items-center justify-center">
             <Loader2 size={24} className="animate-spin text-muted-foreground" />
@@ -347,9 +348,7 @@ export function QuickClientPanel({
             <div className="px-5 py-4 border-b border-border bg-muted/30 shrink-0">
               <div className="flex items-start justify-between gap-3">
                 <div className="flex items-center gap-3 min-w-0">
-                  <div className="w-10 h-10 rounded-full bg-brand-gold/10 text-brand-gold flex items-center justify-center shrink-0 text-sm font-bold">
-                    {client.name.charAt(0).toUpperCase()}
-                  </div>
+                  <Avatar name={client.name} className="size-11 text-sm" />
                   <div className="min-w-0">
                     <SheetTitle className="font-display text-base font-bold text-foreground leading-tight truncate">
                       {client.name}

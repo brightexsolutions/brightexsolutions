@@ -110,6 +110,13 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
     writeRail(!collapsed);
   }
 
+  // Dialogs, sheets and menus render in a portal on <body>, outside this tree.
+  // Tagging <body> lets the admin styles (sans headings, colour fixes) reach them.
+  useEffect(() => {
+    document.body.classList.add("admin-shell");
+    return () => document.body.classList.remove("admin-shell");
+  }, []);
+
   // Auto-close mobile sidebar whenever the user navigates to a new page
   useEffect(() => {
     setMobileSidebarOpen(false);

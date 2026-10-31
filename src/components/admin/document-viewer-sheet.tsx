@@ -126,6 +126,7 @@ export function DocumentViewerSheet({ doc, onClose }: { doc: DocumentViewerTarge
   return (
     <Sheet open={!!doc} onOpenChange={(v) => !v && onClose()}>
       <SheetContent
+        showCloseButton={false}
         className={`w-full flex flex-col overflow-hidden p-0 ${wide ? "sm:max-w-[min(1200px,95vw)]" : "sm:max-w-3xl"}`}
         side="right"
       >

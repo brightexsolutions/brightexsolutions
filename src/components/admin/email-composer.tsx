@@ -480,7 +480,7 @@ export function EmailComposer({ open, onClose, recipient: initialRecipient, link
 
   return (
     <Sheet open={open} onOpenChange={(v) => !v && onClose()}>
-      <SheetContent className="w-full sm:max-w-lg flex flex-col overflow-hidden p-0" side="right">
+      <SheetContent showCloseButton={false} className="w-full sm:max-w-lg flex flex-col overflow-hidden p-0" side="right">
         <div className="px-5 py-4 border-b border-border bg-muted/30 shrink-0 flex items-center justify-between">
           <SheetTitle className="font-display text-base font-bold text-foreground">Compose Email</SheetTitle>
           <button onClick={onClose} className="w-7 h-7 rounded-sm hover:bg-muted flex items-center justify-center text-muted-foreground transition-colors">

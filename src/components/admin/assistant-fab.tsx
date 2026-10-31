@@ -16,6 +16,50 @@ const SUGGESTIONS = [
   { text: "Any overdue invoices?", icon: Receipt },
 ];
 
+/**
+ * Assistant replies are plain text, but models still slip into markdown now and
+ * then. Strip the markup and turn list markers into real list items.
+ */
+function AssistantText({ text }: { text: string }) {
+  const lines = text
+    .replace(/\*\*(.+?)\*\*/g, "$1")
+    .replace(/__(.+?)__/g, "$1")
+    .replace(/`([^`]+)`/g, "$1")
+    .split("\n")
+    .map((l) => l.replace(/^\s*#{1,6}\s+/, "").trimEnd());
+
+  const blocks: Array<{ type: "p"; text: string } | { type: "ul"; items: string[] }> = [];
+  for (const raw of lines) {
+    const item = raw.match(/^\s*(?:[*\-•]|\d+[.)])\s+(.*)$/);
+    if (item) {
+      const last = blocks[blocks.length - 1];
+      if (last?.type === "ul") last.items.push(item[1]);
+      else blocks.push({ type: "ul", items: [item[1]] });
+    } else if (raw.trim()) {
+      blocks.push({ type: "p", text: raw.trim() });
+    }
+  }
+
+  return (
+    <div className="space-y-2">
+      {blocks.map((b, i) =>
+        b.type === "p" ? (
+          <p key={i}>{b.text}</p>
+        ) : (
+          <ul key={i} className="space-y-1.5">
+            {b.items.map((it, j) => (
+              <li key={j} className="flex gap-2">
+                <span aria-hidden className="mt-[0.55em] size-1.5 rounded-full bg-brand-gold shrink-0" />
+                <span>{it}</span>
+              </li>
+            ))}
+          </ul>
+        )
+      )}
+    </div>
+  );
+}
+
 export function AssistantFab() {
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -132,13 +176,14 @@ export function AssistantFab() {
                 )}
                 <div
                   className={cn(
-                    "max-w-[82%] px-3.5 py-2.5 text-[13px] leading-relaxed whitespace-pre-wrap shadow-sm",
+                    "max-w-[82%] px-3.5 py-2.5 text-[13px] leading-relaxed shadow-sm",
+                    m.role === "user" && "whitespace-pre-wrap",
                     m.role === "user"
                       ? "rounded-2xl rounded-br-md bg-brand-gold text-brand-navy"
                       : "rounded-2xl rounded-bl-md bg-card border border-border text-foreground"
                   )}
                 >
-                  {m.content}
+                  {m.role === "assistant" ? <AssistantText text={m.content} /> : m.content}
                   {m.source === "rule-based" && (
                     <p className="text-[11px] text-muted-foreground mt-1.5">Rule-based answer (AI unavailable)</p>
                   )}

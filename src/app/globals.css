@@ -380,3 +380,19 @@ html[data-reveal-ready] [data-reveal="none"]:not([data-revealed]) { translate: n
 }
 
 
+
+/* Dialogs and side panels: consistent section labels and header close buttons */
+:is([data-slot="sheet-content"], [data-slot="dialog-content"]) h3.uppercase {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  color: var(--muted-foreground);
+}
+:is([data-slot="sheet-content"], [data-slot="dialog-content"]) button:has(> svg.lucide-x):not([data-slot="sheet-close"], [data-slot="dialog-close"]):is(.w-7, .w-8, .p-1\.5) {
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 9999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}

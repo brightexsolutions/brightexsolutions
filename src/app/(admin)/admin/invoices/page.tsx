@@ -530,7 +530,7 @@ export default function InvoicesPage() {
 
       {/* PDF Preview Sheet */}
       <Sheet open={previewOpen} onOpenChange={setPreviewOpen}>
-        <SheetContent side="right" className="w-full sm:max-w-6xl p-0 flex flex-col">
+        <SheetContent showCloseButton={false} side="right" className="w-full sm:max-w-6xl p-0 flex flex-col">
           <SheetHeader className="px-6 py-4 border-b border-border flex flex-row items-center justify-between">
             <SheetTitle className="text-base">Invoice Preview</SheetTitle>
             <div className="flex items-center gap-2">
