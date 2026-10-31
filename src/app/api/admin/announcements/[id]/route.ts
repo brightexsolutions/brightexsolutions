@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { createClient, createAdminClient } from "@/lib/supabase/server";
 import { rateLimit } from "@/lib/rate-limit";
+import { PopupConfigSchema, popupColumnMissing } from "@/lib/popup-config";
 import { logSystemAction } from "@/lib/audit";
 import { transporter } from "@/lib/mail";
 import { SITE_NAME, BUSINESS_EMAIL, BUSINESS_WEBSITE } from "@/lib/constants";
@@ -17,6 +18,7 @@ const UpdateSchema = z.object({
   active: z.boolean().optional(),
   starts_at: z.string().datetime().optional().nullable(),
   ends_at: z.string().datetime().optional().nullable(),
+  popup: PopupConfigSchema.nullable().optional(),
 });
 
 export async function PATCH(
@@ -44,7 +46,12 @@ export async function PATCH(
     .select()
     .single();
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) {
+    if (popupColumnMissing(error.message)) {
+      return NextResponse.json({ error: "Pop-up settings need database migration 043 (supabase/migrations/043_announcement_popups.sql). Run it in the Supabase SQL editor, then save again." }, { status: 409 });
+    }
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
 
   // Notify internal team when an announcement is first published
   if (result.data.active === true && before?.active === false) {

@@ -48,6 +48,8 @@ export function TrialForm({ productSlug, productName, trialDays, pricingFrom }: 
         return;
       }
       setSubmitted(true);
+      // Lets "after the form is sent" pop-ups fire (see popup-manager.tsx)
+      window.dispatchEvent(new Event("bx:lead"));
     } catch {
       setError("Network error. Please try again.");
     }

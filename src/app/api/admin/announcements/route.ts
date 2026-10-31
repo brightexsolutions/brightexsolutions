@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { createClient, createAdminClient } from "@/lib/supabase/server";
 import { rateLimit } from "@/lib/rate-limit";
+import { PopupConfigSchema, popupColumnMissing } from "@/lib/popup-config";
 
 const AnnouncementSchema = z.object({
   title: z.string().min(1).max(200).trim(),
@@ -13,6 +14,7 @@ const AnnouncementSchema = z.object({
   active: z.boolean().default(false),
   starts_at: z.string().datetime().optional(),
   ends_at: z.string().datetime().optional(),
+  popup: PopupConfigSchema.nullable().optional(),
 });
 
 export async function GET(request: NextRequest) {
@@ -48,7 +50,12 @@ export async function POST(request: NextRequest) {
   if (!result.success) return NextResponse.json({ error: "Invalid input", details: result.error.flatten() }, { status: 400 });
 
   const { data, error } = await supabase.from("announcements").insert(result.data).select().single();
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) {
+      if (popupColumnMissing(error.message)) {
+        return NextResponse.json({ error: "Pop-up settings need database migration 043 (supabase/migrations/043_announcement_popups.sql). Run it in the Supabase SQL editor, then save again." }, { status: 409 });
+      }
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
 
   return NextResponse.json({ data }, { status: 201 });
 }

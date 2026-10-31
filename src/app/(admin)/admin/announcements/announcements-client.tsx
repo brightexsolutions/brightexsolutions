@@ -13,6 +13,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useConfirm } from "@/components/admin/confirm-dialog";
+import {
+  DEFAULT_POPUP, TRIGGER_LABELS, FREQUENCY_LABELS, STYLE_LABELS, describePopup, readPopup, type PopupConfig,
+} from "@/lib/popup-config";
 
 const typeColors: Record<string, string> = {
   info: "bg-blue-400/10 text-blue-600 dark:text-blue-400 border-blue-200 dark:border-blue-800/40",
@@ -36,6 +39,8 @@ const defaultForm = {
   display_location: ["banner"] as string[],
   starts_at: "",
   ends_at: "",
+  popup: DEFAULT_POPUP as PopupConfig,
+  pagesText: "",
 };
 
 type Announcement = {
@@ -50,6 +55,7 @@ type Announcement = {
   starts_at?: string | null;
   ends_at?: string | null;
   created_at: string;
+  popup?: unknown;
 };
 
 function toLocalDatetimeValue(iso: string | null | undefined): string {
@@ -151,6 +157,8 @@ export function AnnouncementsPageClient() {
       display_location: ann.display_location ?? ["banner"],
       starts_at: toLocalDatetimeValue(ann.starts_at),
       ends_at: toLocalDatetimeValue(ann.ends_at),
+      popup: readPopup(ann.popup) ?? DEFAULT_POPUP,
+      pagesText: (readPopup(ann.popup)?.pages ?? []).join(", "),
     });
     setError("");
     setVisualIdea("");
@@ -177,8 +185,17 @@ export function AnnouncementsPageClient() {
       // undefined). Editing: an empty date means "clear it", which needs an
       // explicit null (PATCH's schema accepts null, unlike POST's).
       const emptyDate = editTarget ? null : undefined;
+      const { pagesText, popup: popupForm, ...rest } = form;
+      const popup: PopupConfig = {
+        ...popupForm,
+        pages: pagesText.split(/[,\n]/).map((p) => p.trim()).filter(Boolean).map((p) => (p.startsWith("/") ? p : `/${p}`)),
+      };
+      // Only send pop-up settings once they are used, so plain announcements keep
+      // saving even before migration 043 has added the column.
+      const sendPopup = popup.enabled || !!readPopup(editTarget?.popup);
       const payload = {
-        ...form,
+        ...rest,
+        ...(sendPopup ? { popup } : {}),
         cta_label: form.cta_label || undefined,
         cta_url: form.cta_url || undefined,
         starts_at: form.starts_at ? new Date(form.starts_at).toISOString() : emptyDate,
@@ -254,7 +271,17 @@ export function AnnouncementsPageClient() {
               label: "Location",
               render: (row) => {
                 const ann = row as unknown as Announcement;
-                return <span className="text-xs text-muted-foreground">{(ann.display_location ?? []).map((l) => locationLabels[l] ?? l).join(", ") || "No location"}</span>;
+                const pop = readPopup(ann.popup);
+                return (
+                  <div className="flex flex-col items-start gap-1">
+                    <span className="text-xs text-muted-foreground">{(ann.display_location ?? []).map((l) => locationLabels[l] ?? l).join(", ") || (pop?.enabled ? "Pop-up only" : "No location")}</span>
+                    {pop?.enabled && (
+                      <span className="inline-flex items-center h-6 px-2.5 rounded-full bg-brand-gold/15 text-[11px] font-medium text-amber-800 dark:text-brand-gold whitespace-nowrap">
+                        Pop-up · {describePopup(pop)}
+                      </span>
+                    )}
+                  </div>
+                );
               },
             },
             {
@@ -306,7 +333,7 @@ export function AnnouncementsPageClient() {
       </Card>
 
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="max-w-lg">
+        <DialogContent className="max-w-2xl sm:max-w-2xl">
           <DialogHeader>
             <DialogTitle>{editTarget ? "Edit Announcement" : "New Announcement"}</DialogTitle>
           </DialogHeader>
@@ -359,7 +386,8 @@ export function AnnouncementsPageClient() {
               </div>
             </div>
             <div className="space-y-1.5">
-              <Label>Display Locations</Label>
+              <Label>Where it shows</Label>
+              <p className="text-xs text-muted-foreground -mt-0.5">Turn all of these off for a pop-up only announcement.</p>
               <div className="flex gap-2 flex-wrap">
                 {Object.entries(locationLabels).map(([key, label]) => (
                   <button key={key} type="button" onClick={() => toggleLocation(key)}
@@ -369,6 +397,12 @@ export function AnnouncementsPageClient() {
                 ))}
               </div>
             </div>
+            <PopupSettings
+              value={form.popup}
+              pagesText={form.pagesText}
+              onChange={(popup) => setForm((f) => ({ ...f, popup }))}
+              onPagesText={(pagesText) => setForm((f) => ({ ...f, pagesText }))}
+            />
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1.5">
                 <Label htmlFor="ann-start">Start Date</Label>
@@ -390,5 +424,104 @@ export function AnnouncementsPageClient() {
         </DialogContent>
       </Dialog>
     </div>
+  );
+}
+
+// ─── Pop-up settings ──────────────────────────────────────────────────────────
+
+const POPUP_SELECT = "h-10 w-full rounded-xl border border-input bg-background px-3 text-sm";
+
+function PopupSettings({
+  value, pagesText, onChange, onPagesText,
+}: {
+  value: PopupConfig;
+  pagesText: string;
+  onChange: (v: PopupConfig) => void;
+  onPagesText: (v: string) => void;
+}) {
+  const set = <K extends keyof PopupConfig>(k: K, v: PopupConfig[K]) => onChange({ ...value, [k]: v });
+  return (
+    <fieldset className="rounded-2xl border border-border p-4 space-y-4">
+      <div className="flex items-center justify-between gap-4">
+        <div>
+          <legend className="text-sm font-semibold text-foreground">Show as a pop-up</legend>
+          <p className="text-xs text-muted-foreground">Appears on the website when the conditions below are met.</p>
+        </div>
+        <button
+          type="button"
+          role="switch"
+          aria-checked={value.enabled}
+          onClick={() => set("enabled", !value.enabled)}
+          className={cn("relative h-7 w-12 rounded-full transition-colors shrink-0", value.enabled ? "bg-brand-gold" : "bg-muted")}
+        >
+          <span className={cn("absolute top-1 size-5 rounded-full bg-white shadow transition-[left]", value.enabled ? "left-6" : "left-1")} />
+          <span className="sr-only">Show as a pop-up</span>
+        </button>
+      </div>
+
+      {value.enabled && (
+        <div className="grid sm:grid-cols-2 gap-4">
+          <div className="space-y-1.5 sm:col-span-2">
+            <Label htmlFor="pop-trigger">When it appears</Label>
+            <div className="flex gap-2">
+              <select id="pop-trigger" className={POPUP_SELECT} value={value.trigger} onChange={(e) => set("trigger", e.target.value as PopupConfig["trigger"])}>
+                {Object.entries(TRIGGER_LABELS).map(([k, l]) => <option key={k} value={k}>{l}</option>)}
+              </select>
+              {value.trigger === "delay" && (
+                <label className="flex items-center gap-2 text-sm text-muted-foreground shrink-0">
+                  <Input type="number" min={0} max={600} className="w-20" value={value.delaySeconds} onChange={(e) => set("delaySeconds", Number(e.target.value) || 0)} /> sec
+                </label>
+              )}
+              {value.trigger === "scroll" && (
+                <label className="flex items-center gap-2 text-sm text-muted-foreground shrink-0">
+                  <Input type="number" min={1} max={100} className="w-20" value={value.scrollPercent} onChange={(e) => set("scrollPercent", Number(e.target.value) || 50)} /> %
+                </label>
+              )}
+            </div>
+            {value.trigger === "exit" && <p className="text-xs text-muted-foreground">On phones, which have no exit gesture, it shows after 30 seconds instead.</p>}
+          </div>
+
+          <div className="space-y-1.5 sm:col-span-2">
+            <Label htmlFor="pop-pages">Pages</Label>
+            <Input id="pop-pages" value={pagesText} onChange={(e) => onPagesText(e.target.value)} placeholder="All pages. Or list them: /, /services, /blog/*" />
+            <p className="text-xs text-muted-foreground">Leave empty for every page. End with /* to include everything under a section.</p>
+          </div>
+
+          <div className="space-y-1.5">
+            <Label htmlFor="pop-audience">Who sees it</Label>
+            <select id="pop-audience" className={POPUP_SELECT} value={value.audience} onChange={(e) => set("audience", e.target.value as PopupConfig["audience"])}>
+              <option value="all">Everyone</option>
+              <option value="new">First-time visitors</option>
+              <option value="returning">Returning visitors</option>
+            </select>
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="pop-device">Device</Label>
+            <select id="pop-device" className={POPUP_SELECT} value={value.device} onChange={(e) => set("device", e.target.value as PopupConfig["device"])}>
+              <option value="all">Phones and computers</option>
+              <option value="mobile">Phones only</option>
+              <option value="desktop">Computers only</option>
+            </select>
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="pop-frequency">How often</Label>
+            <div className="flex gap-2">
+              <select id="pop-frequency" className={POPUP_SELECT} value={value.frequency} onChange={(e) => set("frequency", e.target.value as PopupConfig["frequency"])}>
+                {Object.entries(FREQUENCY_LABELS).map(([k, l]) => <option key={k} value={k}>{l}</option>)}
+              </select>
+              {value.frequency === "days" && (
+                <Input type="number" min={1} max={365} className="w-20" aria-label="Days" value={value.frequencyDays} onChange={(e) => set("frequencyDays", Number(e.target.value) || 7)} />
+              )}
+            </div>
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="pop-style">Style</Label>
+            <select id="pop-style" className={POPUP_SELECT} value={value.style} onChange={(e) => set("style", e.target.value as PopupConfig["style"])}>
+              {Object.entries(STYLE_LABELS).map(([k, l]) => <option key={k} value={k}>{l}</option>)}
+            </select>
+          </div>
+        </div>
+      )}
+    </fieldset>
   );
 }

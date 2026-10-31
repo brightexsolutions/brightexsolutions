@@ -59,6 +59,8 @@ export function ContactForm({ variant = "card", hideService, defaultService }: C
         return;
       }
       setSubmitted(true);
+      // Lets "after the form is sent" pop-ups fire (see popup-manager.tsx)
+      window.dispatchEvent(new Event("bx:lead"));
     } catch {
       setServerError("Network error. Please reach out via WhatsApp at +254 741 980 127.");
     }

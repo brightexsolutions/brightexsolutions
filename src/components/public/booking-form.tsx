@@ -67,6 +67,8 @@ export function BookingForm({ variant = "card" }: BookingFormProps) {
         return;
       }
       setSubmitted(true);
+      // Lets "after the form is sent" pop-ups fire (see popup-manager.tsx)
+      window.dispatchEvent(new Event("bx:lead"));
     } catch {
       setServerError("Network error. Please try again in a moment.");
     }
