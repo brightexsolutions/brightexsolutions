@@ -154,7 +154,7 @@ export function CommunicationsPageClient() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="font-display text-2xl font-bold text-foreground">Communications</h1>
-          <p className="text-sm text-muted-foreground mt-1">Log calls, emails, and meetings with clients.</p>
+          <p className="text-sm text-muted-foreground mt-1">Calls, emails and meetings.</p>
         </div>
         <div className="flex items-center gap-2">
           <button onClick={() => setComposerOpen(true)} className="inline-flex items-center gap-2 px-4 py-2.5 rounded-sm border border-brand-gold/40 text-brand-gold font-semibold text-sm hover:bg-brand-gold/10 transition-colors">
@@ -167,10 +167,10 @@ export function CommunicationsPageClient() {
       </div>
 
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-        <StatCard title="Total Logs" value={communications.length} icon={MessageSquare} />
-        <StatCard title="Emails Sent" value={communications.filter((e) => e.type === "email").length} icon={MessageSquare} iconColor="text-blue-400" iconBg="bg-blue-400/10" />
-        <StatCard title="Calls Logged" value={communications.filter((e) => e.type === "call").length} icon={MessageSquare} iconColor="text-amber-400" iconBg="bg-amber-400/10" />
-        <StatCard title="Meetings" value={communications.filter((e) => e.type === "meeting").length} icon={MessageSquare} iconColor="text-purple-400" iconBg="bg-purple-400/10" />
+        <StatCard loading={loading} title="Total Logs" value={communications.length} icon={MessageSquare} />
+        <StatCard loading={loading} title="Emails Sent" value={communications.filter((e) => e.type === "email").length} icon={MessageSquare} iconColor="text-blue-400" iconBg="bg-blue-400/10" />
+        <StatCard loading={loading} title="Calls Logged" value={communications.filter((e) => e.type === "call").length} icon={MessageSquare} iconColor="text-amber-400" iconBg="bg-amber-400/10" />
+        <StatCard loading={loading} title="Meetings" value={communications.filter((e) => e.type === "meeting").length} icon={MessageSquare} iconColor="text-purple-400" iconBg="bg-purple-400/10" />
       </div>
 
       <Card className="overflow-hidden">
@@ -232,7 +232,7 @@ export function CommunicationsPageClient() {
           ]}
           activeFilters={{ type: activeFilter === "All" ? "" : activeFilter.toLowerCase() }}
           onFilterChange={(_, val) => setActiveFilter(val ? val.charAt(0).toUpperCase() + val.slice(1) : "All")}
-          emptyMessage={loading ? "Loading communication history…" : "No communications logged yet."}
+          loading={loading} emptyMessage={"No communications logged yet."}
         />
       </Card>
 

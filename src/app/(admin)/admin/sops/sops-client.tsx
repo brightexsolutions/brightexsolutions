@@ -42,10 +42,9 @@ export function SopsPageClient({ entries, categories }: { entries: SopListEntry[
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="font-display text-2xl font-bold text-foreground">Standard Operating Procedures</h1>
+        <h1 className="font-display text-2xl font-bold text-foreground">SOPs</h1>
         <p className="text-sm text-muted-foreground mt-1">
-          How Brightex handles clients and runs each kind of project. These are the standing procedures, version
-          controlled and always current.
+          How we run every kind of project.
         </p>
       </div>
 

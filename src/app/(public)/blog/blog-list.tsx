@@ -62,7 +62,7 @@ function NewsletterForm() {
           onChange={(e) => setEmail(e.target.value)}
           placeholder="Your email address"
           required
-          className="w-full pl-9 pr-4 py-3 rounded-sm bg-white/8 border border-white/15 text-white placeholder:text-white/35 text-sm focus:outline-none focus:border-brand-gold transition-colors"
+          className="w-full pl-9 pr-4 py-3 rounded-sm bg-white/8 border border-white/15 text-white placeholder:text-white/60 text-sm focus:outline-none focus:border-brand-gold transition-colors"
         />
       </div>
       <button
@@ -161,7 +161,7 @@ export function BlogList({ posts }: { posts: BlogPost[] }) {
                               <Tag size={10} />
                               {featured.category}
                             </span>
-                            <span className="flex items-center gap-1 text-xs text-white/35">
+                            <span className="flex items-center gap-1 text-xs text-white/65">
                               <Clock size={11} />
                               {featured.readingTime} min read
                             </span>
@@ -174,7 +174,7 @@ export function BlogList({ posts }: { posts: BlogPost[] }) {
                           </p>
                         </div>
                         <div className="flex items-center justify-between mt-8 pt-5 border-t border-white/8">
-                          <span className="text-xs text-white/25">
+                          <span className="text-xs text-white/60">
                             {new Date(featured.date).toLocaleDateString("en-KE", { year: "numeric", month: "long", day: "numeric" })}
                           </span>
                           <span className="flex items-center gap-1.5 text-xs font-semibold text-brand-gold">

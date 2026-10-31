@@ -30,7 +30,7 @@ export function ProcessSection() {
                 {i < steps.length - 1 && (
                   <div className="hidden lg:block absolute top-6 left-[calc(50%+2rem)] right-0 h-px bg-brand-border dark:bg-white/10" />
                 )}
-                <div className="font-display text-6xl font-bold text-brand-gold/20 mb-4 leading-none">
+                <div aria-hidden className="font-display text-6xl font-bold text-brand-gold/30 mb-4 leading-none">
                   {step.number}
                 </div>
                 <h3 className="font-semibold text-brand-navy dark:text-white text-xl mb-3">

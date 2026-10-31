@@ -10,43 +10,46 @@ import { usePathname } from "next/navigation";
 import Link from "next/link";
 import { MoreHorizontal } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Skeleton } from "@/components/ui/skeleton";
 import { ADMIN_HUBS, resolveAdminRoute } from "@/lib/admin-nav";
 
 export function AdminPageSkeleton() {
   return (
-    <div className="space-y-6 animate-pulse">
-      <div className="flex items-center justify-between">
+    <div className="space-y-5" aria-busy="true" aria-label="Loading page">
+      <div className="flex items-center justify-between gap-4">
         <div className="space-y-2">
-          <div className="h-7 w-48 bg-muted rounded-sm" />
-          <div className="h-4 w-72 bg-muted/60 rounded-sm" />
+          <Skeleton className="h-7 w-44" />
+          <Skeleton className="h-4 w-60" />
         </div>
-        <div className="h-9 w-28 bg-muted rounded-sm" />
+        <Skeleton className="h-10 w-32 rounded-full" />
       </div>
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 xl:grid-cols-4 gap-3">
         {[...Array(4)].map((_, i) => (
-          <div key={i} className="rounded-lg border border-border bg-card p-4 space-y-3">
+          <div key={i} className="rounded-2xl bg-muted/50 px-4 py-3.5 space-y-3">
             <div className="flex items-center justify-between">
-              <div className="h-4 w-24 bg-muted rounded-sm" />
-              <div className="h-8 w-8 bg-muted rounded-sm" />
+              <Skeleton className="h-4 w-24" />
+              <Skeleton className="size-7 rounded-full" />
             </div>
-            <div className="h-7 w-20 bg-muted rounded-sm" />
-            <div className="h-3 w-32 bg-muted/60 rounded-sm" />
+            <Skeleton className="h-7 w-20" />
           </div>
         ))}
       </div>
-      <div className="rounded-lg border border-border bg-card">
-        <div className="p-4 border-b border-border">
-          <div className="h-5 w-36 bg-muted rounded-sm" />
+      <div className="rounded-2xl border border-border bg-card overflow-hidden">
+        <div className="flex gap-2 p-3">
+          <Skeleton className="h-10 w-72 rounded-full" />
+          <Skeleton className="h-8 w-16 rounded-lg mt-1" />
+          <Skeleton className="h-8 w-16 rounded-lg mt-1" />
         </div>
-        <div className="divide-y divide-border">
-          {[...Array(5)].map((_, i) => (
-            <div key={i} className="flex items-center gap-4 px-6 py-4">
-              <div className="h-9 w-9 bg-muted rounded-full shrink-0" />
-              <div className="flex-1 space-y-2">
-                <div className="h-4 w-48 bg-muted rounded-sm" />
-                <div className="h-3 w-64 bg-muted/60 rounded-sm" />
+        <div className="border-t border-border divide-y divide-border/60">
+          {[...Array(6)].map((_, i) => (
+            <div key={i} className="flex items-center gap-6 px-4 py-3.5">
+              <div className="w-1/4 space-y-1.5">
+                <Skeleton className="h-3.5 w-3/4" />
+                <Skeleton className="h-3 w-1/2" />
               </div>
-              <div className="h-6 w-16 bg-muted rounded-sm shrink-0" />
+              <Skeleton className="h-6 w-16 rounded-full" />
+              <Skeleton className="h-3.5 w-1/5" />
+              <Skeleton className="h-3.5 w-24 ml-auto" />
             </div>
           ))}
         </div>

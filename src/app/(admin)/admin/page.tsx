@@ -220,7 +220,7 @@ export default async function AdminDashboardPage() {
           {!data
             ? "Live data is unavailable. Check the Supabase connection."
             : hasCritical ? "Critical alerts need attention" : "Some site checks need review"}
-          {data && <span className="ml-auto flex items-center gap-1 text-xs opacity-80">{data.alerts.length} open <ArrowUpRight size={12} /></span>}
+          {data && <span className="ml-auto flex items-center gap-1 text-xs">{data.alerts.length} open <ArrowUpRight size={12} /></span>}
         </Link>
       )}
 

@@ -398,7 +398,7 @@ export default function FinancePage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="font-display text-2xl font-bold text-foreground">Finance</h1>
-          <p className="text-sm text-muted-foreground mt-1">Income, expenses, and P&amp;L reports.</p>
+          <p className="text-sm text-muted-foreground mt-1">Income, expenses and P&amp;L.</p>
         </div>
         <button
           onClick={handleExport}
@@ -409,10 +409,10 @@ export default function FinancePage() {
       </div>
 
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-        <StatCard title="Total Income (net)" value={`KES ${totalIncome.toLocaleString()}`} icon={TrendingUp} iconColor="text-emerald-400" iconBg="bg-emerald-400/10" />
-        <StatCard title="Total Expenses" value={`KES ${totalExpenses.toLocaleString()}`} icon={TrendingDown} iconColor="text-red-400" iconBg="bg-red-400/10" />
-        <StatCard title="Net Profit" value={`KES ${netProfit.toLocaleString()}`} icon={DollarSign} iconColor={netProfit >= 0 ? "text-brand-gold" : "text-red-400"} iconBg={netProfit >= 0 ? "bg-brand-gold/10" : "bg-red-400/10"} />
-        <StatCard title="This Month Net" value={`KES ${(thisMonthIncome - thisMonthExpenses).toLocaleString()}`} icon={BarChart2} />
+        <StatCard loading={loading} title="Income (net)" value={`KES ${totalIncome.toLocaleString()}`} icon={TrendingUp} iconColor="text-emerald-400" iconBg="bg-emerald-400/10" />
+        <StatCard loading={loading} title="Total Expenses" value={`KES ${totalExpenses.toLocaleString()}`} icon={TrendingDown} iconColor="text-red-400" iconBg="bg-red-400/10" />
+        <StatCard loading={loading} title="Net Profit" value={`KES ${netProfit.toLocaleString()}`} icon={DollarSign} iconColor={netProfit >= 0 ? "text-brand-gold" : "text-red-400"} iconBg={netProfit >= 0 ? "bg-brand-gold/10" : "bg-red-400/10"} />
+        <StatCard loading={loading} title="This Month Net" value={`KES ${(thisMonthIncome - thisMonthExpenses).toLocaleString()}`} icon={BarChart2} />
       </div>
 
       <div className="flex gap-1 border-b border-border">
@@ -482,7 +482,7 @@ export default function FinancePage() {
               </button>
             }
             maxHeight="480px"
-            emptyMessage={loading ? "Loading income records…" : "No income records yet."}
+            loading={loading} emptyMessage={"No income records yet."}
           />
         </Card>
       )}
@@ -540,7 +540,7 @@ export default function FinancePage() {
               </button>
             }
             maxHeight="480px"
-            emptyMessage={loading ? "Loading expenses…" : "No expenses yet."}
+            loading={loading} emptyMessage={"No expenses yet."}
           />
         </Card>
       )}
@@ -729,7 +729,7 @@ export default function FinancePage() {
               </button>
             }
             maxHeight="480px"
-            emptyMessage={docsLoading ? "Loading documents…" : "No documents uploaded yet."}
+            loading={docsLoading} emptyMessage={"No documents uploaded yet."}
           />
         </Card>
       )}

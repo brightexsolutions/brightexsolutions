@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Sparkles, RefreshCw, Loader2, ArrowUpRight, PartyPopper, FileEdit } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { ListSkeleton } from "@/components/admin/skeletons";
 
 type Urgency = "high" | "medium" | "low";
 type DraftKind = "invoice_reminder" | "lead_followup" | "client_checkin";
@@ -26,9 +27,9 @@ interface Response {
 }
 
 const urgencyStyle: Record<Urgency, string> = {
-  high: "bg-red-400/10 text-red-500",
-  medium: "bg-amber-400/10 text-amber-500",
-  low: "bg-blue-400/10 text-blue-500",
+  high: "bg-red-500/12 text-red-700 dark:text-red-300",
+  medium: "bg-amber-500/15 text-amber-800 dark:text-amber-300",
+  low: "bg-blue-500/12 text-blue-700 dark:text-blue-300",
 };
 
 export function SuggestedActionsCard({ onDraft }: { onDraft?: (action: SuggestedAction) => void }) {
@@ -67,7 +68,7 @@ export function SuggestedActionsCard({ onDraft }: { onDraft?: (action: Suggested
             <Sparkles size={15} className="text-brand-gold" />
             <CardTitle className="text-base font-semibold">Suggested Next Actions</CardTitle>
             {data?.source === "ai" && (
-              <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600">AI</span>
+              <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-emerald-500/12 text-emerald-700 dark:text-emerald-300">AI</span>
             )}
           </div>
           <button onClick={load} disabled={loading} className="text-muted-foreground hover:text-foreground transition-colors disabled:opacity-50">
@@ -78,9 +79,7 @@ export function SuggestedActionsCard({ onDraft }: { onDraft?: (action: Suggested
       </CardHeader>
       <CardContent className="pt-0">
         {loading && !data ? (
-          <div className="py-6 flex justify-center">
-            <Loader2 size={18} className="animate-spin text-muted-foreground" />
-          </div>
+          <ListSkeleton rows={4} className="-mx-4" />
         ) : !data || data.actions.length === 0 ? (
           <div className="py-6 flex flex-col items-center gap-2 text-center">
             <PartyPopper size={20} className="text-emerald-500" />

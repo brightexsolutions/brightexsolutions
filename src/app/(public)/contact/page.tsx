@@ -57,7 +57,7 @@ export default function ContactPage() {
                   <Icon size={14} className="text-brand-gold" />
                 </div>
                 <div className="pt-0.5">
-                  <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-brand-muted/60 mb-0.5">{label}</p>
+                  <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-brand-muted mb-0.5">{label}</p>
                   {href ? (
                     <a href={href} className="text-sm font-medium text-brand-navy hover:text-brand-gold transition-colors">
                       {value}
@@ -86,7 +86,7 @@ export default function ContactPage() {
               <p className="text-sm font-semibold text-brand-navy">Chat on WhatsApp</p>
               <p className="text-xs text-brand-muted">Replies within {WHATSAPP_REPLY_TIME}</p>
             </div>
-            <svg className="ml-auto w-4 h-4 text-brand-muted/40 group-hover:text-[#25D366] transition-colors" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M12 5l7 7-7 7" /></svg>
+            <svg className="ml-auto w-4 h-4 text-brand-muted group-hover:text-[#25D366] transition-colors" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M12 5l7 7-7 7" /></svg>
           </a>
 
           {/* Promises */}

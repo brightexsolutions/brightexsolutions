@@ -140,7 +140,7 @@ export default async function WorkPage() {
             ].filter(s => s.value).map(({ value, label }) => (
               <div key={label}>
                 <div className="font-display text-3xl font-bold text-white">{value}</div>
-                <div className="text-white/35 text-xs uppercase tracking-widest font-semibold mt-0.5">{label}</div>
+                <div className="text-white/65 text-xs uppercase tracking-widest font-semibold mt-0.5">{label}</div>
               </div>
             ))}
           </FadeIn>
@@ -309,7 +309,7 @@ export default async function WorkPage() {
       <section className="py-20 bg-brand-navy">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <FadeIn>
-            <p className="text-white/40 text-[10px] uppercase tracking-[0.2em] font-bold mb-4">Ready to be next?</p>
+            <p className="text-white/65 text-[10px] uppercase tracking-[0.2em] font-bold mb-4">Ready to be next?</p>
             <h2 className="font-display text-3xl sm:text-4xl font-bold text-white mb-6">
               Let&apos;s build something<br />
               <span className="text-brand-gold">you&apos;re proud of.</span>

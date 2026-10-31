@@ -118,7 +118,7 @@ function ServiceCard({ service: s }: { service: Service }) {
           <div className="w-10 h-10 rounded-sm bg-brand-gold/8 flex items-center justify-center shrink-0">
             <s.icon size={18} className="text-brand-gold" />
           </div>
-          <span className="text-xs font-mono text-brand-muted/40">{s.num}</span>
+          <span className="text-xs font-mono text-brand-muted">{s.num}</span>
         </div>
         <h3 className="font-display text-lg font-bold text-brand-navy mb-1 leading-snug">{s.title}</h3>
         <p className="text-brand-gold text-[11px] font-semibold mb-3">{s.tagline}</p>

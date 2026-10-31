@@ -119,7 +119,7 @@ export function AnnouncementDialog({ announcement }: { announcement: Announcemen
                   )}
                   <button
                     onClick={close}
-                    className="text-xs text-white/35 hover:text-white/60 transition-colors font-medium"
+                    className="text-xs text-white/70 hover:text-white transition-colors font-medium"
                   >
                     Maybe later
                   </button>

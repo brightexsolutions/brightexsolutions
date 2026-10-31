@@ -16,6 +16,7 @@ import { useConfirm, useNotice } from "@/components/admin/confirm-dialog";
 import { EmailComposer, type EmailComposerRecipient } from "@/components/admin/email-composer";
 import { DocumentViewerSheet, type DocumentViewerTarget } from "@/components/admin/document-viewer-sheet";
 import { RecipientHint, useClientContacts } from "@/components/admin/recipient-hint";
+import { Notice } from "@/components/admin/notice";
 
 const methods = ["mpesa", "bank", "paypal", "cash"] as const;
 const methodLabels: Record<string, string> = {
@@ -316,7 +317,7 @@ export function PaymentsPageClient() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="font-display text-2xl font-bold text-foreground">Payments</h1>
-          <p className="text-sm text-muted-foreground mt-1">Record incoming payments and send receipts.</p>
+          <p className="text-sm text-muted-foreground mt-1">Money in, with receipts.</p>
         </div>
         <button
           onClick={openCreate}
@@ -328,18 +329,14 @@ export function PaymentsPageClient() {
       </div>
 
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-        <StatCard title="Total Received" value={`KES ${totalReceived.toLocaleString()}`} icon={CreditCard} iconColor="text-emerald-400" iconBg="bg-emerald-400/10" />
-        <StatCard title="This Month" value={`KES ${thisMonth.toLocaleString()}`} icon={CreditCard} iconColor="text-brand-gold" iconBg="bg-brand-gold/10" />
-        <StatCard title="Transactions" value={payments.length} icon={CreditCard} />
-        <StatCard title="Pending Receipts" value={pendingReceipts} icon={CreditCard} iconColor="text-amber-400" iconBg="bg-amber-400/10" />
+        <StatCard loading={loading} title="Total Received" value={`KES ${totalReceived.toLocaleString()}`} icon={CreditCard} iconColor="text-emerald-400" iconBg="bg-emerald-400/10" />
+        <StatCard loading={loading} title="This Month" value={`KES ${thisMonth.toLocaleString()}`} icon={CreditCard} iconColor="text-brand-gold" iconBg="bg-brand-gold/10" />
+        <StatCard loading={loading} title="Transactions" value={payments.length} icon={CreditCard} />
+        <StatCard loading={loading} title="Receipts due" value={pendingReceipts} icon={CreditCard} iconColor="text-amber-400" iconBg="bg-amber-400/10" />
       </div>
 
       {loadError && (
-        <Card>
-          <CardContent className="pt-6">
-            <p className="text-sm text-red-500 text-center">{loadError}</p>
-          </CardContent>
-        </Card>
+        <Notice tone="error">{loadError}</Notice>
       )}
 
       <Card className="overflow-hidden">
@@ -483,7 +480,7 @@ export function PaymentsPageClient() {
           searchPlaceholder="Search payments…"
           searchKeys={["reference", "method"]}
           exportName="payments"
-          emptyMessage={loading ? "Loading payments…" : "No payments recorded yet."}
+          loading={loading} emptyMessage={"No payments recorded yet."}
         />
       </Card>
 

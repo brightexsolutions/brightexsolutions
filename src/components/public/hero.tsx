@@ -72,7 +72,7 @@ export function Hero({ announcement }: { announcement?: HeroAnnouncement }) {
             </div>
           </FadeIn>
 
-          <ul className="mt-12 flex flex-wrap gap-x-6 gap-y-2 text-sm text-white/55">
+          <ul className="mt-12 flex flex-wrap gap-x-6 gap-y-2 text-sm text-white/70">
             {CAPABILITIES.map((c) => (
               <li key={c} className="flex items-center gap-2">
                 <span className="h-1 w-1 rounded-full bg-brand-gold" />
@@ -84,7 +84,7 @@ export function Hero({ announcement }: { announcement?: HeroAnnouncement }) {
 
         {/* Trusted by: real client logos, linked to the sites we built */}
         <div className="mt-20 border-t border-white/10 pt-8">
-          <p className="text-white/45 text-xs font-semibold uppercase tracking-[0.18em] mb-5">
+          <p className="text-white/65 text-xs font-semibold uppercase tracking-[0.18em] mb-5">
             Trusted by
           </p>
           <ul className="flex flex-wrap items-center gap-3">

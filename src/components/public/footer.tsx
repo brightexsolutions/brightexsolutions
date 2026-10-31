@@ -119,8 +119,8 @@ export function PublicFooter() {
           {/* Brand */}
           <div className="col-span-2 md:col-span-1">
             <Logo inverted className="mb-5" />
-            <p className="text-white/40 text-sm leading-relaxed mb-7 max-w-[260px]">
-              Nairobi-based digital agency building custom websites, platforms, AI tools, and ERP systems for businesses across Kenya and East Africa.
+            <p className="text-white/65 text-sm leading-relaxed mb-7 max-w-[260px]">
+              Technology consultancy in Nairobi. We build websites, ERP systems, custom software and AI tools for businesses across Kenya and East Africa.
             </p>
 
             {/* Social row */}
@@ -165,7 +165,7 @@ export function PublicFooter() {
 
           {/* Navigate */}
           <div>
-            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-white/30 mb-6">Navigate</p>
+            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-white/60 mb-6">Navigate</p>
             <ul className="space-y-3.5">
               {navigation.map((item) => (
                 <li key={item.href}>
@@ -182,7 +182,7 @@ export function PublicFooter() {
 
           {/* Services */}
           <div>
-            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-white/30 mb-6">Services</p>
+            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-white/60 mb-6">Services</p>
             <ul className="space-y-3.5">
               {services.map((s) => (
                 <li key={s}>
@@ -199,7 +199,7 @@ export function PublicFooter() {
 
           {/* Contact */}
           <div>
-            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-white/30 mb-6">Get in Touch</p>
+            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-white/60 mb-6">Get in Touch</p>
             <ul className="space-y-4">
               <li>
                 <a
@@ -244,7 +244,7 @@ export function PublicFooter() {
                   <span className="break-all">{BUSINESS_EMAIL}</span>
                 </a>
               </li>
-              <li className="flex items-start gap-3 text-sm text-white/35">
+              <li className="flex items-start gap-3 text-sm text-white/65">
                 <span className="mt-0.5 w-5 h-5 shrink-0">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5">
                     <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z" />
@@ -276,13 +276,13 @@ export function PublicFooter() {
       {/* ── 3. BOTTOM BAR ───────────────────────────────────────────────── */}
       <div className="border-t border-white/[0.06]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5 flex flex-col sm:flex-row items-center justify-between gap-3">
-          <p className="text-[11px] text-white/25 tracking-wide">
+          <p className="text-[11px] text-white/60 tracking-wide">
             © {new Date().getFullYear()} {SITE_NAME}. All rights reserved.
           </p>
-          <div className="flex items-center gap-5 text-[11px] text-white/25">
-            <Link href="/privacy" className="hover:text-white/50 transition-colors">Privacy Policy</Link>
+          <div className="flex items-center gap-5 text-[11px] text-white/60">
+            <Link href="/privacy" className="hover:text-white transition-colors">Privacy Policy</Link>
             <span className="w-px h-3 bg-white/15" />
-            <Link href="/contact" className="hover:text-white/50 transition-colors">Contact</Link>
+            <Link href="/contact" className="hover:text-white transition-colors">Contact</Link>
           </div>
         </div>
       </div>
@@ -291,6 +291,7 @@ export function PublicFooter() {
       <div className="relative overflow-hidden" style={{ height: "clamp(5rem, 12vw, 9rem)" }}>
         <div className="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-[20%] whitespace-nowrap select-none pointer-events-none">
           <span
+            aria-hidden
             className="font-display font-black leading-none tracking-[-0.04em] text-brand-gold/[0.12]"
             style={{ fontSize: "clamp(5rem, 16vw, 14rem)" }}
           >

@@ -1,15 +1,16 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { Calendar, ChevronLeft, ChevronRight, Pencil, Plus, Trash2, X } from "lucide-react";
+import { CalendarDays, Clock, PhoneCall, Search, ChevronLeft, ChevronRight, Pencil, Plus, Trash2, X } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { DataTable, StackedCell, type Column } from "@/components/admin/data-table";
+import { StatCard } from "@/components/admin/stat-card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { ListSkeleton } from "@/components/admin/skeletons";
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
@@ -104,6 +105,84 @@ function dateKey(date: Date) {
 }
 
 // ─── CalendarGrid ─────────────────────────────────────────────────────────────
+
+// ─── Agenda ──────────────────────────────────────────────────────────────────
+
+function Agenda({
+  events, emptyLabel, onAdd, onEdit, onDelete,
+}: {
+  events: CalendarEvent[];
+  emptyLabel: string;
+  onAdd: () => void;
+  onEdit: (ev: CalendarEvent) => void;
+  onDelete: (id: string) => void;
+}) {
+  if (events.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center text-center gap-3 py-16 px-6">
+        <span className="size-14 rounded-3xl bg-brand-gold/15 flex items-center justify-center">
+          <CalendarDays size={24} className="text-amber-700 dark:text-brand-gold" />
+        </span>
+        <p className="text-sm text-muted-foreground">{emptyLabel}</p>
+        <button onClick={onAdd} className="inline-flex items-center gap-2 h-9 px-4 rounded-full border border-border text-sm font-medium hover:bg-muted">
+          <Plus size={15} />Add event
+        </button>
+      </div>
+    );
+  }
+
+  const groups = new Map<string, CalendarEvent[]>();
+  for (const ev of events) {
+    const key = new Date(ev.start_at).toDateString();
+    groups.set(key, [...(groups.get(key) ?? []), ev]);
+  }
+  const todayKey = new Date().toDateString();
+
+  return (
+    <ol className="divide-y divide-border/70">
+      {[...groups.entries()].map(([key, dayEvents]) => {
+        const d = new Date(key);
+        const isToday = key === todayKey;
+        const past = d < new Date(new Date().toDateString());
+        return (
+          <li key={key} className={cn("flex gap-4 px-4 py-3", past && "opacity-70")}>
+            <div className={cn(
+              "w-12 shrink-0 rounded-2xl text-center py-1.5 h-fit",
+              isToday ? "bg-brand-gold text-brand-navy" : "bg-muted text-foreground"
+            )}>
+              <p className="text-[11px] font-semibold uppercase tracking-wide opacity-80">{d.toLocaleDateString("en-KE", { weekday: "short" })}</p>
+              <p className="text-lg font-semibold leading-tight tabular-nums">{d.getDate()}</p>
+            </div>
+            <ul className="flex-1 min-w-0 space-y-1.5">
+              {dayEvents.map((ev) => (
+                <li key={ev.id} className="group relative flex items-center gap-3 rounded-xl bg-background border border-border/70 pl-3 pr-2 py-2 hover:border-border hover:shadow-sm transition-shadow">
+                  <span className={cn("absolute left-0 top-2 bottom-2 w-1 rounded-r-full", typeColor[ev.type] ?? "bg-slate-400")} />
+                  <div className="flex-1 min-w-0 pl-1">
+                    <p className="text-sm font-medium text-foreground truncate">{ev.title}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {ev.all_day ? "All day" : new Date(ev.start_at).toLocaleTimeString("en-KE", { hour: "numeric", minute: "2-digit", timeZone: "Africa/Nairobi" })}
+                      {" · "}{typeLabel[ev.type] ?? ev.type}
+                    </p>
+                  </div>
+                  {(
+                    <div className="flex items-center opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity">
+                      <button onClick={() => onEdit(ev)} aria-label={`Edit ${ev.title}`} className="size-8 rounded-full flex items-center justify-center text-muted-foreground hover:bg-muted hover:text-foreground">
+                        <Pencil size={14} />
+                      </button>
+                      <button onClick={() => onDelete(ev.id)} aria-label={`Delete ${ev.title}`} className="size-8 rounded-full flex items-center justify-center text-muted-foreground hover:bg-red-500/10 hover:text-red-700">
+                        <Trash2 size={14} />
+                      </button>
+                    </div>
+                  )}
+                </li>
+              ))}
+            </ul>
+          </li>
+        );
+      })}
+    </ol>
+  );
+}
 
 function CalendarGrid({
   events,
@@ -376,6 +455,7 @@ export default function CalendarPage() {
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [events, setEvents] = useState<CalendarEvent[]>([]);
   const [loading, setLoading] = useState(true);
+  const [agendaQuery, setAgendaQuery] = useState("");
   const [refreshToken, setRefreshToken] = useState(0);
 
   // Add dialog
@@ -525,72 +605,13 @@ export default function CalendarPage() {
   const upcomingCount = events.filter((e) => new Date(e.start_at) >= new Date()).length;
   const bookingCount = events.filter((e) => e.type === "booking").length;
 
-  const eventCols: Column<Record<string, unknown>>[] = [
-    {
-      key: "type",
-      label: "Type",
-      className: "w-32",
-      render: (row) => (
-        <span className="inline-flex items-center gap-1.5">
-          <span className={cn("w-2 h-2 rounded-full shrink-0", typeColor[row.type as string] ?? "bg-muted-foreground")} />
-          <span className="text-xs capitalize">{typeLabel[row.type as string] ?? String(row.type ?? "").replace(/_/g, " ")}</span>
-        </span>
-      ),
-    },
-    {
-      key: "title",
-      label: "Event",
-      render: (row) => (
-        <StackedCell
-          primary={row.title as string}
-          secondary={row.description as string | undefined}
-        />
-      ),
-    },
-    {
-      key: "start_at",
-      label: "Date / Time",
-      className: "w-44",
-      render: (row) => (
-        <span className="text-xs text-muted-foreground whitespace-nowrap">
-          {row.all_day
-            ? "All day · " + new Date(row.start_at as string).toLocaleDateString("en-KE", { day: "numeric", month: "short", timeZone: "Africa/Nairobi" })
-            : new Date(row.start_at as string).toLocaleString("en-KE", { day: "numeric", month: "short", hour: "numeric", minute: "2-digit", timeZone: "Africa/Nairobi" })}
-        </span>
-      ),
-    },
-    {
-      key: "_edit",
-      label: "",
-      className: "w-20",
-      render: (row) => (
-        <div className="flex items-center gap-1">
-          <button
-            onClick={(e) => { e.stopPropagation(); openEdit(row as unknown as CalendarEvent); }}
-            className="p-1 rounded-sm text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
-            title="Edit event"
-          >
-            <Pencil size={12} />
-          </button>
-          <button
-            onClick={(e) => { e.stopPropagation(); setDeleteId((row as unknown as CalendarEvent).id); }}
-            className="p-1 rounded-sm text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
-            title="Delete event"
-          >
-            <Trash2 size={12} />
-          </button>
-        </div>
-      ),
-    },
-  ];
-
   return (
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="font-display text-2xl font-bold text-foreground">Calendar</h1>
-          <p className="text-sm text-muted-foreground mt-1">Unified view of all deadlines, bookings, and events.</p>
+          <p className="text-sm text-muted-foreground mt-1">Deadlines, calls and events.</p>
         </div>
         <button
           onClick={() => { setAddForm(emptyForm); setAddError(""); setAddOpen(true); }}
@@ -601,62 +622,61 @@ export default function CalendarPage() {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-3 gap-4">
-        {[
-          { label: "Events this month", value: events.length },
-          { label: "Upcoming", value: upcomingCount },
-          { label: "Bookings", value: bookingCount },
-        ].map(({ label, value }) => (
-          <Card key={label}>
-            <CardContent className="pt-5 pb-5">
-              <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1">{label}</p>
-              <p className="text-2xl font-display font-bold text-foreground">{value}</p>
-            </CardContent>
-          </Card>
-        ))}
+      <div className="grid grid-cols-3 gap-3">
+        <StatCard loading={loading} title="This month" value={events.length} icon={CalendarDays} accent={{ bg: "bg-blue-500/12", text: "text-blue-600" }} />
+        <StatCard loading={loading} title="Upcoming" value={upcomingCount} icon={Clock} accent={{ bg: "bg-amber-500/15", text: "text-amber-600" }} />
+        <StatCard loading={loading} title="Bookings" value={bookingCount} icon={PhoneCall} accent={{ bg: "bg-emerald-500/12", text: "text-emerald-600" }} />
       </div>
 
       {/* Two-panel layout */}
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-6 items-start">
 
-        {/* LEFT: event list */}
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base flex items-center justify-between gap-2">
-              <span className="flex items-center gap-2">
-                <Calendar size={16} />
+        {/* LEFT: agenda grouped by day */}
+        <section className="rounded-2xl border border-border bg-card overflow-hidden">
+          <header className="flex flex-wrap items-center gap-3 px-4 py-3 border-b border-border">
+            <div className="flex items-center gap-2 min-w-0">
+              <h2 className="text-base font-semibold text-foreground truncate">
                 {selectedDate
                   ? selectedDate.toLocaleDateString("en-KE", { weekday: "long", day: "numeric", month: "long" })
-                  : anchorDate.toLocaleDateString("en-KE", { month: "long", year: "numeric" })}
-              </span>
+                  : `Agenda · ${anchorDate.toLocaleDateString("en-KE", { month: "long", year: "numeric" })}`}
+              </h2>
               {selectedDate && (
                 <button
                   onClick={() => setSelectedDate(null)}
-                  className="flex items-center gap-1 text-xs font-normal text-muted-foreground hover:text-foreground transition-colors"
+                  className="inline-flex items-center gap-1 h-7 px-2.5 rounded-full bg-muted text-xs text-foreground hover:bg-muted/70"
                 >
-                  <X size={12} />Clear
+                  <X size={12} />Whole month
                 </button>
               )}
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="p-0">
+            </div>
+            <div className="relative ml-auto w-full sm:w-56">
+              <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
+              <input
+                value={agendaQuery}
+                onChange={(e) => setAgendaQuery(e.target.value)}
+                placeholder="Search events"
+                aria-label="Search events"
+                className="w-full h-9 pl-9 pr-3 rounded-full bg-muted/70 text-sm border border-transparent focus:outline-none focus:border-ring focus:bg-background"
+              />
+            </div>
+          </header>
+          <div className="max-h-[calc(100dvh-380px)] min-h-[280px] overflow-y-auto scrollbar-overlay">
             {loading && events.length === 0 ? (
-              <div className="py-12 text-center text-sm text-muted-foreground">Loading events…</div>
+              <ListSkeleton rows={6} />
             ) : (
-              <DataTable
-                columns={eventCols}
-                data={sortedEvents as unknown as Record<string, unknown>[]}
-                emptyMessage={selectedDate ? "No events on this day." : "No events this month."}
-                searchable
-                searchPlaceholder="Search events…"
-                maxHeight="calc(100vh - 400px)"
+              <Agenda
+                events={sortedEvents.filter((ev) => !agendaQuery.trim() || ev.title.toLowerCase().includes(agendaQuery.trim().toLowerCase()))}
+                emptyLabel={agendaQuery ? `Nothing matches "${agendaQuery}".` : selectedDate ? "Nothing on this day." : "Nothing scheduled this month."}
+                onAdd={() => { setAddForm(emptyForm); setAddError(""); setAddOpen(true); }}
+                onEdit={openEdit}
+                onDelete={(id) => setDeleteId(id)}
               />
             )}
-          </CardContent>
-        </Card>
+          </div>
+        </section>
 
         {/* RIGHT: visual calendar grid */}
-        <Card>
+        <Card className="lg:sticky lg:top-0">
           <CardContent className="pt-5 pb-4 overflow-visible">
             <CalendarGrid
               events={events}

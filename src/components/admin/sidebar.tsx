@@ -99,7 +99,7 @@ export function AdminSidebar({ collapsed, onToggle }: SidebarProps) {
                     >
                       <Icon size={20} />
                       {badge && (
-                        <span className="absolute -top-1 right-1 min-w-4 h-4 px-1 rounded-full bg-red-500 text-white text-[10px] font-semibold leading-4 text-center">
+                        <span className="absolute -top-1 right-1 min-w-4 h-4 px-1 rounded-full bg-red-600 text-white text-[10px] font-semibold leading-4 text-center">
                           {badge}
                         </span>
                       )}
@@ -146,7 +146,7 @@ export function AdminSidebar({ collapsed, onToggle }: SidebarProps) {
       {/* Account */}
       <div className="shrink-0 p-3 space-y-1">
         <div className={cn("flex items-center gap-3 rounded-2xl p-2", collapsed ? "justify-center" : "bg-sidebar-accent/50")}>
-          <div className="size-9 rounded-full bg-brand-gold/20 text-brand-gold flex items-center justify-center text-sm font-semibold shrink-0">
+          <div className="size-9 rounded-full bg-brand-gold text-brand-navy flex items-center justify-center text-sm font-semibold shrink-0">
             G
           </div>
           {!collapsed && (

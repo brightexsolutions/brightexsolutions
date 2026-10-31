@@ -293,7 +293,7 @@ export function ClientsPageClient() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="font-display text-2xl font-bold text-foreground">Clients</h1>
-          <p className="text-sm text-muted-foreground mt-1">Manage your client directory and pipeline.</p>
+          <p className="text-sm text-muted-foreground mt-1">Everyone you work with.</p>
         </div>
         <button onClick={openCreate} className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-brand-gold text-brand-navy font-semibold text-sm hover:bg-brand-gold-hover transition-colors">
           <UserPlus size={15} />Add Client
@@ -301,10 +301,10 @@ export function ClientsPageClient() {
       </div>
 
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-        <StatCard title="Total Clients" value={clients.length} icon={Users} accent={{ bg: "bg-blue-400/10", text: "text-blue-400" }} />
-        <StatCard title="Active" value={clients.filter((c) => c.classification === "active").length} icon={Users} accent={{ bg: "bg-emerald-400/10", text: "text-emerald-400" }} />
-        <StatCard title="Leads" value={clients.filter((c) => c.classification === "lead").length} icon={Users} accent={{ bg: "bg-brand-gold/10", text: "text-brand-gold" }} />
-        <StatCard title="Ghost Follow-ups" value={clients.filter((c) => c.classification === "ghost").length} icon={Users} accent={{ bg: "bg-amber-400/10", text: "text-amber-400" }} />
+        <StatCard loading={loading} title="Total Clients" value={clients.length} icon={Users} accent={{ bg: "bg-blue-400/10", text: "text-blue-400" }} />
+        <StatCard loading={loading} title="Active" value={clients.filter((c) => c.classification === "active").length} icon={Users} accent={{ bg: "bg-emerald-400/10", text: "text-emerald-400" }} />
+        <StatCard loading={loading} title="Leads" value={clients.filter((c) => c.classification === "lead").length} icon={Users} accent={{ bg: "bg-brand-gold/10", text: "text-brand-gold" }} />
+        <StatCard loading={loading} title="Gone quiet" value={clients.filter((c) => c.classification === "ghost").length} icon={Users} accent={{ bg: "bg-amber-400/10", text: "text-amber-400" }} />
       </div>
 
       <Card className="overflow-hidden">
@@ -319,7 +319,7 @@ export function ClientsPageClient() {
           activeFilters={{ classification: classFilter }}
           onFilterChange={(_, v) => setClassFilter(v)}
           exportName="clients"
-          emptyMessage={loading ? "Loading clients…" : "No clients in this segment."}
+          loading={loading} emptyMessage={"No clients in this segment."}
         />
       </Card>
 

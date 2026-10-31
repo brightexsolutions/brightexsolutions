@@ -106,8 +106,8 @@ export function AdminHeader({ onMenuClick }: AdminHeaderProps) {
         {/* User avatar */}
         <DropdownMenu>
           <DropdownMenuTrigger className="flex items-center gap-2 pl-1 pr-2 py-1 rounded-lg hover:bg-muted transition-colors ml-1">
-            <div className="w-7 h-7 rounded-full bg-brand-gold/20 border border-brand-gold/30 flex items-center justify-center shrink-0">
-              <span className="text-brand-gold text-[11px] font-bold">G</span>
+            <div className="size-8 rounded-full bg-brand-gold flex items-center justify-center shrink-0">
+              <span className="text-brand-navy text-xs font-bold">G</span>
             </div>
             <span className="hidden sm:block text-[13px] font-medium text-foreground max-w-[80px] truncate">Godwin</span>
           </DropdownMenuTrigger>

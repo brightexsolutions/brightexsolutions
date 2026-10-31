@@ -152,7 +152,7 @@ export function PortfolioPageClient() {
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Portfolio</h1>
           <p className="text-muted-foreground text-sm mt-0.5">
-            Manage the projects displayed on the public website.
+            Projects shown on the website.
           </p>
         </div>
         <Button onClick={openCreate} className="gap-2">

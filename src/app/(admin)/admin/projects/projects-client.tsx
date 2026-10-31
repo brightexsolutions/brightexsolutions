@@ -8,6 +8,7 @@ import {
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { StatCard } from "@/components/admin/stat-card";
+import { DataTable, StatusDot, Avatar, type Column, type RowAction, type FilterConfig } from "@/components/admin/data-table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import {
   Sheet, SheetContent, SheetHeader, SheetTitle, SheetFooter,
@@ -288,6 +289,7 @@ export function ProjectsPageClient() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [clients, setClients] = useState<Client[]>([]);
   const [loading, setLoading] = useState(true);
+  const [stageFilter, setStageFilter] = useState("");
 
   // Edit dialog
   const [editOpen, setEditOpen] = useState(false);
@@ -647,7 +649,7 @@ export function ProjectsPageClient() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="font-display text-2xl font-bold text-foreground">Projects</h1>
-          <p className="text-sm text-muted-foreground mt-1">One-off projects and recurring retainers.</p>
+          <p className="text-sm text-muted-foreground mt-1">Builds and retainers.</p>
         </div>
         <button
           onClick={openCreate}
@@ -659,86 +661,120 @@ export function ProjectsPageClient() {
 
       {/* Stats */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-        <StatCard title="Active" value={activeProjects.length} icon={FolderOpen} iconColor="text-emerald-400" iconBg="bg-emerald-400/10" />
-        <StatCard title="In Review" value={inReview.length} icon={FolderOpen} iconColor="text-orange-400" iconBg="bg-orange-400/10" />
-        <StatCard title="Retainers" value={retainers.length} icon={RefreshCw} iconColor="text-brand-gold" iconBg="bg-brand-gold/10" />
-        <StatCard title="Total Budget" value={`KES ${totalBudget.toLocaleString()}`} icon={FolderOpen} />
-      </div>
-
-      {/* Status filter strip */}
-      <div className="flex gap-2 overflow-x-auto pb-1">
-        {[...Object.keys(statusColors)].map((status) => (
-          <div key={status} className="flex items-center gap-2 px-3 py-1.5 rounded-sm bg-muted border border-border shrink-0">
-            <span className={cn("px-2 py-0.5 rounded-sm text-[11px] font-medium capitalize", statusColors[status])}>{status}</span>
-            <span className="text-xs text-muted-foreground">{projects.filter((p) => p.status === status).length}</span>
-          </div>
-        ))}
+        <StatCard loading={loading} title="Active" value={activeProjects.length} icon={FolderOpen} iconColor="text-emerald-400" iconBg="bg-emerald-400/10" />
+        <StatCard loading={loading} title="In Review" value={inReview.length} icon={FolderOpen} iconColor="text-orange-400" iconBg="bg-orange-400/10" />
+        <StatCard loading={loading} title="Retainers" value={retainers.length} icon={RefreshCw} iconColor="text-brand-gold" iconBg="bg-brand-gold/10" />
+        <StatCard loading={loading} title="Total Budget" value={`KES ${totalBudget.toLocaleString()}`} icon={FolderOpen} />
       </div>
 
       {/* Project list */}
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-base flex items-center gap-2"><FolderOpen size={16} />All Projects</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {loading && projects.length === 0 ? (
-            <div className="text-center py-12 text-muted-foreground text-sm">Loading projects…</div>
-          ) : projects.length === 0 ? (
-            <div className="text-center py-12 text-muted-foreground">
-              <FolderOpen size={40} className="mx-auto mb-3 opacity-20" />
-              <p className="text-sm">No projects yet.</p>
-              <button onClick={openCreate} className="mt-4 inline-flex items-center gap-2 px-3 py-1.5 rounded-sm border border-border text-xs font-medium hover:border-brand-gold/40 transition-colors">
-                <Plus size={13} />New Project
-              </button>
-            </div>
-          ) : (
-            <div className="divide-y divide-border -mx-6">
-              {projects.map((project) => (
-                <div key={project.id} className="px-6 py-4 flex items-start justify-between gap-4 group">
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <p className="text-sm font-semibold text-foreground">{project.name}</p>
-                      <span className={cn("px-2 py-0.5 rounded-sm text-[11px] font-medium capitalize", statusColors[project.status] ?? "bg-muted text-muted-foreground")}>
-                        {project.status}
-                      </span>
-                      {project.is_retainer && (
-                        <span className="px-2 py-0.5 rounded-sm text-[11px] font-medium bg-brand-gold/10 text-brand-gold flex items-center gap-1">
-                          <RefreshCw size={9} />Retainer
-                        </span>
-                      )}
+      <Card className="overflow-hidden">
+        <DataTable
+          loading={loading}
+          searchable
+          searchPlaceholder="Search projects…"
+          searchKeys={["name", "type", "client_label"]}
+          exportName="projects"
+          emptyMessage="No projects yet. Create one with New Project."
+          onRowClick={(row) => openView(row as unknown as Project)}
+          filters={[{
+            key: "status",
+            label: "Stage",
+            options: [
+              { label: `All ${projects.length}`, value: "" },
+              ...Object.keys(statusColors)
+                .map((st) => ({ st, n: projects.filter((p) => p.status === st).length }))
+                .filter(({ n }) => n > 0)
+                .map(({ st, n }) => ({ label: `${st[0].toUpperCase()}${st.slice(1)} ${n}`, value: st })),
+            ],
+          } as FilterConfig]}
+          activeFilters={{ status: stageFilter }}
+          onFilterChange={(_, v) => setStageFilter(v)}
+          columns={[
+            {
+              key: "name",
+              label: "Project",
+              sortable: true,
+              className: "w-[34%]",
+              render: (row) => {
+                const p = row as unknown as Project;
+                const client = p.clients?.company || p.clients?.name || "No client linked";
+                return (
+                  <div className="flex items-center gap-3 min-w-0">
+                    <Avatar name={client} />
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium text-foreground truncate flex items-center gap-1.5">
+                        {p.name}
+                        {p.is_retainer && (
+                          <span title="Retainer" className="inline-flex items-center gap-1 h-5 px-1.5 rounded-full bg-brand-gold/15 text-[11px] font-medium text-amber-800 dark:text-brand-gold shrink-0">
+                            <RefreshCw size={10} />Retainer
+                          </span>
+                        )}
+                      </p>
+                      <p className="text-xs text-muted-foreground truncate">{client}{p.type ? ` · ${p.type}` : ""}</p>
                     </div>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      {project.clients?.company || project.clients?.name || "No client linked"}
-                      {project.type ? ` · ${project.type}` : ""}
-                    </p>
-                    {project.notes && (
-                      <p className="text-xs text-muted-foreground mt-1 line-clamp-1">{project.notes}</p>
+                  </div>
+                );
+              },
+            },
+            {
+              key: "status",
+              label: "Stage",
+              render: (row) => {
+                const p = row as unknown as Project;
+                const step = STATUS_STEPS.indexOf(p.status as typeof STATUS_STEPS[number]);
+                return (
+                  <div className="flex flex-col items-start gap-1.5">
+                    <StatusDot status={p.status} />
+                    {step >= 0 && (
+                      <div className="flex gap-0.5" aria-label={`Step ${step + 1} of ${STATUS_STEPS.length}`}>
+                        {STATUS_STEPS.map((_, i) => (
+                          <span key={i} className={cn("h-1 w-5 rounded-full", i <= step ? "bg-brand-gold" : "bg-muted")} />
+                        ))}
+                      </div>
                     )}
                   </div>
-                  <div className="flex items-center gap-1 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <button onClick={() => openView(project)} className="p-1.5 rounded-sm hover:bg-muted text-muted-foreground hover:text-foreground transition-colors" title="View">
-                      <Eye size={13} />
-                    </button>
-                    <button onClick={() => openEdit(project)} className="p-1.5 rounded-sm hover:bg-muted text-muted-foreground hover:text-foreground transition-colors" title="Edit">
-                      <Pencil size={13} />
-                    </button>
-                    <button onClick={() => handleDelete(project)} className="p-1.5 rounded-sm hover:bg-red-50 dark:hover:bg-red-950/20 text-muted-foreground hover:text-red-500 transition-colors" title="Delete">
-                      <Trash2 size={13} />
-                    </button>
-                  </div>
-                  <div className="text-right shrink-0">
-                    <p className="text-sm font-semibold text-foreground">
-                      {project.budget ? fmt(project.budget) : "Budget TBD"}
-                    </p>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      {project.start_date ? new Date(project.start_date).toLocaleDateString("en-KE") : "Start TBD"}
-                    </p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </CardContent>
+                );
+              },
+            },
+            {
+              key: "budget",
+              label: "Value",
+              sortable: true,
+              align: "right",
+              render: (row) => {
+                const p = row as unknown as Project;
+                const amount = p.is_retainer ? p.monthly_rate : p.budget;
+                return amount ? (
+                  <span className="whitespace-nowrap">
+                    <span className="text-xs text-muted-foreground mr-1">KES</span>
+                    <span className="font-semibold text-foreground">{Number(amount).toLocaleString("en-KE")}</span>
+                    {p.is_retainer && <span className="text-xs text-muted-foreground"> /mo</span>}
+                  </span>
+                ) : <span className="text-sm text-muted-foreground">Not set</span>;
+              },
+            },
+            {
+              key: "start_date",
+              label: "Started",
+              sortable: true,
+              className: "hidden lg:table-cell",
+              render: (row) => (
+                <span className="text-sm text-foreground whitespace-nowrap">
+                  {row.start_date ? new Date(String(row.start_date)).toLocaleDateString("en-KE", { day: "numeric", month: "short", year: "numeric" }) : <span className="text-muted-foreground">Not set</span>}
+                </span>
+              ),
+            },
+          ] as Column<Record<string, unknown>>[]}
+          data={projects
+            .filter((p) => !stageFilter || p.status === stageFilter)
+            .map((p) => ({ ...p, client_label: p.clients?.company || p.clients?.name || "" })) as unknown as Record<string, unknown>[]}
+          actions={[
+            { label: "Open", icon: <Eye size={14} />, onClick: (row) => openView(row as unknown as Project) },
+            { label: "Edit", icon: <Pencil size={14} />, onClick: (row) => openEdit(row as unknown as Project) },
+            { label: "Delete", icon: <Trash2 size={14} />, destructive: true, onClick: (row) => handleDelete(row as unknown as Project) },
+          ] as RowAction<Record<string, unknown>>[]}
+        />
       </Card>
 
       {/* ── Edit / Create Dialog ─────────────────────────────────────────────── */}

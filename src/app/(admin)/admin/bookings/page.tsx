@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { BookOpen, Clock, CheckCircle2, XCircle, Pencil, Trash2, Loader2, Bell, Mail, MessageCircle, ChevronDown } from "lucide-react";
+import { BookOpen, Clock, CheckCircle2, CheckCheck, Pencil, Trash2, Loader2, Bell, Mail, MessageCircle, ChevronDown } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
@@ -14,6 +14,7 @@ import { DataTable, StackedCell, StatusDot, type Column, type RowAction } from "
 import { cn } from "@/lib/utils";
 import { SITE_NAME } from "@/lib/constants";
 import { useConfirm } from "@/components/admin/confirm-dialog";
+import { Notice } from "@/components/admin/notice";
 
 const statusColors: Record<string, string> = {
   pending: "bg-amber-400/10 text-amber-600 dark:text-amber-400 border-amber-200 dark:border-amber-800/40",
@@ -196,12 +197,12 @@ export default function BookingsPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="font-display text-2xl font-bold text-foreground">Bookings</h1>
-          <p className="text-sm text-muted-foreground mt-1">Manage incoming meeting requests from the public booking page.</p>
+          <p className="text-sm text-muted-foreground mt-1">Calls booked from the website.</p>
         </div>
         <a
           href="/contact?intent=book_call"
           target="_blank"
-          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-sm border border-brand-gold/40 text-brand-gold font-semibold text-sm hover:bg-brand-gold/10 transition-colors"
+          className="inline-flex items-center gap-2 h-10 px-4 rounded-full border border-border text-foreground font-medium text-sm hover:bg-muted transition-colors"
         >
           <BookOpen size={15} />
           View booking page
@@ -209,18 +210,14 @@ export default function BookingsPage() {
       </div>
 
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-        <StatCard title="Pending" value={bookings.filter((b) => b.status === "pending").length} icon={Clock} iconColor="text-amber-400" iconBg="bg-amber-400/10" />
-        <StatCard title="Confirmed" value={bookings.filter((b) => b.status === "confirmed").length} icon={CheckCircle2} iconColor="text-emerald-400" iconBg="bg-emerald-400/10" />
-        <StatCard title="This Week" value={thisWeek} icon={BookOpen} iconColor="text-brand-gold" iconBg="bg-brand-gold/10" />
-        <StatCard title="Completed" value={bookings.filter((b) => b.status === "completed").length} icon={XCircle} />
+        <StatCard loading={loading} title="Pending" value={bookings.filter((b) => b.status === "pending").length} icon={Clock} iconColor="text-amber-400" iconBg="bg-amber-400/10" />
+        <StatCard loading={loading} title="Confirmed" value={bookings.filter((b) => b.status === "confirmed").length} icon={CheckCircle2} iconColor="text-emerald-400" iconBg="bg-emerald-400/10" />
+        <StatCard loading={loading} title="This Week" value={thisWeek} icon={BookOpen} iconColor="text-brand-gold" iconBg="bg-brand-gold/10" />
+        <StatCard loading={loading} title="Completed" value={bookings.filter((b) => b.status === "completed").length} icon={CheckCheck} accent={{ bg: "bg-slate-500/12", text: "text-slate-600" }} />
       </div>
 
       {loadError && (
-        <Card>
-          <CardContent className="pt-6">
-            <p className="text-sm text-red-500 text-center">{loadError}</p>
-          </CardContent>
-        </Card>
+        <Notice tone="error">{loadError}</Notice>
       )}
 
       <Card className="overflow-hidden">
@@ -234,6 +231,7 @@ export default function BookingsPage() {
                 <StackedCell
                   primary={String(row.booker_name)}
                   secondary={String(row.booker_email ?? "")}
+                  avatar={String(row.booker_name)}
                 />
               ),
             },
@@ -241,7 +239,7 @@ export default function BookingsPage() {
               key: "purpose",
               label: "Purpose",
               render: (row) => (
-                <span className="text-sm capitalize">
+                <span className="inline-flex items-center h-7 px-3 rounded-full bg-muted text-xs font-medium text-foreground capitalize whitespace-nowrap">
                   {purposeLabels[String(row.purpose)] ?? String(row.purpose ?? "-").replace(/_/g, " ")}
                 </span>
               ),
@@ -250,14 +248,22 @@ export default function BookingsPage() {
               key: "scheduled_at",
               label: "Scheduled",
               sortable: true,
-              render: (row) => (
-                <span className="text-sm whitespace-nowrap">
-                  {new Date(String(row.scheduled_at)).toLocaleString("en-KE", {
-                    day: "numeric", month: "short", year: "numeric",
-                    hour: "2-digit", minute: "2-digit", timeZone: "Africa/Nairobi",
-                  })}
-                </span>
-              ),
+              render: (row) => {
+                const at = new Date(String(row.scheduled_at));
+                const days = Math.floor((new Date(at.toDateString()).getTime() - new Date(new Date().toDateString()).getTime()) / 864e5);
+                const rel = days === 0 ? "Today" : days === 1 ? "Tomorrow" : days > 1 && days <= 14 ? `In ${days} days` : days < 0 ? "Past" : null;
+                return (
+                  <div className="flex flex-col whitespace-nowrap">
+                    <span className="text-sm text-foreground">
+                      {at.toLocaleDateString("en-KE", { weekday: "short", day: "numeric", month: "short", timeZone: "Africa/Nairobi" })}
+                      <span className="text-muted-foreground"> · {at.toLocaleTimeString("en-KE", { hour: "numeric", minute: "2-digit", timeZone: "Africa/Nairobi" })}</span>
+                    </span>
+                    {rel && (
+                      <span className={cn("text-xs", days === 0 ? "text-amber-700 dark:text-amber-400 font-medium" : "text-muted-foreground")}>{rel}</span>
+                    )}
+                  </div>
+                );
+              },
             },
             {
               key: "status",
@@ -276,7 +282,7 @@ export default function BookingsPage() {
                       <button
                         onClick={(e) => { e.stopPropagation(); handleStatusChange(b, "confirmed"); }}
                         disabled={busyIds.has(b.id)}
-                        className="flex items-center gap-1 px-2 py-1 rounded-md text-[11px] font-medium bg-emerald-400/10 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-400/20 transition-colors disabled:opacity-50"
+                        className="flex items-center gap-1.5 h-8 px-3.5 rounded-full text-xs font-semibold bg-emerald-500/12 text-emerald-800 dark:text-emerald-300 hover:bg-emerald-500/20 transition-colors disabled:opacity-50"
                       >
                         {busyIds.has(b.id) ? <Loader2 size={10} className="animate-spin" /> : null} Confirm
                       </button>
@@ -286,7 +292,7 @@ export default function BookingsPage() {
                         <DropdownMenuTrigger
                           onClick={(e) => e.stopPropagation()}
                           disabled={busyIds.has(b.id)}
-                          className="flex items-center gap-1 px-2 py-1 rounded-md text-[11px] font-medium bg-brand-gold/10 text-brand-gold border border-brand-gold/20 hover:bg-brand-gold/20 transition-colors disabled:opacity-50"
+                          className="flex items-center gap-1.5 h-8 px-3.5 rounded-full text-xs font-semibold bg-brand-gold/15 text-amber-800 dark:text-brand-gold hover:bg-brand-gold/25 transition-colors disabled:opacity-50"
                         >
                           {busyIds.has(b.id) ? <Loader2 size={10} className="animate-spin" /> : <Bell size={10} />}
                           Notify
@@ -330,7 +336,7 @@ export default function BookingsPage() {
           activeFilters={{ status: statusFilter }}
           onFilterChange={(_, v) => setStatusFilter(v)}
           exportName="bookings"
-          emptyMessage={loading ? "Loading bookings…" : "No bookings yet."}
+          loading={loading} emptyMessage={"No bookings yet."}
         />
       </Card>
 

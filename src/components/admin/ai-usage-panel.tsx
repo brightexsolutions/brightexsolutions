@@ -1,9 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Loader2, Zap, Gauge, Coins } from "lucide-react";
+import { Zap, Gauge, Coins } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
+import { ListSkeleton } from "@/components/admin/skeletons";
 
 interface UsageData {
   today: { calls: number; tokensIn: number; tokensOut: number };
@@ -46,7 +47,7 @@ export function AiUsagePanel() {
   }, []);
 
   if (loading) {
-    return <div className="py-10 flex justify-center"><Loader2 size={20} className="animate-spin text-muted-foreground" /></div>;
+    return <ListSkeleton rows={4} />;
   }
   if (!data) {
     return <p className="text-sm text-muted-foreground py-6 text-center">Couldn&apos;t load AI usage data.</p>;

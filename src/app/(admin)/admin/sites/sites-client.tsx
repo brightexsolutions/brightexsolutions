@@ -13,6 +13,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
+import { Notice } from "@/components/admin/notice";
 
 const integrationLevels = [
   { level: "Passive", desc: "HTTP ping + SSL check: no changes to the tracked site" },
@@ -290,23 +291,25 @@ export function SiteMonitoringPageClient() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="font-display text-2xl font-bold text-foreground">Site Monitoring</h1>
-          <p className="text-sm text-muted-foreground mt-1">Track uptime, SSL expiry, and WordPress updates across all sites.</p>
+          <p className="text-sm text-muted-foreground mt-1">Uptime, SSL and updates.</p>
         </div>
         <div className="flex items-center gap-2">
           <button
             onClick={() => setGuideOpen(true)}
+            aria-label="Setup guide"
             className="inline-flex items-center gap-2 px-4 py-2.5 rounded-sm border border-border text-sm font-medium text-foreground hover:bg-muted transition-colors"
           >
             <BookOpen size={14} />
-            Setup Guide
+            <span className="hidden sm:inline">Setup guide</span>
           </button>
           <button
             onClick={checkAll}
             disabled={checking}
+            aria-label="Check all sites now"
             className="inline-flex items-center gap-2 px-4 py-2.5 rounded-sm border border-border text-sm font-medium text-foreground hover:bg-muted transition-colors disabled:opacity-60"
           >
             {checking ? <Loader2 size={14} className="animate-spin" /> : <RefreshCw size={14} />}
-            Check All Now
+            <span className="hidden sm:inline">Check all</span>
           </button>
           <button
             onClick={openCreate}
@@ -319,18 +322,14 @@ export function SiteMonitoringPageClient() {
       </div>
 
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-        <StatCard title="Sites Monitored" value={sites.length} icon={Globe} />
-        <StatCard title="All Up" value={sites.filter((site) => site.status === "up").length} icon={CheckCircle2} iconColor="text-emerald-400" iconBg="bg-emerald-400/10" />
-        <StatCard title="Alerts" value={alertCount} icon={AlertTriangle} iconColor="text-amber-400" iconBg="bg-amber-400/10" />
-        <StatCard title="SSL Expiring" value={sslExpiringSoon.length} icon={AlertTriangle} iconColor="text-red-400" iconBg="bg-red-400/10" />
+        <StatCard loading={loading} title="Sites" value={sites.length} icon={Globe} />
+        <StatCard loading={loading} title="All Up" value={sites.filter((site) => site.status === "up").length} icon={CheckCircle2} iconColor="text-emerald-400" iconBg="bg-emerald-400/10" />
+        <StatCard loading={loading} title="Alerts" value={alertCount} icon={AlertTriangle} iconColor="text-amber-400" iconBg="bg-amber-400/10" />
+        <StatCard loading={loading} title="SSL Expiring" value={sslExpiringSoon.length} icon={AlertTriangle} iconColor="text-red-400" iconBg="bg-red-400/10" />
       </div>
 
       {loadError && (
-        <Card>
-          <CardContent className="pt-6">
-            <p className="text-sm text-red-500 text-center">{loadError}</p>
-          </CardContent>
-        </Card>
+        <Notice tone="error">{loadError}</Notice>
       )}
 
       <div className="flex gap-2 flex-wrap items-center">

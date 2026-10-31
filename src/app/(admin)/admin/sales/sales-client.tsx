@@ -12,6 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useConfirm } from "@/components/admin/confirm-dialog";
+import { BoardSkeleton } from "@/components/admin/skeletons";
 
 // ─── Stage definitions ────────────────────────────────────────────────────────
 
@@ -330,7 +331,7 @@ export function SalesPageClient() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="font-display text-2xl font-bold text-foreground">Sales Pipeline</h1>
-          <p className="text-sm text-muted-foreground mt-1">Track deals from lead to close. Drag cards between stages.</p>
+          <p className="text-sm text-muted-foreground mt-1">Drag deals between stages.</p>
         </div>
         <button
           onClick={() => openCreate()}
@@ -341,10 +342,10 @@ export function SalesPageClient() {
       </div>
 
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-        <StatCard title="Pipeline Value" value={`KES ${pipelineValue.toLocaleString()}`} sub="Open deals only" icon={TrendingUp} />
-        <StatCard title="Open Deals" value={openDeals.length} sub="Lead to negotiation" icon={TrendingUp} iconColor="text-blue-400" iconBg="bg-blue-400/10" />
-        <StatCard title="Won (30 days)" value={wonLast30Days} sub="Recently closed" icon={TrendingUp} iconColor="text-emerald-400" iconBg="bg-emerald-400/10" />
-        <StatCard title="Win Rate" value={`${winRate}%`} sub={closedDeals > 0 ? `${wonDeals.length}/${closedDeals} closed deals` : "No closed deals yet"} icon={TrendingUp} iconColor="text-brand-gold" iconBg="bg-brand-gold/10" />
+        <StatCard loading={loading} title="Pipeline Value" value={`KES ${pipelineValue.toLocaleString()}`} sub="Open deals only" icon={TrendingUp} />
+        <StatCard loading={loading} title="Open Deals" value={openDeals.length} sub="Lead to negotiation" icon={TrendingUp} iconColor="text-blue-400" iconBg="bg-blue-400/10" />
+        <StatCard loading={loading} title="Won (30 days)" value={wonLast30Days} sub="Recently closed" icon={TrendingUp} iconColor="text-emerald-400" iconBg="bg-emerald-400/10" />
+        <StatCard loading={loading} title="Win Rate" value={`${winRate}%`} sub={closedDeals > 0 ? `${wonDeals.length}/${closedDeals} closed deals` : "No closed deals yet"} icon={TrendingUp} iconColor="text-brand-gold" iconBg="bg-brand-gold/10" />
       </div>
 
       {/* Kanban board */}
@@ -470,13 +471,7 @@ export function SalesPageClient() {
         </Card>
       )}
 
-      {loading && deals.length === 0 && (
-        <Card>
-          <CardContent className="pt-6">
-            <p className="text-sm text-muted-foreground text-center">Loading pipeline data…</p>
-          </CardContent>
-        </Card>
-      )}
+      {loading && deals.length === 0 && <BoardSkeleton />}
 
       {/* Create / Edit dialog */}
       <Dialog open={open} onOpenChange={setOpen}>

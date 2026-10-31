@@ -52,7 +52,7 @@ function CustomTooltip({ active, payload, label }: {
 
 export function RevenueChart({ data, height = "100%" }: RevenueChartProps) {
   const { resolvedTheme } = useTheme();
-  const labelColor = resolvedTheme === "dark" ? "#97acc6" : "#64748b";
+  const labelColor = resolvedTheme === "dark" ? "#b4c3d6" : "#475569";
   return (
     <ResponsiveContainer width="100%" height={height} minHeight={220} initialDimension={{ width: 600, height: 220 }}>
       <BarChart data={data} barCategoryGap="30%" barGap={3}>
@@ -74,7 +74,9 @@ export function RevenueChart({ data, height = "100%" }: RevenueChartProps) {
         <Legend
           iconType="square"
           iconSize={10}
-          wrapperStyle={{ fontSize: 11, paddingTop: 12 }}
+          wrapperStyle={{ fontSize: 12, paddingTop: 12 }}
+          // Series colours are for the swatch only; label text must stay readable
+          formatter={(value: string) => <span style={{ color: labelColor }}>{value}</span>}
         />
         <Bar dataKey="income" name="Income" fill="#f9a825" radius={[6, 6, 0, 0]} />
         <Bar dataKey="expenses" name="Expenses" fill="#64748b" radius={[6, 6, 0, 0]} />

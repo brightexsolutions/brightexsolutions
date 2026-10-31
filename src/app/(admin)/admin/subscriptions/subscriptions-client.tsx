@@ -207,7 +207,7 @@ export function SubscriptionsPageClient() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="font-display text-2xl font-bold text-foreground">Subscriptions</h1>
-          <p className="text-sm text-muted-foreground mt-1">Track domains, hosting, tools, and renewal dates.</p>
+          <p className="text-sm text-muted-foreground mt-1">Domains, hosting and renewals.</p>
         </div>
         <button onClick={openCreate} className="inline-flex items-center gap-2 px-4 py-2.5 rounded-sm bg-brand-gold text-brand-navy font-semibold text-sm hover:bg-brand-gold-hover transition-colors">
           <Plus size={15} />Add Subscription
@@ -222,10 +222,10 @@ export function SubscriptionsPageClient() {
       )}
 
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-        <StatCard title="Active" value={subscriptions.length} icon={Rss} iconColor="text-emerald-400" iconBg="bg-emerald-400/10" />
-        <StatCard title="Renewing (14d)" value={renewingSoon.length} icon={AlertTriangle} iconColor="text-amber-400" iconBg="bg-amber-400/10" />
-        <StatCard title="Monthly Cost" value={`KES ${monthlyCost.toLocaleString()}`} icon={Rss} iconColor="text-brand-gold" iconBg="bg-brand-gold/10" />
-        <StatCard title="Annual Cost" value={`KES ${annualCost.toLocaleString()}`} icon={Rss} />
+        <StatCard loading={loading} title="Active" value={subscriptions.length} icon={Rss} iconColor="text-emerald-400" iconBg="bg-emerald-400/10" />
+        <StatCard loading={loading} title="Due in 14 days" value={renewingSoon.length} icon={AlertTriangle} iconColor="text-amber-400" iconBg="bg-amber-400/10" />
+        <StatCard loading={loading} title="Monthly Cost" value={`KES ${monthlyCost.toLocaleString()}`} icon={Rss} iconColor="text-brand-gold" iconBg="bg-brand-gold/10" />
+        <StatCard loading={loading} title="Annual Cost" value={`KES ${annualCost.toLocaleString()}`} icon={Rss} />
       </div>
 
       {renewingSoon.length > 0 && (
@@ -365,7 +365,7 @@ export function SubscriptionsPageClient() {
             if (key === "ownership") setActiveOwnership(val || "all");
           }}
           exportName="subscriptions"
-          emptyMessage={loading ? "Loading subscriptions…" : "No subscriptions tracked yet."}
+          loading={loading} emptyMessage={"No subscriptions tracked yet."}
         />
       </Card>
 

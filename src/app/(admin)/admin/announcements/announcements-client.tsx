@@ -215,7 +215,7 @@ export function AnnouncementsPageClient() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="font-display text-2xl font-bold text-foreground">Announcements</h1>
-          <p className="text-sm text-muted-foreground mt-1">Manage banners, offers, and promos on the public site.</p>
+          <p className="text-sm text-muted-foreground mt-1">Banners and offers on the site.</p>
         </div>
         <button onClick={openCreate} className="inline-flex items-center gap-2 px-4 py-2.5 rounded-sm bg-brand-gold text-brand-navy font-semibold text-sm hover:bg-brand-gold-hover transition-colors">
           <Plus size={15} />New Announcement
@@ -223,10 +223,10 @@ export function AnnouncementsPageClient() {
       </div>
 
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-        <StatCard title="Active" value={announcements.filter((a) => a.active).length} icon={Megaphone} iconColor="text-emerald-400" iconBg="bg-emerald-400/10" />
-        <StatCard title="Scheduled" value={scheduledAnnouncements.length} icon={Megaphone} iconColor="text-blue-400" iconBg="bg-brand-gold/10" />
-        <StatCard title="Offers" value={announcements.filter((a) => a.type === "offer" || a.type === "promo").length} icon={Megaphone} iconColor="text-brand-gold" iconBg="bg-brand-gold/10" />
-        <StatCard title="Total" value={announcements.length} icon={Megaphone} />
+        <StatCard loading={loading} title="Active" value={announcements.filter((a) => a.active).length} icon={Megaphone} iconColor="text-emerald-400" iconBg="bg-emerald-400/10" />
+        <StatCard loading={loading} title="Scheduled" value={scheduledAnnouncements.length} icon={Megaphone} iconColor="text-blue-400" iconBg="bg-brand-gold/10" />
+        <StatCard loading={loading} title="Offers" value={announcements.filter((a) => a.type === "offer" || a.type === "promo").length} icon={Megaphone} iconColor="text-brand-gold" iconBg="bg-brand-gold/10" />
+        <StatCard loading={loading} title="Total" value={announcements.length} icon={Megaphone} />
       </div>
 
       <Card className="overflow-hidden">
@@ -301,7 +301,7 @@ export function AnnouncementsPageClient() {
           ]}
           activeFilters={{ active: activeOnly ? "true" : "" }}
           onFilterChange={(key, val) => { if (key === "active") setActiveOnly(val === "true"); }}
-          emptyMessage={loading ? "Loading announcements…" : "No announcements yet."}
+          loading={loading} emptyMessage={"No announcements yet."}
         />
       </Card>
 
