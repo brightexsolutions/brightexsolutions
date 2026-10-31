@@ -4,6 +4,7 @@ import { rateLimit } from "@/lib/rate-limit";
 import { BUSINESS_PHONE, BUSINESS_EMAIL } from "@/lib/constants";
 import { logger } from "@/lib/logger";
 import type { AIProvider } from "@/types";
+import { normaliseCopy } from "@/lib/document-html/block-schema";
 
 const MessageSchema = z.object({
   role: z.enum(["user", "assistant"]),
@@ -98,8 +99,8 @@ export async function POST(request: NextRequest) {
         .eq("active", true);
 
       if (data?.length) {
-        dbFaqs = data;
-        answer = keywordMatch(message, data);
+        dbFaqs = normaliseCopy(data);
+        answer = keywordMatch(message, dbFaqs);
       }
     } catch {
       // Fall through

@@ -232,7 +232,6 @@ export function CommunicationsPageClient() {
           ]}
           activeFilters={{ type: activeFilter === "All" ? "" : activeFilter.toLowerCase() }}
           onFilterChange={(_, val) => setActiveFilter(val ? val.charAt(0).toUpperCase() + val.slice(1) : "All")}
-          maxHeight="520px"
           emptyMessage={loading ? "Loading communication history…" : "No communications logged yet."}
         />
       </Card>

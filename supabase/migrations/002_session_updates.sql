@@ -1,4 +1,4 @@
--- Migration 002 — Session updates (2026-05-26)
+-- Migration 002 - Session updates (2026-05-26)
 -- Adds: consultancy rate history, invoice payment method + billing fields,
 --       subscription ownership + payment tracking, activity log
 -- Run this in the Supabase SQL editor on your project.
@@ -55,7 +55,7 @@ CREATE TABLE IF NOT EXISTS activity_log (
   entity_type  text NOT NULL,        -- 'invoice' | 'project' | 'client' | 'subscription' | ...
   entity_id    uuid,
   entity_label text,                 -- human-readable: invoice number, project name, etc.
-  changes      jsonb,                -- {field: {from, to}} — optional diff
+  changes      jsonb,                -- {field: {from, to}} - optional diff
   notes        text,                 -- optional free-text context
   created_at   timestamptz DEFAULT now()
 );
@@ -73,7 +73,7 @@ CREATE INDEX IF NOT EXISTS idx_activity_log_created
 
 -- The settings table stores a single-row JSON config.
 -- Ensure the payment columns for Till and PayPal exist.
--- (Only if you have a settings table — otherwise these are stored in a single
+-- (Only if you have a settings table - otherwise these are stored in a single
 --  row keyed on 'invoice_settings'; add columns below if needed.)
 -- If your settings table uses a different structure, adapt this block.
 
@@ -83,4 +83,4 @@ CREATE INDEX IF NOT EXISTS idx_activity_log_created
 -- INSERT INTO settings (key, value) VALUES ('invoice_paypal_email', '') ON CONFLICT (key) DO NOTHING;
 
 -- If settings is a single-row JSONB table, these columns are handled in application config.
--- No schema change needed — the settings API already reads/writes arbitrary keys.
+-- No schema change needed - the settings API already reads/writes arbitrary keys.

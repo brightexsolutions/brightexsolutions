@@ -301,7 +301,6 @@ export function AnnouncementsPageClient() {
           ]}
           activeFilters={{ active: activeOnly ? "true" : "" }}
           onFilterChange={(key, val) => { if (key === "active") setActiveOnly(val === "true"); }}
-          maxHeight="520px"
           emptyMessage={loading ? "Loading announcements…" : "No announcements yet."}
         />
       </Card>

@@ -52,18 +52,18 @@ export function AssistantFab() {
     }
   }
 
+  // Opened from the header button rather than a floating FAB, which used to
+  // cover table pagination and the phone bottom bar.
+  useEffect(() => {
+    const toggle = () => setOpen((v) => !v);
+    window.addEventListener("toggle-assistant", toggle);
+    return () => window.removeEventListener("toggle-assistant", toggle);
+  }, []);
+
   return (
     <>
-      <button
-        onClick={() => setOpen((v) => !v)}
-        className="fixed bottom-5 right-5 z-40 w-12 h-12 rounded-full bg-brand-gold text-brand-navy shadow-lg flex items-center justify-center hover:bg-brand-gold-hover transition-all hover:scale-105"
-        title="Ask your AI assistant"
-      >
-        {open ? <X size={18} /> : <Sparkles size={18} />}
-      </button>
-
       {open && (
-        <div className="fixed bottom-20 right-5 z-40 w-[calc(100vw-2.5rem)] sm:w-96 h-[520px] max-h-[70vh] rounded-lg border border-border bg-card shadow-2xl flex flex-col overflow-hidden">
+        <div className="fixed top-16 right-3 sm:right-5 z-40 w-[calc(100vw-1.5rem)] sm:w-96 h-[520px] max-h-[calc(100dvh-6rem)] rounded-3xl border border-border bg-card shadow-2xl flex flex-col overflow-hidden">
           <div className="px-4 py-3 border-b border-border bg-muted/30 flex items-center gap-2 shrink-0">
             <div className="w-7 h-7 rounded-full bg-brand-gold/15 flex items-center justify-center shrink-0">
               <Bot size={14} className="text-brand-gold" />
@@ -72,6 +72,13 @@ export function AssistantFab() {
               <p className="text-sm font-semibold text-foreground">Assistant</p>
               <p className="text-[11px] text-muted-foreground">Grounded in your live dashboard data</p>
             </div>
+            <button
+              onClick={() => setOpen(false)}
+              aria-label="Close assistant"
+              className="ml-auto size-9 rounded-full flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted"
+            >
+              <X size={18} />
+            </button>
           </div>
 
           <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 py-3 space-y-3">

@@ -1,4 +1,4 @@
--- Migration 003 — Logo storage + Withholding Tax support (2026-05-26)
+-- Migration 003 - Logo storage + Withholding Tax support (2026-05-26)
 -- Run this in the Supabase SQL editor on your project.
 
 -- ─── 1. Logos storage bucket ─────────────────────────────────────────────────
@@ -26,7 +26,7 @@ ON CONFLICT (id) DO UPDATE
 -- withholding_type: key matching the WHT_TYPES list in the finance UI
 --   none | consultancy_5 | professional_5 | management_fees_12 |
 --   dividends_5 | interest_15 | rent_7_5 | custom
--- amount (existing column) stays as the NET received — no rename needed
+-- amount (existing column) stays as the NET received - no rename needed
 
 ALTER TABLE income_records
   ADD COLUMN IF NOT EXISTS gross_amount       numeric,

@@ -146,7 +146,7 @@ async function main() {
   check(html.includes("brxRequestChanges"), "request-changes control is offered");
   check(!html.includes('name="brxSched"'), "payment terms are stated, not offered as a choice");
   check(html.includes("sched-fixed"), "the stated terms are shown before accepting");
-  check(!html.includes("—"), "no em dashes in what the client sees");
+  check(!html.includes("\u2014"), "no em dashes in what the client sees");
   check(/@page\{size:A4/.test(html), "prints to A4");
   check(!/@media\s*\(max-width:720px\)/.test(html), "no unscoped breakpoint leaking into print");
   check(html.includes('onclick="window.print()"'), "download button is live");

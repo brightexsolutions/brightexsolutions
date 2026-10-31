@@ -1,4 +1,4 @@
--- Migration 012 — Project automation columns (2026-06-12)
+-- Migration 012 - Project automation columns (2026-06-12)
 -- These columns are referenced in the tasks PATCH route automation logic
 -- but were never added to the projects table.
 

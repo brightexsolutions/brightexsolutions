@@ -368,7 +368,7 @@ export function SiteMonitoringPageClient() {
             searchable
             searchPlaceholder="Search sites…"
             searchKeys={["name", "url", "platform", "hosting"]}
-            maxHeight="calc(100vh - 440px)"
+            fill
           />
         )}
       </Card>

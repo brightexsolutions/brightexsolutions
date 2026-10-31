@@ -20,6 +20,8 @@ export interface MonthlyDataPoint {
 
 interface RevenueChartProps {
   data: MonthlyDataPoint[];
+  /** Pixel height, or "100%" to fill a parent that has its own height */
+  height?: number | `${number}%`;
 }
 
 function formatKES(value: number) {
@@ -48,13 +50,13 @@ function CustomTooltip({ active, payload, label }: {
   );
 }
 
-export function RevenueChart({ data }: RevenueChartProps) {
+export function RevenueChart({ data, height = "100%" }: RevenueChartProps) {
   const { resolvedTheme } = useTheme();
   const labelColor = resolvedTheme === "dark" ? "#97acc6" : "#64748b";
   return (
-    <ResponsiveContainer width="100%" height={220}>
+    <ResponsiveContainer width="100%" height={height} minHeight={220} initialDimension={{ width: 600, height: 220 }}>
       <BarChart data={data} barCategoryGap="30%" barGap={3}>
-        <CartesianGrid vertical={false} strokeDasharray="3 3" stroke="hsl(var(--border))" />
+        <CartesianGrid vertical={false} strokeDasharray="3 3" stroke="var(--border)" />
         <XAxis
           dataKey="month"
           axisLine={false}
@@ -68,14 +70,14 @@ export function RevenueChart({ data }: RevenueChartProps) {
           tick={{ fontSize: 11, fill: labelColor }}
           width={42}
         />
-        <Tooltip content={<CustomTooltip />} cursor={{ fill: "hsl(var(--muted))", opacity: 0.5 }} />
+        <Tooltip content={<CustomTooltip />} cursor={{ fill: "var(--muted)", opacity: 0.6 }} />
         <Legend
           iconType="square"
           iconSize={10}
           wrapperStyle={{ fontSize: 11, paddingTop: 12 }}
         />
-        <Bar dataKey="income" name="Income" fill="#f9a825" radius={[4, 4, 0, 0]} />
-        <Bar dataKey="expenses" name="Expenses" fill="#3b82f6" radius={[4, 4, 0, 0]} />
+        <Bar dataKey="income" name="Income" fill="#f9a825" radius={[6, 6, 0, 0]} />
+        <Bar dataKey="expenses" name="Expenses" fill="#64748b" radius={[6, 6, 0, 0]} />
       </BarChart>
     </ResponsiveContainer>
   );

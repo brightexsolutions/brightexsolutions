@@ -482,7 +482,7 @@ export function PaymentsPageClient() {
           searchable
           searchPlaceholder="Search payments…"
           searchKeys={["reference", "method"]}
-          maxHeight="520px"
+          exportName="payments"
           emptyMessage={loading ? "Loading payments…" : "No payments recorded yet."}
         />
       </Card>

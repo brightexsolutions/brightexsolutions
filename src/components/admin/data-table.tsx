@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef, useLayoutEffect } from "react";
 import { cn } from "@/lib/utils";
-import { MoreHorizontal, Search, X, ChevronUp, ChevronDown, ChevronsUpDown } from "lucide-react";
+import { MoreHorizontal, Search, X, ChevronUp, ChevronDown, ChevronsUpDown, ChevronLeft, ChevronRight, Check, Download } from "lucide-react";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
@@ -122,6 +122,67 @@ interface DataTableProps<T extends Record<string, unknown>> {
   /** Row click handler */
   onRowClick?: (row: T) => void;
   className?: string;
+  /** Rows per page. Pass 0 to show everything. */
+  pageSize?: number;
+  /** Shows a CSV export button; the value is the file name without extension */
+  exportName?: string;
+  /** Size the table to the space left in the viewport so the page itself does not scroll */
+  fill?: boolean;
+}
+
+const PAGE_SIZES = [10, 25, 50, 100];
+
+function compareValues(a: unknown, b: unknown) {
+  if (typeof a === "number" && typeof b === "number") return a - b;
+  const na = Number(a), nb = Number(b);
+  if (a !== "" && b !== "" && a != null && b != null && !Number.isNaN(na) && !Number.isNaN(nb)) return na - nb;
+  return String(a ?? "").localeCompare(String(b ?? ""), undefined, { numeric: true, sensitivity: "base" });
+}
+
+function csvCell(v: unknown) {
+  const s = v == null ? "" : typeof v === "object" ? JSON.stringify(v) : String(v);
+  return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+}
+
+/**
+ * Height left for the table inside #admin-main, so long lists scroll inside
+ * the table and the header, toolbar and pagination stay on screen.
+ */
+function useFillHeight(enabled: boolean, deps: unknown[]) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [height, setHeight] = useState<number | null>(null);
+
+  useLayoutEffect(() => {
+    if (!enabled) return;
+    const el = ref.current;
+    const main = document.getElementById("admin-main");
+    if (!el || !main) return;
+
+    function measure() {
+      if (!el || !main) return;
+      // Phones get stacked cards and normal page scrolling instead
+      if (window.innerWidth < 768) { setHeight(null); return; }
+      const mainRect = main.getBoundingClientRect();
+      const top = el.getBoundingClientRect().top - mainRect.top + main.scrollTop;
+      const padBottom = parseFloat(getComputedStyle(main).paddingBottom) || 0;
+      // Footer (pagination) sits below the scroll area inside the same card
+      const footer = el.nextElementSibling as HTMLElement | null;
+      const footerH = footer?.offsetHeight ?? 0;
+      // Whatever the page renders after the table (card borders, padding, notes) also has to fit
+      const below = Math.max(0, main.scrollHeight - padBottom - (top + el.offsetHeight + footerH));
+      const available = main.clientHeight - top - padBottom - footerH - below;
+      setHeight(Math.max(available, 280));
+    }
+
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(main);
+    window.addEventListener("resize", measure);
+    return () => { ro.disconnect(); window.removeEventListener("resize", measure); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [enabled, ...deps]);
+
+  return { ref, height };
 }
 
 export function DataTable<T extends Record<string, unknown>>({
@@ -129,9 +190,12 @@ export function DataTable<T extends Record<string, unknown>>({
   searchable, searchPlaceholder = "Search…", searchKeys,
   filters, activeFilters, onFilterChange,
   maxHeight, toolbar, onRowClick, className,
+  pageSize: initialPageSize = 25, exportName, fill = true,
 }: DataTableProps<T>) {
   const [search, setSearch] = useState("");
   const [sort, setSort] = useState<{ key: string; dir: "asc" | "desc" } | null>(null);
+  const [pageSize, setPageSize] = useState(initialPageSize);
+  const [page, setPage] = useState(0);
 
   // Client-side search
   const filtered = useMemo(() => {
@@ -148,13 +212,40 @@ export function DataTable<T extends Record<string, unknown>>({
     }
     if (sort) {
       rows = [...rows].sort((a, b) => {
-        const va = String(a[sort.key] ?? "").toLowerCase();
-        const vb = String(b[sort.key] ?? "").toLowerCase();
-        return sort.dir === "asc" ? va.localeCompare(vb) : vb.localeCompare(va);
+        const c = compareValues(a[sort.key], b[sort.key]);
+        return sort.dir === "asc" ? c : -c;
       });
     }
     return rows;
   }, [data, search, searchable, searchKeys, sort]);
+
+  // Back to the first page when the query changes (not on data refreshes, so
+  // editing a row on page 3 keeps you on page 3). Adjusting state during
+  // render is React's recommended alternative to a resetting effect.
+  const queryKey = `${search}|${sort?.key}:${sort?.dir}|${pageSize}|${JSON.stringify(activeFilters ?? {})}`;
+  const [lastQueryKey, setLastQueryKey] = useState(queryKey);
+  if (lastQueryKey !== queryKey) {
+    setLastQueryKey(queryKey);
+    setPage(0);
+  }
+
+  const pageCount = pageSize > 0 ? Math.max(1, Math.ceil(filtered.length / pageSize)) : 1;
+  const safePage = Math.min(page, pageCount - 1);
+  const visible = pageSize > 0 ? filtered.slice(safePage * pageSize, safePage * pageSize + pageSize) : filtered;
+  const { ref: scrollRef, height: fillHeight } = useFillHeight(fill && !maxHeight, [visible.length, filters?.length]);
+
+  function exportCsv() {
+    const header = columns.map((c) => csvCell(c.label)).join(",");
+    const lines = filtered.map((row) => columns.map((c) => csvCell(row[c.key])).join(","));
+    const blob = new Blob([[header, ...lines].join("\n")], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = Object.assign(document.createElement("a"), {
+      href: url,
+      download: `${exportName}-${new Date().toISOString().slice(0, 10)}.csv`,
+    });
+    a.click();
+    URL.revokeObjectURL(url);
+  }
 
   function toggleSort(key: string) {
     setSort((prev) =>
@@ -164,27 +255,29 @@ export function DataTable<T extends Record<string, unknown>>({
     );
   }
 
-  const hasToolbar = searchable || (filters && filters.length > 0) || toolbar;
+  const hasToolbar = searchable || (filters && filters.length > 0) || toolbar || exportName;
 
   return (
     <div className={cn("flex flex-col", className)}>
       {/* ── Toolbar ── */}
       {hasToolbar && (
-        <div className="flex flex-wrap items-center gap-2 px-3 sm:px-4 py-3 border-b border-border">
+        <div className="flex flex-wrap items-center gap-2 px-3 sm:px-4 py-3">
           {searchable && (
-            <div className="relative flex-1 min-w-[140px] max-w-xs">
-              <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
+            <div className="relative flex-1 min-w-[180px] max-w-sm">
+              <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
               <input
                 type="text"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder={searchPlaceholder}
-                className="w-full h-8 pl-8 pr-3 rounded-lg border border-input bg-background text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+                aria-label={searchPlaceholder}
+                className="w-full h-10 pl-9 pr-8 rounded-full bg-muted/70 text-sm text-foreground placeholder:text-muted-foreground border border-transparent focus:outline-none focus:border-ring focus:bg-background transition-colors"
               />
               {search && (
                 <button
                   onClick={() => setSearch("")}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                  aria-label="Clear search"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
                 >
                   <X size={12} />
                 </button>
@@ -194,51 +287,122 @@ export function DataTable<T extends Record<string, unknown>>({
 
           {/* Filter chips */}
           {filters?.map((f) => (
-            <div key={f.key} className="flex items-center gap-0">
-              <span className="text-xs text-muted-foreground mr-1.5">{f.label}:</span>
-              <div className="flex items-center gap-1 flex-wrap">
+            <div key={f.key} role="group" aria-label={f.label} className="flex items-center gap-1.5 flex-wrap">
                 {f.options.map((opt) => {
                   const isActive = activeFilters?.[f.key] === opt.value;
                   return (
                     <button
                       key={opt.value}
                       onClick={() => onFilterChange?.(f.key, isActive ? "" : opt.value)}
+                      aria-pressed={isActive}
                       className={cn(
-                        "px-2.5 py-1 rounded-full text-xs font-medium border transition-all",
+                        "inline-flex items-center gap-1.5 h-8 px-3 rounded-lg text-[13px] font-medium border transition-colors",
                         isActive
-                          ? "bg-brand-gold/15 text-brand-gold border-brand-gold/30"
-                          : "bg-transparent text-muted-foreground border-border hover:border-brand-gold/30 hover:text-foreground"
+                          ? "bg-brand-gold/20 text-foreground border-transparent"
+                          : "bg-transparent text-muted-foreground border-border hover:bg-muted hover:text-foreground"
                       )}
                     >
+                      {isActive && <Check size={14} className="-ml-0.5" />}
                       {opt.label}
                     </button>
                   );
                 })}
-              </div>
             </div>
           ))}
 
-          {toolbar && <div className="ml-auto flex items-center gap-2">{toolbar}</div>}
+          {(toolbar || exportName) && (
+            <div className="ml-auto flex items-center gap-2">
+              {toolbar}
+              {exportName && (
+                <button
+                  onClick={exportCsv}
+                  disabled={filtered.length === 0}
+                  className="inline-flex items-center gap-1.5 h-9 px-3.5 rounded-full border border-border text-[13px] font-medium text-foreground hover:bg-muted disabled:opacity-40 transition-colors"
+                >
+                  <Download size={14} /> Export
+                </button>
+              )}
+            </div>
+          )}
         </div>
       )}
 
+      {/* ── Phone layout: one card per row ── */}
+      <ul className="md:hidden border-t border-border divide-y divide-border">
+        {visible.length === 0 ? (
+          <li className="px-4 py-10 text-center text-sm text-muted-foreground">
+            {search ? `No results for "${search}"` : emptyMessage}
+          </li>
+        ) : visible.map((row, idx) => {
+          const [first, ...rest] = columns;
+          const rowActions = actions?.filter((a) => !a.hidden?.(row)) ?? [];
+          return (
+            <li
+              key={String(row.id ?? idx)}
+              onClick={onRowClick ? () => onRowClick(row) : undefined}
+              className={cn("px-4 py-3", onRowClick && "active:bg-muted/60")}
+            >
+              <div className="flex items-start gap-2">
+                <div className="flex-1 min-w-0">
+                  {first.render ? first.render(row) : <span className="text-sm font-medium">{String(row[first.key] ?? "-")}</span>}
+                </div>
+                {rowActions.length > 0 && (
+                  <div onClick={(e) => e.stopPropagation()}>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger aria-label="Row actions" className="size-9 -mr-2 rounded-full flex items-center justify-center text-muted-foreground hover:bg-muted">
+                        <MoreHorizontal size={16} />
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="w-48">
+                        {rowActions.map((action, ai) => (
+                          <DropdownMenuItem
+                            key={ai}
+                            onClick={() => action.onClick(row)}
+                            className={cn(action.destructive && "text-destructive focus:text-destructive")}
+                          >
+                            {typeof action.label === "function" ? action.label(row) : action.label}
+                          </DropdownMenuItem>
+                        ))}
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
+                )}
+              </div>
+              {rest.length > 0 && (
+                <dl className="mt-2 grid grid-cols-2 gap-x-4 gap-y-2">
+                  {rest.filter((c) => c.label).map((col) => (
+                    <div key={col.key} className="min-w-0">
+                      <dt className="text-[11px] text-muted-foreground">{col.label}</dt>
+                      <dd className="text-sm min-w-0 truncate">
+                        {col.render ? col.render(row) : String(row[col.key] ?? "-")}
+                      </dd>
+                    </div>
+                  ))}
+                </dl>
+              )}
+            </li>
+          );
+        })}
+      </ul>
+
       {/* ── Table ── */}
       <div
-        className={cn("overflow-x-auto overflow-y-auto scrollbar-overlay")}
-        style={maxHeight ? { maxHeight } : undefined}
+        ref={scrollRef}
+        className="hidden md:block overflow-auto scrollbar-overlay border-t border-border"
+        style={maxHeight ? { maxHeight } : fillHeight ? { maxHeight: fillHeight } : undefined}
       >
         <table className="w-full min-w-[480px] text-sm table-fixed">
           <thead className="sticky top-0 z-10">
-            <tr className="border-b border-border bg-muted/60 dark:bg-muted">
+            <tr className="border-b border-border bg-card shadow-[inset_0_-1px_0_var(--border)]">
               {columns.map((col) => (
                 <th
                   key={col.key}
                   className={cn(
-                    "px-3 sm:px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-[0.06em] text-muted-foreground whitespace-nowrap",
+                    "px-3 sm:px-4 h-11 text-left text-xs font-semibold text-muted-foreground whitespace-nowrap",
                     col.sortable && "cursor-pointer select-none hover:text-foreground transition-colors",
                     col.className
                   )}
                   onClick={col.sortable ? () => toggleSort(col.key) : undefined}
+                  aria-sort={sort?.key === col.key ? (sort.dir === "asc" ? "ascending" : "descending") : undefined}
                 >
                   <span className="inline-flex items-center gap-1">
                     {col.label}
@@ -256,7 +420,7 @@ export function DataTable<T extends Record<string, unknown>>({
             </tr>
           </thead>
           <tbody>
-            {filtered.length === 0 ? (
+            {visible.length === 0 ? (
               <tr>
                 <td
                   colSpan={columns.length + (actions ? 1 : 0)}
@@ -266,13 +430,13 @@ export function DataTable<T extends Record<string, unknown>>({
                 </td>
               </tr>
             ) : (
-              filtered.map((row, idx) => (
+              visible.map((row, idx) => (
                 <tr
                   key={String(row.id ?? idx)}
                   onClick={onRowClick ? () => onRowClick(row) : undefined}
                   className={cn(
                     "border-b border-border/60 transition-colors last:border-0",
-                    onRowClick ? "cursor-pointer hover:bg-muted/40" : "hover:bg-muted/20"
+                    onRowClick ? "cursor-pointer hover:bg-muted/50" : "hover:bg-muted/30"
                   )}
                 >
                   {columns.map((col) => (
@@ -315,12 +479,49 @@ export function DataTable<T extends Record<string, unknown>>({
         </table>
       </div>
 
-      {/* ── Footer: result count ── */}
-      {searchable && data.length > 0 && (
-        <div className="px-4 py-2 border-t border-border/60 text-[11px] text-muted-foreground">
-          {filtered.length === data.length
-            ? `${data.length} record${data.length !== 1 ? "s" : ""}`
-            : `${filtered.length} of ${data.length} records`}
+      {/* ── Footer: count + pagination ── */}
+      {data.length > 0 && (
+        <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-2.5 border-t border-border text-xs text-muted-foreground">
+          <span>
+            {filtered.length === data.length
+              ? `${data.length} record${data.length !== 1 ? "s" : ""}`
+              : `${filtered.length} of ${data.length} records`}
+          </span>
+          {pageSize > 0 && (
+            <div className="flex items-center gap-3">
+              <label className="hidden sm:flex items-center gap-2">
+                Rows per page
+                <select
+                  value={pageSize}
+                  onChange={(e) => setPageSize(Number(e.target.value))}
+                  className="h-8 rounded-lg border border-border bg-background px-2 text-foreground"
+                >
+                  {PAGE_SIZES.map((n) => <option key={n} value={n}>{n}</option>)}
+                </select>
+              </label>
+              <span className="tabular-nums">
+                {filtered.length === 0 ? "0" : `${safePage * pageSize + 1}–${Math.min(filtered.length, (safePage + 1) * pageSize)}`} of {filtered.length}
+              </span>
+              <div className="flex items-center">
+                <button
+                  onClick={() => setPage(safePage - 1)}
+                  disabled={safePage === 0}
+                  aria-label="Previous page"
+                  className="size-8 rounded-full flex items-center justify-center hover:bg-muted disabled:opacity-30 disabled:hover:bg-transparent"
+                >
+                  <ChevronLeft size={16} />
+                </button>
+                <button
+                  onClick={() => setPage(safePage + 1)}
+                  disabled={safePage >= pageCount - 1}
+                  aria-label="Next page"
+                  className="size-8 rounded-full flex items-center justify-center hover:bg-muted disabled:opacity-30 disabled:hover:bg-transparent"
+                >
+                  <ChevronRight size={16} />
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       )}
     </div>

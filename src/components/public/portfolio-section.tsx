@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { ArrowUpRight, ArrowRight } from "lucide-react";
 import { FadeIn, FadeInStagger, StaggerChild } from "./fade-in";
+import { portfolioImage } from "@/lib/client-showcase";
+import { normaliseCopy } from "@/lib/document-html/block-schema";
 
 interface PortfolioProject {
   id?: string;
@@ -19,7 +21,7 @@ const FALLBACK_PROJECTS: PortfolioProject[] = [
     category: "E-Commerce Redesign",
     description: "Full e-commerce redesign for a premium interiors brand: refined visual identity, product catalogue, and a seamless buying experience.",
     tags: ["WordPress", "E-Commerce", "UI Design"],
-    url: "https://beco-interiors.netlify.app/",
+    url: "https://www.beco.co.ke/",
     accent_color: "#f9a825",
   },
   {
@@ -78,7 +80,8 @@ async function getProjects(): Promise<PortfolioProject[]> {
       .order("display_order", { ascending: true })
       .order("created_at", { ascending: false });
     if (error || !data || data.length === 0) return FALLBACK_PROJECTS;
-    return data as PortfolioProject[];
+    // Admin-entered copy can carry em dashes; the public site never shows them
+    return normaliseCopy(data as PortfolioProject[]);
   } catch {
     return FALLBACK_PROJECTS;
   }
@@ -89,7 +92,7 @@ function CardBackground({ accent, imageUrl }: { accent: string; imageUrl?: strin
     return (
       <>
         <div
-          className="absolute inset-0 bg-cover bg-center transition-transform duration-700 ease-out group-hover:scale-105"
+          className="absolute inset-0 bg-cover bg-top transition-transform duration-700 ease-out group-hover:scale-105"
           style={{ backgroundImage: `url(${imageUrl})` }}
         />
         <div className="absolute inset-0 bg-gradient-to-t from-[#0a101e]/95 via-[#0a101e]/50 to-[#0a101e]/10 group-hover:from-[#0a101e]/98 transition-colors duration-300" />
@@ -161,10 +164,10 @@ export async function PortfolioSection() {
               Our Work
             </span>
             <h2 className="font-display text-4xl sm:text-5xl font-bold text-brand-navy dark:text-white mb-3">
-              Projects We&apos;re Proud Of
+              Recent client work
             </h2>
             <p className="text-brand-muted leading-relaxed">
-              From e-commerce platforms to mobile apps: a selection of what we&apos;ve shipped for clients across Kenya and East Africa.
+              Live sites and systems we designed, built and still support. Each card opens the real thing.
             </p>
           </div>
           <Link
@@ -180,14 +183,14 @@ export async function PortfolioSection() {
           {projects.map((p) => {
             const accent = p.accent_color ?? "#f9a825";
             return (
-              <StaggerChild key={p.name}>
+              <StaggerChild key={p.id ?? p.name}>
                 <a
                   href={p.url}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="group relative flex flex-col h-72 rounded-sm overflow-hidden focus-visible:ring-2 focus-visible:ring-brand-gold bg-[#0d1928]"
                 >
-                  <CardBackground accent={accent} imageUrl={p.image_url} />
+                  <CardBackground accent={accent} imageUrl={portfolioImage(p.name, p.image_url)} />
 
                   {/* Top row: category badge + arrow */}
                   <div className="relative flex items-start justify-between p-5">

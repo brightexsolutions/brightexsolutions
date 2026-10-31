@@ -329,7 +329,7 @@ export default function BookingsPage() {
           filters={[STATUS_FILTER]}
           activeFilters={{ status: statusFilter }}
           onFilterChange={(_, v) => setStatusFilter(v)}
-          maxHeight="520px"
+          exportName="bookings"
           emptyMessage={loading ? "Loading bookings…" : "No bookings yet."}
         />
       </Card>

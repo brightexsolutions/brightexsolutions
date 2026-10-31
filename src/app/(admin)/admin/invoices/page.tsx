@@ -426,23 +426,24 @@ export default function InvoicesPage() {
             {
               key: "inline_actions",
               label: "",
-              className: "w-32",
+              className: "w-48",
               render: (row) => {
                 const inv = row as unknown as Invoice;
                 return (
                   <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
                     <button
                       onClick={() => openPreview(inv.id)}
-                      className="flex items-center gap-1 px-2 py-1 rounded-md text-[11px] font-medium border border-border text-muted-foreground hover:border-brand-gold/40 hover:text-foreground transition-colors"
+                      className="flex items-center gap-1 h-8 px-3 rounded-full text-xs font-medium border border-border text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
                     >
-                      <Eye size={11} />PDF
+                      <Eye size={13} />PDF
                     </button>
-                    {inv.status !== "cancelled" && (
+                    {/* A paid or cancelled invoice has nothing left to send */}
+                    {inv.status !== "cancelled" && inv.status !== "paid" && (
                       <>
                         <button
                           onClick={() => sendInvoice(inv.id)}
                           disabled={busyIds.has(inv.id)}
-                          className="flex items-center gap-1 px-2 py-1 rounded-md text-[11px] font-medium bg-brand-navy text-white hover:bg-brand-navy/90 transition-colors disabled:opacity-60"
+                          className="flex items-center gap-1 h-8 px-3 rounded-full text-xs font-medium bg-primary text-primary-foreground hover:opacity-90 transition-opacity disabled:opacity-60"
                         >
                           {busyIds.has(inv.id) ? <Loader2 size={10} className="animate-spin" /> : <Send size={10} />}
                           {inv.status === "draft" ? "Send" : "Resend"}
@@ -500,7 +501,7 @@ export default function InvoicesPage() {
           }]}
           activeFilters={{ status: activeFilter === "All" ? "" : activeFilter.toLowerCase() }}
           onFilterChange={(_, v) => setActiveFilter(v ? v.charAt(0).toUpperCase() + v.slice(1) : "All")}
-          maxHeight="520px"
+          exportName="invoices"
           emptyMessage={loading ? "Loading invoices…" : "No invoices yet."}
         />
       </Card>

@@ -6,6 +6,7 @@ import { ArrowRight, Zap, MessageCircle, Wrench, Code2, Layers } from "lucide-re
 import { whatsappUrl } from "@/lib/constants";
 import { getPublishedProducts } from "@/lib/products";
 import { ClientProjectsList } from "./work-client";
+import { normaliseCopy } from "@/lib/document-html/block-schema";
 
 export const revalidate = 3600;
 
@@ -80,7 +81,8 @@ async function getAllProjects() {
       .order("display_order", { ascending: true })
       .order("created_at", { ascending: false });
     if (error || !data || data.length === 0) return FALLBACK_PROJECTS;
-    return data;
+    // Admin-entered copy can carry em dashes; the public site never shows them
+    return normaliseCopy(data);
   } catch {
     return FALLBACK_PROJECTS;
   }

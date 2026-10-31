@@ -190,7 +190,7 @@ export default function ActivityLogPage() {
             </p>
           </div>
         ) : (
-          <div className="divide-y divide-border scrollbar-overlay overflow-y-auto" style={{ maxHeight: "calc(100vh - 340px)" }}>
+          <div className="divide-y divide-border scrollbar-overlay overflow-y-auto" style={{ maxHeight: "calc(100dvh - 420px)" }}>
             {/* Table head */}
             <div className="hidden sm:grid grid-cols-[28px_160px_100px_120px_1fr_180px] gap-3 px-5 py-2.5 bg-muted/60 sticky top-0 z-10 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
               <span />

@@ -15,7 +15,7 @@ export function ProcessSection() {
             How We Work
           </span>
           <h2 className="font-display text-4xl sm:text-5xl font-bold text-brand-navy dark:text-white mt-3 mb-4">
-            A Process Built for Clarity
+            How a project runs
           </h2>
           <p className="text-brand-muted text-lg max-w-xl mx-auto">
             From first call to launch, you always know what&apos;s happening and what&apos;s next.

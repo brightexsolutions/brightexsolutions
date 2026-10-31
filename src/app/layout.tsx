@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { Fraunces, Plus_Jakarta_Sans } from "next/font/google";
 import { ThemeProvider } from "@/components/theme-provider";
-import { SiteLoader } from "@/components/site-loader";
 import { Analytics } from "@vercel/analytics/next";
 import { SITE_NAME, SITE_URL, GOOGLE_SITE_VERIFICATION } from "@/lib/constants";
 import "./globals.css";
@@ -27,8 +26,11 @@ export const metadata: Metadata = {
     template: `%s | ${SITE_NAME}`,
   },
   description:
-    "Nairobi-based digital agency building custom websites, platforms, ERP systems, and AI-powered tools for businesses across Kenya and East Africa.",
+    "Nairobi technology consultancy building websites, ERP systems, custom software and AI automation for businesses across Kenya and East Africa.",
   keywords: [
+    "technology consultancy Kenya",
+    "IT consultancy Nairobi",
+    "software development company Kenya",
     "web development Kenya",
     "digital agency Nairobi",
     "custom software Kenya",
@@ -48,13 +50,13 @@ export const metadata: Metadata = {
     siteName: SITE_NAME,
     title: SITE_NAME,
     description:
-      "Nairobi-based digital agency building premium digital experiences that drive growth.",
+      "Nairobi technology consultancy: websites, ERP systems, custom software and AI automation for Kenyan businesses.",
     images: [
       {
         url: `${SITE_URL}/opengraph-image`,
         width: 1200,
         height: 630,
-        alt: "Brightex Solutions: Digital Agency Nairobi",
+        alt: "Brightex Solutions: Technology Consultancy in Nairobi",
       },
     ],
   },
@@ -62,7 +64,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: SITE_NAME,
     description:
-      "Nairobi-based digital agency building premium digital experiences that drive growth.",
+      "Nairobi technology consultancy: websites, ERP systems, custom software and AI automation for Kenyan businesses.",
     images: [`${SITE_URL}/opengraph-image`],
   },
   robots: {
@@ -100,7 +102,6 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <SiteLoader />
           {children}
           <Analytics />
         </ThemeProvider>

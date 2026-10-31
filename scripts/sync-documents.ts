@@ -91,7 +91,7 @@ async function main() {
       ];
       if (needsFigureLock(document)) notes.push("ranged");
       if (doc.gate_mode && doc.gate_mode !== "off") notes.push(`gate: ${doc.gate_mode}`);
-      if (html.includes("—")) { notes.push("\x1b[31mem dash\x1b[0m"); failures++; }
+      if (html.includes("\u2014")) { notes.push("\x1b[31mem dash\x1b[0m"); failures++; }
       ok(`${label}  ${notes.join(", ")}`);
     } catch (err) {
       failures++;

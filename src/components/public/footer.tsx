@@ -27,7 +27,7 @@ const services = [
 const navigation = [
   { label: "Home", href: "/" },
   { label: "Services", href: "/services" },
-  { label: "Products", href: "/products" },
+  { label: "Products", href: "/work#products" },
   { label: "Blog", href: "/blog" },
   { label: "Contact", href: "/contact" },
   { label: "Book a Call", href: "/contact?intent=book_call" },

@@ -98,7 +98,7 @@ console.log("\n5. Print and responsive");
 for (const [state, html] of Object.entries(states)) {
   check(`${state}: @page A4`, /@page\{size:A4/.test(html));
   check(`${state}: no unscoped 720 breakpoint`, !/@media\s*\(max-width:720px\)/.test(html));
-  check(`${state}: no em dash`, !html.includes("—"));
+  check(`${state}: no em dash`, !html.includes("\u2014"));
 }
 // Whitespace-tolerant: the rule's formatting is not the thing being asserted.
 const printBlocks = [...styleBlock.matchAll(/@media\s+print\s*\{([\s\S]*?)\n\s*\}/g)].map((m) => m[1]).join("\n");

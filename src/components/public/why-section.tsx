@@ -2,12 +2,12 @@ import { FadeIn, FadeInStagger, StaggerChild } from "./fade-in";
 import { CheckCircle2 } from "lucide-react";
 
 const reasons = [
-  "Context-aware: we understand the Kenyan and East African market",
-  "Full-stack team: design, development, and strategy in one place",
-  "Transparent pricing and milestone-based delivery",
-  "We build for growth: not just for launch day",
-  "Direct communication with the people doing the work",
-  "Post-launch support without hidden retainer fees",
+  "We know the local stack: M-Pesa, KRA eTIMS, WhatsApp-first customers",
+  "Strategy, design and engineering under one roof",
+  "Fixed quotes and milestone payments, agreed before work starts",
+  "You talk directly to the people building your system",
+  "Support after launch, with no surprise retainer",
+  "Your code, your domain, your data: you own all of it",
 ];
 
 export function WhySection() {
@@ -21,14 +21,13 @@ export function WhySection() {
               Why Brightex
             </span>
             <h2 className="font-display text-4xl sm:text-5xl font-bold text-white mt-3 mb-6 leading-tight">
-              Built for Businesses
+              A small senior team,
               <br />
-              That Mean Business
+              accountable for the result
             </h2>
             <p className="text-white/60 text-lg leading-relaxed">
-              We're not a factory. We're a focused team of builders who care
-              about the outcome: not just the deliverable. Every project we
-              take on, we take seriously.
+              We take on a limited number of projects at a time so the people
+              who scope your work are the same people who build and support it.
             </p>
           </FadeIn>
 

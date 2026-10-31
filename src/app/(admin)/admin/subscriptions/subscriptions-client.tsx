@@ -364,7 +364,7 @@ export function SubscriptionsPageClient() {
             if (key === "category") setActiveCategory(val || "all");
             if (key === "ownership") setActiveOwnership(val || "all");
           }}
-          maxHeight="520px"
+          exportName="subscriptions"
           emptyMessage={loading ? "Loading subscriptions…" : "No subscriptions tracked yet."}
         />
       </Card>

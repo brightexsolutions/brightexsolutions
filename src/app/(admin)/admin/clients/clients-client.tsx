@@ -318,7 +318,7 @@ export function ClientsPageClient() {
           filters={[CLASSIFICATION_FILTER]}
           activeFilters={{ classification: classFilter }}
           onFilterChange={(_, v) => setClassFilter(v)}
-          maxHeight="520px"
+          exportName="clients"
           emptyMessage={loading ? "Loading clients…" : "No clients in this segment."}
         />
       </Card>

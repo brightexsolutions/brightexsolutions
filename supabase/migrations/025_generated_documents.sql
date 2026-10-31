@@ -1,6 +1,6 @@
 -- AI-assisted document generation: proposals, client agreements/terms, and
 -- internal SOPs. `data` holds the structured content (matching the relevant
--- PDF component's *Data type in src/components/admin/*-pdf.tsx) — the PDF
+-- PDF component's *Data type in src/components/admin/*-pdf.tsx) - the PDF
 -- itself is always rendered on demand from this, never stored as a blob.
 create table if not exists generated_documents (
   id uuid primary key default gen_random_uuid(),
