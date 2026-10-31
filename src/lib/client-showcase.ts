@@ -57,15 +57,6 @@ export const SHOWCASE_CLIENTS: ShowcaseClient[] = [
     screenshot: "/work/talkways.jpg",
   },
   {
-    key: "afn",
-    name: "Africa Feature Network",
-    sector: "Media",
-    url: "https://africafeaturenetwork.com/",
-    logo: "/clients/afn.png",
-    mark: true,
-    screenshot: "/work/afn.jpg",
-  },
-  {
     key: "greenhouse",
     name: "The Green House",
     sector: "Worship community",
@@ -82,7 +73,6 @@ const ALIASES: Record<string, string> = {
   cbc: "cbcapp",
   verb: "cbcapp",
   talkways: "talkways",
-  "africa feature": "afn",
   greenhouse: "greenhouse",
   "green house": "greenhouse",
 };

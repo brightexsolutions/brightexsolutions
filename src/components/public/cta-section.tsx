@@ -13,7 +13,7 @@ export function CtaSection() {
             {/* Background image */}
             <div
               className="absolute inset-0 bg-cover bg-center"
-              style={{ backgroundImage: "url('https://images.unsplash.com/photo-1519389950473-47ba0277781c?auto=format&fit=crop&w=1920&q=80')" }}
+              style={{ backgroundImage: "url('/images/hero-team.webp')" }}
             />
 
             {/* Cinematic gradient overlay */}

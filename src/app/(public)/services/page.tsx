@@ -8,7 +8,7 @@ export const revalidate = 3600;
 export const metadata: Metadata = {
   title: "Services",
   description:
-    "Web development, UI/UX design, SEO, branding, AI automation, ERP systems, and technology consultancy: all from one team in Nairobi.",
+    "Web development, UI/UX design, SEO, branding, AI automation, ERP systems and integrations, and technology consultancy, all from one team in Nairobi.",
   alternates: { canonical: "/services" },
 };
 
@@ -69,8 +69,8 @@ const services = [
     title: "ERP Systems",
     tagline: "Built around how you actually operate.",
     description:
-      "Custom enterprise resource planning designed around your workflows: not a rigid off-the-shelf product forced into your processes. Built for schools, hospitals, hospitality, NGOs, and more.",
-    points: ["Custom ERP development", "Module & workflow design", "Data migration & cleanup", "Training & ongoing support"],
+      "Custom enterprise resource planning designed around your workflows, not a rigid off-the-shelf product forced into your processes. Connected to the tools you already rely on, so data flows without retyping. Built for schools, hospitals, hospitality, NGOs, and more.",
+    points: ["Custom ERP development", "Integrations: M-Pesa, KRA eTIMS, banks, accounting software", "WhatsApp, SMS and email notifications", "Data migration, training and ongoing support"],
     featured: false,
   },
   {

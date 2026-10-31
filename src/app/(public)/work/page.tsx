@@ -42,14 +42,6 @@ const FALLBACK_PROJECTS = [
     accent_color: "#a78bfa",
   },
   {
-    name: "Africa Feature Network",
-    category: "Media Platform",
-    description: "A media and news platform built for scale: structured content architecture, editorial workflow, and strong on-page SEO across hundreds of articles.",
-    tags: ["Media Platform", "SEO", "WordPress"],
-    url: "https://africafeaturenetwork.com/",
-    accent_color: "#10b981",
-  },
-  {
     name: "Amuches Oven",
     category: "Online Ordering System",
     description: "Online ordering system for a bakery: digital menu, cart, order management, and an admin dashboard for the owner to track and fulfil orders daily.",

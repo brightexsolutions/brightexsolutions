@@ -41,14 +41,6 @@ const FALLBACK_PROJECTS: PortfolioProject[] = [
     accent_color: "#a78bfa",
   },
   {
-    name: "Africa Feature Network",
-    category: "Media Platform",
-    description: "A media and news platform built for scale: structured content architecture, editorial workflow, and strong on-page SEO across hundreds of articles.",
-    tags: ["Media Platform", "SEO", "WordPress"],
-    url: "https://africafeaturenetwork.com/",
-    accent_color: "#10b981",
-  },
-  {
     name: "Amuches Oven",
     category: "Online Ordering System",
     description: "Online ordering system for a bakery: digital menu, cart, order management, and an admin dashboard for the owner to track and fulfil orders daily.",
@@ -164,10 +156,10 @@ export async function PortfolioSection() {
               Our Work
             </span>
             <h2 className="font-display text-4xl sm:text-5xl font-bold text-brand-navy dark:text-white mb-3">
-              Recent client work
+              Projects We&apos;re Proud Of
             </h2>
             <p className="text-brand-muted leading-relaxed">
-              Live sites and systems we designed, built and still support. Each card opens the real thing.
+              From e-commerce platforms to learning apps, a selection of what we&apos;ve shipped for clients across Kenya and East Africa.
             </p>
           </div>
           <Link

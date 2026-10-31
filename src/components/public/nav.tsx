@@ -12,11 +12,12 @@ const links = [
   { label: "Services", href: "/services", exact: false },
   { label: "Our Work", href: "/work", exact: false },
   { label: "Blog", href: "/blog", exact: false },
+  { label: "About", href: "/about", exact: true },
   { label: "Contact", href: "/contact", exact: true },
 ];
 
 // Routes where the top of the page is a full-width dark hero: nav starts transparent with white text
-const DARK_HERO_ROUTES = ["/", "/services", "/work", "/blog"];
+const DARK_HERO_ROUTES = ["/", "/services", "/work", "/blog", "/about"];
 
 export function PublicNav() {
   const [scrolled, setScrolled] = useState(false);

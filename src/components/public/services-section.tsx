@@ -7,7 +7,7 @@ const services = [
     icon: Globe,
     title: "Web Development",
     description:
-      "Fast, secure websites and web apps that rank on Google and turn visitors into enquiries.",
+      "Custom websites and web apps built with modern stacks. Fast, secure, and built to scale with your business.",
   },
   {
     icon: Palette,
@@ -35,9 +35,9 @@ const services = [
   },
   {
     icon: Database,
-    title: "ERP Systems",
+    title: "ERP & Integrations",
     description:
-      "Inventory, sales, HR and finance in one system, shaped around how your business already works.",
+      "ERP built for how your business actually operates, integrated with M-Pesa, KRA eTIMS, your bank and accounting tools.",
   },
   {
     icon: BarChart3,
@@ -57,10 +57,11 @@ export function ServicesSection() {
             What We Do
           </span>
           <h2 className="font-display text-4xl sm:text-5xl font-bold text-brand-navy dark:text-white mt-3 mb-4">
-            What we do for clients
+            End-to-End Digital Services
           </h2>
           <p className="text-brand-muted text-lg max-w-2xl mx-auto">
-            One team for the whole job, from the first strategy call to the system your staff use every day.
+            Everything your business needs to compete online, under one roof,
+            with one team that knows your goals.
           </p>
         </FadeIn>
 

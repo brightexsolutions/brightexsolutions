@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { Logo } from "@/components/public/logo";
 import {
   SITE_NAME,
@@ -29,6 +30,7 @@ const navigation = [
   { label: "Services", href: "/services" },
   { label: "Products", href: "/work#products" },
   { label: "Blog", href: "/blog" },
+  { label: "About Godwin", href: "/about" },
   { label: "Contact", href: "/contact" },
   { label: "Book a Call", href: "/contact?intent=book_call" },
 ];
@@ -68,15 +70,28 @@ export function PublicFooter() {
         {/* Background image */}
         <div
           className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-          style={{ backgroundImage: "url('https://images.unsplash.com/photo-1519389950473-47ba0277781c?auto=format&fit=crop&w=2400&q=80')" }}
+          style={{ backgroundImage: "url('/images/hero-team.webp')" }}
         />
         {/* Cinematic overlay: deep navy gradient */}
         <div className="absolute inset-0 bg-gradient-to-r from-[#090f1a]/96 via-[#090f1a]/88 to-[#090f1a]/80" />
         {/* Subtle gold radial glow */}
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_65%_50%,rgba(249,168,37,0.06)_0%,transparent_60%)] pointer-events-none" />
 
+        {/* Cut-out figure on a gold disc, anchored to the bottom edge */}
+        <div aria-hidden className="hidden lg:block absolute bottom-0 right-[6%] w-[300px] h-[360px] pointer-events-none">
+          <div className="absolute bottom-[-90px] left-1/2 -translate-x-1/2 w-[300px] h-[300px] rounded-full bg-gradient-to-b from-brand-gold/90 to-brand-gold-hover/80" />
+          <Image
+            src="/images/people/client-laptop.webp"
+            alt=""
+            width={580}
+            height={1100}
+            sizes="200px"
+            className="absolute bottom-0 left-1/2 -translate-x-1/2 h-[350px] w-auto drop-shadow-[0_20px_30px_rgba(0,0,0,0.5)]"
+          />
+        </div>
+
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 lg:py-28">
-          <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-10">
+          <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-10 lg:pr-[320px]">
 
             {/* Headline */}
             <div className="max-w-2xl">
@@ -97,13 +112,13 @@ export function PublicFooter() {
             <div className="flex flex-col sm:flex-row lg:flex-col xl:flex-row gap-3 lg:shrink-0 lg:pb-1">
               <Link
                 href="/contact"
-                className="inline-flex items-center justify-center gap-2 px-8 py-3.5 rounded-sm bg-brand-gold text-brand-navy text-sm font-bold hover:bg-brand-gold-hover transition-colors"
+                className="inline-flex items-center justify-center gap-2 px-8 py-3.5 rounded-full bg-brand-gold text-brand-navy text-sm font-bold shadow-[0_10px_30px_-10px_rgba(249,168,37,0.8)] hover:bg-brand-gold-hover transition-colors"
               >
                 Start a project <IconArrow />
               </Link>
               <Link
                 href="/contact?intent=book_call"
-                className="inline-flex items-center justify-center gap-2 px-8 py-3.5 rounded-sm border border-white/15 text-white text-sm font-medium hover:border-white/35 hover:bg-white/[0.04] transition-all duration-200"
+                className="inline-flex items-center justify-center gap-2 px-8 py-3.5 rounded-full border border-white/20 text-white text-sm font-medium hover:border-white/35 hover:bg-white/[0.04] transition-all duration-200"
               >
                 Book a call
               </Link>
