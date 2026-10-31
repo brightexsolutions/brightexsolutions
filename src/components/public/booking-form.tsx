@@ -169,7 +169,7 @@ export function BookingForm({ variant = "card" }: BookingFormProps) {
       <button
         type="submit"
         disabled={isSubmitting}
-        className="w-full inline-flex items-center justify-center gap-2 px-8 py-4 rounded-sm bg-brand-gold text-brand-navy font-bold text-sm hover:bg-brand-gold-hover transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+        className="w-full inline-flex items-center justify-center gap-2 px-8 py-4 rounded-full bg-brand-gold text-brand-navy font-bold text-sm hover:bg-brand-gold-hover transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
       >
         {isSubmitting ? (
           <>

@@ -91,7 +91,7 @@ export function ClientProjectsList({ projects }: { projects: Project[] }) {
         <FadeIn className="mt-10 text-center">
           <button
             onClick={() => setVisible((v) => v + BATCH)}
-            className="inline-flex items-center gap-2 px-7 py-3.5 rounded-sm border border-brand-border dark:border-white/15 text-brand-navy dark:text-white text-sm font-semibold hover:border-brand-gold hover:text-brand-gold transition-colors group"
+            className="inline-flex items-center gap-2 px-7 py-3.5 rounded-full border border-brand-border dark:border-white/15 text-brand-navy dark:text-white text-sm font-semibold hover:border-brand-gold hover:text-brand-gold transition-colors group"
           >
             <Plus size={15} className="group-hover:rotate-90 transition-transform duration-200" />
             Load more projects

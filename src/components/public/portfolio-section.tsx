@@ -251,7 +251,7 @@ export async function PortfolioSection() {
         <FadeIn className="mt-12 text-center">
           <Link
             href="/work"
-            className="inline-flex items-center gap-2 px-7 py-3.5 rounded-sm border border-brand-navy/20 dark:border-white/15 text-brand-navy dark:text-white text-sm font-semibold hover:border-brand-gold hover:text-brand-gold transition-colors group"
+            className="inline-flex items-center gap-2 px-7 py-3.5 rounded-full border border-brand-navy/20 dark:border-white/15 text-brand-navy dark:text-white text-sm font-semibold hover:border-brand-gold hover:text-brand-gold transition-colors group"
           >
             See all our work
             <ArrowRight size={14} className="group-hover:translate-x-0.5 transition-transform" />

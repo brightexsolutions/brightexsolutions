@@ -244,7 +244,7 @@ export function CommandPalette() {
               <X size={14} />
             </button>
           )}
-          <kbd className="hidden sm:inline text-[10px] bg-muted text-muted-foreground px-1.5 py-0.5 rounded font-mono border border-border shrink-0">
+          <kbd className="hidden sm:inline text-[10px] bg-muted text-muted-foreground px-1.5 py-0.5 rounded-md font-mono border border-border shrink-0">
             esc
           </kbd>
         </div>
@@ -301,9 +301,9 @@ export function CommandPalette() {
 
         {/* Footer hint bar */}
         <div className="border-t border-border px-4 py-2 flex items-center gap-4 text-[10px] text-muted-foreground">
-          <span className="flex items-center gap-1"><kbd className="bg-muted border border-border px-1 py-0.5 rounded font-mono">↑↓</kbd> navigate</span>
-          <span className="flex items-center gap-1"><kbd className="bg-muted border border-border px-1 py-0.5 rounded font-mono">↵</kbd> open</span>
-          <span className="flex items-center gap-1"><kbd className="bg-muted border border-border px-1 py-0.5 rounded font-mono">⌘K</kbd> toggle</span>
+          <span className="flex items-center gap-1"><kbd className="bg-muted border border-border px-1 py-0.5 rounded-md font-mono">↑↓</kbd> navigate</span>
+          <span className="flex items-center gap-1"><kbd className="bg-muted border border-border px-1 py-0.5 rounded-md font-mono">↵</kbd> open</span>
+          <span className="flex items-center gap-1"><kbd className="bg-muted border border-border px-1 py-0.5 rounded-md font-mono">⌘K</kbd> toggle</span>
         </div>
       </div>
     </div>

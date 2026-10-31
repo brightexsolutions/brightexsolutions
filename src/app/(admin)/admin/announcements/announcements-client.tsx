@@ -259,8 +259,8 @@ export function AnnouncementsPageClient() {
                   <div className="flex flex-col gap-1 min-w-0">
                     <StackedCell primary={ann.title} secondary={ann.body ? ann.body.slice(0, 80) + (ann.body.length > 80 ? "…" : "") : undefined} />
                     <div className="flex items-center gap-1 flex-wrap">
-                      <span className={`px-1.5 py-0.5 rounded text-[10px] font-medium border capitalize ${typeColors[ann.type] ?? "bg-muted text-muted-foreground border-border"}`}>{ann.type}</span>
-                      {ann.active && <span className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-emerald-400/10 text-emerald-500 border border-emerald-400/20">Live</span>}
+                      <span className={`px-1.5 py-0.5 rounded-md text-[10px] font-medium border capitalize ${typeColors[ann.type] ?? "bg-muted text-muted-foreground border-border"}`}>{ann.type}</span>
+                      {ann.active && <span className="px-1.5 py-0.5 rounded-md text-[10px] font-medium bg-emerald-400/10 text-emerald-500 border border-emerald-400/20">Live</span>}
                     </div>
                   </div>
                 );
@@ -303,7 +303,7 @@ export function AnnouncementsPageClient() {
                 return (
                   <button
                     onClick={(e) => { e.stopPropagation(); handleToggleActive(ann); }}
-                    className={cn("flex items-center gap-1 px-2 py-1 rounded text-[11px] font-medium border transition-colors",
+                    className={cn("flex items-center gap-1 px-2 py-1 rounded-md text-[11px] font-medium border transition-colors",
                       ann.active ? "border-red-200 text-red-500 dark:border-red-800/40 hover:bg-red-50 dark:hover:bg-red-950/20" : "border-emerald-200 text-emerald-600 dark:border-emerald-800/40 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/20"
                     )}
                   >

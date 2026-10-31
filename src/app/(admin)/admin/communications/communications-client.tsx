@@ -188,7 +188,7 @@ export function CommunicationsPageClient() {
                       primary={e.subject || "No subject"}
                       secondary={e.body ? e.body.slice(0, 80) + (e.body.length > 80 ? "…" : "") : undefined}
                     />
-                    <span className={`self-start px-1.5 py-0.5 rounded text-[10px] font-medium capitalize ${typeColors[e.type] ?? "bg-muted text-muted-foreground"}`}>{e.type}</span>
+                    <span className={`self-start px-1.5 py-0.5 rounded-md text-[10px] font-medium capitalize ${typeColors[e.type] ?? "bg-muted text-muted-foreground"}`}>{e.type}</span>
                   </div>
                 );
               },

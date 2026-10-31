@@ -135,7 +135,7 @@ export function ContactForm({ variant = "card", hideService, defaultService }: C
       <button
         type="submit"
         disabled={isSubmitting}
-        className="w-full inline-flex items-center justify-center gap-2 px-8 py-4 rounded-sm bg-brand-navy dark:bg-brand-gold text-white dark:text-brand-navy font-bold text-sm hover:bg-brand-navy-hover dark:hover:bg-brand-gold-hover transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+        className="w-full inline-flex items-center justify-center gap-2 px-8 py-4 rounded-full bg-brand-navy dark:bg-brand-gold text-white dark:text-brand-navy font-bold text-sm hover:bg-brand-navy-hover dark:hover:bg-brand-gold-hover transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
       >
         {isSubmitting ? (
           <><span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Sending…</>

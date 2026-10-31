@@ -68,7 +68,7 @@ function NewsletterForm() {
       <button
         type="submit"
         disabled={state === "loading"}
-        className="px-6 py-3 rounded-sm bg-brand-gold text-brand-navy text-sm font-bold hover:bg-brand-gold-hover transition-colors disabled:opacity-60 whitespace-nowrap flex items-center justify-center gap-2"
+        className="px-6 py-3 rounded-full bg-brand-gold text-brand-navy text-sm font-bold hover:bg-brand-gold-hover transition-colors disabled:opacity-60 whitespace-nowrap flex items-center justify-center gap-2"
       >
         {state === "loading" && <Loader2 size={14} className="animate-spin" />}
         Subscribe

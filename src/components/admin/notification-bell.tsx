@@ -263,7 +263,7 @@ export function NotificationBell() {
                             <button
                               onClick={() => dismiss(alert.id)}
                               disabled={dismissing.has(alert.id)}
-                              className="shrink-0 p-0.5 rounded text-muted-foreground hover:text-foreground transition-colors disabled:opacity-40 mt-0.5"
+                              className="shrink-0 p-0.5 rounded-md text-muted-foreground hover:text-foreground transition-colors disabled:opacity-40 mt-0.5"
                               title="Dismiss"
                             >
                               <X size={11} />

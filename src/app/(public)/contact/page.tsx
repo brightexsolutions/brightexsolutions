@@ -35,7 +35,7 @@ export default function ContactPage() {
           Tell us about your project.
         </h1>
         <p className="text-brand-muted text-base leading-relaxed">
-          Whether you know exactly what you need or you&apos;re still figuring it out: we&apos;d love to hear from you. We reply within 24 hours.
+          Whether you know exactly what you need or you&apos;re still figuring it out, we&apos;d love to hear from you. We reply within 24 hours.
         </p>
       </FadeIn>
 
@@ -84,7 +84,7 @@ export default function ContactPage() {
             </div>
             <div>
               <p className="text-sm font-semibold text-brand-navy">Chat on WhatsApp</p>
-              <p className="text-xs text-brand-muted">Replies within {WHATSAPP_REPLY_TIME}</p>
+              <p className="text-xs text-brand-muted">Replies {WHATSAPP_REPLY_TIME}</p>
             </div>
             <svg className="ml-auto w-4 h-4 text-brand-muted group-hover:text-[#25D366] transition-colors" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M12 5l7 7-7 7" /></svg>
           </a>

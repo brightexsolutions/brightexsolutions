@@ -392,7 +392,7 @@ function EventForm({
           type="checkbox"
           checked={form.all_day}
           onChange={(e) => setForm((f) => ({ ...f, all_day: e.target.checked, start_at: "", end_at: "" }))}
-          className="rounded border-input"
+          className="rounded-md border-input"
         />
         <Label htmlFor="all_day" className="font-normal">All-day event</Label>
       </div>

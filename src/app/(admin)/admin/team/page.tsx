@@ -452,7 +452,7 @@ export default function AdminTeamPage() {
                 <span className={cn("text-xs font-semibold px-2.5 py-0.5 rounded-full capitalize", ROLE_PORTAL[permMember.role]?.bg, ROLE_PORTAL[permMember.role]?.colour)}>
                   {permMember.role}
                 </span>
-                <span className="text-xs text-muted-foreground">Portal: <code className="text-xs bg-muted px-1 py-0.5 rounded">{ROLE_PORTAL[permMember.role]?.path ?? "-"}</code></span>
+                <span className="text-xs text-muted-foreground">Portal: <code className="text-xs bg-muted px-1 py-0.5 rounded-md">{ROLE_PORTAL[permMember.role]?.path ?? "-"}</code></span>
               </div>
               {ROLE_PERMISSIONS[permMember.role] ? (
                 <>

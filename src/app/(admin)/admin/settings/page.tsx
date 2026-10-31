@@ -388,7 +388,7 @@ export default function SettingsPage() {
                                 <div className="relative w-full h-full flex items-center justify-center p-4">
                                   {/* eslint-disable-next-line @next/next/no-img-element */}
                                   <img src={currentUrl} alt={`${variant} logo preview`} className="max-h-20 max-w-full object-contain" />
-                                  <span className="absolute top-2 right-2 text-[10px] px-1.5 py-0.5 rounded bg-background/90 text-muted-foreground border border-border">
+                                  <span className="absolute top-2 right-2 text-[10px] px-1.5 py-0.5 rounded-md bg-background/90 text-muted-foreground border border-border">
                                     Click to replace
                                   </span>
                                 </div>
@@ -434,7 +434,7 @@ export default function SettingsPage() {
                                     type="checkbox"
                                     checked={currentPlacements.includes(p.key)}
                                     onChange={() => toggleLogoPlacement(placementsKey, p.key, currentPlacements)}
-                                    className="rounded border-border accent-amber-500 w-3.5 h-3.5 shrink-0"
+                                    className="rounded-xs border-border accent-amber-500 w-3.5 h-3.5 shrink-0"
                                   />
                                   <span className="text-xs text-muted-foreground group-hover:text-foreground transition-colors">
                                     {p.label}

@@ -132,7 +132,7 @@ export default async function ProductPage({
                   {product.targetIndustries.map((ind) => (
                     <span
                       key={ind}
-                      className="px-3 py-1.5 rounded-sm text-sm font-medium bg-white dark:bg-brand-navy-light border border-brand-border dark:border-white/10 text-brand-navy dark:text-white"
+                      className="px-3 py-1.5 rounded-full text-sm font-medium bg-white dark:bg-brand-navy-light border border-brand-border dark:border-white/10 text-brand-navy dark:text-white"
                     >
                       {ind}
                     </span>

@@ -596,7 +596,7 @@ export function DocumentsPageClient() {
                 return (
                   <div className="flex flex-col gap-1 min-w-0">
                     <StackedCell primary={d.title} secondary={d.reference_code ?? undefined} />
-                    <span className={`self-start px-1.5 py-0.5 rounded text-[10px] font-medium ${typeColors[d.type]}`}>{typeLabels[d.type]}</span>
+                    <span className={`self-start px-1.5 py-0.5 rounded-md text-[10px] font-medium ${typeColors[d.type]}`}>{typeLabels[d.type]}</span>
                   </div>
                 );
               },
@@ -699,7 +699,7 @@ export function DocumentsPageClient() {
                 return (
                   <div className="flex flex-col gap-1 min-w-0">
                     <StackedCell primary={d.title} secondary={d.subtitle ?? undefined} />
-                    <span className={`self-start px-1.5 py-0.5 rounded text-[10px] font-medium ${hubTypeColors[d.type]}`}>{hubTypeLabels[d.type]}</span>
+                    <span className={`self-start px-1.5 py-0.5 rounded-md text-[10px] font-medium ${hubTypeColors[d.type]}`}>{hubTypeLabels[d.type]}</span>
                   </div>
                 );
               },
@@ -951,7 +951,7 @@ export function DocumentsPageClient() {
                   type="checkbox"
                   checked={form.gated}
                   onChange={(e) => set("gated", e.target.checked)}
-                  className="mt-0.5 h-4 w-4 rounded border-input"
+                  className="mt-0.5 h-4 w-4 rounded-md border-input"
                 />
                 <span className="text-sm text-foreground">
                   Show a summary first

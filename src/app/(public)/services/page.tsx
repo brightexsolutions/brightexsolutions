@@ -159,7 +159,7 @@ export default function ServicesPage() {
               </p>
               <Link
                 href="/contact"
-                className="inline-flex items-center gap-2 px-7 py-3.5 rounded-sm bg-brand-gold text-brand-navy font-semibold text-sm hover:bg-brand-gold-hover transition-colors"
+                className="inline-flex items-center gap-2 px-7 py-3.5 rounded-full bg-brand-gold text-brand-navy font-semibold text-sm hover:bg-brand-gold-hover transition-colors"
               >
                 Start a conversation <ArrowRight size={14} />
               </Link>
@@ -219,7 +219,7 @@ export default function ServicesPage() {
               </p>
               <Link
                 href="/contact"
-                className="inline-flex items-center gap-2 px-6 py-3 rounded-sm bg-brand-gold text-brand-navy font-semibold text-sm hover:bg-brand-gold-hover transition-colors"
+                className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-brand-gold text-brand-navy font-semibold text-sm hover:bg-brand-gold-hover transition-colors"
               >
                 Get a quote <ArrowRight size={14} />
               </Link>
@@ -304,7 +304,7 @@ export default function ServicesPage() {
               </p>
               <Link
                 href="/contact"
-                className="inline-flex items-center gap-2 px-6 py-3 rounded-sm border border-white/20 text-white text-sm font-semibold hover:border-brand-gold hover:text-brand-gold transition-colors"
+                className="inline-flex items-center gap-2 px-6 py-3 rounded-full border border-white/20 text-white text-sm font-semibold hover:border-brand-gold hover:text-brand-gold transition-colors"
               >
                 Tell us about your project <ArrowRight size={14} />
               </Link>

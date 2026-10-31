@@ -107,14 +107,14 @@ export default async function WorkPage() {
             <div className="flex flex-wrap gap-3">
               <a
                 href="#products"
-                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-sm bg-brand-gold text-brand-navy text-sm font-semibold hover:bg-brand-gold-hover transition-colors"
+                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-brand-gold text-brand-navy text-sm font-semibold hover:bg-brand-gold-hover transition-colors"
               >
                 Software Products
                 <ArrowRight size={13} />
               </a>
               <a
                 href="#projects"
-                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-sm border border-white/20 text-white text-sm font-medium hover:border-white/40 transition-colors"
+                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full border border-white/20 text-white text-sm font-medium hover:border-white/40 transition-colors"
               >
                 Client Projects
                 <ArrowRight size={13} />
@@ -245,14 +245,14 @@ export default async function WorkPage() {
                     href={whatsappUrl("Hi Godwin, I'm interested in your upcoming software products and would like early access information.")}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center justify-center gap-2 px-8 py-4 rounded-sm bg-brand-gold text-brand-navy font-semibold text-sm hover:bg-brand-gold-hover transition-colors"
+                    className="inline-flex items-center justify-center gap-2 px-8 py-4 rounded-full bg-brand-gold text-brand-navy font-semibold text-sm hover:bg-brand-gold-hover transition-colors"
                   >
                     <MessageCircle size={15} />
                     Get Early Access
                   </a>
                   <Link
                     href="/contact?intent=book_call"
-                    className="inline-flex items-center justify-center gap-2 px-8 py-4 rounded-sm border border-white/20 text-white font-semibold text-sm hover:border-brand-gold/40 transition-colors"
+                    className="inline-flex items-center justify-center gap-2 px-8 py-4 rounded-full border border-white/20 text-white font-semibold text-sm hover:border-brand-gold/40 transition-colors"
                   >
                     Book a Discovery Call <ArrowRight size={14} />
                   </Link>
@@ -309,13 +309,13 @@ export default async function WorkPage() {
             <div className="flex flex-col sm:flex-row gap-3 justify-center">
               <Link
                 href="/contact"
-                className="inline-flex items-center justify-center gap-2 px-8 py-3.5 rounded-sm bg-brand-gold text-brand-navy text-sm font-bold hover:bg-brand-gold-hover transition-colors"
+                className="inline-flex items-center justify-center gap-2 px-8 py-3.5 rounded-full bg-brand-gold text-brand-navy text-sm font-bold hover:bg-brand-gold-hover transition-colors"
               >
                 Start a project
               </Link>
               <Link
                 href="/contact?intent=book_call"
-                className="inline-flex items-center justify-center gap-2 px-8 py-3.5 rounded-sm border border-white/15 text-white text-sm font-medium hover:border-white/35 hover:bg-white/[0.04] transition-all"
+                className="inline-flex items-center justify-center gap-2 px-8 py-3.5 rounded-full border border-white/15 text-white text-sm font-medium hover:border-white/35 hover:bg-white/[0.04] transition-all"
               >
                 Book a call
               </Link>

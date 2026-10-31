@@ -253,7 +253,7 @@ export function BrixoWidget() {
                       <Link
                         href="/contact?intent=book_call"
                         onClick={() => setOpen(false)}
-                        className="inline-flex items-center gap-2 px-4 py-2.5 rounded-sm bg-brand-gold text-brand-navy text-xs font-bold hover:opacity-90 transition-opacity w-fit"
+                        className="inline-flex items-center gap-2 px-4 py-2.5 rounded-full bg-brand-gold text-brand-navy text-xs font-bold hover:opacity-90 transition-opacity w-fit"
                       >
                         <Calendar size={13} />
                         Book a Discovery Call →

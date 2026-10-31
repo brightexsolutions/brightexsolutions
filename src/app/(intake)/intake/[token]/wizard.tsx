@@ -424,7 +424,7 @@ function Step1({ state, update }: { state: IntakeState; update: (p: Partial<Inta
                 )}
               </div>
               <span className={cn(
-                "ml-auto shrink-0 w-5 h-5 rounded-md border flex items-center justify-center text-xs",
+                "ml-auto shrink-0 w-5 h-5 rounded-xs border flex items-center justify-center text-xs",
                 active ? "border-[#f9a825] bg-[#f9a825] text-white" : "border-slate-200 text-transparent"
               )}>
                 ✓
@@ -1356,7 +1356,7 @@ export function IntakeWizard({
       )} style={{ background: NAVY, borderBottom: `2px solid ${GOLD}` }}>
         <div className="max-w-lg mx-auto px-4 h-12 flex items-center justify-between gap-3">
           <div className="flex items-center gap-2.5 min-w-0">
-            <div className="w-6 h-6 rounded-md flex items-center justify-center text-xs font-extrabold shrink-0"
+            <div className="w-6 h-6 rounded-xs flex items-center justify-center text-xs font-extrabold shrink-0"
               style={{ background: GOLD, color: NAVY }}>B</div>
             <span className="text-white font-semibold text-sm truncate">{STEP_LABELS[step - 1]}</span>
           </div>

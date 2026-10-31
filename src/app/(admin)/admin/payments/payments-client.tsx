@@ -721,7 +721,7 @@ export function PaymentsPageClient() {
                   type="checkbox"
                   checked={form.send_receipt}
                   onChange={(e) => set("send_receipt", e.target.checked)}
-                  className="w-4 h-4 rounded border-border accent-brand-gold"
+                  className="w-4 h-4 rounded-xs border-border accent-brand-gold"
                 />
                 <span className="text-sm text-foreground">Send receipt to client</span>
               </label>

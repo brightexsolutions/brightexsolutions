@@ -836,7 +836,7 @@ export function ProjectsPageClient() {
                   type="checkbox"
                   checked={form.is_retainer}
                   onChange={(e) => set("is_retainer", e.target.checked)}
-                  className="rounded border-input"
+                  className="rounded-md border-input"
                 />
                 <Label htmlFor="is_retainer" className="font-normal">This is a retainer (recurring engagement)</Label>
               </div>

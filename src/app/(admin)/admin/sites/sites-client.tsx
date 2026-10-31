@@ -483,7 +483,7 @@ export function SiteMonitoringPageClient() {
                   <li className="flex items-start gap-3">
                     <span className="w-5 h-5 rounded-full bg-brand-gold/20 text-brand-gold text-[10px] font-bold flex items-center justify-center shrink-0 mt-0.5">1</span>
                     <div>
-                      <p className="text-xs text-muted-foreground mb-2">Add the health route to the site at <code className="bg-muted px-1 rounded text-[11px]">src/app/api/health/route.ts</code>:</p>
+                      <p className="text-xs text-muted-foreground mb-2">Add the health route to the site at <code className="bg-muted px-1 rounded-md text-[11px]">src/app/api/health/route.ts</code>:</p>
                       <pre className="bg-muted rounded-sm p-3 text-[10px] text-muted-foreground overflow-x-auto leading-relaxed whitespace-pre">{`import { NextResponse } from 'next/server'
 export async function GET(request: Request) {
   const token = request.headers.get('x-brightex-token')
@@ -516,7 +516,7 @@ NEXT_PUBLIC_SITE_NAME=your-site-name`}</pre>
                   </li>
                   <li className="flex items-start gap-3">
                     <span className="w-5 h-5 rounded-full bg-brand-gold/20 text-brand-gold text-[10px] font-bold flex items-center justify-center shrink-0 mt-0.5">3</span>
-                    <p className="text-xs text-muted-foreground">Deploy the site. Verify the endpoint responds at <code className="bg-muted px-1 rounded text-[11px]">https://yoursite.com/api/health</code>.</p>
+                    <p className="text-xs text-muted-foreground">Deploy the site. Verify the endpoint responds at <code className="bg-muted px-1 rounded-md text-[11px]">https://yoursite.com/api/health</code>.</p>
                   </li>
                   <li className="flex items-start gap-3">
                     <span className="w-5 h-5 rounded-full bg-brand-gold/20 text-brand-gold text-[10px] font-bold flex items-center justify-center shrink-0 mt-0.5">4</span>
@@ -554,7 +554,7 @@ NEXT_PUBLIC_SITE_NAME=your-site-name`}</pre>
                   <li className="flex items-start gap-3">
                     <span className="w-5 h-5 rounded-full bg-brand-gold/20 text-brand-gold text-[10px] font-bold flex items-center justify-center shrink-0 mt-0.5">1</span>
                     <div>
-                      <p className="text-xs text-muted-foreground mb-2">Create the file <code className="bg-muted px-1 rounded text-[11px]">/wp-content/mu-plugins/brightex-health.php</code>:</p>
+                      <p className="text-xs text-muted-foreground mb-2">Create the file <code className="bg-muted px-1 rounded-md text-[11px]">/wp-content/mu-plugins/brightex-health.php</code>:</p>
                       <pre className="bg-muted rounded-sm p-3 text-[10px] text-muted-foreground overflow-x-auto leading-relaxed whitespace-pre">{`<?php
 // Plugin Name: Brightex Health Monitor
 add_action('rest_api_init', function () {
@@ -591,13 +591,13 @@ function brightex_health_check(WP_REST_Request $req) {
                   <li className="flex items-start gap-3">
                     <span className="w-5 h-5 rounded-full bg-brand-gold/20 text-brand-gold text-[10px] font-bold flex items-center justify-center shrink-0 mt-0.5">2</span>
                     <div>
-                      <p className="text-xs text-muted-foreground mb-2">Add this line to <code className="bg-muted px-1 rounded text-[11px]">wp-config.php</code> (above the line that says &quot;That&apos;s all, stop editing!&quot;):</p>
+                      <p className="text-xs text-muted-foreground mb-2">Add this line to <code className="bg-muted px-1 rounded-md text-[11px]">wp-config.php</code> (above the line that says &quot;That&apos;s all, stop editing!&quot;):</p>
                       <pre className="bg-muted rounded-sm p-3 text-[10px] text-muted-foreground overflow-x-auto">{`define('BRIGHTEX_HEALTH_TOKEN', 'your-secret-here');`}</pre>
                     </div>
                   </li>
                   <li className="flex items-start gap-3">
                     <span className="w-5 h-5 rounded-full bg-brand-gold/20 text-brand-gold text-[10px] font-bold flex items-center justify-center shrink-0 mt-0.5">3</span>
-                    <p className="text-xs text-muted-foreground">Test the endpoint: <code className="bg-muted px-1 rounded text-[11px]">https://clientsite.com/wp-json/brightex/v1/health</code>: should return <code className="bg-muted px-1 rounded text-[11px]">{`{"status":"ok"}`}</code>.</p>
+                    <p className="text-xs text-muted-foreground">Test the endpoint: <code className="bg-muted px-1 rounded-md text-[11px]">https://clientsite.com/wp-json/brightex/v1/health</code>: should return <code className="bg-muted px-1 rounded-md text-[11px]">{`{"status":"ok"}`}</code>.</p>
                   </li>
                   <li className="flex items-start gap-3">
                     <span className="w-5 h-5 rounded-full bg-brand-gold/20 text-brand-gold text-[10px] font-bold flex items-center justify-center shrink-0 mt-0.5">4</span>
@@ -607,7 +607,7 @@ function brightex_health_check(WP_REST_Request $req) {
               </div>
               <div className="p-3 rounded-sm bg-muted/50 border border-border">
                 <p className="text-xs font-medium text-foreground mb-1">How to upload the file</p>
-                <p className="text-xs text-muted-foreground">Use cPanel File Manager → navigate to <code className="bg-muted px-1 rounded text-[11px]">wp-content/mu-plugins/</code> (create folder if it doesn&apos;t exist) and upload the file. Or use FTP/SFTP. The plugin activates automatically: no wp-admin activation needed.</p>
+                <p className="text-xs text-muted-foreground">Use cPanel File Manager → navigate to <code className="bg-muted px-1 rounded-md text-[11px]">wp-content/mu-plugins/</code> (create folder if it doesn&apos;t exist) and upload the file. Or use FTP/SFTP. The plugin activates automatically: no wp-admin activation needed.</p>
               </div>
             </div>
           )}
