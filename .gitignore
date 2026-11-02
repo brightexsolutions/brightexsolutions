@@ -45,3 +45,6 @@ next-env.d.ts
 
 # Playwright MCP scratch output
 .playwright-mcp/
+
+# Supabase CLI link state (includes connection details)
+supabase/.temp/

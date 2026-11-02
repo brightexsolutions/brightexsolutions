@@ -50,6 +50,7 @@ export async function GET(request: NextRequest) {
   const { data, error } = await supabase
     .from("settings")
     .select("key, value")
+    .not("key", "like", "popup:%") // pop-up configs, managed from Announcements
     .order("key");
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });

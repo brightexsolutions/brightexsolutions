@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-/** Pop-up settings stored on an announcement (announcements.popup, migration 043). */
+/** Pop-up settings for an announcement, stored in `settings` (see popup-store.ts). */
 export const PopupConfigSchema = z.object({
   enabled: z.boolean().default(false),
   trigger: z.enum(["load", "delay", "scroll", "exit", "after_contact"]).default("delay"),
@@ -68,9 +68,4 @@ export function readPopup(value: unknown): PopupConfig | null {
   if (!value) return null;
   const r = PopupConfigSchema.safeParse(value);
   return r.success ? r.data : null;
-}
-
-/** The friendly message when migration 043 has not been run yet. */
-export function popupColumnMissing(message: string | undefined): boolean {
-  return !!message && /popup/i.test(message) && /column|schema cache/i.test(message);
 }

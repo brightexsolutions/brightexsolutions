@@ -190,8 +190,7 @@ export function AnnouncementsPageClient() {
         ...popupForm,
         pages: pagesText.split(/[,\n]/).map((p) => p.trim()).filter(Boolean).map((p) => (p.startsWith("/") ? p : `/${p}`)),
       };
-      // Only send pop-up settings once they are used, so plain announcements keep
-      // saving even before migration 043 has added the column.
+      // Plain announcements store no pop-up row at all
       const sendPopup = popup.enabled || !!readPopup(editTarget?.popup);
       const payload = {
         ...rest,

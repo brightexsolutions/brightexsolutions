@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { createClient, createAdminClient } from "@/lib/supabase/server";
 import { rateLimit } from "@/lib/rate-limit";
-import { PopupConfigSchema, popupColumnMissing } from "@/lib/popup-config";
+import { PopupConfigSchema } from "@/lib/popup-config";
+import { loadPopups, savePopup } from "@/lib/popup-store";
 import { logSystemAction } from "@/lib/audit";
 import { transporter } from "@/lib/mail";
 import { SITE_NAME, BUSINESS_EMAIL, BUSINESS_WEBSITE } from "@/lib/constants";
@@ -39,19 +40,18 @@ export async function PATCH(
 
   const { data: before } = await supabase.from("announcements").select("active, title, type, body").eq("id", id).single();
 
-  const { data, error } = await supabase
-    .from("announcements")
-    .update(result.data)
-    .eq("id", id)
-    .select()
-    .single();
+  const { popup, ...fields } = result.data;
+  // A pop-up-only edit has no announcement columns to update
+  const { data: row, error } = Object.keys(fields).length
+    ? await supabase.from("announcements").update(fields).eq("id", id).select().single()
+    : await supabase.from("announcements").select().eq("id", id).single();
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
-  if (error) {
-    if (popupColumnMissing(error.message)) {
-      return NextResponse.json({ error: "Pop-up settings need database migration 043 (supabase/migrations/043_announcement_popups.sql). Run it in the Supabase SQL editor, then save again." }, { status: 409 });
-    }
-    return NextResponse.json({ error: error.message }, { status: 500 });
+  if (popup !== undefined) {
+    const saved = await savePopup(supabase, id, popup);
+    if (saved.error) return NextResponse.json({ error: `Pop-up settings failed to save: ${saved.error.message}` }, { status: 500 });
   }
+  const data = { ...row, popup: popup !== undefined ? popup : (await loadPopups(supabase)).get(id) ?? null };
 
   // Notify internal team when an announcement is first published
   if (result.data.active === true && before?.active === false) {
@@ -104,5 +104,6 @@ export async function DELETE(
   const { id } = await params;
   const { error } = await supabase.from("announcements").update({ deleted_at: new Date().toISOString() }).eq("id", id);
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  await savePopup(supabase, id, null);
   return NextResponse.json({ ok: true });
 }

@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { createClient, createAdminClient } from "@/lib/supabase/server";
 import { rateLimit } from "@/lib/rate-limit";
-import { PopupConfigSchema, popupColumnMissing } from "@/lib/popup-config";
+import { PopupConfigSchema } from "@/lib/popup-config";
+import { loadPopups, savePopup } from "@/lib/popup-store";
 
 const AnnouncementSchema = z.object({
   title: z.string().min(1).max(200).trim(),
@@ -31,10 +32,10 @@ export async function GET(request: NextRequest) {
   let query = supabase.from("announcements").select("*").is("deleted_at", null).order("created_at", { ascending: false });
   if (activeOnly) query = query.eq("active", true);
 
-  const { data, error } = await query;
+  const [{ data, error }, popups] = await Promise.all([query, loadPopups(supabase)]);
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
-  return NextResponse.json({ data });
+  return NextResponse.json({ data: (data ?? []).map((a) => ({ ...a, popup: popups.get(a.id) ?? null })) });
 }
 
 export async function POST(request: NextRequest) {
@@ -49,13 +50,14 @@ export async function POST(request: NextRequest) {
   const result = AnnouncementSchema.safeParse(body);
   if (!result.success) return NextResponse.json({ error: "Invalid input", details: result.error.flatten() }, { status: 400 });
 
-  const { data, error } = await supabase.from("announcements").insert(result.data).select().single();
-  if (error) {
-      if (popupColumnMissing(error.message)) {
-        return NextResponse.json({ error: "Pop-up settings need database migration 043 (supabase/migrations/043_announcement_popups.sql). Run it in the Supabase SQL editor, then save again." }, { status: 409 });
-      }
-    return NextResponse.json({ error: error.message }, { status: 500 });
+  const { popup, ...fields } = result.data;
+  const { data, error } = await supabase.from("announcements").insert(fields).select().single();
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+
+  if (popup) {
+    const saved = await savePopup(supabase, data.id, popup);
+    if (saved.error) return NextResponse.json({ error: `Announcement saved, but its pop-up settings failed: ${saved.error.message}` }, { status: 500 });
   }
 
-  return NextResponse.json({ data }, { status: 201 });
+  return NextResponse.json({ data: { ...data, popup: popup ?? null } }, { status: 201 });
 }
