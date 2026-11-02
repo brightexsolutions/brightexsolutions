@@ -18,7 +18,9 @@ const TEAM_PORTALS: Record<string, string> = {
  * Unset, nothing changes and /admin keeps working on the main domain.
  */
 const ADMIN_HOST = process.env.ADMIN_HOST;
-const APP_PREFIXES = ["/admin", "/portal", "/team", "/auth"];
+// Everything that needs the admin session cookie, including the invite landing
+// page, so a new team member signs in on the same host as their portal.
+const APP_PREFIXES = ["/admin", "/portal", "/team", "/auth", "/join"];
 
 function adminHostRedirect(request: NextRequest): NextResponse | null {
   if (!ADMIN_HOST) return null;
@@ -151,6 +153,7 @@ export const config = {
     "/admin/:path*",
     "/portal/:path*",
     "/team/:path*",
+    "/join",
     { source: "/((?!_next/|api/|.*\\.).*)", has: [{ type: "host", value: "admin\\..+" }] },
   ],
 };
