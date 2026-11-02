@@ -1,17 +1,18 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import Image from "next/image";
-import { ArrowRight, MessageCircle, Mail, CalendarDays, User, Users, CheckCircle2, MapPin, Code2, PenTool, Workflow, Sparkles } from "lucide-react";
+import { ArrowRight, MessageCircle, Mail, CalendarDays, User, Users, CheckCircle2, MapPin, Code2, PenTool, Workflow, Sparkles, Plug, Compass } from "lucide-react";
 import { FadeIn, FadeInStagger, StaggerChild } from "@/components/public/fade-in";
 import { SHOWCASE_CLIENTS } from "@/lib/client-showcase";
 import {
-  SITE_NAME, SITE_URL, BUSINESS_EMAIL, BUSINESS_PHONE, BUSINESS_CITY, BUSINESS_COUNTRY,
+  SITE_NAME, SITE_URL, BUSINESS_PHONE, BUSINESS_CITY, BUSINESS_COUNTRY,
   SOCIAL_LINKEDIN, whatsappUrl,
 } from "@/lib/constants";
 
 export const revalidate = 3600;
 
 const FOUNDER = {
+  email: "godwinochieng05@gmail.com",
   role: "Software Engineer · Full-Stack Developer · Product Designer",
   name: "Godwin Ochieng",
   title: "Lead at Brightex Solutions",
@@ -35,14 +36,14 @@ const personSchema = {
     { "@type": "Occupation", name: "Product Designer" },
   ],
   url: `${SITE_URL}/about`,
-  email: `mailto:${BUSINESS_EMAIL}`,
+  email: `mailto:${FOUNDER.email}`,
   telephone: BUSINESS_PHONE,
   address: { "@type": "PostalAddress", addressLocality: BUSINESS_CITY, addressCountry: "KE" },
   worksFor: { "@type": "ProfessionalService", "@id": `${SITE_URL}/#organization`, name: SITE_NAME, url: SITE_URL },
   knowsAbout: [
     "Software engineering", "Full-stack development", "Web development", "UI/UX design", "Product design",
-    "ERP systems", "System integrations", "AI automation", "Technology consulting", "SEO",
-    "TypeScript", "React", "Next.js", "Node.js", "PostgreSQL",
+    "AI integration", "System integrations", "API integrations", "ERP systems", "Technology consulting", "SEO",
+    "TypeScript", "React", "Next.js", "Node.js", "Python", "FastAPI", "PostgreSQL", "Docker",
   ],
 };
 
@@ -51,7 +52,7 @@ const SKILLS = [
     icon: Code2,
     title: "Software engineering",
     body: "Full-stack web applications built to last, with clean code that a team can keep extending.",
-    points: ["Front end and back end", "APIs and databases", "Auth, payments and admin tools"],
+    points: ["Front end, back end and APIs", "Databases, auth and payments", "Docker for consistent builds and deploys"],
   },
   {
     icon: PenTool,
@@ -60,20 +61,50 @@ const SKILLS = [
     points: ["User flows and wireframes", "Design systems", "Brand and visual identity"],
   },
   {
-    icon: Workflow,
-    title: "Business systems",
-    body: "ERPs and internal tools that replace spreadsheets and connect to the services a business relies on.",
-    points: ["ERP and dashboards", "M-Pesa and KRA eTIMS", "WhatsApp, SMS and email"],
+    icon: Sparkles,
+    title: "AI integration",
+    body: "AI built into real workflows, with a person approving what matters and clear limits on what it may say.",
+    points: ["Claude and Gemini integrations", "Assistants grounded in live data", "Drafting, summaries and digests"],
   },
   {
-    icon: Sparkles,
-    title: "AI and automation",
-    body: "Practical automation that takes repetitive work off a team, with a person approving what matters.",
-    points: ["AI drafting and assistants", "Workflow automation", "Search and SEO"],
+    icon: Plug,
+    title: "Systems integration",
+    body: "Connecting a business to the services it already relies on, so data moves without retyping.",
+    points: ["M-Pesa (Daraja) and KRA eTIMS", "Trading and third-party platform APIs", "WhatsApp, SMS and email"],
+  },
+  {
+    icon: Workflow,
+    title: "Business systems",
+    body: "ERPs, dashboards and internal tools that replace spreadsheets and give owners a clear view.",
+    points: ["ERP and admin dashboards", "Orders, stock and finance", "Reporting and audit trails"],
+  },
+  {
+    icon: Compass,
+    title: "Technology consultancy",
+    body: "A clear technical answer before you spend, from someone who builds these systems every day.",
+    points: ["Platform and architecture choices", "Reviews of quotes and existing systems", "Roadmaps: what to build first"],
   },
 ];
 
-const STACK = ["Next.js", "React", "TypeScript", "Node.js", "PostgreSQL", "Supabase", "Tailwind CSS", "WordPress", "Vercel"];
+const UPCOMING = [
+  {
+    name: "TradeBridge",
+    kind: "Trading tool",
+    body: "Fast order entry from TradingView analysis into MetaTrader 5. Every order passes an explicit confirm step, and an optional AI market digest summarises the day's calendar and news without giving advice.",
+    stack: ["Python", "FastAPI", "React", "MetaApi", "AI digest"],
+  },
+  {
+    name: "DesignScents",
+    kind: "E-commerce",
+    body: "An online perfume shop for a Nairobi brand: catalogue with a scent-finder quiz, cart and checkout with M-Pesa, delivery across all 47 counties, and its own admin for orders, stock and promotions.",
+    stack: ["Next.js", "Supabase", "M-Pesa", "Admin dashboard"],
+  },
+];
+
+const STACK = [
+  "Next.js", "React", "TypeScript", "Node.js", "Python", "FastAPI", "PostgreSQL", "Supabase",
+  "Tailwind CSS", "Docker", "Claude and Gemini APIs", "WordPress", "Vercel",
+];
 
 const PATHS = [
   {
@@ -137,6 +168,9 @@ export default function AboutPage() {
                 <CalendarDays size={16} /> Book a call
               </Link>
             </div>
+            <a href={`mailto:${FOUNDER.email}`} className="mt-5 inline-flex items-center gap-2 text-sm text-white/75 hover:text-white">
+              <Mail size={15} /> {FOUNDER.email}
+            </a>
           </FadeIn>
 
           {/* Portrait placeholder: a monogram until a real photo is added to /public/images/godwin.webp */}
@@ -161,9 +195,9 @@ export default function AboutPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <FadeIn className="max-w-2xl mb-12">
             <p className="text-brand-gold text-xs font-semibold tracking-widest uppercase">What I do</p>
-            <h2 className="font-display text-4xl font-bold text-brand-navy mt-3">Engineering, design and the systems in between</h2>
+            <h2 className="font-display text-4xl font-bold text-brand-navy mt-3">Engineering, design, AI and the systems in between</h2>
           </FadeIn>
-          <FadeInStagger className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <FadeInStagger className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {SKILLS.map((sk) => (
               <StaggerChild key={sk.title}>
                 <div className="h-full rounded-2xl border border-brand-border bg-brand-bg/50 p-6">
@@ -235,6 +269,39 @@ export default function AboutPage() {
         </div>
       </section>
 
+      {/* In development */}
+      <section className="py-20 bg-brand-bg">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <FadeIn className="max-w-2xl mb-10">
+            <p className="text-brand-gold text-xs font-semibold tracking-widest uppercase">Coming soon</p>
+            <h2 className="font-display text-4xl font-bold text-brand-navy mt-3">In development now</h2>
+            <p className="text-brand-muted mt-3">Two products I&apos;m building that launch soon.</p>
+          </FadeIn>
+          <FadeInStagger className="grid md:grid-cols-2 gap-5">
+            {UPCOMING.map((u) => (
+              <StaggerChild key={u.name}>
+                <div className="relative h-full overflow-hidden rounded-3xl bg-brand-navy p-8 text-white">
+                  <div aria-hidden className="absolute -right-16 -top-16 size-56 rounded-full bg-brand-gold/15 blur-2xl" />
+                  <div className="relative flex items-center justify-between gap-3 mb-5">
+                    <span className="text-xs font-semibold uppercase tracking-widest text-white/65">{u.kind}</span>
+                    <span className="inline-flex items-center gap-1.5 h-7 px-3 rounded-full bg-brand-gold/15 text-brand-gold text-xs font-semibold">
+                      <span className="size-1.5 rounded-full bg-brand-gold animate-pulse" /> Launching soon
+                    </span>
+                  </div>
+                  <h3 className="relative font-display text-3xl font-bold mb-3">{u.name}</h3>
+                  <p className="relative text-white/75 leading-relaxed mb-6">{u.body}</p>
+                  <ul className="relative flex flex-wrap gap-2">
+                    {u.stack.map((t) => (
+                      <li key={t} className="h-8 px-3 inline-flex items-center rounded-full bg-white/10 text-white/85 text-xs font-medium">{t}</li>
+                    ))}
+                  </ul>
+                </div>
+              </StaggerChild>
+            ))}
+          </FadeInStagger>
+        </div>
+      </section>
+
       {/* Work Godwin has led */}
       <section className="py-20 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -271,12 +338,15 @@ export default function AboutPage() {
           <div>
             <h2 className="font-display text-3xl sm:text-4xl font-bold text-white">Want to hear from Godwin?</h2>
             <p className="text-white/70 mt-2">Pick whichever is easiest. Replies usually come the same day.</p>
+            <a href={`mailto:${FOUNDER.email}`} className="inline-flex items-center gap-2 mt-3 text-brand-gold font-medium hover:underline">
+              <Mail size={16} /> {FOUNDER.email}
+            </a>
           </div>
           <div className="flex flex-wrap gap-3">
             <a href={whatsappUrl("Hi Godwin, I'd like to talk to you about")} target="_blank" rel="noopener" className="inline-flex items-center gap-2 px-6 py-3.5 rounded-full bg-brand-gold text-brand-navy font-semibold text-sm hover:bg-brand-gold-hover">
               <MessageCircle size={16} /> WhatsApp
             </a>
-            <a href={`mailto:${BUSINESS_EMAIL}?subject=${encodeURIComponent("For Godwin")}`} className="inline-flex items-center gap-2 px-6 py-3.5 rounded-full border border-white/25 text-white font-semibold text-sm hover:bg-white/5">
+            <a href={`mailto:${FOUNDER.email}`} className="inline-flex items-center gap-2 px-6 py-3.5 rounded-full border border-white/25 text-white font-semibold text-sm hover:bg-white/5">
               <Mail size={16} /> Email
             </a>
             <Link href="/contact?intent=book_call" className="inline-flex items-center gap-2 px-6 py-3.5 rounded-full border border-white/25 text-white font-semibold text-sm hover:bg-white/5">
