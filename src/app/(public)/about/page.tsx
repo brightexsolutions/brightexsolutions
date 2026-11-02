@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import Image from "next/image";
-import { ArrowRight, MessageCircle, Mail, CalendarDays, User, Users, CheckCircle2, MapPin } from "lucide-react";
+import { ArrowRight, MessageCircle, Mail, CalendarDays, User, Users, CheckCircle2, MapPin, Code2, PenTool, Workflow, Sparkles } from "lucide-react";
 import { FadeIn, FadeInStagger, StaggerChild } from "@/components/public/fade-in";
 import { SHOWCASE_CLIENTS } from "@/lib/client-showcase";
 import {
@@ -12,13 +12,14 @@ import {
 export const revalidate = 3600;
 
 const FOUNDER = {
+  role: "Software Engineer · Full-Stack Developer · Product Designer",
   name: "Godwin Ochieng",
   title: "Lead at Brightex Solutions",
 };
 
 export const metadata: Metadata = {
-  title: `${FOUNDER.name}, ${FOUNDER.title}`,
-  description: `${FOUNDER.name} leads Brightex Solutions, a technology consultancy in Nairobi building websites, ERP systems and AI tools. Hire Godwin directly or the Brightex team.`,
+  title: `${FOUNDER.name}, Software Engineer and ${FOUNDER.title}`,
+  description: `${FOUNDER.name} is a software engineer and full-stack developer with a background in design, and leads Brightex Solutions, a technology consultancy in Nairobi building websites, ERP systems and AI tools. Hire Godwin directly or the Brightex team.`,
   alternates: { canonical: "/about" },
   openGraph: { type: "profile", title: `${FOUNDER.name} | ${SITE_NAME}`, url: `${SITE_URL}/about` },
 };
@@ -27,22 +28,60 @@ const personSchema = {
   "@context": "https://schema.org",
   "@type": "Person",
   name: FOUNDER.name,
-  jobTitle: FOUNDER.title,
+  jobTitle: "Software Engineer",
+  hasOccupation: [
+    { "@type": "Occupation", name: "Software Engineer" },
+    { "@type": "Occupation", name: "Full-Stack Developer" },
+    { "@type": "Occupation", name: "Product Designer" },
+  ],
   url: `${SITE_URL}/about`,
   email: `mailto:${BUSINESS_EMAIL}`,
   telephone: BUSINESS_PHONE,
   address: { "@type": "PostalAddress", addressLocality: BUSINESS_CITY, addressCountry: "KE" },
   worksFor: { "@type": "ProfessionalService", "@id": `${SITE_URL}/#organization`, name: SITE_NAME, url: SITE_URL },
-  knowsAbout: ["Technology consulting", "Web development", "ERP systems", "System integrations", "AI automation", "SEO"],
+  knowsAbout: [
+    "Software engineering", "Full-stack development", "Web development", "UI/UX design", "Product design",
+    "ERP systems", "System integrations", "AI automation", "Technology consulting", "SEO",
+    "TypeScript", "React", "Next.js", "Node.js", "PostgreSQL",
+  ],
 };
+
+const SKILLS = [
+  {
+    icon: Code2,
+    title: "Software engineering",
+    body: "Full-stack web applications built to last, with clean code that a team can keep extending.",
+    points: ["Front end and back end", "APIs and databases", "Auth, payments and admin tools"],
+  },
+  {
+    icon: PenTool,
+    title: "Product and UI/UX design",
+    body: "Interfaces designed around how people actually work, then built exactly as designed.",
+    points: ["User flows and wireframes", "Design systems", "Brand and visual identity"],
+  },
+  {
+    icon: Workflow,
+    title: "Business systems",
+    body: "ERPs and internal tools that replace spreadsheets and connect to the services a business relies on.",
+    points: ["ERP and dashboards", "M-Pesa and KRA eTIMS", "WhatsApp, SMS and email"],
+  },
+  {
+    icon: Sparkles,
+    title: "AI and automation",
+    body: "Practical automation that takes repetitive work off a team, with a person approving what matters.",
+    points: ["AI drafting and assistants", "Workflow automation", "Search and SEO"],
+  },
+];
+
+const STACK = ["Next.js", "React", "TypeScript", "Node.js", "PostgreSQL", "Supabase", "Tailwind CSS", "WordPress", "Vercel"];
 
 const PATHS = [
   {
     icon: User,
     eyebrow: "Work with Godwin",
-    title: "Advice and technical leadership",
-    body: "For founders and managers who need a clear technical answer before they spend: choosing a platform, reviewing a quote or a system you already have, or planning what to build first.",
-    points: ["One-to-one advisory calls", "Review of an existing website or system", "Technical lead on your project"],
+    title: "Engineering, design and advice",
+    body: "Bring me in to design and build a product hands-on, to lead the technical side of your project, or for a clear answer before you spend: choosing a platform, reviewing a quote, or planning what to build first.",
+    points: ["One-to-one advisory calls", "Hands-on full-stack development and design", "Review of an existing website or system", "Technical lead on your project"],
     cta: { label: "Message Godwin on WhatsApp", href: whatsappUrl("Hi Godwin, I'd like to talk to you about") , external: true },
   },
   {
@@ -71,11 +110,16 @@ export default function AboutPage() {
             <h1 className="font-display text-5xl sm:text-6xl font-bold text-white leading-[1.05] tracking-tight">
               {FOUNDER.name}
             </h1>
-            <p className="mt-4 text-xl text-brand-gold font-medium">{FOUNDER.title}</p>
+            <p className="mt-4 text-xl text-brand-gold font-medium">{FOUNDER.role}</p>
+            <p className="mt-1 text-white/65">{FOUNDER.title}</p>
             <p className="mt-6 text-white/75 text-lg leading-relaxed max-w-xl">
-              Godwin leads Brightex Solutions from Nairobi. He works directly with every client, from the
-              first call through design, build and launch, so the person who scopes your project is the same
-              person accountable for delivering it.
+              I&apos;m a software engineer and full-stack developer with a background in design. I build
+              products end to end, from the first sketch of the interface to the database, the APIs and the
+              integrations that make a system useful day to day.
+            </p>
+            <p className="mt-4 text-white/75 text-lg leading-relaxed max-w-xl">
+              I lead Brightex Solutions from Nairobi and work directly with every client, so the person who
+              scopes your project is the same person accountable for delivering it.
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
               <a
@@ -108,6 +152,45 @@ export default function AboutPage() {
                 <span className="text-sm font-semibold text-brand-navy">{BUSINESS_CITY}, {BUSINESS_COUNTRY}</span>
               </div>
             </div>
+          </FadeIn>
+        </div>
+      </section>
+
+      {/* What I do */}
+      <section className="py-20 bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <FadeIn className="max-w-2xl mb-12">
+            <p className="text-brand-gold text-xs font-semibold tracking-widest uppercase">What I do</p>
+            <h2 className="font-display text-4xl font-bold text-brand-navy mt-3">Engineering, design and the systems in between</h2>
+          </FadeIn>
+          <FadeInStagger className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {SKILLS.map((sk) => (
+              <StaggerChild key={sk.title}>
+                <div className="h-full rounded-2xl border border-brand-border bg-brand-bg/50 p-6">
+                  <span className="size-11 rounded-xl bg-brand-navy text-brand-gold flex items-center justify-center mb-5">
+                    <sk.icon size={20} />
+                  </span>
+                  <h3 className="font-semibold text-brand-navy text-lg leading-snug mb-2">{sk.title}</h3>
+                  <p className="text-sm text-brand-muted leading-relaxed mb-4">{sk.body}</p>
+                  <ul className="space-y-1.5">
+                    {sk.points.map((pt) => (
+                      <li key={pt} className="flex items-start gap-2 text-sm text-brand-text">
+                        <CheckCircle2 size={15} className="text-brand-gold mt-0.5 shrink-0" />{pt}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </StaggerChild>
+            ))}
+          </FadeInStagger>
+
+          <FadeIn className="mt-12 rounded-2xl bg-brand-navy px-6 py-6 sm:px-8 flex flex-col lg:flex-row lg:items-center gap-5">
+            <p className="text-white font-semibold shrink-0">Tools I build with</p>
+            <ul className="flex flex-wrap gap-2">
+              {STACK.map((t) => (
+                <li key={t} className="h-9 px-4 inline-flex items-center rounded-full bg-white/10 text-white/90 text-sm font-medium">{t}</li>
+              ))}
+            </ul>
           </FadeIn>
         </div>
       </section>
