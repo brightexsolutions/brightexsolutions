@@ -2,36 +2,22 @@
 
 import { useEffect, useRef, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import {
-  Search, X, ArrowRight, LayoutDashboard, Users, FolderOpen,
-  FileText, CreditCard, DollarSign, Rss, Package, BookOpen,
-  BarChart3, Megaphone, Globe, UserCheck, MessageSquare,
-  ScrollText, Calendar, TrendingUp, User, Hash,
-} from "lucide-react";
+import { Search, X, CornerDownLeft, FolderOpen, FileText, User, Hash } from "lucide-react";
+import { ADMIN_HUBS } from "@/lib/admin-nav";
 import { cn } from "@/lib/utils";
 
-// ─── Quick nav shown when query is empty ─────────────────────────────────────
+// ─── Jump list: every hub tab, grouped like the sidebar ─────────────────────
 
-const QUICK_NAV = [
-  { label: "Dashboard",      href: "/admin",               icon: LayoutDashboard },
-  { label: "Clients",        href: "/admin/clients",        icon: Users },
-  { label: "Sales Pipeline", href: "/admin/sales",          icon: TrendingUp },
-  { label: "Bookings",       href: "/admin/bookings",       icon: BookOpen },
-  { label: "Projects",       href: "/admin/projects",       icon: FolderOpen },
-  { label: "Invoices",       href: "/admin/invoices",       icon: FileText },
-  { label: "Payments",       href: "/admin/payments",       icon: CreditCard },
-  { label: "Finance",        href: "/admin/finance",        icon: DollarSign },
-  { label: "Subscriptions",  href: "/admin/subscriptions",  icon: Rss },
-  { label: "Products",       href: "/admin/products",       icon: Package },
-  { label: "Social Media",   href: "/admin/social",         icon: BarChart3 },
-  { label: "Announcements",  href: "/admin/announcements",  icon: Megaphone },
-  { label: "Portfolio",      href: "/admin/portfolio",      icon: Globe },
-  { label: "Brixo Chat",     href: "/admin/chat",           icon: MessageSquare },
-  { label: "Team",           href: "/admin/team",           icon: UserCheck },
-  { label: "Site Monitoring",href: "/admin/sites",          icon: Globe },
-  { label: "Calendar",       href: "/admin/calendar",       icon: Calendar },
-  { label: "Activity Log",   href: "/admin/logs",           icon: ScrollText },
-];
+const JUMP_ITEMS: ResultItem[] = ADMIN_HUBS.flatMap((hub) =>
+  hub.tabs.map((tab) => ({
+    id: `nav-${tab.href}`,
+    label: tab.label === hub.label || hub.tabs.length === 1 ? hub.label : tab.label,
+    href: tab.href,
+    group: hub.label,
+    icon: hub.icon,
+    keywords: `${hub.label} ${tab.label}`.toLowerCase(),
+  })),
+);
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -43,6 +29,7 @@ interface ResultItem {
   group: string;
   icon: React.ElementType;
   badge?: string;
+  keywords?: string;
 }
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -90,12 +77,20 @@ function buildResults(data: {
     label: p.caption.slice(0, 70) + (p.caption.length > 70 ? "…" : ""),
     sub: (p.platforms ?? []).join(", "),
     href: `/admin/social`,
-    group: "Social Posts",
+    group: "Social posts",
     icon: Hash,
     badge: p.status?.replace(/_/g, " "),
   }));
 
   return items;
+}
+
+function Kbd({ children }: { children: React.ReactNode }) {
+  return (
+    <kbd className="inline-flex items-center justify-center min-w-5 h-5 px-1 rounded-md border border-border bg-background text-[10px] font-medium text-muted-foreground font-sans">
+      {children}
+    </kbd>
+  );
 }
 
 // ─── Component ───────────────────────────────────────────────────────────────
@@ -168,15 +163,10 @@ export function CommandPalette() {
     return () => { if (debounceRef.current) clearTimeout(debounceRef.current); };
   }, [query]);
 
-  // ── Flat navigable list ──
-  const quickFiltered = query.trim()
-    ? QUICK_NAV.filter((n) => n.label.toLowerCase().includes(query.toLowerCase()))
-    : QUICK_NAV;
-
-  const allItems: Array<{ label: string; sub?: string; href: string; icon: React.ElementType; badge?: string; group?: string }> =
-    query.trim() && query.length >= 2
-      ? results
-      : quickFiltered.map((n) => ({ ...n, group: "Quick Navigation" }));
+  // ── Flat navigable list: matching pages first, then records ──
+  const q = query.trim().toLowerCase();
+  const pages = q ? JUMP_ITEMS.filter((n) => n.keywords?.includes(q)).map((n) => ({ ...n, group: "Pages" })) : JUMP_ITEMS;
+  const allItems: ResultItem[] = q.length >= 2 ? [...pages, ...results] : pages;
 
   // ── Keyboard navigation ──
   function onKeyDown(e: React.KeyboardEvent) {
@@ -205,11 +195,9 @@ export function CommandPalette() {
   }
 
   // ── Group results ──
-  const groups: Record<string, typeof allItems> = {};
+  const groups: Record<string, ResultItem[]> = {};
   allItems.forEach((item) => {
-    const g = ("group" in item && item.group) ? item.group : "Results";
-    if (!groups[g]) groups[g] = [];
-    groups[g].push(item);
+    (groups[item.group] ??= []).push(item);
   });
 
   let flatIdx = 0;
@@ -219,47 +207,58 @@ export function CommandPalette() {
   return (
     <div className="fixed inset-0 z-[70] flex items-start justify-center pt-[12vh] px-4">
       {/* Backdrop */}
-      <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={closePalette} />
+      <div className="absolute inset-0 bg-brand-navy/40 backdrop-blur-[3px] animate-in fade-in duration-150" onClick={closePalette} />
 
       {/* Panel */}
-      <div className="relative w-full max-w-lg bg-card border border-border rounded-xl shadow-2xl overflow-hidden flex flex-col">
-
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-label="Search or jump to"
+        className="relative w-full max-w-xl bg-popover text-popover-foreground rounded-2xl ring-1 ring-border shadow-[0_24px_64px_-16px_rgba(11,17,32,0.45)] overflow-hidden flex flex-col animate-in fade-in zoom-in-[0.98] slide-in-from-top-2 duration-150"
+      >
         {/* Search input */}
-        <div className="flex items-center gap-3 px-4 border-b border-border">
-          <Search size={16} className="text-muted-foreground shrink-0" />
+        <div className="flex items-center gap-3 px-4 h-14 border-b border-border">
+          <Search size={18} className="text-muted-foreground shrink-0" />
           <input
             ref={inputRef}
+            data-slot="command-input"
             type="text"
             value={query}
             onChange={(e) => { setQuery(e.target.value); setActiveIdx(0); }}
             onKeyDown={onKeyDown}
-            placeholder="Search or jump to…"
-            className="flex-1 py-4 bg-transparent text-sm text-foreground placeholder:text-muted-foreground focus:outline-none"
+            placeholder="Search clients, projects, invoices or jump to a page"
+            aria-label="Search"
+            className="flex-1 h-full min-w-0 bg-transparent border-0 text-[15px] text-foreground placeholder:text-muted-foreground outline-none"
           />
           {loading && (
-            <div className="w-4 h-4 border-2 border-border border-t-brand-gold rounded-full animate-spin shrink-0" />
+            <div className="size-4 border-2 border-border border-t-brand-gold rounded-full animate-spin shrink-0" />
           )}
           {!loading && query && (
-            <button onClick={() => { setQuery(""); setActiveIdx(0); inputRef.current?.focus(); }} className="text-muted-foreground hover:text-foreground shrink-0">
+            <button
+              onClick={() => { setQuery(""); setActiveIdx(0); inputRef.current?.focus(); }}
+              aria-label="Clear search"
+              className="size-7 rounded-full flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted shrink-0"
+            >
               <X size={14} />
             </button>
           )}
-          <kbd className="hidden sm:inline text-[10px] bg-muted text-muted-foreground px-1.5 py-0.5 rounded-md font-mono border border-border shrink-0">
-            esc
-          </kbd>
+          <button onClick={closePalette} className="hidden sm:inline-flex shrink-0" aria-label="Close">
+            <Kbd>esc</Kbd>
+          </button>
         </div>
 
         {/* Results */}
-        <div ref={listRef} className="overflow-y-auto scrollbar-overlay max-h-[400px] py-1">
-          {allItems.length === 0 && query.length >= 2 && !loading && (
-            <p className="text-center text-sm text-muted-foreground py-10">
-              No results for &quot;{query}&quot;
-            </p>
+        <div ref={listRef} className="overflow-y-auto scrollbar-overlay max-h-[min(440px,60vh)] p-2">
+          {allItems.length === 0 && (q.length < 2 || !loading) && (
+            <div className="py-12 text-center">
+              <p className="text-sm font-medium text-foreground">No matches for &quot;{query}&quot;</p>
+              <p className="text-xs text-muted-foreground mt-1">Try a client name, project or invoice number.</p>
+            </div>
           )}
 
           {Object.entries(groups).map(([groupName, items]) => (
-            <div key={groupName}>
-              <p className="px-4 pt-3 pb-1 text-[10px] font-semibold uppercase tracking-[0.1em] text-muted-foreground">
+            <div key={groupName} className="mb-1 last:mb-0">
+              <p className="px-2.5 pt-2 pb-1.5 text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
                 {groupName}
               </p>
               {items.map((item) => {
@@ -267,31 +266,31 @@ export function CommandPalette() {
                 const isActive = activeIdx === idx;
                 return (
                   <button
-                    key={("id" in item ? String(item.id) : item.href)}
+                    key={item.id}
                     data-idx={idx}
-                    onMouseEnter={() => setActiveIdx(idx)}
+                    onMouseMove={() => { if (!isActive) setActiveIdx(idx); }}
                     onClick={() => navigate(item.href)}
                     className={cn(
-                      "w-full flex items-center gap-3 px-4 py-2.5 text-left transition-colors",
-                      isActive ? "bg-accent" : "hover:bg-accent/50"
+                      "group w-full flex items-center gap-3 px-2.5 py-2 rounded-xl text-left transition-colors",
+                      isActive ? "bg-brand-gold/12 dark:bg-white/[0.06]" : "hover:bg-muted"
                     )}
                   >
-                    <div className={cn(
-                      "w-7 h-7 rounded-lg flex items-center justify-center shrink-0",
-                      isActive ? "bg-brand-gold/20" : "bg-muted"
+                    <span className={cn(
+                      "size-8 rounded-lg flex items-center justify-center shrink-0 transition-colors",
+                      isActive ? "bg-brand-gold text-brand-navy" : "bg-muted text-muted-foreground"
                     )}>
-                      <item.icon size={13} className={isActive ? "text-brand-gold" : "text-muted-foreground"} />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm text-foreground truncate">{item.label}</p>
-                      {item.sub && <p className="text-xs text-muted-foreground truncate">{item.sub}</p>}
-                    </div>
+                      <item.icon size={15} />
+                    </span>
+                    <span className="flex-1 min-w-0">
+                      <span className="block text-sm font-medium text-foreground truncate">{item.label}</span>
+                      {item.sub && <span className="block text-xs text-muted-foreground truncate">{item.sub}</span>}
+                    </span>
                     {item.badge && (
-                      <span className="text-[10px] px-1.5 py-0.5 rounded-sm bg-muted text-muted-foreground font-medium capitalize shrink-0">
+                      <span className="text-[10px] px-2 py-0.5 rounded-full bg-muted text-muted-foreground font-medium capitalize shrink-0">
                         {item.badge}
                       </span>
                     )}
-                    {isActive && <ArrowRight size={13} className="text-brand-gold shrink-0" />}
+                    <CornerDownLeft size={14} className={cn("shrink-0 text-muted-foreground", isActive ? "opacity-100" : "opacity-0")} />
                   </button>
                 );
               })}
@@ -300,10 +299,10 @@ export function CommandPalette() {
         </div>
 
         {/* Footer hint bar */}
-        <div className="border-t border-border px-4 py-2 flex items-center gap-4 text-[10px] text-muted-foreground">
-          <span className="flex items-center gap-1"><kbd className="bg-muted border border-border px-1 py-0.5 rounded-md font-mono">↑↓</kbd> navigate</span>
-          <span className="flex items-center gap-1"><kbd className="bg-muted border border-border px-1 py-0.5 rounded-md font-mono">↵</kbd> open</span>
-          <span className="flex items-center gap-1"><kbd className="bg-muted border border-border px-1 py-0.5 rounded-md font-mono">⌘K</kbd> toggle</span>
+        <div className="hidden sm:flex border-t border-border bg-muted/40 px-4 h-10 items-center gap-4 text-[11px] text-muted-foreground">
+          <span className="flex items-center gap-1.5"><Kbd>↑</Kbd><Kbd>↓</Kbd> to move</span>
+          <span className="flex items-center gap-1.5"><Kbd>↵</Kbd> to open</span>
+          <span className="flex items-center gap-1.5 ml-auto"><Kbd>⌘</Kbd><Kbd>K</Kbd> to toggle</span>
         </div>
       </div>
     </div>

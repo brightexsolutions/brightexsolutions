@@ -364,7 +364,7 @@ html[data-reveal-ready] [data-reveal="none"]:not([data-revealed]) { translate: n
 .admin-shell :is(input:not([type="checkbox"], [type="radio"], [type="range"], [type="file"]), select, textarea):not([data-slot], [class*="rounded-full"], [class*="rounded-lg"], [class*="rounded-xl"], [class*="rounded-2xl"]) {
   border-radius: var(--radius-sm);
 }
-.admin-shell :is(input, select, textarea):focus-visible {
+.admin-shell :is(input, select, textarea):not([data-slot="command-input"]):focus-visible {
   outline: none;
   box-shadow: 0 0 0 4px color-mix(in oklab, var(--ring) 15%, transparent);
   border-color: var(--ring);
