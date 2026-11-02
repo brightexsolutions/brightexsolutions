@@ -152,6 +152,11 @@ export default function AboutPage() {
               I lead Brightex Solutions from Nairobi and work directly with every client, so the person who
               scopes your project is the same person accountable for delivering it.
             </p>
+            <p className="mt-4 text-white/75 text-lg leading-relaxed max-w-xl">
+              I don&apos;t do it alone. I work with a team of dedicated developers, designers and specialists,
+              and on larger projects we join forces so each part is handled by someone who does it well and
+              the whole system is delivered on time.
+            </p>
             <div className="mt-8 flex flex-wrap gap-3">
               <a
                 href={whatsappUrl("Hi Godwin, I'd like to talk to you about")}
