@@ -19,7 +19,7 @@ const FOUNDER = {
 
 export const metadata: Metadata = {
   title: `${FOUNDER.name}, Software Engineer and ${FOUNDER.title}`,
-  description: `${FOUNDER.name} is a software engineer and full-stack developer with a background in design, and leads Brightex Solutions, a technology consultancy in Nairobi building websites, ERP systems and AI tools. Hire Godwin directly or the Brightex team.`,
+  description: `${FOUNDER.name} is a software engineer and full-stack developer with hands-on product design skills, and leads Brightex Solutions, a technology consultancy in Nairobi building websites, ERP systems and AI tools. Hire Godwin directly or the Brightex team.`,
   alternates: { canonical: "/about" },
   openGraph: { type: "profile", title: `${FOUNDER.name} | ${SITE_NAME}`, url: `${SITE_URL}/about` },
 };
@@ -113,9 +113,9 @@ export default function AboutPage() {
             <p className="mt-4 text-xl text-brand-gold font-medium">{FOUNDER.role}</p>
             <p className="mt-1 text-white/65">{FOUNDER.title}</p>
             <p className="mt-6 text-white/75 text-lg leading-relaxed max-w-xl">
-              I&apos;m a software engineer and full-stack developer with a background in design. I build
-              products end to end, from the first sketch of the interface to the database, the APIs and the
-              integrations that make a system useful day to day.
+              I&apos;m a software engineer and full-stack developer, and I design the products I build too.
+              I take them end to end, from the first sketch of the interface to the database, the APIs and
+              the integrations that make a system useful day to day.
             </p>
             <p className="mt-4 text-white/75 text-lg leading-relaxed max-w-xl">
               I lead Brightex Solutions from Nairobi and work directly with every client, so the person who
