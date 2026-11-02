@@ -15,6 +15,13 @@ import { recordAiFailure, recordAiRecovery } from "@/lib/ai-monitor";
 import { getActionCandidates, type ActionCandidate } from "@/lib/ops-candidates";
 import type { AIProvider } from "@/types";
 
+// The dashboard calls this on every visit. The AI pass only re-ranks the same
+// candidates, so its answer is reused until the candidate set changes or the
+// entry goes stale. Per server instance, which is enough to stop repeat
+// charges from page refreshes.
+const AI_CACHE_TTL_MS = 30 * 60 * 1000;
+const aiCache = new Map<string, { at: number; body: unknown }>();
+
 export async function GET(request: NextRequest) {
   const limited = await rateLimit(request, "admin");
   if (limited) return limited;
@@ -59,6 +66,12 @@ export async function GET(request: NextRequest) {
     .map((c) => `- id:"${c.id}" [${c.type}] ${c.title}: ${c.detail}`)
     .join("\n");
 
+  const cacheKey = `${aiProvider}:${aiModel}:${candidateList}`;
+  const cached = aiCache.get(cacheKey);
+  if (cached && Date.now() - cached.at < AI_CACHE_TTL_MS) {
+    return NextResponse.json(cached.body);
+  }
+
   const userPrompt = `Here is a grounded list of real, already-verified action candidates pulled directly from Brightex Solutions' database (clients, invoices, leads, tasks, projects, system alerts). Do NOT invent any new candidate, client, invoice, or link: only work with the ids listed below.
 
 ${candidateList}
@@ -101,11 +114,14 @@ Return JSON in exactly this shape:
       });
     }
 
-    return NextResponse.json({
+    const body = {
       headline: parsed.headline ?? `${candidates.length} items need attention.`,
       actions: ranked,
       source: "ai",
-    });
+    };
+    aiCache.clear(); // only the latest candidate set is worth keeping
+    aiCache.set(cacheKey, { at: Date.now(), body });
+    return NextResponse.json(body);
   } catch (err) {
     const errorMessage = err instanceof Error ? err.message : String(err);
     if (!(err instanceof GeminiRateLimitedError)) {

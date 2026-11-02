@@ -121,14 +121,14 @@ function TaskCard({ task, onClick, isDragOverlay }: { task: Task; onClick: () =>
       )}
       {!task.projects && task.category && (
         <div className="mb-1.5">
-          <span className="text-[10px] text-muted-foreground capitalize px-1.5 py-0.5 rounded bg-muted">{task.category}</span>
+          <span className="text-[10px] text-muted-foreground capitalize px-1.5 py-0.5 rounded-md bg-muted">{task.category}</span>
         </div>
       )}
 
       <p className="text-sm font-medium text-foreground leading-snug mb-2">{task.title}</p>
 
       <div className="flex items-center gap-2 flex-wrap">
-        <span className={cn("text-[10px] font-semibold px-1.5 py-0.5 rounded capitalize", PRIORITY_STYLES[task.priority])}>
+        <span className={cn("text-[10px] font-semibold px-1.5 py-0.5 rounded-md capitalize", PRIORITY_STYLES[task.priority])}>
           {task.priority}
         </span>
 
@@ -190,7 +190,7 @@ function Column({
           </div>
           <button
             onClick={() => onAddInColumn(col.id)}
-            className="w-6 h-6 flex items-center justify-center rounded-sm text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+            className="w-6 h-6 flex items-center justify-center rounded-xs text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
             title={`Add task to ${col.label}`}
           >
             <Plus size={13} />

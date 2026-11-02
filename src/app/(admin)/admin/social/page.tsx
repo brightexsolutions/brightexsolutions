@@ -344,7 +344,7 @@ export default function SocialMediaPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="font-display text-2xl font-bold text-foreground">Social Media</h1>
-          <p className="text-sm text-muted-foreground mt-1">Plan, approve, and track content across platforms.</p>
+          <p className="text-sm text-muted-foreground mt-1">Plan and approve posts.</p>
         </div>
         <button onClick={openCreate} className="inline-flex items-center gap-2 px-4 py-2.5 rounded-sm bg-brand-gold text-brand-navy font-semibold text-sm hover:bg-brand-gold-hover transition-colors">
           <Plus size={15} />New Post
@@ -352,10 +352,10 @@ export default function SocialMediaPage() {
       </div>
 
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-        <StatCard title="Scheduled" value={scheduled.length} icon={Clock} iconColor="text-blue-400" iconBg="bg-blue-400/10" />
-        <StatCard title="Pending Approval" value={pending.length} icon={BarChart3} iconColor="text-amber-400" iconBg="bg-amber-400/10" />
-        <StatCard title="Posted (30d)" value={postedRecent.length} icon={CheckCircle2} iconColor="text-emerald-400" iconBg="bg-emerald-400/10" />
-        <StatCard title="Drafts" value={drafts.length} icon={BarChart3} />
+        <StatCard loading={loading} title="Scheduled" value={scheduled.length} icon={Clock} iconColor="text-blue-400" iconBg="bg-blue-400/10" />
+        <StatCard loading={loading} title="To approve" value={pending.length} icon={BarChart3} iconColor="text-amber-400" iconBg="bg-amber-400/10" />
+        <StatCard loading={loading} title="Posted (30d)" value={postedRecent.length} icon={CheckCircle2} iconColor="text-emerald-400" iconBg="bg-emerald-400/10" />
+        <StatCard loading={loading} title="Drafts" value={drafts.length} icon={BarChart3} />
       </div>
 
       <div className="flex gap-1 border-b border-border">

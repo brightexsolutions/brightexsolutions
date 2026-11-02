@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { CheckCircle2, XCircle, Loader2, Inbox, ChevronDown, ChevronUp } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { ListSkeleton } from "@/components/admin/skeletons";
 
 interface PendingAction {
   id: string;
@@ -77,7 +78,7 @@ export function PendingActionsCard({ refreshKey }: { refreshKey: number }) {
       </CardHeader>
       <CardContent className="pt-0">
         {loading ? (
-          <div className="py-6 flex justify-center"><Loader2 size={18} className="animate-spin text-muted-foreground" /></div>
+          <ListSkeleton rows={2} className="-mx-4" />
         ) : (
           <div className="space-y-2">
             {items.map((item) => {

@@ -12,9 +12,9 @@ import { whatsappUrl } from "@/lib/constants";
 type Intent = "book_call" | "general" | "service";
 
 const INTENTS: { value: Intent; icon: typeof Calendar; title: string; description: string }[] = [
-  { value: "book_call", icon: Calendar, title: "Book a Consultation", description: "A focused 30-minute call to talk through your project: no obligation." },
+  { value: "book_call", icon: Calendar, title: "Book a Consultation", description: "A focused 30-minute call to talk through your project, with no obligation." },
   { value: "general", icon: MessageSquare, title: "General Inquiry", description: "Have a question, or just want to say hello? Send us a message." },
-  { value: "service", icon: Briefcase, title: "Inquiry About a Specific Service", description: "Tell us exactly what you need: we'll ask the right questions." },
+  { value: "service", icon: Briefcase, title: "Inquiry About a Specific Service", description: "Tell us exactly what you need and we'll ask the right questions." },
 ];
 
 const SERVICES: { value: string; label: string; icon: typeof Globe; sub: string }[] = [
@@ -187,7 +187,7 @@ function ContactExperienceInner() {
       </div>
       <Link
         href={`/intake?service=${service}`}
-        className="w-full inline-flex items-center justify-center gap-2 px-8 py-4 rounded-sm bg-brand-navy text-white font-bold text-sm hover:bg-brand-navy-hover transition-colors"
+        className="w-full inline-flex items-center justify-center gap-2 px-8 py-4 rounded-full bg-brand-navy text-white font-bold text-sm hover:bg-brand-navy-hover transition-colors"
       >
         Continue to questionnaire <ArrowRight size={15} />
       </Link>

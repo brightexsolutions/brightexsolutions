@@ -1,6 +1,6 @@
 -- Human-in-the-loop queue: AI drafts a concrete action (an email to send),
 -- but it always sits here pending Godwin's explicit approval before anything
--- is actually sent — the AI never executes on its own.
+-- is actually sent - the AI never executes on its own.
 create table if not exists pending_ai_actions (
   id uuid primary key default gen_random_uuid(),
   kind text not null,

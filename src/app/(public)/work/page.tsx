@@ -6,6 +6,7 @@ import { ArrowRight, Zap, MessageCircle, Wrench, Code2, Layers } from "lucide-re
 import { whatsappUrl } from "@/lib/constants";
 import { getPublishedProducts } from "@/lib/products";
 import { ClientProjectsList } from "./work-client";
+import { normaliseCopy } from "@/lib/document-html/block-schema";
 
 export const revalidate = 3600;
 
@@ -41,14 +42,6 @@ const FALLBACK_PROJECTS = [
     accent_color: "#a78bfa",
   },
   {
-    name: "Africa Feature Network",
-    category: "Media Platform",
-    description: "A media and news platform built for scale: structured content architecture, editorial workflow, and strong on-page SEO across hundreds of articles.",
-    tags: ["Media Platform", "SEO", "WordPress"],
-    url: "https://africafeaturenetwork.com/",
-    accent_color: "#10b981",
-  },
-  {
     name: "Amuches Oven",
     category: "Online Ordering System",
     description: "Online ordering system for a bakery: digital menu, cart, order management, and an admin dashboard for the owner to track and fulfil orders daily.",
@@ -80,7 +73,8 @@ async function getAllProjects() {
       .order("display_order", { ascending: true })
       .order("created_at", { ascending: false });
     if (error || !data || data.length === 0) return FALLBACK_PROJECTS;
-    return data;
+    // Admin-entered copy can carry em dashes; the public site never shows them
+    return normaliseCopy(data);
   } catch {
     return FALLBACK_PROJECTS;
   }
@@ -113,14 +107,14 @@ export default async function WorkPage() {
             <div className="flex flex-wrap gap-3">
               <a
                 href="#products"
-                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-sm bg-brand-gold text-brand-navy text-sm font-semibold hover:bg-brand-gold-hover transition-colors"
+                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-brand-gold text-brand-navy text-sm font-semibold hover:bg-brand-gold-hover transition-colors"
               >
                 Software Products
                 <ArrowRight size={13} />
               </a>
               <a
                 href="#projects"
-                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-sm border border-white/20 text-white text-sm font-medium hover:border-white/40 transition-colors"
+                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full border border-white/20 text-white text-sm font-medium hover:border-white/40 transition-colors"
               >
                 Client Projects
                 <ArrowRight size={13} />
@@ -138,7 +132,7 @@ export default async function WorkPage() {
             ].filter(s => s.value).map(({ value, label }) => (
               <div key={label}>
                 <div className="font-display text-3xl font-bold text-white">{value}</div>
-                <div className="text-white/35 text-xs uppercase tracking-widest font-semibold mt-0.5">{label}</div>
+                <div className="text-white/65 text-xs uppercase tracking-widest font-semibold mt-0.5">{label}</div>
               </div>
             ))}
           </FadeIn>
@@ -251,14 +245,14 @@ export default async function WorkPage() {
                     href={whatsappUrl("Hi Godwin, I'm interested in your upcoming software products and would like early access information.")}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center justify-center gap-2 px-8 py-4 rounded-sm bg-brand-gold text-brand-navy font-semibold text-sm hover:bg-brand-gold-hover transition-colors"
+                    className="inline-flex items-center justify-center gap-2 px-8 py-4 rounded-full bg-brand-gold text-brand-navy font-semibold text-sm hover:bg-brand-gold-hover transition-colors"
                   >
                     <MessageCircle size={15} />
                     Get Early Access
                   </a>
                   <Link
                     href="/contact?intent=book_call"
-                    className="inline-flex items-center justify-center gap-2 px-8 py-4 rounded-sm border border-white/20 text-white font-semibold text-sm hover:border-brand-gold/40 transition-colors"
+                    className="inline-flex items-center justify-center gap-2 px-8 py-4 rounded-full border border-white/20 text-white font-semibold text-sm hover:border-brand-gold/40 transition-colors"
                   >
                     Book a Discovery Call <ArrowRight size={14} />
                   </Link>
@@ -307,7 +301,7 @@ export default async function WorkPage() {
       <section className="py-20 bg-brand-navy">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <FadeIn>
-            <p className="text-white/40 text-[10px] uppercase tracking-[0.2em] font-bold mb-4">Ready to be next?</p>
+            <p className="text-white/65 text-[10px] uppercase tracking-[0.2em] font-bold mb-4">Ready to be next?</p>
             <h2 className="font-display text-3xl sm:text-4xl font-bold text-white mb-6">
               Let&apos;s build something<br />
               <span className="text-brand-gold">you&apos;re proud of.</span>
@@ -315,13 +309,13 @@ export default async function WorkPage() {
             <div className="flex flex-col sm:flex-row gap-3 justify-center">
               <Link
                 href="/contact"
-                className="inline-flex items-center justify-center gap-2 px-8 py-3.5 rounded-sm bg-brand-gold text-brand-navy text-sm font-bold hover:bg-brand-gold-hover transition-colors"
+                className="inline-flex items-center justify-center gap-2 px-8 py-3.5 rounded-full bg-brand-gold text-brand-navy text-sm font-bold hover:bg-brand-gold-hover transition-colors"
               >
                 Start a project
               </Link>
               <Link
                 href="/contact?intent=book_call"
-                className="inline-flex items-center justify-center gap-2 px-8 py-3.5 rounded-sm border border-white/15 text-white text-sm font-medium hover:border-white/35 hover:bg-white/[0.04] transition-all"
+                className="inline-flex items-center justify-center gap-2 px-8 py-3.5 rounded-full border border-white/15 text-white text-sm font-medium hover:border-white/35 hover:bg-white/[0.04] transition-all"
               >
                 Book a call
               </Link>

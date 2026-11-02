@@ -111,7 +111,7 @@ export function AnnouncementDialog({ announcement }: { announcement: Announcemen
                     <a
                       href={announcement.cta_url}
                       onClick={close}
-                      className="inline-flex items-center gap-2 px-5 py-2.5 rounded-sm bg-brand-gold text-brand-navy font-bold text-sm hover:bg-brand-gold-hover transition-colors"
+                      className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-brand-gold text-brand-navy font-bold text-sm hover:bg-brand-gold-hover transition-colors"
                     >
                       {announcement.cta_label}
                       <ArrowRight size={14} />
@@ -119,7 +119,7 @@ export function AnnouncementDialog({ announcement }: { announcement: Announcemen
                   )}
                   <button
                     onClick={close}
-                    className="text-xs text-white/35 hover:text-white/60 transition-colors font-medium"
+                    className="text-xs text-white/70 hover:text-white transition-colors font-medium"
                   >
                     Maybe later
                   </button>

@@ -429,7 +429,7 @@ function SendRecapAction({ intakeId }: { intakeId: string; submitterEmail: strin
       </Button>
 
       {open && (
-        <div className="space-y-2 rounded border border-border p-2.5 bg-muted/20">
+        <div className="space-y-2 rounded-md border border-border p-2.5 bg-muted/20">
           <div>
             <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground mb-1">
               Address it to
@@ -467,7 +467,7 @@ function SendRecapAction({ intakeId }: { intakeId: string; submitterEmail: strin
               value={extra}
               onChange={(e) => setExtra(e.target.value)}
               placeholder="Copy anyone else (optional)"
-              className="w-full px-2.5 py-1.5 text-xs rounded border border-input bg-background"
+              className="w-full px-2.5 py-1.5 text-xs rounded-md border border-input bg-background"
             />
             <p className="text-[10px] text-muted-foreground mt-1 leading-relaxed">
               Whoever filled the form is always copied when it is addressed elsewhere.

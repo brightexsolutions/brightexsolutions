@@ -1,4 +1,4 @@
--- Brightex Solutions — Dummy Data Seed
+-- Brightex Solutions - Dummy Data Seed
 -- Run AFTER 001_schema.sql
 -- Use this to populate all tables with test data for admin dashboard development.
 
@@ -26,7 +26,7 @@ insert into projects (id, client_id, name, type, status, budget, start_date, end
   ('22222222-0000-0000-0000-000000000003', '11111111-0000-0000-0000-000000000003', 'Greenhouse Worship Site', 'website', 'live', 60000, '2025-08-01', '2025-09-30', 'Community website. Live at thegreenhouse-w-s.netlify.app'),
   ('22222222-0000-0000-0000-000000000004', '11111111-0000-0000-0000-000000000004', 'Africa Feature Network Platform', 'website', 'live', 220000, '2025-06-01', '2025-10-31', 'WordPress media platform. Live at africafeaturenetwork.com'),
   ('22222222-0000-0000-0000-000000000005', '11111111-0000-0000-0000-000000000005', 'Amuches Oven Ordering System', 'website', 'live', 75000, '2025-07-01', '2025-08-31', 'Next.js ordering app. Live at amuches-oven.netlify.app'),
-  ('22222222-0000-0000-0000-000000000006', '11111111-0000-0000-0000-000000000006', 'CBC App — Verb Education', 'web_app', 'live', 450000, '2025-03-01', '2025-09-30', 'EdTech SaaS. Live at cbcapp.co.ke'),
+  ('22222222-0000-0000-0000-000000000006', '11111111-0000-0000-0000-000000000006', 'CBC App - Verb Education', 'web_app', 'live', 450000, '2025-03-01', '2025-09-30', 'EdTech SaaS. Live at cbcapp.co.ke'),
   ('22222222-0000-0000-0000-000000000007', '11111111-0000-0000-0000-000000000007', 'Wanjiku Consulting Website', 'website', 'design', 120000, '2026-05-20', null, 'Discovery complete. Moving into design phase.');
 
 -- ─────────────────────────────────────────────
@@ -44,9 +44,9 @@ insert into tasks (project_id, title, status, priority, due_date) values
 -- ─────────────────────────────────────────────
 insert into sales (client_id, service, estimated_value, status, notes) values
   ('11111111-0000-0000-0000-000000000007', 'Full website + CRM integration', 120000, 'negotiation', 'Client wants discount on CRM module. Holding at 120K.'),
-  ('11111111-0000-0000-0000-000000000006', 'Analytics dashboard upgrade — CBC App', 180000, 'proposal', 'Proposal sent 2026-05-20. Awaiting board approval.'),
+  ('11111111-0000-0000-0000-000000000006', 'Analytics dashboard upgrade - CBC App', 180000, 'proposal', 'Proposal sent 2026-05-20. Awaiting board approval.'),
   ('11111111-0000-0000-0000-000000000001', 'SEO retainer (3 months)', 90000, 'won', 'Starting June 2026.'),
-  ('11111111-0000-0000-0000-000000000008', 'Mobile app — Android', 350000, 'lead', 'Initial enquiry only. Budget not confirmed.');
+  ('11111111-0000-0000-0000-000000000008', 'Mobile app - Android', 350000, 'lead', 'Initial enquiry only. Budget not confirmed.');
 
 -- ─────────────────────────────────────────────
 -- INVOICES
@@ -59,13 +59,13 @@ insert into invoices (id, client_id, project_id, invoice_number, items, subtotal
     '[{"description":"Website Design & Development","qty":1,"unit_price":80000,"total":80000},{"description":"SEO Setup","qty":1,"unit_price":15000,"total":15000}]',
     95000, 0, 95000, 'paid', '2026-01-10'),
   ('33333333-0000-0000-0000-000000000003', '11111111-0000-0000-0000-000000000006', '22222222-0000-0000-0000-000000000006', 'BRX-2025-003',
-    '[{"description":"CBC Learning Platform — Phase 1","qty":1,"unit_price":450000,"total":450000}]',
+    '[{"description":"CBC Learning Platform - Phase 1","qty":1,"unit_price":450000,"total":450000}]',
     450000, 0, 450000, 'paid', '2025-10-01'),
   ('33333333-0000-0000-0000-000000000004', '11111111-0000-0000-0000-000000000001', null, 'BRX-2026-001',
-    '[{"description":"SEO Retainer — June 2026","qty":1,"unit_price":30000,"total":30000}]',
+    '[{"description":"SEO Retainer - June 2026","qty":1,"unit_price":30000,"total":30000}]',
     30000, 0, 30000, 'sent', '2026-06-05'),
   ('33333333-0000-0000-0000-000000000005', '11111111-0000-0000-0000-000000000007', '22222222-0000-0000-0000-000000000007', 'BRX-2026-002',
-    '[{"description":"Website Design — Deposit (50%)","qty":1,"unit_price":60000,"total":60000}]',
+    '[{"description":"Website Design - Deposit (50%)","qty":1,"unit_price":60000,"total":60000}]',
     60000, 0, 60000, 'draft', '2026-06-10');
 
 -- ─────────────────────────────────────────────
@@ -80,18 +80,18 @@ insert into payments (invoice_id, amount, method, reference, confirmation_sent, 
 -- INCOME RECORDS
 -- ─────────────────────────────────────────────
 insert into income_records (source, description, client_id, amount, currency, date, category) values
-  ('invoice_payment', 'Beco Interiors — E-Commerce project', '11111111-0000-0000-0000-000000000001', 180000, 'KES', '2025-12-10', 'service_revenue'),
-  ('invoice_payment', 'Talkways Languages — Website + SEO', '11111111-0000-0000-0000-000000000002', 95000, 'KES', '2026-01-08', 'service_revenue'),
-  ('invoice_payment', 'Verb Education — CBC App Phase 1', '11111111-0000-0000-0000-000000000006', 450000, 'KES', '2025-09-28', 'service_revenue');
+  ('invoice_payment', 'Beco Interiors - E-Commerce project', '11111111-0000-0000-0000-000000000001', 180000, 'KES', '2025-12-10', 'service_revenue'),
+  ('invoice_payment', 'Talkways Languages - Website + SEO', '11111111-0000-0000-0000-000000000002', 95000, 'KES', '2026-01-08', 'service_revenue'),
+  ('invoice_payment', 'Verb Education - CBC App Phase 1', '11111111-0000-0000-0000-000000000006', 450000, 'KES', '2025-09-28', 'service_revenue');
 
 -- ─────────────────────────────────────────────
 -- EXPENSES
 -- ─────────────────────────────────────────────
 insert into expenses (description, category, amount, currency, date, vendor, tax_deductible) values
-  ('Domain renewal — brightexsolutions.co.ke', 'subscription', 1500, 'KES', '2026-01-15', 'Namecheap', true),
-  ('Adobe Creative Cloud — annual', 'software', 32000, 'KES', '2026-01-01', 'Adobe', true),
-  ('Figma Pro — annual', 'software', 18000, 'KES', '2026-02-01', 'Figma', true),
-  ('Transport to client meeting — Westlands', 'transport', 800, 'KES', '2026-05-20', null, true),
+  ('Domain renewal - brightexsolutions.co.ke', 'subscription', 1500, 'KES', '2026-01-15', 'Namecheap', true),
+  ('Adobe Creative Cloud - annual', 'software', 32000, 'KES', '2026-01-01', 'Adobe', true),
+  ('Figma Pro - annual', 'software', 18000, 'KES', '2026-02-01', 'Figma', true),
+  ('Transport to client meeting - Westlands', 'transport', 800, 'KES', '2026-05-20', null, true),
   ('Business cards printing', 'marketing', 3500, 'KES', '2026-03-10', 'Print Express Nairobi', true);
 
 -- ─────────────────────────────────────────────
@@ -119,7 +119,7 @@ insert into team_members (id, name, email, phone, role, skill_tags, rate_type, d
 -- ─────────────────────────────────────────────
 insert into tasks (project_id, title, description, assigned_to, status, priority, due_date) values
   ('22222222-0000-0000-0000-000000000007', 'Build homepage component', 'Implement the homepage in Next.js from approved wireframes.', '44444444-0000-0000-0000-000000000001', 'todo', 'high', '2026-06-05'),
-  ('22222222-0000-0000-0000-000000000007', 'Design contact page mockup', 'Figma mockup for contact page — split screen layout.', '44444444-0000-0000-0000-000000000002', 'in_progress', 'normal', '2026-05-29');
+  ('22222222-0000-0000-0000-000000000007', 'Design contact page mockup', 'Figma mockup for contact page - split screen layout.', '44444444-0000-0000-0000-000000000002', 'in_progress', 'normal', '2026-05-29');
 
 -- ─────────────────────────────────────────────
 -- SUBCONTRACTOR PAYOUTS
@@ -135,7 +135,7 @@ insert into bookings (booker_name, booker_email, booker_phone, purpose, schedule
   ('Lydia Wanjiku', 'lydia@wanjiku.co.ke', '+254777007007', 'project_review', now() + interval '2 days', 'confirmed', 'Design review for homepage wireframes'),
   ('Dr. Kamau Mwangi', 'kamau@verbeducation.co.ke', '+254766006006', 'consultation', now() + interval '5 days', 'pending', 'Discussing analytics upgrade scope'),
   ('James Kariuki', 'james@talkways.co.ke', '+254722002002', 'intro_call', now() + interval '8 days', 'pending', 'Intro call for SEO retainer discussion'),
-  ('New Prospect', 'prospect@example.com', null, 'intro_call', now() - interval '1 day', 'completed', 'Completed — no follow-up yet');
+  ('New Prospect', 'prospect@example.com', null, 'intro_call', now() - interval '1 day', 'completed', 'Completed - no follow-up yet');
 
 -- ─────────────────────────────────────────────
 -- CHAT FAQs
@@ -146,7 +146,7 @@ insert into chat_faqs (question, answer, keywords, category, order_index, active
    ARRAY['services', 'what do you do', 'offerings', 'help', 'offer'],
    'services', 1, true),
   ('How much does a website cost?',
-   'Our websites start from KES 50,000 for simple business sites, and go up to KES 500,000+ for complex e-commerce or SaaS platforms. Every project is quoted individually — book a free call to get an accurate estimate.',
+   'Our websites start from KES 50,000 for simple business sites, and go up to KES 500,000+ for complex e-commerce or SaaS platforms. Every project is quoted individually - book a free call to get an accurate estimate.',
    ARRAY['price', 'cost', 'how much', 'pricing', 'rates', 'charges'],
    'pricing', 2, true),
   ('How long does a project take?',
@@ -154,7 +154,7 @@ insert into chat_faqs (question, answer, keywords, category, order_index, active
    ARRAY['how long', 'timeline', 'duration', 'weeks', 'months', 'turnaround'],
    'process', 3, true),
   ('Do you work with clients outside Kenya?',
-   'Yes! We work with clients across East Africa and internationally. We communicate via WhatsApp, Zoom, and email — distance is no barrier.',
+   'Yes! We work with clients across East Africa and internationally. We communicate via WhatsApp, Zoom, and email - distance is no barrier.',
    ARRAY['outside kenya', 'international', 'remote', 'africa', 'diaspora'],
    'general', 4, true),
   ('How do I get started?',
@@ -162,7 +162,7 @@ insert into chat_faqs (question, answer, keywords, category, order_index, active
    ARRAY['get started', 'begin', 'start', 'how to', 'contact', 'quote'],
    'process', 5, true),
   ('What is CBC App?',
-   'CBC App is a Kenya curriculum (CBC) learning platform we built for Verb Education — designed for students and teachers with curriculum-aligned content, progress tracking, and analytics. Visit cbcapp.co.ke to learn more.',
+   'CBC App is a Kenya curriculum (CBC) learning platform we built for Verb Education - designed for students and teachers with curriculum-aligned content, progress tracking, and analytics. Visit cbcapp.co.ke to learn more.',
    ARRAY['cbc', 'education', 'verb', 'school', 'learning platform'],
    'products', 6, true);
 
@@ -194,7 +194,7 @@ insert into sites (name, url, platform, hosting, integration_level, status, last
 -- SYSTEM ALERTS
 -- ─────────────────────────────────────────────
 insert into system_alerts (type, severity, message, entity_type, acknowledged) values
-  ('site_down', 'warning', 'Africa Feature Network response time exceeded 1500ms — site may be degraded.', 'site', false),
+  ('site_down', 'warning', 'Africa Feature Network response time exceeded 1500ms - site may be degraded.', 'site', false),
   ('ssl_expiring', 'warning', 'Talkways Languages SSL certificate expires in 28 days.', 'site', false),
   ('wp_update', 'info', 'Africa Feature Network is running WordPress 6.4. WordPress 6.8 is available.', 'site', false);
 
@@ -204,13 +204,13 @@ insert into system_alerts (type, severity, message, entity_type, acknowledged) v
 insert into social_posts (created_by, platforms, caption, hashtags, scheduled_at, status) values
   ('44444444-0000-0000-0000-000000000003',
    ARRAY['instagram', 'facebook'],
-   'Excited to announce we just launched a new e-commerce experience for Beco Interiors! 🛒 From wireframe to live store — every detail crafted for a seamless shopping experience. #WebDesign #Ecommerce #Kenya',
+   'Excited to announce we just launched a new e-commerce experience for Beco Interiors! 🛒 From wireframe to live store - every detail crafted for a seamless shopping experience. #WebDesign #Ecommerce #Kenya',
    ARRAY['WebDesign', 'Ecommerce', 'Kenya', 'BrightexSolutions'],
    now() + interval '3 days',
    'pending_approval'),
   ('44444444-0000-0000-0000-000000000003',
    ARRAY['linkedin', 'instagram'],
-   'Did you know that 78% of users judge a business''s credibility based on their website? Your website is your first impression — make it count. DM us to discuss your next project.',
+   'Did you know that 78% of users judge a business''s credibility based on their website? Your website is your first impression - make it count. DM us to discuss your next project.',
    ARRAY['WebDevelopment', 'DigitalMarketing', 'BusinessGrowth', 'Nairobi'],
    now() + interval '7 days',
    'draft');
@@ -219,19 +219,19 @@ insert into social_posts (created_by, platforms, caption, hashtags, scheduled_at
 -- CALENDAR EVENTS (manual examples)
 -- ─────────────────────────────────────────────
 insert into calendar_events (title, type, start_at, end_at, all_day, entity_type) values
-  ('Wanjiku Consulting — Design Review', 'booking', now() + interval '2 days 10 hours', now() + interval '2 days 10 hours 30 minutes', false, 'booking'),
+  ('Wanjiku Consulting - Design Review', 'booking', now() + interval '2 days 10 hours', now() + interval '2 days 10 hours 30 minutes', false, 'booking'),
   ('CBC App Analytics Scope Call', 'booking', now() + interval '5 days 14 hours', now() + interval '5 days 15 hours', false, 'booking'),
   ('Subscription: Adobe CC renewal', 'subscription_renewal', '2027-01-01 00:00:00+03', null, true, 'subscription'),
   ('Subscription: Figma Pro renewal', 'subscription_renewal', '2027-02-01 00:00:00+03', null, true, 'subscription'),
-  ('Wanjiku site — Homepage component due', 'task_deadline', '2026-06-05 23:59:00+03', null, true, 'project'),
+  ('Wanjiku site - Homepage component due', 'task_deadline', '2026-06-05 23:59:00+03', null, true, 'project'),
   ('Social post: Beco Interiors launch', 'social_post', now() + interval '3 days', null, true, null);
 
 -- ─────────────────────────────────────────────
 -- COMMUNICATIONS LOG
 -- ─────────────────────────────────────────────
 insert into communications (client_id, type, subject, body, direction, status) values
-  ('11111111-0000-0000-0000-000000000007', 'email', 'Project proposal — Wanjiku Consulting website', 'Sent full proposal with scope, timeline, and pricing breakdown.', 'out', 'sent'),
-  ('11111111-0000-0000-0000-000000000006', 'whatsapp', 'Analytics upgrade discussion', 'Discussed scope of analytics dashboard upgrade. Client interested — awaiting board approval.', 'out', 'sent'),
+  ('11111111-0000-0000-0000-000000000007', 'email', 'Project proposal - Wanjiku Consulting website', 'Sent full proposal with scope, timeline, and pricing breakdown.', 'out', 'sent'),
+  ('11111111-0000-0000-0000-000000000006', 'whatsapp', 'Analytics upgrade discussion', 'Discussed scope of analytics dashboard upgrade. Client interested - awaiting board approval.', 'out', 'sent'),
   ('11111111-0000-0000-0000-000000000001', 'email', 'SEO retainer invoice', 'Sent BRX-2026-001 for June SEO retainer.', 'out', 'sent');
 
 -- ─────────────────────────────────────────────

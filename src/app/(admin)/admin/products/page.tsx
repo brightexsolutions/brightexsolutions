@@ -12,6 +12,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useConfirm } from "@/components/admin/confirm-dialog";
+import { ListSkeleton } from "@/components/admin/skeletons";
+import { Notice } from "@/components/admin/notice";
 
 const tabs = ["Products", "Trials", "Subscriptions"] as const;
 type Tab = (typeof tabs)[number];
@@ -250,7 +252,7 @@ export default function AdminProductsPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="font-display text-2xl font-bold text-foreground">Products</h1>
-          <p className="text-sm text-muted-foreground mt-1">Manage Brightex-built licensable software products.</p>
+          <p className="text-sm text-muted-foreground mt-1">Software we license.</p>
         </div>
         {activeTab === "Products" && (
           <button
@@ -264,18 +266,14 @@ export default function AdminProductsPage() {
       </div>
 
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-        <StatCard title="Published" value={publishedProducts.length} icon={Package} iconColor="text-emerald-400" iconBg="bg-emerald-400/10" />
-        <StatCard title="Active Trials" value={activeTrials.length} icon={Package} iconColor="text-blue-400" iconBg="bg-blue-400/10" />
-        <StatCard title="Subscriptions" value={activeSubscriptions.length} icon={Package} iconColor="text-brand-gold" iconBg="bg-brand-gold/10" />
-        <StatCard title="MRR" value={`KES ${productMrr.toLocaleString()}`} icon={Package} />
+        <StatCard loading={loading} title="Published" value={publishedProducts.length} icon={Package} iconColor="text-emerald-400" iconBg="bg-emerald-400/10" />
+        <StatCard loading={loading} title="Active Trials" value={activeTrials.length} icon={Package} iconColor="text-blue-400" iconBg="bg-blue-400/10" />
+        <StatCard loading={loading} title="Subscriptions" value={activeSubscriptions.length} icon={Package} iconColor="text-brand-gold" iconBg="bg-brand-gold/10" />
+        <StatCard loading={loading} title="MRR" value={`KES ${productMrr.toLocaleString()}`} icon={Package} />
       </div>
 
       {loadError && (
-        <Card>
-          <CardContent className="pt-6">
-            <p className="text-sm text-red-500 text-center">{loadError}</p>
-          </CardContent>
-        </Card>
+        <Notice tone="error">{loadError}</Notice>
       )}
 
       <div className="flex gap-1 border-b border-border">
@@ -302,7 +300,7 @@ export default function AdminProductsPage() {
             searchable
             searchPlaceholder="Search products…"
             searchKeys={["name", "slug", "category", "status"]}
-            emptyMessage={loading ? "Loading products…" : "No products yet. Create one to display on the public /products page."}
+            loading={loading} emptyMessage={"No products yet. Create one to display on the public /products page."}
           />
         </Card>
       )}
@@ -314,7 +312,7 @@ export default function AdminProductsPage() {
           </CardHeader>
           <CardContent>
             {loading && trials.length === 0 ? (
-              <div className="text-center py-12 text-muted-foreground"><p className="text-sm">Loading trial requests…</p></div>
+              <ListSkeleton />
             ) : trials.length === 0 ? (
               <div className="text-center py-12 text-muted-foreground">
                 <Package size={40} className="mx-auto mb-3 opacity-20" />
@@ -354,7 +352,7 @@ export default function AdminProductsPage() {
           </CardHeader>
           <CardContent>
             {loading && subscriptions.length === 0 ? (
-              <div className="text-center py-12 text-muted-foreground"><p className="text-sm">Loading subscriptions…</p></div>
+              <ListSkeleton />
             ) : subscriptions.length === 0 ? (
               <div className="text-center py-12 text-muted-foreground">
                 <Package size={40} className="mx-auto mb-3 opacity-20" />

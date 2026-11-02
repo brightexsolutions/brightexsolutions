@@ -52,9 +52,9 @@ endpoint and emails the proposal, then stops and leaves the rest to you.
 
 Three emails arrive, in this order:
 
-1. **We received your requirements** — the acknowledgement
-2. **Your submission to Brightex** — everything you told us, in full
-3. **Your proposal from Brightex** — the link
+1. **We received your requirements**: the acknowledgement
+2. **Your submission to Brightex**: everything you told us, in full
+3. **Your proposal from Brightex**: the link
 
 ### What to look at
 

@@ -256,7 +256,7 @@ export function SignatureSettings() {
       {state.hasSignature && state.image && !pending && (
         <div className="max-w-xl">
           <Label className="text-xs">On file</Label>
-          <div className="mt-1 rounded border border-border bg-white p-4 flex items-center justify-between gap-4">
+          <div className="mt-1 rounded-md border border-border bg-white p-4 flex items-center justify-between gap-4">
             <img src={state.image} alt="Your signature" className="max-h-16" />
             <button
               type="button"
@@ -279,7 +279,7 @@ export function SignatureSettings() {
               type="button"
               onClick={() => { setMode(m); setPending(null); setError(""); }}
               className={cn(
-                "flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded border text-xs font-medium transition-colors",
+                "flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-md border text-xs font-medium transition-colors",
                 mode === m
                   ? "border-brand-gold bg-brand-gold/10 text-foreground"
                   : "border-border text-muted-foreground hover:text-foreground"
@@ -296,7 +296,7 @@ export function SignatureSettings() {
               ref={setupCanvas}
               width={1000}
               height={320}
-              className="w-full h-[150px] bg-white border border-border rounded cursor-crosshair touch-none block"
+              className="w-full h-[150px] bg-white border border-border rounded-md cursor-crosshair touch-none block"
             />
             <div className="flex items-center justify-between mt-1.5">
               <span className="text-[11px] text-muted-foreground">Sign with your mouse, trackpad or finger.</span>
@@ -329,7 +329,7 @@ export function SignatureSettings() {
         {pending && (
           <div className="mt-3">
             <Label className="text-xs">How it will appear</Label>
-            <div className="mt-1 rounded border border-border bg-white p-4">
+            <div className="mt-1 rounded-md border border-border bg-white p-4">
               <img src={pending} alt="Signature preview" className="max-h-16" />
             </div>
           </div>

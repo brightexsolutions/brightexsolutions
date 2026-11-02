@@ -13,6 +13,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
+import { Notice } from "@/components/admin/notice";
 
 const integrationLevels = [
   { level: "Passive", desc: "HTTP ping + SSL check: no changes to the tracked site" },
@@ -290,23 +291,25 @@ export function SiteMonitoringPageClient() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="font-display text-2xl font-bold text-foreground">Site Monitoring</h1>
-          <p className="text-sm text-muted-foreground mt-1">Track uptime, SSL expiry, and WordPress updates across all sites.</p>
+          <p className="text-sm text-muted-foreground mt-1">Uptime, SSL and updates.</p>
         </div>
         <div className="flex items-center gap-2">
           <button
             onClick={() => setGuideOpen(true)}
+            aria-label="Setup guide"
             className="inline-flex items-center gap-2 px-4 py-2.5 rounded-sm border border-border text-sm font-medium text-foreground hover:bg-muted transition-colors"
           >
             <BookOpen size={14} />
-            Setup Guide
+            <span className="hidden sm:inline">Setup guide</span>
           </button>
           <button
             onClick={checkAll}
             disabled={checking}
+            aria-label="Check all sites now"
             className="inline-flex items-center gap-2 px-4 py-2.5 rounded-sm border border-border text-sm font-medium text-foreground hover:bg-muted transition-colors disabled:opacity-60"
           >
             {checking ? <Loader2 size={14} className="animate-spin" /> : <RefreshCw size={14} />}
-            Check All Now
+            <span className="hidden sm:inline">Check all</span>
           </button>
           <button
             onClick={openCreate}
@@ -319,18 +322,14 @@ export function SiteMonitoringPageClient() {
       </div>
 
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-        <StatCard title="Sites Monitored" value={sites.length} icon={Globe} />
-        <StatCard title="All Up" value={sites.filter((site) => site.status === "up").length} icon={CheckCircle2} iconColor="text-emerald-400" iconBg="bg-emerald-400/10" />
-        <StatCard title="Alerts" value={alertCount} icon={AlertTriangle} iconColor="text-amber-400" iconBg="bg-amber-400/10" />
-        <StatCard title="SSL Expiring" value={sslExpiringSoon.length} icon={AlertTriangle} iconColor="text-red-400" iconBg="bg-red-400/10" />
+        <StatCard loading={loading} title="Sites" value={sites.length} icon={Globe} />
+        <StatCard loading={loading} title="All Up" value={sites.filter((site) => site.status === "up").length} icon={CheckCircle2} iconColor="text-emerald-400" iconBg="bg-emerald-400/10" />
+        <StatCard loading={loading} title="Alerts" value={alertCount} icon={AlertTriangle} iconColor="text-amber-400" iconBg="bg-amber-400/10" />
+        <StatCard loading={loading} title="SSL Expiring" value={sslExpiringSoon.length} icon={AlertTriangle} iconColor="text-red-400" iconBg="bg-red-400/10" />
       </div>
 
       {loadError && (
-        <Card>
-          <CardContent className="pt-6">
-            <p className="text-sm text-red-500 text-center">{loadError}</p>
-          </CardContent>
-        </Card>
+        <Notice tone="error">{loadError}</Notice>
       )}
 
       <div className="flex gap-2 flex-wrap items-center">
@@ -368,7 +367,7 @@ export function SiteMonitoringPageClient() {
             searchable
             searchPlaceholder="Search sites…"
             searchKeys={["name", "url", "platform", "hosting"]}
-            maxHeight="calc(100vh - 440px)"
+            fill
           />
         )}
       </Card>
@@ -484,7 +483,7 @@ export function SiteMonitoringPageClient() {
                   <li className="flex items-start gap-3">
                     <span className="w-5 h-5 rounded-full bg-brand-gold/20 text-brand-gold text-[10px] font-bold flex items-center justify-center shrink-0 mt-0.5">1</span>
                     <div>
-                      <p className="text-xs text-muted-foreground mb-2">Add the health route to the site at <code className="bg-muted px-1 rounded text-[11px]">src/app/api/health/route.ts</code>:</p>
+                      <p className="text-xs text-muted-foreground mb-2">Add the health route to the site at <code className="bg-muted px-1 rounded-md text-[11px]">src/app/api/health/route.ts</code>:</p>
                       <pre className="bg-muted rounded-sm p-3 text-[10px] text-muted-foreground overflow-x-auto leading-relaxed whitespace-pre">{`import { NextResponse } from 'next/server'
 export async function GET(request: Request) {
   const token = request.headers.get('x-brightex-token')
@@ -517,7 +516,7 @@ NEXT_PUBLIC_SITE_NAME=your-site-name`}</pre>
                   </li>
                   <li className="flex items-start gap-3">
                     <span className="w-5 h-5 rounded-full bg-brand-gold/20 text-brand-gold text-[10px] font-bold flex items-center justify-center shrink-0 mt-0.5">3</span>
-                    <p className="text-xs text-muted-foreground">Deploy the site. Verify the endpoint responds at <code className="bg-muted px-1 rounded text-[11px]">https://yoursite.com/api/health</code>.</p>
+                    <p className="text-xs text-muted-foreground">Deploy the site. Verify the endpoint responds at <code className="bg-muted px-1 rounded-md text-[11px]">https://yoursite.com/api/health</code>.</p>
                   </li>
                   <li className="flex items-start gap-3">
                     <span className="w-5 h-5 rounded-full bg-brand-gold/20 text-brand-gold text-[10px] font-bold flex items-center justify-center shrink-0 mt-0.5">4</span>
@@ -555,7 +554,7 @@ NEXT_PUBLIC_SITE_NAME=your-site-name`}</pre>
                   <li className="flex items-start gap-3">
                     <span className="w-5 h-5 rounded-full bg-brand-gold/20 text-brand-gold text-[10px] font-bold flex items-center justify-center shrink-0 mt-0.5">1</span>
                     <div>
-                      <p className="text-xs text-muted-foreground mb-2">Create the file <code className="bg-muted px-1 rounded text-[11px]">/wp-content/mu-plugins/brightex-health.php</code>:</p>
+                      <p className="text-xs text-muted-foreground mb-2">Create the file <code className="bg-muted px-1 rounded-md text-[11px]">/wp-content/mu-plugins/brightex-health.php</code>:</p>
                       <pre className="bg-muted rounded-sm p-3 text-[10px] text-muted-foreground overflow-x-auto leading-relaxed whitespace-pre">{`<?php
 // Plugin Name: Brightex Health Monitor
 add_action('rest_api_init', function () {
@@ -592,13 +591,13 @@ function brightex_health_check(WP_REST_Request $req) {
                   <li className="flex items-start gap-3">
                     <span className="w-5 h-5 rounded-full bg-brand-gold/20 text-brand-gold text-[10px] font-bold flex items-center justify-center shrink-0 mt-0.5">2</span>
                     <div>
-                      <p className="text-xs text-muted-foreground mb-2">Add this line to <code className="bg-muted px-1 rounded text-[11px]">wp-config.php</code> (above the line that says &quot;That&apos;s all, stop editing!&quot;):</p>
+                      <p className="text-xs text-muted-foreground mb-2">Add this line to <code className="bg-muted px-1 rounded-md text-[11px]">wp-config.php</code> (above the line that says &quot;That&apos;s all, stop editing!&quot;):</p>
                       <pre className="bg-muted rounded-sm p-3 text-[10px] text-muted-foreground overflow-x-auto">{`define('BRIGHTEX_HEALTH_TOKEN', 'your-secret-here');`}</pre>
                     </div>
                   </li>
                   <li className="flex items-start gap-3">
                     <span className="w-5 h-5 rounded-full bg-brand-gold/20 text-brand-gold text-[10px] font-bold flex items-center justify-center shrink-0 mt-0.5">3</span>
-                    <p className="text-xs text-muted-foreground">Test the endpoint: <code className="bg-muted px-1 rounded text-[11px]">https://clientsite.com/wp-json/brightex/v1/health</code>: should return <code className="bg-muted px-1 rounded text-[11px]">{`{"status":"ok"}`}</code>.</p>
+                    <p className="text-xs text-muted-foreground">Test the endpoint: <code className="bg-muted px-1 rounded-md text-[11px]">https://clientsite.com/wp-json/brightex/v1/health</code>: should return <code className="bg-muted px-1 rounded-md text-[11px]">{`{"status":"ok"}`}</code>.</p>
                   </li>
                   <li className="flex items-start gap-3">
                     <span className="w-5 h-5 rounded-full bg-brand-gold/20 text-brand-gold text-[10px] font-bold flex items-center justify-center shrink-0 mt-0.5">4</span>
@@ -608,7 +607,7 @@ function brightex_health_check(WP_REST_Request $req) {
               </div>
               <div className="p-3 rounded-sm bg-muted/50 border border-border">
                 <p className="text-xs font-medium text-foreground mb-1">How to upload the file</p>
-                <p className="text-xs text-muted-foreground">Use cPanel File Manager → navigate to <code className="bg-muted px-1 rounded text-[11px]">wp-content/mu-plugins/</code> (create folder if it doesn&apos;t exist) and upload the file. Or use FTP/SFTP. The plugin activates automatically: no wp-admin activation needed.</p>
+                <p className="text-xs text-muted-foreground">Use cPanel File Manager → navigate to <code className="bg-muted px-1 rounded-md text-[11px]">wp-content/mu-plugins/</code> (create folder if it doesn&apos;t exist) and upload the file. Or use FTP/SFTP. The plugin activates automatically: no wp-admin activation needed.</p>
               </div>
             </div>
           )}

@@ -1,13 +1,14 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useSyncExternalStore, useRef } from "react";
 import {
   FileSignature, Plus, Trash2, Eye, Send, Sparkles, Loader2, ScrollText, Briefcase, ClipboardList,
-  Receipt, FolderOpen, Wallet, Library, CheckCircle2, Upload, Pencil,
+  Receipt, FolderOpen, Wallet, Library, CheckCircle2, Upload, Pencil, List, LayoutGrid, Check,
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 import { StatCard } from "@/components/admin/stat-card";
-import { DataTable, StackedCell, type Column, type RowAction, type FilterConfig } from "@/components/admin/data-table";
+import { DataTable, StackedCell, StatusDot, type Column, type RowAction, type FilterConfig } from "@/components/admin/data-table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -94,6 +95,173 @@ const defaultForm = {
   gated: false,
 };
 
+// List or grid, remembered per device
+const DOC_VIEW_KEY = "admin:documents-view";
+function readDocView(): "list" | "grid" {
+  try { return localStorage.getItem(DOC_VIEW_KEY) === "grid" ? "grid" : "list"; } catch { return "list"; }
+}
+function writeDocView(v: "list" | "grid") {
+  try { localStorage.setItem(DOC_VIEW_KEY, v); } catch {}
+  window.dispatchEvent(new Event("documents-view"));
+}
+function subscribeDocView(cb: () => void) {
+  window.addEventListener("documents-view", cb);
+  return () => window.removeEventListener("documents-view", cb);
+}
+
+const TYPE_TINT: Record<string, string> = {
+  proposal: "bg-blue-500/12 text-blue-800 dark:text-blue-200",
+  agreement: "bg-violet-500/12 text-violet-800 dark:text-violet-200",
+  sop: "bg-emerald-500/12 text-emerald-800 dark:text-emerald-200",
+};
+
+const DOC_PAGE_WIDTH = 900; // .doc-wrap max-width in the rendered documents
+
+/**
+ * The document's real first page, scaled to exactly fill its container.
+ * Same-origin, so the frame's download bar and page margins can be hidden.
+ */
+function DocPreview({ id, title }: { id: string; title: string }) {
+  const boxRef = useRef<HTMLDivElement>(null);
+  const [scale, setScale] = useState(0);
+  const [ready, setReady] = useState(false);
+
+  useEffect(() => {
+    const el = boxRef.current;
+    if (!el) return;
+    const ro = new ResizeObserver(([entry]) => setScale(entry.contentRect.width / DOC_PAGE_WIDTH));
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+
+  function onLoad(e: React.SyntheticEvent<HTMLIFrameElement>) {
+    try {
+      const doc = e.currentTarget.contentDocument;
+      if (doc) {
+        const style = doc.createElement("style");
+        style.textContent =
+          ".dl-bar{display:none!important}html,body{margin:0!important;padding:0!important;background:#fff!important;overflow:hidden!important}.doc-wrap{max-width:none!important;box-shadow:none!important}";
+        doc.head.appendChild(style);
+      }
+    } catch {
+      // Cross-origin or blocked: the unstyled page still previews fine
+    }
+    setReady(true);
+  }
+
+  return (
+    <div ref={boxRef} className="relative aspect-[4/3] overflow-hidden bg-brand-navy">
+      {!ready && <Skeleton className="absolute inset-0 rounded-none" />}
+      {scale > 0 && (
+        <iframe
+          src={`/api/admin/documents/${id}/view`}
+          title={`Preview of ${title}`}
+          loading="lazy"
+          tabIndex={-1}
+          aria-hidden
+          onLoad={onLoad}
+          className={cn("absolute top-0 left-0 origin-top-left pointer-events-none border-0 transition-opacity duration-300", ready ? "opacity-100" : "opacity-0")}
+          style={{
+            width: DOC_PAGE_WIDTH,
+            height: Math.ceil((DOC_PAGE_WIDTH * 3) / 4) + 2,
+            transform: `scale(${scale})`,
+          }}
+        />
+      )}
+    </div>
+  );
+}
+
+/** Card grid with a live, scaled-down render of each document's first page. */
+function DocumentGrid({
+  documents, loading, counts, active, onFilter, onOpen,
+}: {
+  documents: GeneratedDocument[];
+  loading: boolean;
+  counts: { all: number; proposal: number; agreement: number; sop: number };
+  active: string;
+  onFilter: (v: string) => void;
+  onOpen: (d: GeneratedDocument) => void;
+}) {
+  const chips = [
+    { label: "All", value: "All", n: counts.all },
+    { label: "Proposals", value: "Proposal", n: counts.proposal },
+    { label: "Agreements", value: "Agreement", n: counts.agreement },
+    { label: "SOPs", value: "Sop", n: counts.sop },
+  ];
+  return (
+    <div className="space-y-3">
+      <div className="flex flex-wrap gap-1.5">
+        {chips.map((c) => (
+          <button
+            key={c.value}
+            onClick={() => onFilter(c.value)}
+            aria-pressed={active === c.value}
+            className={cn(
+              "inline-flex items-center gap-1.5 h-8 px-3 rounded-lg text-[13px] font-medium border transition-colors",
+              active === c.value ? "bg-brand-gold/20 border-transparent text-foreground" : "border-border text-muted-foreground hover:bg-muted hover:text-foreground"
+            )}
+          >
+            {active === c.value && <Check size={14} className="-ml-0.5" />}
+            {c.label} {c.n}
+          </button>
+        ))}
+      </div>
+
+      {loading && documents.length === 0 ? (
+        <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4">
+          {Array.from({ length: 4 }, (_, i) => (
+            <div key={i} className="rounded-2xl border border-border overflow-hidden">
+              <Skeleton className="aspect-[4/3] rounded-none" />
+              <div className="p-3 space-y-2"><Skeleton className="h-4 w-3/4" /><Skeleton className="h-3 w-1/2" /></div>
+            </div>
+          ))}
+        </div>
+      ) : documents.length === 0 ? (
+        <p className="py-16 text-center text-sm text-muted-foreground">No documents here yet.</p>
+      ) : (
+        <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4">
+          {documents.map((d) => (
+            <button
+              key={d.id}
+              onClick={() => onOpen(d)}
+              className="group flex flex-col text-left rounded-2xl border border-border bg-card overflow-hidden hover:border-brand-gold/50 hover:shadow-[0_16px_40px_-20px_rgba(15,23,42,0.45)] hover:-translate-y-0.5 transition-all focus-visible:outline-2 focus-visible:outline-ring"
+            >
+              <div className="relative">
+                <DocPreview id={d.id} title={d.title} />
+                {/* Hover: make it obvious the card opens the document */}
+                <div className="absolute inset-0 flex items-center justify-center bg-brand-navy/0 group-hover:bg-brand-navy/45 transition-colors">
+                  <span className="inline-flex items-center gap-1.5 h-9 px-4 rounded-full bg-white text-brand-navy text-sm font-semibold shadow-lg opacity-0 translate-y-1 group-hover:opacity-100 group-hover:translate-y-0 transition-all">
+                    <Eye size={15} /> Open
+                  </span>
+                </div>
+              </div>
+              <div className="flex flex-col gap-2 p-4 border-t border-border">
+                <div className="flex items-center justify-between gap-2">
+                  <span className={cn("h-6 px-2.5 inline-flex items-center rounded-full text-[11px] font-semibold capitalize", TYPE_TINT[d.type] ?? "bg-muted text-foreground")}>
+                    {d.type === "sop" ? "SOP" : d.type}
+                  </span>
+                  <span className="text-xs text-muted-foreground whitespace-nowrap">
+                    {new Date(d.created_at).toLocaleDateString("en-KE", { day: "numeric", month: "short", year: "numeric" })}
+                  </span>
+                </div>
+                <p className="text-[15px] font-semibold text-foreground leading-snug line-clamp-2 min-h-[2.6em]" title={d.title}>{d.title}</p>
+                <p className="text-xs text-muted-foreground truncate">
+                  {d.clients?.company?.trim() || d.clients?.name || "Internal"}
+                  {d.reference_code ? <span className="tabular-nums"> · {d.reference_code}</span> : null}
+                </p>
+                <div className="pt-1">
+                  <StatusDot status={d.accepted_at ? "accepted" : d.status} />
+                </div>
+              </div>
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export function DocumentsPageClient() {
   const confirm = useConfirm();
   const notice = useNotice();
@@ -105,6 +273,7 @@ export function DocumentsPageClient() {
   const [clients, setClients] = useState<ClientOption[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeFilter, setActiveFilter] = useState("All");
+  const docView = useSyncExternalStore(subscribeDocView, readDocView, () => "list" as const);
 
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState(defaultForm);
@@ -340,6 +509,28 @@ export function DocumentsPageClient() {
     setEmailDoc({ id: doc.id, title: doc.title, client });
   }
 
+  async function openDocument(d: GeneratedDocument) {
+    const base: DocumentViewerTarget = { title: d.title, subtitle: d.reference_code, client: d.clients?.company?.trim() || d.clients?.name, date: d.created_at, viewUrl: `/api/admin/documents/${d.id}/view`, isHtmlDocument: true };
+    setViewerDoc(base);
+    const res = await fetch(`/api/admin/documents/${d.id}`).then((r) => r.json()).catch(() => null);
+    if (res?.data) {
+      setViewerDoc({
+        ...base,
+        refine: { documentId: d.id, docType: d.type, data: res.data.data },
+        gating: d.type !== "sop" ? { documentId: d.id, gated: !!res.data.gated } : undefined,
+        acceptedAt: res.data.accepted_at ?? null,
+        acceptedByName: res.data.accepted_by_name ?? null,
+        changesRequestedAt: res.data.changes_requested_at ?? null,
+        changesRequestedBy: res.data.changes_requested_by ?? null,
+        changesRequestedNote: res.data.changes_requested_note ?? null,
+        editHref:
+          res.data.data?.version === 2 && !res.data.accepted_at
+            ? `/admin/documents/${d.id}/edit`
+            : null,
+      });
+    }
+  }
+
   const filteredDocuments = documents.filter((d) => {
     if (activeFilter === "All") return true;
     return d.type === activeFilter.toLowerCase();
@@ -355,7 +546,7 @@ export function DocumentsPageClient() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="font-display text-2xl font-bold text-foreground">Documents</h1>
-          <p className="text-sm text-muted-foreground mt-1">Proposals, agreements, and internal SOPs, drafted with AI or uploaded, plus a hub for every document the system holds.</p>
+          <p className="text-sm text-muted-foreground mt-1">Proposals, agreements and SOPs.</p>
         </div>
         {tab === "generated" && (
           <div className="flex items-center gap-2">
@@ -371,20 +562,6 @@ export function DocumentsPageClient() {
           </div>
         )}
       </div>
-
-      {tab === "generated" && (
-        <div className="flex items-start gap-2.5 px-3.5 py-2.5 rounded-sm border border-dashed border-border bg-muted/20">
-          <ClipboardList size={13} className="text-brand-gold mt-0.5 shrink-0" />
-          <p className="text-xs text-muted-foreground leading-relaxed">
-            Not sure whether this enquiry has earned a proposal yet? Read{" "}
-            <a href="/api/admin/sops/proposal-policy/view" target="_blank" rel="noopener noreferrer"
-              className="text-primary underline font-medium">When to Send a Proposal</a>
-            {" "}before drafting. Agreements follow{" "}
-            <a href="/api/admin/sops/agreement-signing/view" target="_blank" rel="noopener noreferrer"
-              className="text-primary underline font-medium">Working Agreement and Sign-off</a>.
-          </p>
-        </div>
-      )}
 
       <div className="flex border-b border-border">
         {([
@@ -402,46 +579,67 @@ export function DocumentsPageClient() {
             <t.icon size={14} />{t.label}
           </button>
         ))}
+        {tab === "generated" && (
+          <div className="ml-auto flex items-center gap-3">
+          <div className="hidden xl:flex items-center gap-1 text-xs text-muted-foreground">
+            <ClipboardList size={14} className="mr-1 shrink-0" />
+            Guides:
+            {[
+              { label: "When to send a proposal", href: "/api/admin/sops/proposal-policy/view" },
+              { label: "Sign-off", href: "/api/admin/sops/agreement-signing/view" },
+            ].map((g) => (
+              <a key={g.href} href={g.href} target="_blank" rel="noopener noreferrer" className="px-2 h-7 inline-flex items-center rounded-full text-foreground hover:bg-muted">
+                {g.label}
+              </a>
+            ))}
+            <button
+              type="button"
+              className="px-2 h-7 inline-flex items-center rounded-full text-foreground hover:bg-muted"
+              onClick={() => setViewerDoc({
+                title: "Brightex Standard Operating Procedure",
+                subtitle: "SOP-DEFAULT-001",
+                client: "Internal",
+                viewUrl: "/api/admin/documents/default-sop/view",
+                isHtmlDocument: true,
+              })}
+            >
+              Default SOP
+            </button>
+          </div>
+          <div role="group" aria-label="View" className="flex items-center rounded-full bg-muted p-0.5 mb-1">
+            {([["list", List], ["grid", LayoutGrid]] as const).map(([v, Icon]) => (
+              <button
+                key={v}
+                onClick={() => writeDocView(v)}
+                aria-pressed={docView === v}
+                aria-label={v === "list" ? "List view" : "Grid view"}
+                className={cn("size-8 rounded-full flex items-center justify-center transition-colors", docView === v ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground")}
+              >
+                <Icon size={15} />
+              </button>
+            ))}
+          </div>
+          </div>
+        )}
       </div>
 
       {tab === "generated" ? (
       <>
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-        <StatCard title="Total Documents" value={documents.length} icon={FileSignature} />
-        <StatCard title="Proposals" value={documents.filter((d) => d.type === "proposal").length} icon={Briefcase} iconColor="text-blue-400" iconBg="bg-blue-400/10" />
-        <StatCard title="Agreements" value={documents.filter((d) => d.type === "agreement").length} icon={ScrollText} iconColor="text-purple-400" iconBg="bg-purple-400/10" />
-        <StatCard title="SOPs" value={documents.filter((d) => d.type === "sop").length} icon={ClipboardList} iconColor="text-emerald-400" iconBg="bg-emerald-400/10" />
-      </div>
-
-      <Card className="p-4 flex items-center justify-between gap-3 bg-brand-navy/5 border-brand-navy/15">
-        <div className="flex items-center gap-3 min-w-0">
-          <div className="w-9 h-9 rounded-sm bg-emerald-400/10 text-emerald-500 flex items-center justify-center shrink-0">
-            <ClipboardList size={16} />
-          </div>
-          <div className="min-w-0">
-            <p className="text-sm font-semibold text-foreground">Brightex Standard Operating Procedure</p>
-            <p className="text-xs text-muted-foreground truncate">
-              The default, always-current process: same four stages promised on the public &quot;How We Work&quot; page.
-            </p>
-          </div>
-        </div>
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          className="shrink-0"
-          onClick={() => setViewerDoc({
-            title: "Brightex Standard Operating Procedure",
-            subtitle: "SOP-DEFAULT-001",
-            client: "Internal",
-            viewUrl: "/api/admin/documents/default-sop/view",
-            isHtmlDocument: true,
-          })}
-        >
-          View SOP
-        </Button>
-      </Card>
-
+      {docView === "grid" ? (
+        <DocumentGrid
+          documents={filteredDocuments}
+          loading={loading}
+          counts={{
+            all: documents.length,
+            proposal: documents.filter((d) => d.type === "proposal").length,
+            agreement: documents.filter((d) => d.type === "agreement").length,
+            sop: documents.filter((d) => d.type === "sop").length,
+          }}
+          active={activeFilter}
+          onFilter={setActiveFilter}
+          onOpen={openDocument}
+        />
+      ) : (
       <Card className="overflow-hidden">
         <DataTable
           columns={[
@@ -454,7 +652,7 @@ export function DocumentsPageClient() {
                 return (
                   <div className="flex flex-col gap-1 min-w-0">
                     <StackedCell primary={d.title} secondary={d.reference_code ?? undefined} />
-                    <span className={`self-start px-1.5 py-0.5 rounded text-[10px] font-medium ${typeColors[d.type]}`}>{typeLabels[d.type]}</span>
+                    <span className={`self-start px-1.5 py-0.5 rounded-md text-[10px] font-medium ${typeColors[d.type]}`}>{typeLabels[d.type]}</span>
                   </div>
                 );
               },
@@ -472,14 +670,7 @@ export function DocumentsPageClient() {
               label: "Status",
               render: (row) => {
                 const d = row as unknown as GeneratedDocument;
-                if (d.accepted_at) {
-                  return (
-                    <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold bg-emerald-400/10 text-emerald-600">
-                      <CheckCircle2 size={10} /> Accepted
-                    </span>
-                  );
-                }
-                return <span className="text-xs font-medium capitalize text-muted-foreground">{d.status}</span>;
+                return <StatusDot status={d.accepted_at ? "accepted" : d.status} />;
               },
             },
             {
@@ -488,34 +679,13 @@ export function DocumentsPageClient() {
               sortable: true,
               render: (row) => {
                 const d = row as unknown as GeneratedDocument;
-                return <span className="text-sm text-muted-foreground">{new Date(d.created_at).toLocaleDateString("en-KE")}</span>;
+                return <span className="text-sm text-foreground whitespace-nowrap">{new Date(d.created_at).toLocaleDateString("en-KE", { day: "numeric", month: "short", year: "numeric" })}</span>;
               },
             },
           ] as Column<Record<string, unknown>>[]}
           data={filteredDocuments as unknown as Record<string, unknown>[]}
           actions={[
-            { label: "View", icon: <Eye size={13} />, onClick: async (row) => {
-              const d = row as unknown as GeneratedDocument;
-              const base: DocumentViewerTarget = { title: d.title, subtitle: d.reference_code, client: d.clients?.company?.trim() || d.clients?.name, date: d.created_at, viewUrl: `/api/admin/documents/${d.id}/view`, isHtmlDocument: true };
-              setViewerDoc(base);
-              const res = await fetch(`/api/admin/documents/${d.id}`).then((r) => r.json()).catch(() => null);
-              if (res?.data) {
-                setViewerDoc({
-                  ...base,
-                  refine: { documentId: d.id, docType: d.type, data: res.data.data },
-                  gating: d.type !== "sop" ? { documentId: d.id, gated: !!res.data.gated } : undefined,
-                  acceptedAt: res.data.accepted_at ?? null,
-                  acceptedByName: res.data.accepted_by_name ?? null,
-                  changesRequestedAt: res.data.changes_requested_at ?? null,
-                  changesRequestedBy: res.data.changes_requested_by ?? null,
-                  changesRequestedNote: res.data.changes_requested_note ?? null,
-                  editHref:
-                    res.data.data?.version === 2 && !res.data.accepted_at
-                      ? `/admin/documents/${d.id}/edit`
-                      : null,
-                });
-              }
-            } },
+            { label: "View", icon: <Eye size={13} />, onClick: (row) => openDocument(row as unknown as GeneratedDocument) },
             {
               label: "Edit sections",
               icon: <Pencil size={13} />,
@@ -550,22 +720,27 @@ export function DocumentsPageClient() {
           searchPlaceholder="Search documents…"
           searchKeys={["title", "reference_code"]}
           filters={[
-            { key: "type", label: "Type", options: [{ label: "All", value: "" }, { label: "Proposal", value: "proposal" }, { label: "Agreement", value: "agreement" }, { label: "SOP", value: "sop" }] } as FilterConfig,
+            { key: "type", label: "Type", options: [
+              { label: `All ${documents.length}`, value: "" },
+              { label: `Proposals ${documents.filter((d) => d.type === "proposal").length}`, value: "proposal" },
+              { label: `Agreements ${documents.filter((d) => d.type === "agreement").length}`, value: "agreement" },
+              { label: `SOPs ${documents.filter((d) => d.type === "sop").length}`, value: "sop" },
+            ] } as FilterConfig,
           ]}
           activeFilters={{ type: activeFilter === "All" ? "" : activeFilter.toLowerCase() }}
           onFilterChange={(_, val) => setActiveFilter(val ? val.charAt(0).toUpperCase() + val.slice(1) : "All")}
-          maxHeight="520px"
-          emptyMessage={loading ? "Loading documents…" : "No documents generated yet."}
+          loading={loading} emptyMessage={"No documents generated yet."}
         />
       </Card>
+      )}
       </>
       ) : (
       <>
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-        <StatCard title="Total Documents" value={hubDocuments.length} icon={Library} />
-        <StatCard title="Invoices" value={hubDocuments.filter((d) => d.type === "invoice").length} icon={FileSignature} iconColor="text-amber-500" iconBg="bg-amber-400/10" />
-        <StatCard title="Receipts" value={hubDocuments.filter((d) => d.type === "receipt").length} icon={Receipt} iconColor="text-teal-500" iconBg="bg-teal-400/10" />
-        <StatCard title="Uploads" value={hubDocuments.filter((d) => d.type === "project_file" || d.type === "finance_file").length} icon={FolderOpen} iconColor="text-slate-500" iconBg="bg-slate-400/10" />
+        <StatCard loading={loading} title="Documents" value={hubDocuments.length} icon={Library} />
+        <StatCard loading={loading} title="Invoices" value={hubDocuments.filter((d) => d.type === "invoice").length} icon={FileSignature} iconColor="text-amber-500" iconBg="bg-amber-400/10" />
+        <StatCard loading={loading} title="Receipts" value={hubDocuments.filter((d) => d.type === "receipt").length} icon={Receipt} iconColor="text-teal-500" iconBg="bg-teal-400/10" />
+        <StatCard loading={loading} title="Uploads" value={hubDocuments.filter((d) => d.type === "project_file" || d.type === "finance_file").length} icon={FolderOpen} iconColor="text-slate-500" iconBg="bg-slate-400/10" />
       </div>
 
       <Card className="overflow-hidden">
@@ -580,7 +755,7 @@ export function DocumentsPageClient() {
                 return (
                   <div className="flex flex-col gap-1 min-w-0">
                     <StackedCell primary={d.title} secondary={d.subtitle ?? undefined} />
-                    <span className={`self-start px-1.5 py-0.5 rounded text-[10px] font-medium ${hubTypeColors[d.type]}`}>{hubTypeLabels[d.type]}</span>
+                    <span className={`self-start px-1.5 py-0.5 rounded-md text-[10px] font-medium ${hubTypeColors[d.type]}`}>{hubTypeLabels[d.type]}</span>
                   </div>
                 );
               },
@@ -599,7 +774,7 @@ export function DocumentsPageClient() {
               sortable: true,
               render: (row) => {
                 const d = row as unknown as HubDocument;
-                return <span className="text-sm text-muted-foreground">{new Date(d.date).toLocaleDateString("en-KE")}</span>;
+                return <span className="text-sm text-foreground whitespace-nowrap">{new Date(d.date).toLocaleDateString("en-KE", { day: "numeric", month: "short", year: "numeric" })}</span>;
               },
             },
           ] as Column<Record<string, unknown>>[]}
@@ -629,7 +804,7 @@ export function DocumentsPageClient() {
           activeFilters={{ type: hubFilter === "All" ? "" : hubFilter }}
           onFilterChange={(_, val) => setHubFilter(val || "All")}
           maxHeight="520px"
-          emptyMessage={hubLoading ? "Loading…" : "No documents on file yet."}
+          loading={hubLoading} emptyMessage={"No documents on file yet."}
         />
       </Card>
 
@@ -832,7 +1007,7 @@ export function DocumentsPageClient() {
                   type="checkbox"
                   checked={form.gated}
                   onChange={(e) => set("gated", e.target.checked)}
-                  className="mt-0.5 h-4 w-4 rounded border-input"
+                  className="mt-0.5 h-4 w-4 rounded-md border-input"
                 />
                 <span className="text-sm text-foreground">
                   Show a summary first

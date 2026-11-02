@@ -48,6 +48,8 @@ export function TrialForm({ productSlug, productName, trialDays, pricingFrom }: 
         return;
       }
       setSubmitted(true);
+      // Lets "after the form is sent" pop-ups fire (see popup-manager.tsx)
+      window.dispatchEvent(new Event("bx:lead"));
     } catch {
       setError("Network error. Please try again.");
     }
@@ -154,7 +156,7 @@ export function TrialForm({ productSlug, productName, trialDays, pricingFrom }: 
         <button
           type="submit"
           disabled={isSubmitting}
-          className="w-full inline-flex items-center justify-center gap-2 px-6 py-4 rounded-sm bg-brand-gold text-brand-navy font-semibold text-sm hover:bg-brand-gold-hover transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+          className="w-full inline-flex items-center justify-center gap-2 px-6 py-4 rounded-full bg-brand-gold text-brand-navy font-semibold text-sm hover:bg-brand-gold-hover transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
         >
           {isSubmitting ? (
             <span className="w-4 h-4 border-2 border-brand-navy/30 border-t-brand-navy rounded-full animate-spin" />

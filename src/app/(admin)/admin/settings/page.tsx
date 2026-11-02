@@ -16,15 +16,16 @@ import { cn } from "@/lib/utils";
 import { SignatureSettings } from "@/components/admin/signature-settings";
 
 const sections = [
-  { id: "business", label: "Business", icon: Building2, description: "Name, tagline, location" },
-  { id: "contact", label: "Contact", icon: Phone, description: "Email, phone, WhatsApp" },
-  { id: "brand", label: "Brand Assets", icon: Image, description: "Logo variants and usage" },
-  { id: "invoice", label: "Invoice & Payments", icon: FileText, description: "Payment methods, bank details" },
-  { id: "social", label: "Social Media", icon: Hash, description: "Platform handles" },
-  { id: "integrations", label: "Integrations", icon: BarChart2, description: "Analytics, cron" },
-  { id: "signature", label: "Signature", icon: PenLine, description: "Countersignature on agreements" },
-  { id: "ai", label: "AI", icon: Bot, description: "Provider, model, on/off toggle" },
+  { id: "business", group: "Company", label: "Business", icon: Building2, description: "Name, tagline and location used across the site and documents." },
+  { id: "contact", group: "Company", label: "Contact", icon: Phone, description: "How clients reach you: email, phone, WhatsApp and booking." },
+  { id: "brand", group: "Company", label: "Brand assets", icon: Image, description: "Logo variants and where each one appears." },
+  { id: "invoice", group: "Money", label: "Invoices and payments", icon: FileText, description: "Payment methods and bank details printed on invoices." },
+  { id: "social", group: "Channels", label: "Social media", icon: Hash, description: "Handles linked from the website footer and structured data." },
+  { id: "integrations", group: "Channels", label: "Integrations", icon: BarChart2, description: "Analytics and scheduled jobs." },
+  { id: "signature", group: "Documents", label: "Signature", icon: PenLine, description: "Your countersignature on agreements." },
+  { id: "ai", group: "Documents", label: "AI", icon: Bot, description: "Provider, model and whether AI drafting is on." },
 ] as const;
+const SECTION_GROUPS = ["Company", "Money", "Channels", "Documents"] as const;
 type Section = (typeof sections)[number]["id"];
 
 const LOGO_PLACEMENTS = [
@@ -209,79 +210,94 @@ export default function SettingsPage() {
 
   const activeSection = sections.find((s) => s.id === active)!;
 
+  const dirty = isSectionDirty(active);
+
   return (
-    <div className="space-y-6">
+    <div className="flex flex-col gap-4 lg:h-full lg:min-h-0">
       {/* Page header */}
       <div>
         <h1 className="font-display text-2xl font-bold text-foreground">Settings</h1>
-        <p className="text-sm text-muted-foreground mt-1">Manage your business information and site configuration.</p>
+        <p className="text-sm text-muted-foreground mt-1">Business details and site setup.</p>
       </div>
 
       {loadError && (
-        <div className="p-4 rounded-sm border border-amber-200 bg-amber-50 text-sm text-amber-700 dark:bg-amber-950/20 dark:border-amber-800/30 dark:text-amber-300">
+        <div className="px-4 py-3 rounded-2xl bg-amber-500/10 text-sm text-amber-800 dark:text-amber-300">
           {loadError}
         </div>
       )}
 
-      <div className="grid grid-cols-1 lg:grid-cols-[260px_1fr] gap-6 items-start">
-
-        {/* ── Left sidebar nav ── */}
-        <div className="rounded-sm border border-border bg-card overflow-hidden">
-          {sections.map((s, i) => (
-            <button
-              key={s.id}
-              onClick={() => setActive(s.id)}
-              className={cn(
-                "w-full flex items-center gap-4 px-5 py-4 text-left transition-colors group",
-                i !== 0 && "border-t border-border",
-                active === s.id
-                  ? "bg-brand-gold/8 border-l-2 border-l-brand-gold"
-                  : "hover:bg-muted border-l-2 border-l-transparent"
-              )}
-            >
-              <div className={cn(
-                "w-9 h-9 rounded-sm flex items-center justify-center shrink-0 transition-colors",
-                active === s.id ? "bg-brand-gold text-brand-navy" : "bg-muted text-muted-foreground group-hover:bg-brand-gold/10 group-hover:text-brand-gold"
-              )}>
-                <s.icon size={16} />
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className={cn("text-sm font-semibold", active === s.id ? "text-foreground" : "text-foreground/70")}>{s.label}</p>
-                <p className="text-xs text-muted-foreground truncate">{s.description}</p>
-              </div>
-              <ChevronRight size={14} className={cn("shrink-0 transition-colors", active === s.id ? "text-brand-gold" : "text-muted-foreground/40 group-hover:text-muted-foreground")} />
-            </button>
-          ))}
-          {/* Email Templates: separate page link */}
-          <Link
-            href="/admin/settings/email-preview"
-            className="w-full flex items-center gap-4 px-5 py-4 text-left transition-colors group border-t border-border hover:bg-muted border-l-2 border-l-transparent"
+      {/* Phones and tablets: sections as a scrolling chip row */}
+      <nav aria-label="Settings sections" className="lg:hidden -mx-4 px-4 flex gap-2 overflow-x-auto scrollbar-overlay pb-1">
+        {sections.map((s) => (
+          <button
+            key={s.id}
+            onClick={() => setActive(s.id)}
+            aria-current={active === s.id ? "page" : undefined}
+            className={cn(
+              "shrink-0 inline-flex items-center gap-2 h-9 px-3.5 rounded-lg border text-sm font-medium transition-colors",
+              active === s.id ? "bg-brand-gold/20 border-transparent text-foreground" : "border-border text-muted-foreground"
+            )}
           >
-            <div className="w-9 h-9 rounded-sm flex items-center justify-center shrink-0 bg-muted text-muted-foreground group-hover:bg-brand-gold/10 group-hover:text-brand-gold transition-colors">
-              <MailOpen size={16} />
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-semibold text-foreground/70">Email Templates</p>
-              <p className="text-xs text-muted-foreground truncate">Preview outbound email designs</p>
-            </div>
-            <ExternalLink size={12} className="shrink-0 text-muted-foreground/40 group-hover:text-muted-foreground transition-colors" />
-          </Link>
-        </div>
+            <s.icon size={15} />
+            {s.label}
+          </button>
+        ))}
+        <Link href="/admin/settings/email-preview" className="shrink-0 inline-flex items-center gap-2 h-9 px-3.5 rounded-lg border border-border text-sm font-medium text-muted-foreground">
+          <MailOpen size={15} /> Email templates
+        </Link>
+      </nav>
 
-        {/* ── Right content pane ── */}
-        <form onSubmit={handleSave} className="space-y-0">
-          {/* Section header */}
-          <div className="flex items-center gap-3 mb-4">
-            <div className="w-10 h-10 rounded-sm bg-brand-gold/10 flex items-center justify-center shrink-0">
-              <activeSection.icon size={18} className="text-brand-gold" />
+      <div className="grid grid-cols-1 lg:grid-cols-[240px_minmax(0,1fr)] gap-4 lg:flex-1 lg:min-h-0">
+
+        {/* Desktop: grouped navigation list */}
+        <nav aria-label="Settings sections" className="hidden lg:block rounded-2xl bg-muted/50 p-2 overflow-y-auto scrollbar-overlay">
+          {SECTION_GROUPS.map((group) => (
+            <div key={group} className="mb-2 last:mb-0">
+              <p className="px-3 pt-2 pb-1 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">{group}</p>
+              {sections.filter((s) => s.group === group).map((s) => (
+                <button
+                  key={s.id}
+                  onClick={() => setActive(s.id)}
+                  aria-current={active === s.id ? "page" : undefined}
+                  className={cn(
+                    "w-full flex items-center gap-3 h-10 px-3 rounded-full text-sm text-left transition-colors",
+                    active === s.id
+                      ? "bg-brand-gold/25 text-foreground font-semibold"
+                      : "text-foreground/80 hover:bg-muted"
+                  )}
+                >
+                  <s.icon size={17} className="shrink-0" />
+                  <span className="truncate">{s.label}</span>
+                  {isSectionDirty(s.id) && <span className="ml-auto size-2 rounded-full bg-amber-500" aria-label="Unsaved changes" />}
+                </button>
+              ))}
+              {group === "Channels" && (
+                <Link
+                  href="/admin/settings/email-preview"
+                  className="w-full flex items-center gap-3 h-10 px-3 rounded-full text-sm text-foreground/80 hover:bg-muted transition-colors"
+                >
+                  <MailOpen size={17} className="shrink-0" />
+                  <span className="truncate">Email templates</span>
+                  <ChevronRight size={14} className="ml-auto text-muted-foreground" />
+                </Link>
+              )}
             </div>
-            <div>
+          ))}
+        </nav>
+
+        {/* Section panel: header, fields, and a save bar that stays in view */}
+        <form onSubmit={handleSave} className="flex flex-col min-h-0 rounded-2xl border border-border bg-card overflow-hidden">
+          <header className="flex items-center gap-3 px-6 py-4 border-b border-border shrink-0">
+            <span className="size-10 rounded-full bg-brand-gold/15 text-foreground flex items-center justify-center shrink-0">
+              <activeSection.icon size={18} />
+            </span>
+            <div className="min-w-0">
               <h2 className="text-base font-semibold text-foreground">{activeSection.label}</h2>
-              <p className="text-xs text-muted-foreground">{activeSection.description}</p>
+              <p className="text-sm text-muted-foreground">{activeSection.description}</p>
             </div>
-          </div>
+          </header>
 
-          <div className="rounded-sm border border-border bg-card overflow-hidden">
+          <div className="flex-1 min-h-0 overflow-y-auto scrollbar-overlay">
             <div className="divide-y divide-border">
 
               {/* ── Business ── */}
@@ -372,7 +388,7 @@ export default function SettingsPage() {
                                 <div className="relative w-full h-full flex items-center justify-center p-4">
                                   {/* eslint-disable-next-line @next/next/no-img-element */}
                                   <img src={currentUrl} alt={`${variant} logo preview`} className="max-h-20 max-w-full object-contain" />
-                                  <span className="absolute top-2 right-2 text-[10px] px-1.5 py-0.5 rounded bg-background/90 text-muted-foreground border border-border">
+                                  <span className="absolute top-2 right-2 text-[10px] px-1.5 py-0.5 rounded-md bg-background/90 text-muted-foreground border border-border">
                                     Click to replace
                                   </span>
                                 </div>
@@ -418,7 +434,7 @@ export default function SettingsPage() {
                                     type="checkbox"
                                     checked={currentPlacements.includes(p.key)}
                                     onChange={() => toggleLogoPlacement(placementsKey, p.key, currentPlacements)}
-                                    className="rounded border-border accent-amber-500 w-3.5 h-3.5 shrink-0"
+                                    className="rounded-xs border-border accent-amber-500 w-3.5 h-3.5 shrink-0"
                                   />
                                   <span className="text-xs text-muted-foreground group-hover:text-foreground transition-colors">
                                     {p.label}
@@ -661,33 +677,36 @@ export default function SettingsPage() {
             </div>
           </div>
 
-          {/* Save bar */}
-          <div className="mt-4 flex items-center justify-between p-4 rounded-sm border border-border bg-card">
-            <div className="flex items-center gap-2 text-sm">
+          {/* Save bar: quiet when saved, prominent when there is something to save */}
+          <div className={cn(
+            "shrink-0 flex items-center justify-between gap-3 px-6 py-3 border-t border-border transition-colors",
+            saveError ? "bg-red-500/8" : dirty ? "bg-brand-gold/10" : "bg-card"
+          )}>
+            <div className="flex items-center gap-2 text-sm min-w-0" role="status" aria-live="polite">
               {saveError ? (
                 <>
-                  <AlertCircle size={15} className="text-red-500" />
-                  <span className="text-red-600 dark:text-red-400 font-medium">{saveError}</span>
+                  <AlertCircle size={16} className="text-red-600 shrink-0" />
+                  <span className="text-red-700 dark:text-red-400 font-medium truncate">{saveError}</span>
                 </>
-              ) : isSectionDirty(active) ? (
+              ) : dirty ? (
                 <>
-                  <AlertCircle size={15} className="text-amber-500" />
-                  <span className="text-muted-foreground">Unsaved changes in this section</span>
+                  <span className="size-2 rounded-full bg-amber-500 shrink-0" />
+                  <span className="text-foreground font-medium">Unsaved changes</span>
                 </>
               ) : loaded ? (
                 <>
-                  <CheckCircle2 size={15} className="text-emerald-500" />
-                  <span className="text-emerald-600 dark:text-emerald-400 font-medium">All changes saved</span>
+                  <CheckCircle2 size={16} className="text-emerald-700 dark:text-emerald-400 shrink-0" />
+                  <span className="text-muted-foreground">All changes saved</span>
                 </>
               ) : null}
             </div>
             <button
               type="submit"
-              disabled={saving}
-              className="inline-flex items-center gap-2 px-5 py-2 rounded-sm bg-brand-gold text-brand-navy font-semibold text-sm hover:bg-brand-gold-hover transition-colors disabled:opacity-60"
+              disabled={saving || !dirty}
+              className="inline-flex items-center gap-2 h-10 px-5 rounded-full bg-brand-gold text-brand-navy font-semibold text-sm hover:bg-brand-gold-hover transition-colors disabled:bg-muted disabled:text-muted-foreground shrink-0"
             >
-              <Save size={14} />
-              {saving ? "Saving…" : "Save Changes"}
+              {saving ? <Loader2 size={15} className="animate-spin" /> : <Save size={15} />}
+              {saving ? "Saving" : "Save"}
             </button>
           </div>
         </form>
@@ -702,12 +721,12 @@ function SettingRow({
   label, hint, children,
 }: { label: string; hint?: string; children: React.ReactNode }) {
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-[240px_1fr] gap-4 px-6 py-5 items-start">
-      <div>
+    <div className="grid grid-cols-1 md:grid-cols-[minmax(0,220px)_minmax(0,1fr)] gap-2 md:gap-6 px-6 py-4 items-start">
+      <div className="md:pt-2">
         <p className="text-sm font-medium text-foreground">{label}</p>
         {hint && <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">{hint}</p>}
       </div>
-      <div className="max-w-md">{children}</div>
+      <div className="max-w-lg">{children}</div>
     </div>
   );
 }
@@ -716,9 +735,9 @@ function SocialRow({
   label, prefix, value, placeholder = "", onChange,
 }: { label: string; prefix: string; value: string; placeholder?: string; onChange: (v: string) => void }) {
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-[240px_1fr] gap-4 px-6 py-4 items-center">
+    <div className="grid grid-cols-1 md:grid-cols-[minmax(0,220px)_minmax(0,1fr)] gap-2 md:gap-6 px-6 py-4 items-center">
       <p className="text-sm font-medium text-foreground">{label}</p>
-      <div className="max-w-md flex items-center border border-input rounded-sm overflow-hidden focus-within:ring-1 focus-within:ring-ring">
+      <div className="max-w-lg flex items-center border border-input rounded-lg overflow-hidden focus-within:ring-2 focus-within:ring-ring/40">
         <span className="px-3 py-2 text-xs text-muted-foreground bg-muted border-r border-input shrink-0 whitespace-nowrap select-none">
           {prefix}
         </span>

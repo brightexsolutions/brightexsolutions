@@ -4,7 +4,7 @@ import { Hero } from "@/components/public/hero";
 import { ServicesSection } from "@/components/public/services-section";
 import { PortfolioSection } from "@/components/public/portfolio-section";
 import { ProcessSection } from "@/components/public/process-section";
-import { TestimonialsSection } from "@/components/public/testimonials-section";
+import { ClientsSection } from "@/components/public/clients-section";
 import { WhySection } from "@/components/public/why-section";
 import {
   SITE_NAME,
@@ -47,9 +47,9 @@ async function getHeroAnnouncement(): Promise<HeroAnnouncement> {
 }
 
 export const metadata: Metadata = {
-  title: `${SITE_NAME}: Digital Agency Nairobi`,
+  title: { absolute: `${SITE_NAME} | Technology Consultancy and Software Development in Nairobi, Kenya` },
   description:
-    "Nairobi-based digital agency building custom websites, ERP systems, AI tools, and platforms for businesses across Kenya and East Africa.",
+    "Brightex Solutions is a Nairobi technology consultancy. We build websites, ERP systems, custom software and AI automation for businesses in Kenya and East Africa.",
   alternates: {
     canonical: "/",
   },
@@ -57,11 +57,30 @@ export const metadata: Metadata = {
 
 const localBusinessSchema = {
   "@context": "https://schema.org",
-  "@type": "LocalBusiness",
+  "@type": "ProfessionalService",
+  "@id": `${SITE_URL}/#organization`,
   name: SITE_NAME,
   description:
-    "Digital agency based in Nairobi, Kenya offering web development, UI/UX design, SEO, branding, ERP systems, AI automation, and technology consultancy.",
+    "Technology consultancy in Nairobi, Kenya offering custom software, web development, ERP systems, AI automation, UI/UX design, SEO and branding.",
   url: SITE_URL,
+  logo: `${SITE_URL}/assets/Brightex%20Solutions%20Logo-dark-v1-no-bg.png`,
+  image: `${SITE_URL}/opengraph-image`,
+  areaServed: [
+    { "@type": "Country", name: "Kenya" },
+    { "@type": "Place", name: "East Africa" },
+  ],
+  knowsAbout: [
+    "Technology consulting", "Custom software development", "Web development",
+    "ERP systems", "AI automation", "UI/UX design", "Search engine optimisation",
+  ],
+  hasOfferCatalog: {
+    "@type": "OfferCatalog",
+    name: "Services",
+    itemListElement: [
+      "Technology Consultancy", "Web Development", "ERP Systems", "AI & Automation",
+      "UI/UX Design", "SEO & Growth", "Branding & Identity",
+    ].map((name) => ({ "@type": "Offer", itemOffered: { "@type": "Service", name } })),
+  },
   telephone: BUSINESS_PHONE,
   email: BUSINESS_EMAIL,
   address: {
@@ -90,6 +109,14 @@ const localBusinessSchema = {
   priceRange: "KES",
 };
 
+const websiteSchema = {
+  "@context": "https://schema.org",
+  "@type": "WebSite",
+  name: SITE_NAME,
+  url: SITE_URL,
+  publisher: { "@id": `${SITE_URL}/#organization` },
+};
+
 export default async function HomePage() {
   const heroAnnouncement = await getHeroAnnouncement();
 
@@ -98,6 +125,10 @@ export default async function HomePage() {
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(localBusinessSchema) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteSchema) }}
       />
 
       <SectionErrorBoundary>
@@ -117,7 +148,7 @@ export default async function HomePage() {
       </SectionErrorBoundary>
 
       <SectionErrorBoundary>
-        <TestimonialsSection />
+        <ClientsSection />
       </SectionErrorBoundary>
 
       <SectionErrorBoundary>

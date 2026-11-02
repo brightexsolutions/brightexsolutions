@@ -8,7 +8,7 @@ export const revalidate = 3600;
 export const metadata: Metadata = {
   title: "Services",
   description:
-    "Web development, UI/UX design, SEO, branding, AI automation, ERP systems, and technology consultancy: all from one team in Nairobi.",
+    "Web development, UI/UX design, SEO, branding, AI automation, ERP systems and integrations, and technology consultancy, all from one team in Nairobi.",
   alternates: { canonical: "/services" },
 };
 
@@ -69,8 +69,8 @@ const services = [
     title: "ERP Systems",
     tagline: "Built around how you actually operate.",
     description:
-      "Custom enterprise resource planning designed around your workflows: not a rigid off-the-shelf product forced into your processes. Built for schools, hospitals, hospitality, NGOs, and more.",
-    points: ["Custom ERP development", "Module & workflow design", "Data migration & cleanup", "Training & ongoing support"],
+      "Custom enterprise resource planning designed around your workflows, not a rigid off-the-shelf product forced into your processes. Connected to the tools you already rely on, so data flows without retyping. Built for schools, hospitals, hospitality, NGOs, and more.",
+    points: ["Custom ERP development", "Integrations: M-Pesa, KRA eTIMS, banks, accounting software", "WhatsApp, SMS and email notifications", "Data migration, training and ongoing support"],
     featured: false,
   },
   {
@@ -118,7 +118,7 @@ function ServiceCard({ service: s }: { service: Service }) {
           <div className="w-10 h-10 rounded-sm bg-brand-gold/8 flex items-center justify-center shrink-0">
             <s.icon size={18} className="text-brand-gold" />
           </div>
-          <span className="text-xs font-mono text-brand-muted/40">{s.num}</span>
+          <span className="text-xs font-mono text-brand-muted">{s.num}</span>
         </div>
         <h3 className="font-display text-lg font-bold text-brand-navy mb-1 leading-snug">{s.title}</h3>
         <p className="text-brand-gold text-[11px] font-semibold mb-3">{s.tagline}</p>
@@ -159,7 +159,7 @@ export default function ServicesPage() {
               </p>
               <Link
                 href="/contact"
-                className="inline-flex items-center gap-2 px-7 py-3.5 rounded-sm bg-brand-gold text-brand-navy font-semibold text-sm hover:bg-brand-gold-hover transition-colors"
+                className="inline-flex items-center gap-2 px-7 py-3.5 rounded-full bg-brand-gold text-brand-navy font-semibold text-sm hover:bg-brand-gold-hover transition-colors"
               >
                 Start a conversation <ArrowRight size={14} />
               </Link>
@@ -219,7 +219,7 @@ export default function ServicesPage() {
               </p>
               <Link
                 href="/contact"
-                className="inline-flex items-center gap-2 px-6 py-3 rounded-sm bg-brand-gold text-brand-navy font-semibold text-sm hover:bg-brand-gold-hover transition-colors"
+                className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-brand-gold text-brand-navy font-semibold text-sm hover:bg-brand-gold-hover transition-colors"
               >
                 Get a quote <ArrowRight size={14} />
               </Link>
@@ -304,7 +304,7 @@ export default function ServicesPage() {
               </p>
               <Link
                 href="/contact"
-                className="inline-flex items-center gap-2 px-6 py-3 rounded-sm border border-white/20 text-white text-sm font-semibold hover:border-brand-gold hover:text-brand-gold transition-colors"
+                className="inline-flex items-center gap-2 px-6 py-3 rounded-full border border-white/20 text-white text-sm font-semibold hover:border-brand-gold hover:text-brand-gold transition-colors"
               >
                 Tell us about your project <ArrowRight size={14} />
               </Link>

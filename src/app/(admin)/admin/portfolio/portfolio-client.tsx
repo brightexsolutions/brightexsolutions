@@ -152,7 +152,7 @@ export function PortfolioPageClient() {
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Portfolio</h1>
           <p className="text-muted-foreground text-sm mt-0.5">
-            Manage the projects displayed on the public website.
+            Projects shown on the website.
           </p>
         </div>
         <Button onClick={openCreate} className="gap-2">
@@ -194,8 +194,8 @@ export function PortfolioPageClient() {
                 <div key={i} className="flex items-center gap-4 px-6 py-4 animate-pulse">
                   <div className="w-14 h-10 bg-muted rounded-sm shrink-0" />
                   <div className="flex-1 space-y-2">
-                    <div className="h-4 w-40 bg-muted rounded" />
-                    <div className="h-3 w-24 bg-muted/60 rounded" />
+                    <div className="h-4 w-40 bg-muted rounded-md" />
+                    <div className="h-3 w-24 bg-muted/60 rounded-md" />
                   </div>
                 </div>
               ))}
@@ -223,7 +223,7 @@ export function PortfolioPageClient() {
                     <div className="flex items-center gap-2">
                       <p className="text-sm font-semibold truncate">{p.name}</p>
                       {p.featured && (
-                        <span className="px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider bg-brand-gold/10 text-brand-gold">
+                        <span className="px-1.5 py-0.5 rounded-md text-[9px] font-bold uppercase tracking-wider bg-brand-gold/10 text-brand-gold">
                           Featured
                         </span>
                       )}
@@ -234,7 +234,7 @@ export function PortfolioPageClient() {
                   {/* Tags preview */}
                   <div className="hidden md:flex gap-1.5">
                     {(p.tags ?? []).slice(0, 2).map((t) => (
-                      <span key={t} className="px-2 py-0.5 rounded text-[10px] font-medium bg-muted text-muted-foreground">
+                      <span key={t} className="px-2 py-0.5 rounded-md text-[10px] font-medium bg-muted text-muted-foreground">
                         {t}
                       </span>
                     ))}
@@ -250,20 +250,20 @@ export function PortfolioPageClient() {
                   <div className="flex items-center gap-1 shrink-0">
                     <button
                       onClick={() => toggleActive(p)}
-                      className="p-1.5 rounded hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
+                      className="p-1.5 rounded-md hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
                       title={p.active ? "Hide" : "Show"}
                     >
                       {p.active ? <Eye size={14} /> : <EyeOff size={14} />}
                     </button>
                     <button
                       onClick={() => openEdit(p)}
-                      className="p-1.5 rounded hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
+                      className="p-1.5 rounded-md hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
                     >
                       <Pencil size={14} />
                     </button>
                     <button
                       onClick={() => setDeleteId(p.id)}
-                      className="p-1.5 rounded hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors text-muted-foreground hover:text-red-600"
+                      className="p-1.5 rounded-md hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors text-muted-foreground hover:text-red-600"
                     >
                       <Trash2 size={14} />
                     </button>

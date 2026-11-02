@@ -81,7 +81,7 @@ function GatingToggle({
       type="button"
       onClick={toggle}
       disabled={busy}
-      className="w-full flex items-center justify-between gap-2 px-3 py-2 rounded border border-border bg-muted/20 text-xs disabled:opacity-60"
+      className="w-full flex items-center justify-between gap-2 px-3 py-2 rounded-md border border-border bg-muted/20 text-xs disabled:opacity-60"
     >
       <span className="flex items-center gap-1.5 text-foreground font-medium">
         {busy ? <Loader2 size={12} className="animate-spin" /> : gated ? <EyeOff size={12} /> : <Eye size={12} />}
@@ -95,7 +95,7 @@ function GatingToggle({
 function StatusBadge({ doc }: { doc: DocumentViewerTarget }) {
   if (doc.acceptedAt) {
     return (
-      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-semibold bg-emerald-400/10 text-emerald-600 shrink-0">
+      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-semibold bg-emerald-400/10 text-emerald-600 shrink-0">
         <CheckCircle2 size={10} />
         {doc.acceptedByName ? `Accepted by ${doc.acceptedByName.split(" ")[0]}` : "Accepted"}
       </span>
@@ -103,7 +103,7 @@ function StatusBadge({ doc }: { doc: DocumentViewerTarget }) {
   }
   if (doc.changesRequestedAt) {
     return (
-      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-semibold bg-amber-400/10 text-amber-600 shrink-0">
+      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-semibold bg-amber-400/10 text-amber-600 shrink-0">
         <MessageSquareWarning size={10} />Changes requested
       </span>
     );
@@ -126,6 +126,7 @@ export function DocumentViewerSheet({ doc, onClose }: { doc: DocumentViewerTarge
   return (
     <Sheet open={!!doc} onOpenChange={(v) => !v && onClose()}>
       <SheetContent
+        showCloseButton={false}
         className={`w-full flex flex-col overflow-hidden p-0 ${wide ? "sm:max-w-[min(1200px,95vw)]" : "sm:max-w-3xl"}`}
         side="right"
       >
@@ -148,11 +149,11 @@ export function DocumentViewerSheet({ doc, onClose }: { doc: DocumentViewerTarge
                 <button
                   onClick={() => setWide((w) => !w)}
                   title={wide ? "Narrow the panel" : "Widen the panel"}
-                  className="hidden sm:flex w-7 h-7 rounded hover:bg-muted items-center justify-center text-muted-foreground transition-colors"
+                  className="hidden sm:flex w-7 h-7 rounded-md hover:bg-muted items-center justify-center text-muted-foreground transition-colors"
                 >
                   {wide ? <Minimize2 size={13} /> : <Maximize2 size={13} />}
                 </button>
-                <button onClick={onClose} className="w-7 h-7 rounded hover:bg-muted flex items-center justify-center text-muted-foreground transition-colors">
+                <button onClick={onClose} className="w-7 h-7 rounded-md hover:bg-muted flex items-center justify-center text-muted-foreground transition-colors">
                   <X size={14} />
                 </button>
               </div>
@@ -240,21 +241,21 @@ export function DocumentViewerSheet({ doc, onClose }: { doc: DocumentViewerTarge
                 href={doc.viewUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex-1 min-w-[110px] py-2 rounded border border-input text-sm text-foreground hover:bg-muted transition-colors flex items-center justify-center gap-1.5"
+                className="flex-1 min-w-[110px] py-2 rounded-md border border-input text-sm text-foreground hover:bg-muted transition-colors flex items-center justify-center gap-1.5"
               >
                 <ExternalLink size={13} />Open
               </a>
               <a
                 href={doc.isHtmlDocument ? `${doc.viewUrl}?print=1` : doc.viewUrl}
                 {...(doc.isHtmlDocument ? { target: "_blank", rel: "noopener noreferrer" } : { download: true })}
-                className="flex-1 min-w-[110px] py-2 rounded border border-input text-sm text-foreground hover:bg-muted transition-colors flex items-center justify-center gap-1.5"
+                className="flex-1 min-w-[110px] py-2 rounded-md border border-input text-sm text-foreground hover:bg-muted transition-colors flex items-center justify-center gap-1.5"
               >
                 <Download size={13} />{doc.isHtmlDocument ? "Save PDF" : "Download"}
               </a>
               {doc.editHref && (
                 <a
                   href={doc.editHref}
-                  className="flex-1 min-w-[110px] py-2 rounded border border-input text-sm text-foreground hover:bg-muted transition-colors flex items-center justify-center gap-1.5"
+                  className="flex-1 min-w-[110px] py-2 rounded-md border border-input text-sm text-foreground hover:bg-muted transition-colors flex items-center justify-center gap-1.5"
                 >
                   <Pencil size={13} />Edit
                 </a>
@@ -263,7 +264,7 @@ export function DocumentViewerSheet({ doc, onClose }: { doc: DocumentViewerTarge
                 <button
                   type="button"
                   onClick={doc.onEmailClient}
-                  className="flex-1 min-w-[140px] py-2 rounded bg-brand-gold text-brand-navy text-sm font-semibold hover:bg-brand-gold-hover transition-colors flex items-center justify-center gap-1.5"
+                  className="flex-1 min-w-[140px] py-2 rounded-md bg-brand-gold text-brand-navy text-sm font-semibold hover:bg-brand-gold-hover transition-colors flex items-center justify-center gap-1.5"
                 >
                   <Send size={13} />Email to Client
                 </button>

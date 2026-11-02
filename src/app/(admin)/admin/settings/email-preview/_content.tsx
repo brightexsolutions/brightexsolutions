@@ -173,7 +173,7 @@ export function EmailPreviewContent({
         <div>
           <h1 className="text-xl font-semibold text-foreground">Email Templates &amp; Documents</h1>
           <p className="text-sm text-muted-foreground mt-1">
-            Click any template or document to preview it. Use the arrows inside the panel to navigate.
+            Click any item to preview it.
           </p>
         </div>
 

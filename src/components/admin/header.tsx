@@ -4,9 +4,7 @@ import { useState, useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { createBrowserClient } from "@supabase/ssr";
 import { useTheme } from "next-themes";
-import {
-  Sun, Moon, Monitor, LogOut, Menu, ChevronRight, Settings,
-} from "lucide-react";
+import { Sun, Moon, Monitor, LogOut, Menu, Settings, Sparkles, ClipboardList } from "lucide-react";
 import { NotificationBell } from "@/components/admin/notification-bell";
 import { PushNotificationsToggle } from "@/components/admin/push-notifications-toggle";
 import { SopQuickAccess } from "@/components/admin/sop-quick-access";
@@ -15,39 +13,8 @@ import {
   DropdownMenuSeparator, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
-
-// ─── Route → breadcrumb label map ─────────────────────────────────────────────
-const ROUTE_LABELS: Record<string, string> = {
-  "/admin":               "Dashboard",
-  "/admin/calendar":      "Calendar",
-  "/admin/clients":       "Clients",
-  "/admin/sales":         "Sales Pipeline",
-  "/admin/communications":"Communications",
-  "/admin/projects":      "Projects",
-  "/admin/tasks":         "Tasks",
-  "/admin/invoices":      "Invoices",
-  "/admin/payments":      "Payments",
-  "/admin/finance":       "Finance",
-  "/admin/subscriptions": "Subscriptions",
-  "/admin/products":      "Products",
-  "/admin/bookings":      "Bookings",
-  "/admin/team":          "Team",
-  "/admin/social":        "Social Media",
-  "/admin/announcements": "Announcements",
-  "/admin/portfolio":     "Portfolio",
-  "/admin/chat":          "Brixo Chat",
-  "/admin/sites":         "Site Monitoring",
-  "/admin/settings":      "Settings",
-  "/admin/logs":          "Activity Log",
-};
-
-function buildBreadcrumbs(pathname: string): { label: string; href: string }[] {
-  const crumbs: { label: string; href: string }[] = [{ label: "Admin", href: "/admin" }];
-  if (pathname === "/admin") return crumbs;
-  const label = ROUTE_LABELS[pathname] ?? pathname.split("/").pop()?.replace(/-/g, " ") ?? "";
-  crumbs.push({ label: label.charAt(0).toUpperCase() + label.slice(1), href: pathname });
-  return crumbs;
-}
+import Link from "next/link";
+import { resolveAdminRoute } from "@/lib/admin-nav";
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
@@ -62,8 +29,9 @@ export function AdminHeader({ onMenuClick }: AdminHeaderProps) {
   const [mounted, setMounted] = useState(false);
   useEffect(() => { setMounted(true); }, []);
 
-  const breadcrumbs = buildBreadcrumbs(pathname);
-  const pageTitle = breadcrumbs[breadcrumbs.length - 1].label;
+  const { hub, tab } = resolveAdminRoute(pathname);
+  const pageTitle = hub?.label ?? "Admin";
+  const tabs = hub && hub.tabs.length > 1 ? hub.tabs : [];
 
   async function handleSignOut() {
     const supabase = createBrowserClient(
@@ -80,51 +48,43 @@ export function AdminHeader({ onMenuClick }: AdminHeaderProps) {
     theme === "dark" ? Moon : Monitor;
 
   return (
-    <header className="h-14 border-b border-border bg-card/80 backdrop-blur-sm flex items-center gap-3 px-4 sm:px-6 shrink-0 sticky top-0 z-30">
+    <header className="shrink-0 bg-background">
+    <div className="h-16 flex items-center gap-3 px-4 sm:px-6">
       {/* Mobile menu */}
       {onMenuClick && (
         <button
           onClick={onMenuClick}
-          className="lg:hidden w-8 h-8 flex items-center justify-center rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors shrink-0"
+          className="lg:hidden size-10 -ml-2 flex items-center justify-center rounded-full text-muted-foreground hover:text-foreground hover:bg-muted transition-colors shrink-0"
+          aria-label="Open navigation"
         >
-          <Menu size={17} />
+          <Menu size={20} />
         </button>
       )}
 
-      {/* Page title: mobile only (breadcrumb hidden on mobile) */}
-      <span className="sm:hidden font-semibold text-foreground text-sm flex-1 truncate">{pageTitle}</span>
-
-      {/* Breadcrumb: desktop only */}
-      <nav className="hidden sm:flex items-center gap-1 min-w-0 flex-1">
-        {breadcrumbs.map((crumb, i) => (
-          <div key={crumb.href} className="flex items-center gap-1 min-w-0">
-            {i > 0 && <ChevronRight size={13} className="text-muted-foreground/40 shrink-0" />}
-            {i < breadcrumbs.length - 1 ? (
-              <button
-                onClick={() => router.push(crumb.href)}
-                className="text-[13px] text-muted-foreground hover:text-foreground transition-colors truncate"
-              >
-                {crumb.label}
-              </button>
-            ) : (
-              <span className="text-[13px] font-semibold text-foreground truncate">{crumb.label}</span>
-            )}
-          </div>
-        ))}
-      </nav>
+      <h1 className="flex-1 min-w-0 truncate text-lg sm:text-xl font-semibold text-foreground tracking-tight">{pageTitle}</h1>
 
       {/* Right actions */}
       <div className="flex items-center gap-1 shrink-0">
+        <button
+          onClick={() => window.dispatchEvent(new CustomEvent("toggle-assistant"))}
+          className="inline-flex items-center gap-2 h-10 px-3 sm:px-4 rounded-full bg-brand-gold/15 text-sm font-medium text-foreground hover:bg-brand-gold/25 transition-colors mr-1"
+          aria-label="Ask the assistant"
+        >
+          <Sparkles size={16} className="text-amber-600 dark:text-brand-gold" />
+          <span className="hidden md:inline">Ask</span>
+        </button>
+
         {/* Browser push toggle */}
-        <PushNotificationsToggle />
+        <div className="hidden md:flex"><PushNotificationsToggle /></div>
 
         {/* Notifications */}
         <NotificationBell />
 
         {/* SOPs quick access */}
-        <SopQuickAccess />
+        <div className="hidden md:flex"><SopQuickAccess /></div>
 
-        {/* Theme */}
+        {/* Theme (on phones it lives in the account menu) */}
+        <div className="hidden md:flex">
         <DropdownMenu>
           <DropdownMenuTrigger className="w-8 h-8 rounded-lg flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted transition-colors">
             <ThemeIcon size={15} />
@@ -141,12 +101,13 @@ export function AdminHeader({ onMenuClick }: AdminHeaderProps) {
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
+        </div>
 
         {/* User avatar */}
         <DropdownMenu>
           <DropdownMenuTrigger className="flex items-center gap-2 pl-1 pr-2 py-1 rounded-lg hover:bg-muted transition-colors ml-1">
-            <div className="w-7 h-7 rounded-full bg-brand-gold/20 border border-brand-gold/30 flex items-center justify-center shrink-0">
-              <span className="text-brand-gold text-[11px] font-bold">G</span>
+            <div className="size-8 rounded-full bg-brand-gold flex items-center justify-center shrink-0">
+              <span className="text-brand-navy text-xs font-bold">G</span>
             </div>
             <span className="hidden sm:block text-[13px] font-medium text-foreground max-w-[80px] truncate">Godwin</span>
           </DropdownMenuTrigger>
@@ -158,6 +119,16 @@ export function AdminHeader({ onMenuClick }: AdminHeaderProps) {
             <DropdownMenuItem onClick={() => router.push("/admin/settings")}>
               <Settings size={13} className="mr-2" /> Settings
             </DropdownMenuItem>
+            <div className="md:hidden">
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => setTheme(theme === "dark" ? "light" : "dark")}>
+                {theme === "dark" ? <Sun size={13} className="mr-2" /> : <Moon size={13} className="mr-2" />}
+                {theme === "dark" ? "Light mode" : "Dark mode"}
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => router.push("/admin/sops")}>
+                <ClipboardList size={13} className="mr-2" /> SOPs
+              </DropdownMenuItem>
+            </div>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={handleSignOut} className="text-destructive focus:text-destructive">
               <LogOut size={13} className="mr-2" /> Sign out
@@ -165,6 +136,31 @@ export function AdminHeader({ onMenuClick }: AdminHeaderProps) {
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
+    </div>
+
+    {/* Hub tabs (M3 secondary tabs) */}
+    {tabs.length > 0 && (
+      <nav aria-label={`${pageTitle} sections`} className="flex gap-1 overflow-x-auto scrollbar-overlay border-b border-border px-2 sm:px-4">
+        {tabs.map((t) => {
+          const active = t.href === tab?.href;
+          return (
+            <Link
+              key={t.href}
+              href={t.href}
+              aria-current={active ? "page" : undefined}
+              className={cn(
+                "relative shrink-0 h-12 px-4 flex items-center text-sm font-medium transition-colors rounded-t-lg hover:bg-muted/60",
+                active ? "text-foreground" : "text-muted-foreground"
+              )}
+            >
+              {t.label}
+              {active && <span className="absolute inset-x-3 bottom-0 h-[3px] rounded-t-full bg-primary" />}
+            </Link>
+          );
+        })}
+      </nav>
+    )}
+    {tabs.length === 0 && <div className="border-b border-border" />}
     </header>
   );
 }

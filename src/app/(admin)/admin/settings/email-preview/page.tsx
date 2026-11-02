@@ -14,7 +14,7 @@ import {
 import { SITE_NAME, BUSINESS_PHONE, BUSINESS_EMAIL, BUSINESS_WEBSITE } from "@/lib/constants";
 import { EmailPreviewContent } from "./_content";
 
-export const metadata: Metadata = { title: "Email Templates & Documents | Admin Settings" };
+export const metadata: Metadata = { title: "Email Templates & Documents" };
 
 // ─── Sample data ──────────────────────────────────────────────────────────────
 

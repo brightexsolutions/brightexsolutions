@@ -1,4 +1,4 @@
--- Brightex Solutions — Full Database Schema
+-- Brightex Solutions - Full Database Schema
 -- Run this against your Supabase project (SQL Editor → Run)
 -- New projects (May 30 2026+) require explicit GRANTs per table.
 
@@ -8,7 +8,7 @@
 create extension if not exists "pgcrypto";
 
 -- ─────────────────────────────────────────────
--- CONTACTS — public form submissions
+-- CONTACTS - public form submissions
 -- ─────────────────────────────────────────────
 create table if not exists contacts (
   id uuid primary key default gen_random_uuid(),
@@ -554,7 +554,7 @@ on conflict (key) do nothing;
 
 -- ─────────────────────────────────────────────
 -- Row Level Security: lock everything to service_role only
--- (browser never touches Supabase directly — only API routes do)
+-- (browser never touches Supabase directly - only API routes do)
 -- ─────────────────────────────────────────────
 alter table contacts enable row level security;
 alter table clients enable row level security;
@@ -586,5 +586,5 @@ alter table calendar_events enable row level security;
 alter table system_alerts enable row level security;
 alter table settings enable row level security;
 
--- Service role bypasses RLS — anon key gets nothing
+-- Service role bypasses RLS - anon key gets nothing
 -- No additional policies needed. service_role always bypasses RLS in Supabase.

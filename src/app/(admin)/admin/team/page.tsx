@@ -13,6 +13,7 @@ import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { TeamInviteModal } from "@/components/admin/team-invite-modal";
 import { cn } from "@/lib/utils";
 import { useConfirm, useNotice } from "@/components/admin/confirm-dialog";
+import { Notice } from "@/components/admin/notice";
 
 // ─── Permission definitions ────────────────────────────────────────────────────
 
@@ -234,7 +235,7 @@ export default function AdminTeamPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="font-display text-2xl font-bold text-foreground">Team</h1>
-          <p className="text-sm text-muted-foreground mt-1">Manage subcontractors, marketing, and finance team members.</p>
+          <p className="text-sm text-muted-foreground mt-1">People with portal access.</p>
         </div>
         <TeamInviteModal onInviteSent={loadInvites} />
       </div>
@@ -286,14 +287,7 @@ export default function AdminTeamPage() {
       {tab === "members" && (
         <>
           {!loading && members.length === 0 && (
-            <Card className="border-amber-200 bg-amber-50 dark:border-amber-800/30 dark:bg-amber-950/20">
-              <CardContent className="pt-6">
-                <div className="flex items-start gap-3">
-                  <AlertTriangle size={16} className="text-amber-600 dark:text-amber-400 mt-0.5 shrink-0" />
-                  <p className="text-sm text-muted-foreground">Invite your first team member to enable portal access and permission management.</p>
-                </div>
-              </CardContent>
-            </Card>
+            <Notice tone="info">Invite your first team member to give them portal access.</Notice>
           )}
 
           <Card>
@@ -458,7 +452,7 @@ export default function AdminTeamPage() {
                 <span className={cn("text-xs font-semibold px-2.5 py-0.5 rounded-full capitalize", ROLE_PORTAL[permMember.role]?.bg, ROLE_PORTAL[permMember.role]?.colour)}>
                   {permMember.role}
                 </span>
-                <span className="text-xs text-muted-foreground">Portal: <code className="text-xs bg-muted px-1 py-0.5 rounded">{ROLE_PORTAL[permMember.role]?.path ?? "-"}</code></span>
+                <span className="text-xs text-muted-foreground">Portal: <code className="text-xs bg-muted px-1 py-0.5 rounded-md">{ROLE_PORTAL[permMember.role]?.path ?? "-"}</code></span>
               </div>
               {ROLE_PERMISSIONS[permMember.role] ? (
                 <>

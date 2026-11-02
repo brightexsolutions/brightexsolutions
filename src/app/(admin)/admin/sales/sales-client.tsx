@@ -12,6 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useConfirm } from "@/components/admin/confirm-dialog";
+import { BoardSkeleton } from "@/components/admin/skeletons";
 
 // ─── Stage definitions ────────────────────────────────────────────────────────
 
@@ -98,6 +99,8 @@ const defaultForm = { service: "", estimated_value: "", status: "lead" as StageK
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
+type UnlinkedLead = { id: string; name: string; company?: string | null; classification: string };
+
 type Deal = {
   id: string;
   client_id?: string | null;
@@ -169,13 +172,42 @@ export function SalesPageClient() {
   const [draggedId, setDraggedId] = useState<string | null>(null);
   const [dragOverStage, setDragOverStage] = useState<string | null>(null);
 
+  // Leads and qualified clients that have no deal yet: keeps Clients and the pipeline in step
+  const [unlinkedLeads, setUnlinkedLeads] = useState<UnlinkedLead[]>([]);
+
   const load = useCallback(async () => {
     setLoading(true);
-    const res = await fetch("/api/admin/sales");
+    const [res, clientsRes] = await Promise.all([fetch("/api/admin/sales"), fetch("/api/admin/clients")]);
     const json = await res.json().catch(() => ({}));
-    if (res.ok) { setDeals(json.data ?? []); setNowMs(Date.now()); }
+    const clientsJson = await clientsRes.json().catch(() => ({}));
+    if (res.ok) {
+      const loaded: Deal[] = json.data ?? [];
+      setDeals(loaded);
+      setNowMs(Date.now());
+      const linked = new Set(loaded.map((d) => d.client_id).filter(Boolean));
+      setUnlinkedLeads(
+        ((clientsJson.data ?? []) as UnlinkedLead[]).filter(
+          (c) => (c.classification === "lead" || c.classification === "qualified") && !linked.has(c.id)
+        )
+      );
+    }
     setLoading(false);
   }, []);
+
+  async function addLeadToPipeline(lead: UnlinkedLead) {
+    setBusyId(lead.id);
+    const res = await fetch("/api/admin/sales", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        client_id: lead.id,
+        status: lead.classification === "qualified" ? "qualified" : "lead",
+        ...(lead.company ? { service: lead.company } : {}),
+      }),
+    });
+    setBusyId(null);
+    if (res.ok) load();
+  }
 
   useEffect(() => { load(); }, [load]);
 
@@ -299,7 +331,7 @@ export function SalesPageClient() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="font-display text-2xl font-bold text-foreground">Sales Pipeline</h1>
-          <p className="text-sm text-muted-foreground mt-1">Track deals from lead to close. Drag cards between stages.</p>
+          <p className="text-sm text-muted-foreground mt-1">Drag deals between stages.</p>
         </div>
         <button
           onClick={() => openCreate()}
@@ -310,10 +342,10 @@ export function SalesPageClient() {
       </div>
 
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-        <StatCard title="Pipeline Value" value={`KES ${pipelineValue.toLocaleString()}`} sub="Open deals only" icon={TrendingUp} />
-        <StatCard title="Open Deals" value={openDeals.length} sub="Lead to negotiation" icon={TrendingUp} iconColor="text-blue-400" iconBg="bg-blue-400/10" />
-        <StatCard title="Won (30 days)" value={wonLast30Days} sub="Recently closed" icon={TrendingUp} iconColor="text-emerald-400" iconBg="bg-emerald-400/10" />
-        <StatCard title="Win Rate" value={`${winRate}%`} sub={closedDeals > 0 ? `${wonDeals.length}/${closedDeals} closed deals` : "No closed deals yet"} icon={TrendingUp} iconColor="text-brand-gold" iconBg="bg-brand-gold/10" />
+        <StatCard loading={loading} title="Pipeline Value" value={`KES ${pipelineValue.toLocaleString()}`} sub="Open deals only" icon={TrendingUp} />
+        <StatCard loading={loading} title="Open Deals" value={openDeals.length} sub="Lead to negotiation" icon={TrendingUp} iconColor="text-blue-400" iconBg="bg-blue-400/10" />
+        <StatCard loading={loading} title="Won (30 days)" value={wonLast30Days} sub="Recently closed" icon={TrendingUp} iconColor="text-emerald-400" iconBg="bg-emerald-400/10" />
+        <StatCard loading={loading} title="Win Rate" value={`${winRate}%`} sub={closedDeals > 0 ? `${wonDeals.length}/${closedDeals} closed deals` : "No closed deals yet"} icon={TrendingUp} iconColor="text-brand-gold" iconBg="bg-brand-gold/10" />
       </div>
 
       {/* Kanban board */}
@@ -404,7 +436,32 @@ export function SalesPageClient() {
         })}
       </div>
 
-      {!loading && deals.length === 0 && (
+      {!loading && unlinkedLeads.length > 0 && (
+        <section className="rounded-2xl border border-border bg-card">
+          <header className="px-4 pt-4 pb-2">
+            <h2 className="text-base font-semibold">Leads not in the pipeline yet</h2>
+            <p className="text-xs text-muted-foreground">
+              {unlinkedLeads.length} client{unlinkedLeads.length === 1 ? " is" : "s are"} marked as a lead or qualified in Clients but has no deal here.
+            </p>
+          </header>
+          <ul className="divide-y divide-border max-h-64 overflow-y-auto scrollbar-overlay">
+            {unlinkedLeads.map((lead) => (
+              <li key={lead.id} className="flex items-center gap-3 px-4 py-2.5">
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium truncate">{lead.name}</p>
+                  <p className="text-xs text-muted-foreground truncate">{lead.company || "No company"} · {lead.classification}</p>
+                </div>
+                <Button size="sm" variant="outline" className="rounded-full" disabled={busyId === lead.id} onClick={() => addLeadToPipeline(lead)}>
+                  {busyId === lead.id ? <Loader2 size={14} className="animate-spin" /> : <Plus size={14} />}
+                  Add to pipeline
+                </Button>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
+      {!loading && deals.length === 0 && unlinkedLeads.length === 0 && (
         <Card>
           <CardContent className="pt-6">
             <p className="text-sm text-muted-foreground text-center">
@@ -414,13 +471,7 @@ export function SalesPageClient() {
         </Card>
       )}
 
-      {loading && deals.length === 0 && (
-        <Card>
-          <CardContent className="pt-6">
-            <p className="text-sm text-muted-foreground text-center">Loading pipeline data…</p>
-          </CardContent>
-        </Card>
-      )}
+      {loading && deals.length === 0 && <BoardSkeleton />}
 
       {/* Create / Edit dialog */}
       <Dialog open={open} onOpenChange={setOpen}>

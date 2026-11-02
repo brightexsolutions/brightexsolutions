@@ -33,15 +33,15 @@ t("CHANF fixture validates", r.ok, (r.errors ?? []).join(" | "));
 // type error, and the interesting thing here is the runtime transform.
 const norm = (s: string): string => normaliseCopy(s);
 
-const labelCase = norm("Phase 1 — Stabilise & Discover");
+const labelCase = norm("Phase 1 \u2014 Stabilise & Discover");
 t("label separator becomes a colon", labelCase === "Phase 1: Stabilise & Discover", labelCase);
 
-const proseCase = norm("many leads are low quality — job seekers rather than students");
+const proseCase = norm("many leads are low quality \u2014 job seekers rather than students");
 t("mid-sentence becomes a comma",
   proseCase === "many leads are low quality, job seekers rather than students", proseCase);
 
 t("normalisation is deep",
-  !JSON.stringify(normaliseCopy({ a: [{ b: "x — Y" }] })).includes("—"));
+  !JSON.stringify(normaliseCopy({ a: [{ b: "x \u2014 Y" }] })).includes("\u2014"));
 
 // Schedules must sum to 100
 t("60/40 accepted", PaymentScheduleSchema.safeParse({ mode: "standard", stages: [

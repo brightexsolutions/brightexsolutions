@@ -1,4 +1,4 @@
--- Migration 010 — Tasks table missing columns (2026-06-12)
+-- Migration 010 - Tasks table missing columns (2026-06-12)
 -- Migration 005 added deleted_at to all main tables but omitted tasks.
 -- board_order and category were added to application code without a matching migration.
 

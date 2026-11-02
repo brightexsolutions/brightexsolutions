@@ -187,7 +187,7 @@ export function NotificationBell() {
         {total > 0 && (
           <span className={cn(
             "absolute -top-0.5 -right-0.5 min-w-[16px] h-[16px] px-1 rounded-full text-[9px] font-bold flex items-center justify-center leading-none",
-            hasCritical ? "bg-red-500 text-white" : "bg-brand-gold text-brand-navy"
+            hasCritical ? "bg-red-600 text-white" : "bg-brand-gold text-brand-navy"
           )}>
             {total > 99 ? "99+" : total}
           </span>
@@ -263,7 +263,7 @@ export function NotificationBell() {
                             <button
                               onClick={() => dismiss(alert.id)}
                               disabled={dismissing.has(alert.id)}
-                              className="shrink-0 p-0.5 rounded text-muted-foreground hover:text-foreground transition-colors disabled:opacity-40 mt-0.5"
+                              className="shrink-0 p-0.5 rounded-md text-muted-foreground hover:text-foreground transition-colors disabled:opacity-40 mt-0.5"
                               title="Dismiss"
                             >
                               <X size={11} />

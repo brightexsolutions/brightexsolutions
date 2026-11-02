@@ -1,4 +1,4 @@
--- Migration 011 — Link subscriptions to clients (2026-06-12)
+-- Migration 011 - Link subscriptions to clients (2026-06-12)
 -- Enables client-linked renewal reminders for on_behalf and client_managed subscriptions.
 
 ALTER TABLE subscriptions

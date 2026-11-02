@@ -398,7 +398,7 @@ export default function FinancePage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="font-display text-2xl font-bold text-foreground">Finance</h1>
-          <p className="text-sm text-muted-foreground mt-1">Income, expenses, and P&amp;L reports.</p>
+          <p className="text-sm text-muted-foreground mt-1">Income, expenses and P&amp;L.</p>
         </div>
         <button
           onClick={handleExport}
@@ -409,10 +409,10 @@ export default function FinancePage() {
       </div>
 
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-        <StatCard title="Total Income (net)" value={`KES ${totalIncome.toLocaleString()}`} icon={TrendingUp} iconColor="text-emerald-400" iconBg="bg-emerald-400/10" />
-        <StatCard title="Total Expenses" value={`KES ${totalExpenses.toLocaleString()}`} icon={TrendingDown} iconColor="text-red-400" iconBg="bg-red-400/10" />
-        <StatCard title="Net Profit" value={`KES ${netProfit.toLocaleString()}`} icon={DollarSign} iconColor={netProfit >= 0 ? "text-brand-gold" : "text-red-400"} iconBg={netProfit >= 0 ? "bg-brand-gold/10" : "bg-red-400/10"} />
-        <StatCard title="This Month Net" value={`KES ${(thisMonthIncome - thisMonthExpenses).toLocaleString()}`} icon={BarChart2} />
+        <StatCard loading={loading} title="Income (net)" value={`KES ${totalIncome.toLocaleString()}`} icon={TrendingUp} iconColor="text-emerald-400" iconBg="bg-emerald-400/10" />
+        <StatCard loading={loading} title="Total Expenses" value={`KES ${totalExpenses.toLocaleString()}`} icon={TrendingDown} iconColor="text-red-400" iconBg="bg-red-400/10" />
+        <StatCard loading={loading} title="Net Profit" value={`KES ${netProfit.toLocaleString()}`} icon={DollarSign} iconColor={netProfit >= 0 ? "text-brand-gold" : "text-red-400"} iconBg={netProfit >= 0 ? "bg-brand-gold/10" : "bg-red-400/10"} />
+        <StatCard loading={loading} title="This Month Net" value={`KES ${(thisMonthIncome - thisMonthExpenses).toLocaleString()}`} icon={BarChart2} />
       </div>
 
       <div className="flex gap-1 border-b border-border">
@@ -440,8 +440,8 @@ export default function FinancePage() {
                     <div className="flex flex-col gap-1 min-w-0">
                       <StackedCell primary={r.description || r.source.replace(/_/g, " ")} secondary={r.clients?.name ?? undefined} />
                       <div className="flex items-center gap-1 flex-wrap">
-                        <span className="px-1.5 py-0.5 rounded text-[10px] font-medium border border-border text-muted-foreground capitalize">{r.category.replace(/_/g, " ")}</span>
-                        {hasWHT && <span className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-amber-400/10 text-amber-600 dark:text-amber-400">WHT KES {Number(r.withholding_tax).toLocaleString()}</span>}
+                        <span className="px-1.5 py-0.5 rounded-md text-[10px] font-medium border border-border text-muted-foreground capitalize">{r.category.replace(/_/g, " ")}</span>
+                        {hasWHT && <span className="px-1.5 py-0.5 rounded-md text-[10px] font-medium bg-amber-400/10 text-amber-600 dark:text-amber-400">WHT KES {Number(r.withholding_tax).toLocaleString()}</span>}
                       </div>
                     </div>
                   );
@@ -482,7 +482,7 @@ export default function FinancePage() {
               </button>
             }
             maxHeight="480px"
-            emptyMessage={loading ? "Loading income records…" : "No income records yet."}
+            loading={loading} emptyMessage={"No income records yet."}
           />
         </Card>
       )}
@@ -502,8 +502,8 @@ export default function FinancePage() {
                     <div className="flex flex-col gap-1 min-w-0">
                       <StackedCell primary={r.description} secondary={r.vendor ?? undefined} />
                       <div className="flex items-center gap-1 flex-wrap">
-                        <span className="px-1.5 py-0.5 rounded text-[10px] font-medium border border-border text-muted-foreground capitalize">{r.category.replace(/_/g, " ")}</span>
-                        {r.tax_deductible && <span className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-emerald-400/10 text-emerald-600 dark:text-emerald-400">deductible</span>}
+                        <span className="px-1.5 py-0.5 rounded-md text-[10px] font-medium border border-border text-muted-foreground capitalize">{r.category.replace(/_/g, " ")}</span>
+                        {r.tax_deductible && <span className="px-1.5 py-0.5 rounded-md text-[10px] font-medium bg-emerald-400/10 text-emerald-600 dark:text-emerald-400">deductible</span>}
                       </div>
                     </div>
                   );
@@ -540,7 +540,7 @@ export default function FinancePage() {
               </button>
             }
             maxHeight="480px"
-            emptyMessage={loading ? "Loading expenses…" : "No expenses yet."}
+            loading={loading} emptyMessage={"No expenses yet."}
           />
         </Card>
       )}
@@ -669,8 +669,8 @@ export default function FinancePage() {
                       <div className="flex flex-col gap-1 min-w-0">
                         <StackedCell primary={doc.party_name} secondary={doc.original_filename ?? undefined} />
                         <div className="flex items-center gap-1 flex-wrap">
-                          <span className={cn("px-1.5 py-0.5 rounded text-[10px] font-semibold", isIncome ? "bg-emerald-400/10 text-emerald-600 dark:text-emerald-400" : "bg-red-400/10 text-red-600 dark:text-red-400")}>{isIncome ? "income" : "expense"}</span>
-                          <span className="px-1.5 py-0.5 rounded text-[10px] bg-muted text-muted-foreground">{typeLabel}</span>
+                          <span className={cn("px-1.5 py-0.5 rounded-md text-[10px] font-semibold", isIncome ? "bg-emerald-400/10 text-emerald-600 dark:text-emerald-400" : "bg-red-400/10 text-red-600 dark:text-red-400")}>{isIncome ? "income" : "expense"}</span>
+                          <span className="px-1.5 py-0.5 rounded-md text-[10px] bg-muted text-muted-foreground">{typeLabel}</span>
                         </div>
                       </div>
                     </div>
@@ -729,7 +729,7 @@ export default function FinancePage() {
               </button>
             }
             maxHeight="480px"
-            emptyMessage={docsLoading ? "Loading documents…" : "No documents uploaded yet."}
+            loading={docsLoading} emptyMessage={"No documents uploaded yet."}
           />
         </Card>
       )}
@@ -914,7 +914,7 @@ export default function FinancePage() {
             </div>
             <div className="p-3 rounded-sm bg-muted/40 border border-border space-y-1">
               <label className="flex items-start gap-2 cursor-pointer">
-                <input type="checkbox" checked={expenseForm.tax_deductible} onChange={(e) => setExpenseForm((f) => ({ ...f, tax_deductible: e.target.checked }))} className="mt-0.5 rounded border-input" />
+                <input type="checkbox" checked={expenseForm.tax_deductible} onChange={(e) => setExpenseForm((f) => ({ ...f, tax_deductible: e.target.checked }))} className="mt-0.5 rounded-md border-input" />
                 <div>
                   <p className="text-sm font-medium text-foreground">Tax deductible</p>
                   <p className="text-xs text-muted-foreground">Mark if this expense can be offset against taxable income (reduces your net taxable income for KRA filing)</p>

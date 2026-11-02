@@ -71,7 +71,7 @@ function SectionRow({
     <div
       ref={setNodeRef}
       style={{ transform: CSS.Transform.toString(transform), transition }}
-      className={`flex items-center gap-1.5 px-2 py-2 rounded border text-sm transition-colors ${
+      className={`flex items-center gap-1.5 px-2 py-2 rounded-md border text-sm transition-colors ${
         active ? "border-primary bg-primary/5" : "border-transparent hover:bg-muted/50"
       } ${isDragging ? "opacity-60" : ""} ${section.hidden ? "opacity-50" : ""}`}
     >
@@ -106,7 +106,7 @@ function SectionRow({
             type="button"
             onClick={() => onToggle({ gated: !section.gated })}
             title={section.gated ? "Shown in full" : "Blur when gated"}
-            className={`shrink-0 p-1 rounded hover:bg-muted ${section.gated ? "text-primary" : "text-muted-foreground/50"}`}
+            className={`shrink-0 p-1 rounded-md hover:bg-muted ${section.gated ? "text-primary" : "text-muted-foreground/50"}`}
           >
             <ShieldCheck size={12} />
           </button>
@@ -114,7 +114,7 @@ function SectionRow({
             type="button"
             onClick={() => onToggle({ hidden: !section.hidden })}
             title={section.hidden ? "Hidden from the client" : "Visible"}
-            className="shrink-0 p-1 rounded hover:bg-muted text-muted-foreground"
+            className="shrink-0 p-1 rounded-md hover:bg-muted text-muted-foreground"
           >
             {section.hidden ? <EyeOff size={12} /> : <Eye size={12} />}
           </button>
@@ -160,7 +160,7 @@ function BlockEditor({ block, onChange, readOnly }: { block: Block; onChange: (b
 
   if (readOnly) {
     return (
-      <div className="text-xs text-muted-foreground p-3 rounded border border-dashed border-border">
+      <div className="text-xs text-muted-foreground p-3 rounded-md border border-dashed border-border">
         <Lock size={12} className="inline mr-1.5 -mt-0.5" />
         Fixed content: legal clauses and derived figures are not editable here.
       </div>
@@ -201,7 +201,7 @@ function BlockEditor({ block, onChange, readOnly }: { block: Block; onChange: (b
       return (
         <Field label="Cards">
           {block.cards.map((card, i) => (
-            <div key={i} className="mb-3 p-2 rounded border border-border">
+            <div key={i} className="mb-3 p-2 rounded-md border border-border">
               <Input className="mb-1.5" value={card.title} placeholder="Card title"
                 onChange={(e) => set({ cards: block.cards.map((c, j) => j === i ? { ...c, title: e.target.value } : c) })} />
               <Textarea rows={2} value={card.body ?? ""} placeholder="One or two sentences"
@@ -235,7 +235,7 @@ function BlockEditor({ block, onChange, readOnly }: { block: Block; onChange: (b
       return (
         <Field label="Delivery phases">
           {block.phases.map((phase, i) => (
-            <div key={i} className="mb-3 p-2 rounded border border-border">
+            <div key={i} className="mb-3 p-2 rounded-md border border-border">
               <div className="flex gap-2 mb-1.5">
                 <Input value={phase.name} placeholder="Phase 1: Discover"
                   onChange={(e) => set({ phases: block.phases.map((p, j) => j === i ? { ...p, name: e.target.value } : p) })} />
@@ -331,7 +331,7 @@ function BlockEditor({ block, onChange, readOnly }: { block: Block; onChange: (b
       return (
         <Field label="Tiers">
           {block.tiers.map((tier, i) => (
-            <div key={i} className="mb-3 p-2 rounded border border-border">
+            <div key={i} className="mb-3 p-2 rounded-md border border-border">
               <div className="flex gap-2 mb-1.5">
                 <Input value={tier.name}
                   onChange={(e) => set({ tiers: block.tiers.map((t, j) => j === i ? { ...t, name: e.target.value } : t) })} />
@@ -408,7 +408,7 @@ function BlockEditor({ block, onChange, readOnly }: { block: Block; onChange: (b
 
     default:
       return (
-        <div className="text-xs text-muted-foreground p-3 rounded border border-dashed border-border">
+        <div className="text-xs text-muted-foreground p-3 rounded-md border border-dashed border-border">
           This block has no form editor yet. It renders correctly and can be improved with AI.
         </div>
       );
@@ -475,7 +475,7 @@ function PaymentTermsPanel({
             onChange={(e) => update(i, { percent: Number(e.target.value) || 0 })}
           />
           <select
-            className="w-40 rounded border border-input bg-background px-2 text-xs"
+            className="w-40 rounded-md border border-input bg-background px-2 text-xs"
             value={stage.trigger}
             disabled={readOnly}
             onChange={(e) => update(i, { trigger: e.target.value as ScheduleStage["trigger"] })}
@@ -710,7 +710,7 @@ export function DocumentEditor({ documentId }: { documentId: string }) {
         <div className="flex items-center gap-1 shrink-0">
           {(["desktop", "phone", "print"] as Viewport[]).map((v) => (
             <button key={v} type="button" onClick={() => setViewport(v)} title={v}
-              className={`p-1.5 rounded ${viewport === v ? "bg-muted text-foreground" : "text-muted-foreground hover:bg-muted/50"}`}>
+              className={`p-1.5 rounded-md ${viewport === v ? "bg-muted text-foreground" : "text-muted-foreground hover:bg-muted/50"}`}>
               {v === "desktop" ? <Monitor size={14} /> : v === "phone" ? <Smartphone size={14} /> : <Printer size={14} />}
             </button>
           ))}

@@ -1,4 +1,4 @@
--- Migration 005 — Soft Delete (2026-05-26)
+-- Migration 005 - Soft Delete (2026-05-26)
 -- Adds deleted_at to all main business tables.
 -- DELETE routes now set deleted_at instead of removing rows.
 -- GET list routes filter .is("deleted_at", null).

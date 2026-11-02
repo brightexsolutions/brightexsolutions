@@ -121,9 +121,9 @@ t("unrecognised heading is reported", unknown.unrecognised.length === 1, unknown
 const empty = parseMarkdownSections("just some text with no headings at all");
 t("markdown with no headings warns", empty.warnings.length > 0);
 
-const dashes = parseMarkdownSections("## Executive Summary\nPhase 1 — Stabilise the thing, and it — mostly — works.\n");
+const dashes = parseMarkdownSections("## Executive Summary\nPhase 1 \u2014 Stabilise the thing, and it \u2014 mostly \u2014 works.\n");
 t("em dashes are normalised on import",
-  !JSON.stringify(dashes.sections).includes("—"), JSON.stringify(dashes.sections).slice(0, 120));
+  !JSON.stringify(dashes.sections).includes("\u2014"), JSON.stringify(dashes.sections).slice(0, 120));
 
 console.log("\n3. Contract and parser agree");
 for (const heading of ["Executive Summary", "Understanding the Brief", "Scope", "Phases",

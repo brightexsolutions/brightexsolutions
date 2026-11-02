@@ -13,7 +13,7 @@ export function CtaSection() {
             {/* Background image */}
             <div
               className="absolute inset-0 bg-cover bg-center"
-              style={{ backgroundImage: "url('https://images.unsplash.com/photo-1519389950473-47ba0277781c?auto=format&fit=crop&w=1920&q=80')" }}
+              style={{ backgroundImage: "url('/images/hero-team.webp')" }}
             />
 
             {/* Cinematic gradient overlay */}
@@ -38,14 +38,14 @@ export function CtaSection() {
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
                 <Link
                   href="/contact"
-                  className="inline-flex items-center justify-center gap-2 px-8 py-3.5 rounded-sm bg-brand-gold text-brand-navy font-bold text-sm hover:bg-brand-gold-hover transition-colors"
+                  className="inline-flex items-center justify-center gap-2 px-8 py-3.5 rounded-full bg-brand-gold text-brand-navy font-bold text-sm hover:bg-brand-gold-hover transition-colors"
                 >
                   Start a Conversation
                   <ArrowRight size={15} />
                 </Link>
                 <Link
                   href="/contact?intent=book_call"
-                  className="inline-flex items-center justify-center gap-2 px-8 py-3.5 rounded-sm border border-white/20 text-white font-semibold text-sm hover:bg-white/[0.06] hover:border-white/30 transition-colors"
+                  className="inline-flex items-center justify-center gap-2 px-8 py-3.5 rounded-full border border-white/20 text-white font-semibold text-sm hover:bg-white/[0.06] hover:border-white/30 transition-colors"
                 >
                   <Calendar size={15} />
                   Book a Call

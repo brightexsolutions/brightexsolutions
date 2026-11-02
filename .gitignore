@@ -42,3 +42,12 @@ next-env.d.ts
 
 # esbuild scratch file from scripts/run-ts.mjs
 .run-ts.tmp.cjs
+
+# Playwright MCP scratch output
+.playwright-mcp/
+
+# Supabase CLI link state (includes connection details)
+supabase/.temp/
+
+# Claude Code personal settings
+.claude/settings.local.json

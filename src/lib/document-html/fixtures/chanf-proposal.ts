@@ -30,7 +30,7 @@ export const CHANF_PROPOSAL: BlockDocument = {
     created_at: "2026-08-04",
     client: { name: "CHANF Healthcare Technical Training Institute", company: "CHANF Healthcare Technical Training Institute" },
     badges: [
-      { label: "Investment", value: "KES 110,000 - 135,000" },
+      { label: "Investment", value: "KES 125,000" },
       { label: "Timeline", value: "6 to 8 weeks" },
       { label: "Delivery phases", value: "3" },
     ],
@@ -55,7 +55,7 @@ export const CHANF_PROPOSAL: BlockDocument = {
           id: "exec-kpi",
           kind: "kpi_row",
           items: [
-            { value: "KES 110K - 135K", label: "Total investment" },
+            { value: "KES 125,000", label: "Total investment" },
             { value: "6 to 8 weeks", label: "Delivery timeline" },
             { value: "3", label: "Delivery phases" },
             { value: "60 / 40", label: "Payment split" },
@@ -83,7 +83,7 @@ export const CHANF_PROPOSAL: BlockDocument = {
           id: "brief-intro",
           kind: "prose",
           paragraphs: [
-            "Since its founding during COVID, CHANF has built genuine credibility as a NITA and DOSH accredited healthcare training institute, including its first graduation on 7 November 2025 with 24 graduates and documented placements, among them a graduate now working as a caregiver in Canada. That track record is not currently visible anywhere a prospective student or parent would look.",
+            "Since its founding during COVID, CHANF has built genuine credibility as a NITA, DOSH and TVET accredited healthcare training institute, with its TVET programmes accounting for most of its enrolment. Its first graduation on 7 November 2025 produced 24 graduates and documented placements, among them a graduate now working as a caregiver in Canada. That track record is not currently visible anywhere a prospective student or parent would look.",
           ],
         },
         {
@@ -188,7 +188,7 @@ export const CHANF_PROPOSAL: BlockDocument = {
             "Logo files, brand colours, and fonts, if already established. If CHANF does not have these formalised yet, Brightex can develop a simple brand identity (logo refinement, colour palette, typography) as a separate scoped add-on before the site build begins",
             "Current course list with fees, requirements, and durations",
             "Updated photography and any video content, replacing the existing outdated hospital images",
-            "Testimonials and graduate stories, including any existing accreditation documents (NITA and DOSH) and trainer bios and photos if these should feature on the site",
+            "Testimonials and graduate stories, including any existing accreditation documents (NITA, DOSH and TVET) and trainer bios and photos if these should feature on the site",
             "Access to any existing Google Analytics, Search Console, or Google Business Profile accounts, if previously set up",
             "The questions prospective students ask most often, with CHANF's approved answers, so the chat assistant says what CHANF would say. A list of 15 to 25 is enough, and we will help shape it during Phase 1.",
             "A single point of contact for content sign-off and questions during the build",
@@ -207,7 +207,7 @@ export const CHANF_PROPOSAL: BlockDocument = {
             "  03 - Campus & Facility Photos/",
             "  04 - Graduate Stories & Testimonials/ (photos, videos, written quotes)",
             "  05 - Trainer Photos & Bios/",
-            "  06 - Accreditation Documents/ (NITA, DOSH certificates)",
+            "  06 - Accreditation Documents/ (NITA, DOSH, TVET certificates)",
             "  07 - Course Fee Sheets & Requirements/",
           ].join("\n"),
         },
@@ -228,16 +228,20 @@ export const CHANF_PROPOSAL: BlockDocument = {
           id: "inv-table",
           kind: "phased_investment_table",
           rows: [
-            { phase: "Phase 1", desc: "Site recovery, content audit and discovery", amount: "10,000 - 15,000" },
-            { phase: "Phase 2", desc: "Nine-page mobile-first build, online application form and rule-based chat assistant", amount: "75,000 - 90,000" },
-            { phase: "Phase 3", desc: "Analytics, one-time SEO setup, Google Business Profile and launch", amount: "25,000 - 30,000" },
+            { phase: "Phase 1", desc: "Site recovery, content audit and discovery", amount: "12,000" },
+            { phase: "Phase 2", desc: "Nine-page mobile-first build, online application form and rule-based chat assistant", amount: "85,000" },
+            { phase: "Phase 3", desc: "Analytics, one-time SEO setup, Google Business Profile and launch", amount: "28,000" },
           ],
-          total: { label: "Total investment range", amount: "110,000 - 135,000" },
+          total: { label: "Total investment", amount: "125,000" },
         },
         {
           id: "inv-terms",
           kind: "key_value_list",
           items: [
+            {
+              label: "Pricing",
+              detail: "These are final figures set by Brightex Solutions, not estimates to be narrowed later. Each phase is priced as scoped above, and the total is KES 125,000.",
+            },
             {
               label: "Payment structure",
               detail: "60% deposit upfront to commence work, which covers Phase 1 from day one, and 40% due on completion and launch.",
@@ -499,8 +503,8 @@ export const CHANF_PROPOSAL: BlockDocument = {
           id: "next-steps",
           kind: "steps",
           steps: [
-            { title: "Review this proposal", desc: "CHANF's team reviews scope, phasing, and investment range" },
-            { title: "Align on final scope", desc: "Confirm any adjustments, and the final figure within each phase range, before signing" },
+            { title: "Review this proposal", desc: "CHANF's team reviews the scope, phasing, and investment" },
+            { title: "Align on final scope", desc: "Confirm any adjustments before signing" },
             { title: "Sign the agreement and pay the 60% deposit", desc: "Formalises the engagement and triggers Phase 1" },
             { title: "Delivery across 3 phases", desc: "Site recovery through to launch, 6 to 8 weeks" },
             { title: "Ongoing partnership begins", desc: "CHANF selects a retainer tier post-launch" },

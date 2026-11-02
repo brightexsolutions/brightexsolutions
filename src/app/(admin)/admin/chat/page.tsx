@@ -243,7 +243,7 @@ export default function BrixoChatPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="font-display text-2xl font-bold text-foreground">Brixo Chat</h1>
-          <p className="text-sm text-muted-foreground mt-1">Manage FAQ responses and review visitor chat sessions.</p>
+          <p className="text-sm text-muted-foreground mt-1">FAQs and visitor chats.</p>
         </div>
         {activeTab === "FAQ Manager" && (
           <button
@@ -306,7 +306,7 @@ export default function BrixoChatPage() {
               searchable
               searchPlaceholder="Search FAQs…"
               searchKeys={["question", "answer", "category"]}
-              emptyMessage={faqLoading ? "Loading FAQs…" : "No FAQ entries yet. Add question/answer pairs to power Brixo's responses."}
+              loading={faqLoading} emptyMessage={"No FAQ entries yet. Add question/answer pairs to power Brixo's responses."}
             />
           </Card>
 

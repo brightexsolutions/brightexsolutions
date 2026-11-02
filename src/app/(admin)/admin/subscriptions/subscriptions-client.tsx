@@ -207,7 +207,7 @@ export function SubscriptionsPageClient() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="font-display text-2xl font-bold text-foreground">Subscriptions</h1>
-          <p className="text-sm text-muted-foreground mt-1">Track domains, hosting, tools, and renewal dates.</p>
+          <p className="text-sm text-muted-foreground mt-1">Domains, hosting and renewals.</p>
         </div>
         <button onClick={openCreate} className="inline-flex items-center gap-2 px-4 py-2.5 rounded-sm bg-brand-gold text-brand-navy font-semibold text-sm hover:bg-brand-gold-hover transition-colors">
           <Plus size={15} />Add Subscription
@@ -222,10 +222,10 @@ export function SubscriptionsPageClient() {
       )}
 
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-        <StatCard title="Active" value={subscriptions.length} icon={Rss} iconColor="text-emerald-400" iconBg="bg-emerald-400/10" />
-        <StatCard title="Renewing (14d)" value={renewingSoon.length} icon={AlertTriangle} iconColor="text-amber-400" iconBg="bg-amber-400/10" />
-        <StatCard title="Monthly Cost" value={`KES ${monthlyCost.toLocaleString()}`} icon={Rss} iconColor="text-brand-gold" iconBg="bg-brand-gold/10" />
-        <StatCard title="Annual Cost" value={`KES ${annualCost.toLocaleString()}`} icon={Rss} />
+        <StatCard loading={loading} title="Active" value={subscriptions.length} icon={Rss} iconColor="text-emerald-400" iconBg="bg-emerald-400/10" />
+        <StatCard loading={loading} title="Due in 14 days" value={renewingSoon.length} icon={AlertTriangle} iconColor="text-amber-400" iconBg="bg-amber-400/10" />
+        <StatCard loading={loading} title="Monthly Cost" value={`KES ${monthlyCost.toLocaleString()}`} icon={Rss} iconColor="text-brand-gold" iconBg="bg-brand-gold/10" />
+        <StatCard loading={loading} title="Annual Cost" value={`KES ${annualCost.toLocaleString()}`} icon={Rss} />
       </div>
 
       {renewingSoon.length > 0 && (
@@ -251,10 +251,10 @@ export function SubscriptionsPageClient() {
                   <div className="flex flex-col gap-1 min-w-0">
                     <StackedCell primary={s.name} secondary={s.provider ?? undefined} />
                     <div className="flex items-center gap-1 flex-wrap">
-                      <span className="px-1.5 py-0.5 rounded text-[10px] font-medium border border-border text-muted-foreground capitalize">{s.category}</span>
-                      {ownerDef && <span className={`px-1.5 py-0.5 rounded text-[10px] font-medium ${ownerDef.color}`}>{ownerDef.label}</span>}
+                      <span className="px-1.5 py-0.5 rounded-md text-[10px] font-medium border border-border text-muted-foreground capitalize">{s.category}</span>
+                      {ownerDef && <span className={`px-1.5 py-0.5 rounded-md text-[10px] font-medium ${ownerDef.color}`}>{ownerDef.label}</span>}
                       {s.clients && (
-                        <span className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-sky-400/10 text-sky-600 dark:text-sky-400">
+                        <span className="px-1.5 py-0.5 rounded-md text-[10px] font-medium bg-sky-400/10 text-sky-600 dark:text-sky-400">
                           {s.clients.name}
                         </span>
                       )}
@@ -311,7 +311,7 @@ export function SubscriptionsPageClient() {
                       <button
                         onClick={(e) => { e.stopPropagation(); handleMarkPaid(s); }}
                         disabled={isBusy}
-                        className="flex items-center gap-1 px-2 py-1 rounded text-[11px] font-medium bg-emerald-400/10 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-400/20 transition-colors disabled:opacity-50"
+                        className="flex items-center gap-1 px-2 py-1 rounded-md text-[11px] font-medium bg-emerald-400/10 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-400/20 transition-colors disabled:opacity-50"
                       >
                         {isBusy ? <Loader2 size={10} className="animate-spin" /> : <CheckCircle2 size={10} />} Paid
                       </button>
@@ -321,7 +321,7 @@ export function SubscriptionsPageClient() {
                         <DropdownMenuTrigger
                           onClick={(e) => e.stopPropagation()}
                           disabled={isNotifyBusy}
-                          className="flex items-center gap-1 px-2 py-1 rounded text-[11px] font-medium bg-sky-400/10 text-sky-600 dark:text-sky-400 hover:bg-sky-400/20 transition-colors disabled:opacity-50"
+                          className="flex items-center gap-1 px-2 py-1 rounded-md text-[11px] font-medium bg-sky-400/10 text-sky-600 dark:text-sky-400 hover:bg-sky-400/20 transition-colors disabled:opacity-50"
                         >
                           {isNotifyBusy ? <Loader2 size={10} className="animate-spin" /> : <Bell size={10} />} Notify
                         </DropdownMenuTrigger>
@@ -338,7 +338,7 @@ export function SubscriptionsPageClient() {
                       </DropdownMenu>
                     )}
                     {s.login_url && (
-                      <a href={s.login_url} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()} className="p-1 rounded text-muted-foreground hover:text-brand-gold transition-colors">
+                      <a href={s.login_url} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()} className="p-1 rounded-md text-muted-foreground hover:text-brand-gold transition-colors">
                         <ExternalLink size={12} />
                       </a>
                     )}
@@ -364,8 +364,8 @@ export function SubscriptionsPageClient() {
             if (key === "category") setActiveCategory(val || "all");
             if (key === "ownership") setActiveOwnership(val || "all");
           }}
-          maxHeight="520px"
-          emptyMessage={loading ? "Loading subscriptions…" : "No subscriptions tracked yet."}
+          exportName="subscriptions"
+          loading={loading} emptyMessage={"No subscriptions tracked yet."}
         />
       </Card>
 

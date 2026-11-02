@@ -346,7 +346,7 @@ export default function InvoicesPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="font-display text-2xl font-bold text-foreground">Invoices</h1>
-          <p className="text-sm text-muted-foreground mt-1">Create, preview, and send invoices to clients.</p>
+          <p className="text-sm text-muted-foreground mt-1">Bill clients and track payment.</p>
         </div>
         <button
           onClick={openCreate}
@@ -357,10 +357,10 @@ export default function InvoicesPage() {
       </div>
 
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-        <StatCard title="Total Invoiced" value={`KES ${totalInvoiced.toLocaleString()}`} icon={FileText} accent={{ bg: "bg-brand-gold/10", text: "text-brand-gold" }} />
-        <StatCard title="Pending" value={String(pending)} icon={FileText} accent={{ bg: "bg-blue-400/10", text: "text-blue-400" }} />
-        <StatCard title="Overdue" value={String(overdue)} icon={FileText} accent={{ bg: "bg-red-400/10", text: "text-red-400" }} trend={overdue > 0 ? { direction: "down", value: `${overdue} overdue` } : undefined} />
-        <StatCard title="Paid (30d)" value={`KES ${paidThisMonth.toLocaleString()}`} icon={FileText} accent={{ bg: "bg-emerald-400/10", text: "text-emerald-400" }} />
+        <StatCard loading={loading} title="Total Invoiced" value={`KES ${totalInvoiced.toLocaleString()}`} icon={FileText} accent={{ bg: "bg-brand-gold/10", text: "text-brand-gold" }} />
+        <StatCard loading={loading} title="Pending" value={String(pending)} icon={FileText} accent={{ bg: "bg-blue-400/10", text: "text-blue-400" }} />
+        <StatCard loading={loading} title="Overdue" value={String(overdue)} icon={FileText} accent={{ bg: "bg-red-400/10", text: "text-red-400" }} trend={overdue > 0 ? { direction: "down", value: `${overdue} overdue` } : undefined} />
+        <StatCard loading={loading} title="Paid (30d)" value={`KES ${paidThisMonth.toLocaleString()}`} icon={FileText} accent={{ bg: "bg-emerald-400/10", text: "text-emerald-400" }} />
       </div>
 
       <Card className="overflow-hidden">
@@ -376,6 +376,7 @@ export default function InvoicesPage() {
                   <StackedCell
                     primary={inv.invoice_number ?? "Draft"}
                     secondary={inv.clients?.name ?? "No client"}
+                    avatar={inv.clients?.name ?? "?"}
                     mono
                   />
                 );
@@ -385,9 +386,11 @@ export default function InvoicesPage() {
               key: "total",
               label: "Amount",
               sortable: true,
+              align: "right",
               render: (row) => (
-                <span className="font-semibold text-foreground">
-                  KES {Number(row.total).toLocaleString()}
+                <span className="font-semibold text-foreground whitespace-nowrap">
+                  <span className="text-xs font-medium text-muted-foreground mr-1">KES</span>
+                  {Number(row.total).toLocaleString("en-KE")}
                 </span>
               ),
             },
@@ -398,14 +401,12 @@ export default function InvoicesPage() {
                 const inv = row as unknown as Invoice;
                 const lastSent = inv.last_comm_at ?? inv.sent_at;
                 return (
-                  <div className="flex flex-col gap-0.5">
+                  <div className="flex flex-col items-start gap-1">
                     <StatusDot status={inv.status} />
                     {lastSent && (
-                      <span className="text-[10px] text-muted-foreground whitespace-nowrap">
-                        {inv.send_count && inv.send_count > 0
-                          ? `Sent ×${inv.send_count} · ${new Date(lastSent).toLocaleDateString("en-KE", { day: "numeric", month: "short", year: "2-digit" })}`
-                          : `Sent ${new Date(lastSent).toLocaleDateString("en-KE", { day: "numeric", month: "short", year: "2-digit" })}`
-                        }
+                      <span className="text-xs text-muted-foreground whitespace-nowrap">
+                        {inv.send_count && inv.send_count > 1 ? `Sent ${inv.send_count} times, last ` : "Sent "}
+                        {new Date(lastSent).toLocaleDateString("en-KE", { day: "numeric", month: "short" })}
                       </span>
                     )}
                   </div>
@@ -417,35 +418,57 @@ export default function InvoicesPage() {
               label: "Due",
               className: "hidden sm:table-cell",
               sortable: true,
-              render: (row) => (
-                <span className="text-xs text-muted-foreground whitespace-nowrap">
-                  {row.due_date ? new Date(String(row.due_date)).toLocaleDateString("en-KE", { day: "numeric", month: "short", year: "numeric" }) : "-"}
-                </span>
-              ),
+              render: (row) => {
+                if (!row.due_date) return <span className="text-sm text-muted-foreground">-</span>;
+                const due = new Date(String(row.due_date));
+                const days = Math.round((due.getTime() - Date.now()) / 864e5);
+                const open = row.status !== "paid" && row.status !== "cancelled";
+                return (
+                  <div className="flex flex-col whitespace-nowrap">
+                    <span className="text-sm text-foreground">
+                      {due.toLocaleDateString("en-KE", { day: "numeric", month: "short", year: "numeric" })}
+                    </span>
+                    {open && (
+                      <span className={cn("text-xs", days < 0 ? "text-red-700 dark:text-red-400 font-medium" : days <= 7 ? "text-amber-700 dark:text-amber-400" : "text-muted-foreground")}>
+                        {days < 0 ? `${-days} day${days === -1 ? "" : "s"} late` : days === 0 ? "Due today" : `In ${days} day${days === 1 ? "" : "s"}`}
+                      </span>
+                    )}
+                  </div>
+                );
+              },
             },
             {
               key: "inline_actions",
               label: "",
-              className: "w-32",
+              className: "w-36",
               render: (row) => {
                 const inv = row as unknown as Invoice;
                 return (
                   <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
                     <button
                       onClick={() => openPreview(inv.id)}
-                      className="flex items-center gap-1 px-2 py-1 rounded-md text-[11px] font-medium border border-border text-muted-foreground hover:border-brand-gold/40 hover:text-foreground transition-colors"
+                      aria-label={`Preview ${inv.invoice_number ?? "invoice"} PDF`}
+                      title="Preview PDF"
+                      className="size-9 rounded-full flex items-center justify-center text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
                     >
-                      <Eye size={11} />PDF
+                      <Eye size={16} />
                     </button>
-                    {inv.status !== "cancelled" && (
+                    {/* A paid or cancelled invoice has nothing left to send */}
+                    {inv.status !== "cancelled" && inv.status !== "paid" && (
                       <>
                         <button
                           onClick={() => sendInvoice(inv.id)}
                           disabled={busyIds.has(inv.id)}
-                          className="flex items-center gap-1 px-2 py-1 rounded-md text-[11px] font-medium bg-brand-navy text-white hover:bg-brand-navy/90 transition-colors disabled:opacity-60"
+                          aria-label={`${inv.status === "draft" ? "Send" : "Resend"} ${inv.invoice_number ?? "invoice"}`}
+                          title={inv.status === "draft" ? "Send to client" : "Send again"}
+                          className={cn(
+                            "size-9 rounded-full flex items-center justify-center transition-colors disabled:opacity-60",
+                            inv.status === "overdue"
+                              ? "bg-red-500/10 text-red-700 hover:bg-red-500/20 dark:text-red-300"
+                              : "bg-brand-gold/15 text-amber-800 hover:bg-brand-gold/25 dark:text-brand-gold"
+                          )}
                         >
-                          {busyIds.has(inv.id) ? <Loader2 size={10} className="animate-spin" /> : <Send size={10} />}
-                          {inv.status === "draft" ? "Send" : "Resend"}
+                          {busyIds.has(inv.id) ? <Loader2 size={15} className="animate-spin" /> : <Send size={15} />}
                         </button>
                         <RecipientHint
                           contacts={ccContacts}
@@ -500,14 +523,14 @@ export default function InvoicesPage() {
           }]}
           activeFilters={{ status: activeFilter === "All" ? "" : activeFilter.toLowerCase() }}
           onFilterChange={(_, v) => setActiveFilter(v ? v.charAt(0).toUpperCase() + v.slice(1) : "All")}
-          maxHeight="520px"
-          emptyMessage={loading ? "Loading invoices…" : "No invoices yet."}
+          exportName="invoices"
+          loading={loading} emptyMessage={"No invoices yet."}
         />
       </Card>
 
       {/* PDF Preview Sheet */}
       <Sheet open={previewOpen} onOpenChange={setPreviewOpen}>
-        <SheetContent side="right" className="w-full sm:max-w-6xl p-0 flex flex-col">
+        <SheetContent showCloseButton={false} side="right" className="w-full sm:max-w-6xl p-0 flex flex-col">
           <SheetHeader className="px-6 py-4 border-b border-border flex flex-row items-center justify-between">
             <SheetTitle className="text-base">Invoice Preview</SheetTitle>
             <div className="flex items-center gap-2">

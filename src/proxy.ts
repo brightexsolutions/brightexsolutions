@@ -1,5 +1,6 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+import { DEV_AUTH_BYPASS } from "@/lib/dev-auth";
 
 const TEAM_PORTALS: Record<string, string> = {
   finance: "/team/finance",
@@ -8,8 +9,44 @@ const TEAM_PORTALS: Record<string, string> = {
   subcontractor: "/portal",
 };
 
+/**
+ * Admin subdomain. Set ADMIN_HOST (e.g. admin.brightexsolutions.co.ke) once the
+ * DNS record exists. The same deployment then serves both hosts:
+ *   admin.<domain>/            -> /admin
+ *   admin.<domain>/<public>    -> www.<domain>/<public>
+ *   www.<domain>/admin/...     -> admin.<domain>/admin/...
+ * Unset, nothing changes and /admin keeps working on the main domain.
+ */
+const ADMIN_HOST = process.env.ADMIN_HOST;
+// Everything that needs the admin session cookie, including the invite landing
+// page, so a new team member signs in on the same host as their portal.
+const APP_PREFIXES = ["/admin", "/portal", "/team", "/auth", "/join"];
+
+function adminHostRedirect(request: NextRequest): NextResponse | null {
+  if (!ADMIN_HOST) return null;
+  const host = request.headers.get("host") ?? "";
+  const { pathname, search } = request.nextUrl;
+  const isAppPath = APP_PREFIXES.some((p) => pathname === p || pathname.startsWith(p + "/"));
+
+  if (host === ADMIN_HOST) {
+    if (pathname === "/") return NextResponse.redirect(new URL("/admin", request.url));
+    if (!isAppPath) {
+      const site = process.env.NEXT_PUBLIC_SITE_URL ?? "https://www.brightexsolutions.co.ke";
+      return NextResponse.redirect(new URL(pathname + search, site));
+    }
+    return null;
+  }
+  if (isAppPath) {
+    return NextResponse.redirect(`https://${ADMIN_HOST}${pathname}${search}`);
+  }
+  return null;
+}
+
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
+
+  const hostRedirect = adminHostRedirect(request);
+  if (hostRedirect) return hostRedirect;
 
   // Admin maintenance mode: locks /admin/* but leaves public routes untouched
   if (
@@ -18,6 +55,11 @@ export async function proxy(request: NextRequest) {
     process.env.ADMIN_MAINTENANCE === "true"
   ) {
     return NextResponse.rewrite(new URL("/admin/maintenance", request.url));
+  }
+
+  // Local UI work: skip the login wall entirely (never active in production builds)
+  if (DEV_AUTH_BYPASS) {
+    return NextResponse.next({ request: { headers: request.headers } });
   }
 
   // If Supabase is not configured, allow all protected routes through (local dev)
@@ -105,6 +147,13 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  // Public routes are NOT in the matcher: zero proxy overhead on visitor traffic
-  matcher: ["/admin/:path*", "/portal/:path*", "/team/:path*"],
+  // Public routes are NOT in the matcher: zero proxy overhead on visitor traffic.
+  // The last entry only runs on the admin subdomain.
+  matcher: [
+    "/admin/:path*",
+    "/portal/:path*",
+    "/team/:path*",
+    "/join",
+    { source: "/((?!_next/|api/|.*\\.).*)", has: [{ type: "host", value: "admin\\..+" }] },
+  ],
 };
