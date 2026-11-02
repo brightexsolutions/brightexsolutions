@@ -1,0 +1,120 @@
+{/*
+title: "How to Accept M-Pesa Payments on Your Website: A Practical Guide for Kenyan Businesses"
+slug: "how-to-accept-mpesa-payments-on-your-website"
+description: "STK Push, Paybill, Till numbers and the Daraja API explained in plain language, plus the mistakes that cause missing payments and how a proper M-Pesa integration avoids them."
+date: "2026-11-02"
+category: "Technology"
+readingTime: 8
+author: "Brightex Solutions"
+heroImage: "https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?auto=format&fit=crop&w=1920&q=80"
+*/}
+
+Most Kenyan customers would rather pay with M-Pesa than type card details into a website. If your site asks them to "send money to this number and WhatsApp us the code", you are losing sales to every competitor whose checkout simply pops up a PIN prompt on the customer's phone.
+
+This guide explains how M-Pesa payments on a website actually work, which option fits your business, and what separates an integration that quietly loses payments from one you can trust.
+
+## The Short Version
+
+Safaricom exposes M-Pesa to developers through the **Daraja API**. Your website talks to Daraja, Daraja talks to the customer's phone, and Safaricom tells your server when the payment succeeds or fails. To go live you need three things:
+
+- **A Paybill or Till (Buy Goods) number** registered to your business
+- **A Daraja app** with production credentials linked to that number
+- **A server** that can receive Safaricom's payment notifications over HTTPS
+
+A plugin can cover the basics for a simple online shop. Anything with bookings, invoices, subscriptions or stock levels usually needs a custom integration so the payment updates the right record automatically.
+
+## The Main Ways to Take M-Pesa Online
+
+### 1. STK Push (M-Pesa Express)
+
+The customer enters their phone number at checkout, and a payment prompt appears on their phone with the amount and your business name already filled in. They enter their PIN and they are done.
+
+This is the best experience for most websites because the customer never types a Paybill number, an account number or an amount, so there is nothing for them to get wrong.
+
+**Best for:** e-commerce checkouts, booking deposits, invoice payment links, event tickets and subscriptions.
+
+### 2. C2B (Customer to Business) Paybill or Till
+
+The customer pays from their own M-Pesa menu using your Paybill or Till number, as they would in a shop. Your system registers a **confirmation URL** with Safaricom, so every payment to that number is reported to your server in real time.
+
+Paybill payments also carry an **account number** typed by the customer. If you ask them to enter an invoice or order number there, your system can match the payment to the right record without anyone checking statements by hand.
+
+**Best for:** school fees, rent, utility-style billing and any business that already shares a Paybill number widely.
+
+### 3. B2C (Business to Customer)
+
+This sends money out of your business account to a customer's phone. It's used for refunds, commissions, payouts to suppliers or agents, and loan disbursements.
+
+**Best for:** marketplaces, SACCOs, lending platforms and any business that pays many people regularly.
+
+Many systems combine these. A typical setup uses STK Push at checkout, C2B as a fallback for customers who prefer to pay from their own menu, and B2C for refunds.
+
+## How a Payment Flows Through Your System
+
+Using STK Push as the example:
+
+1. The customer clicks **Pay with M-Pesa** and enters a number such as 0712 345 678.
+2. Your server converts it to the international format (2547...) and sends a payment request to Daraja.
+3. Safaricom sends the PIN prompt to the customer's phone.
+4. The customer approves, cancels, or ignores the prompt.
+5. Safaricom calls your **callback URL** with the result, including the M-Pesa receipt number.
+6. Your system marks the order, invoice or booking as paid and sends a receipt.
+
+Step 5 is where most problems start.
+
+## The Mistakes That Cause Missing Payments
+
+### Trusting the browser instead of Safaricom
+
+Some sites mark an order as paid as soon as the prompt is sent, or when the customer clicks "I have paid". The only reliable signal is Safaricom's callback to your server, together with the receipt number. Never release goods or services on anything less.
+
+### No plan for late or missing callbacks
+
+Networks fail. A callback can arrive late, and occasionally not at all. A robust system records every request, and if no result arrives within a few minutes it asks Daraja for the **transaction status** instead of leaving the order stuck as "pending".
+
+### Processing the same payment twice
+
+Your server should treat the M-Pesa receipt number as unique. If the same notification arrives twice, the second one should change nothing. Without that check you get double-credited wallets, duplicate receipts and confused accounting.
+
+### Callback URLs that only work on a developer's laptop
+
+Safaricom must be able to reach your callback URL over public HTTPS. Integrations that worked in the sandbox often break at go-live because the URL, the certificate or a firewall rule was never set up for production.
+
+### Payments that never reach the books
+
+Payments that sit in M-Pesa statements but not in your accounting or ERP system create hours of reconciliation every month. When the integration writes each payment straight into the matching invoice, your finance team only has to deal with the exceptions.
+
+## Sandbox First, Then Go Live
+
+Daraja provides a **sandbox** with test credentials and test phone numbers, so the full flow can be built and tested before any real money moves. Going live means linking your real Paybill or Till number to your Daraja app, switching to production credentials, and confirming that your production callback URLs respond correctly.
+
+Plan for the go-live step. It involves your business's M-Pesa administrator and Safaricom's approval, so leave time for it before a launch date.
+
+## Plugin or Custom Integration?
+
+**A plugin is usually enough when:**
+- You run a standard WooCommerce or Shopify-style shop
+- Every payment matches one order
+- Nobody needs the payment to update another system
+
+**A custom integration pays for itself when:**
+- Payments must update invoices, bookings, school fees, rent or stock automatically
+- You also use Paybill payments with account numbers, refunds or payouts
+- The data needs to reach your accounting software, ERP or KRA eTIMS invoicing
+- You want reliable reports of who paid, for what, and when
+
+In our experience, the cost of a custom integration is small next to the staff hours spent matching M-Pesa messages to orders by hand, and the sales lost when customers give up at a manual payment step.
+
+## A Quick Checklist Before You Launch
+
+- Payment is confirmed only by Safaricom's callback, never by the browser
+- Each M-Pesa receipt number can only be recorded once
+- Pending payments are checked automatically with a status query
+- Callback URLs use HTTPS and have been tested in production
+- Customers get a receipt by SMS or email the moment payment lands
+- Every payment is linked to an order, invoice or account in your system
+- Credentials are stored on the server and never in the website's code
+
+---
+
+Brightex builds M-Pesa checkouts and connects them to the systems businesses already run, from booking platforms to [ERP systems](/blog/what-is-an-erp-and-does-your-business-need-one) and accounting software. If you want customers to pay in one tap and your records to update themselves, [tell us about your setup](/contact) or see our [integration services](/services).
