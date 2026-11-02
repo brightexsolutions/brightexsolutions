@@ -2,7 +2,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { Counter } from "./counter";
 import { FadeIn, FadeInStagger, StaggerChild } from "./fade-in";
-import { ArrowRight, Plug, Globe2 } from "lucide-react";
+import { ArrowRight, Plug, Globe2, MapPin } from "lucide-react";
 
 const stats = [
   { value: 50, suffix: "+", label: "Projects Delivered" },
@@ -65,9 +65,11 @@ export function Hero({ announcement }: { announcement?: HeroAnnouncement }) {
             )}
 
             <FadeIn delay={announcement ? 0.05 : 0}>
-              <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-brand-gold/30 bg-brand-gold/10 text-brand-gold text-xs font-semibold tracking-widest uppercase mb-7 backdrop-blur">
-                <span className="w-1.5 h-1.5 rounded-full bg-brand-gold animate-pulse" />
-                Nairobi · Africa-Focused · Globally Capable
+              <div className="inline-flex items-center gap-2.5 pl-1.5 pr-4 py-1.5 rounded-full border border-white/15 bg-white/[0.06] text-white/90 text-sm font-medium mb-7 backdrop-blur">
+                <span className="size-7 rounded-full bg-brand-gold text-brand-navy flex items-center justify-center shrink-0">
+                  <MapPin size={14} strokeWidth={2.25} />
+                </span>
+                Technology consultancy in Nairobi, Kenya
               </div>
             </FadeIn>
 
